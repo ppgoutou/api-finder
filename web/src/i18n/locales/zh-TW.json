@@ -729,7 +729,6 @@
     "Async task polling": "異步任務輪詢",
     "Supplier price check": "供應商價格檢查",
     "Plugin update needed": "需更新外掛",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "標記的渠道所用外掛尚不支援此模型，外掛更新前經由該渠道的呼叫都會失敗。",
     "Async Task Public Address": "非同步任務對外地址",
     "Async task refund": "異步任務退款",
     "At least one model regex pattern is required": "至少需要一個模型正則匹配模式",
@@ -7702,6 +7701,13 @@
     "Model available again": "已恢復可用",
     "This model is temporarily unavailable: {{reason}}": "該模型暫不可用：{{reason}}",
     "This model is temporarily unavailable. Pick another model.": "該模型暫不可用，請換一個模型。",
-    "Switch to {{model}}": "切換到 {{model}}"
+    "Switch to {{model}}": "切換到 {{model}}",
+    "Plugin adapted automatically": "外掛已自動適配",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "解析度和計費方式依供應商設定，時長和畫幅參照 {{model}}，上架前請確認。",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "標記的渠道所用外掛還不支援這個模型。每次檢查上游價格時，系統會盡量依供應商價格自動適配外掛。",
+    "This plugin cannot adapt to new models by itself": "這個外掛不支援自動適配新模型",
+    "The supplier has not priced this model yet": "供應商還沒為這個模型定價",
+    "The plugin could not work out this model's parameters": "外掛無法推斷這個模型的參數",
+    "The plugin rejected the parameters it worked out for this model": "外掛不接受它為這個模型推斷的參數"
   }
 }

@@ -729,7 +729,6 @@
     "Async task polling": "Interrogation des tâches asynchrones",
     "Supplier price check": "Vérification des prix fournisseur",
     "Plugin update needed": "Mise à jour du plugin requise",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "Le plugin d'un canal marqué ne prend pas encore en charge ce modèle. Les appels via ce canal échouent tant que le plugin n'est pas mis à jour.",
     "Async Task Public Address": "Adresse publique des tâches asynchrones",
     "Async task refund": "Remboursement de tâche asynchrone",
     "At least one model regex pattern is required": "Au moins un modèle de regex est requis",
@@ -7702,6 +7701,13 @@
     "Model available again": "Modèle de nouveau disponible",
     "This model is temporarily unavailable: {{reason}}": "Ce modèle est temporairement indisponible : {{reason}}",
     "This model is temporarily unavailable. Pick another model.": "Ce modèle est temporairement indisponible. Choisissez-en un autre.",
-    "Switch to {{model}}": "Passer à {{model}}"
+    "Switch to {{model}}": "Passer à {{model}}",
+    "Plugin adapted automatically": "Plugin adapté automatiquement",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "La résolution et la facturation suivent le fournisseur ; les durées et formats suivent {{model}}. Vérifiez-les avant la mise en ligne.",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "Le plugin d’un canal marqué ne prend pas encore en charge ce modèle. Chaque vérification des prix amont adapte le plugin à partir des prix du fournisseur lorsque c’est possible.",
+    "This plugin cannot adapt to new models by itself": "Ce plugin ne sait pas s’adapter seul aux nouveaux modèles",
+    "The supplier has not priced this model yet": "Le fournisseur n’a pas encore fixé le prix de ce modèle",
+    "The plugin could not work out this model's parameters": "Le plugin n’a pas pu déterminer les paramètres de ce modèle",
+    "The plugin rejected the parameters it worked out for this model": "Le plugin a refusé les paramètres qu’il a déterminés pour ce modèle"
   }
 }

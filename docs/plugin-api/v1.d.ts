@@ -18,6 +18,8 @@ export interface HostUtils {
   base64URL(value: string): string;
   base64URLDecode(value: string): string;
   volcSignV4(request: {method: string; url: string; headers?: Record<string, string>; body?: string; accessKey: string; secretKey: string; region?: string; service?: string; timestamp?: number}): Record<string, string>;
+  /** Model entries the host adapted this plugin to, from deriveModel; readable while the module evaluates. Empty when there are none. */
+  modelExtras: Readonly<Record<string, JSONValue>>;
   /** Synchronous read-only request from driver hooks to the channel Base URL host or allowedHosts. At most 4 per hook call, 15 s each, 30 s in total, 1 MiB per body; redirects are returned, not followed. */
   fetch(request: FetchRequest): FetchResponse;
 }
@@ -76,6 +78,9 @@ export declare const protocols: {
   /** render returns the OpenAI ImageResponse; the host adds `created` when absent and resolves response_format b64_json. */
   openai_image?: {decodeRequest(ctx: ProtocolDecodeContext): SubmitIntent; render(ctx: unknown, task: TaskView): {created?: number; data: readonly ImageResponseEntry[]} & Record<string, unknown>};
 };
+export interface DeriveModelInput {model: string; declared: readonly string[]; supplier: {billingExpr: string; usageKeys: readonly string[]}}
+/** Optional. Turns a supplier's price for a newly offered model into this plugin's own model-table entry, kept by the host as utils.modelExtras. */
+export declare function deriveModel(input: DeriveModelInput): {entry: JSONValue; basedOn?: string} | null;
 export declare function buildSubmitRequest(ctx: DriverContext): RequestDescriptor;
 export interface SubmitEvent {event: string; id: string; data: string}
 export type JSONPath = readonly (string | number)[];

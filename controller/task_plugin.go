@@ -750,11 +750,20 @@ func syncTaskPluginsOnceContext(ctx context.Context) error {
 	nextOverrides := make([]*jsplugin.LoadedPlugin, 0, len(databasePlugins))
 	nextHashes := make(map[string]string, len(databasePlugins))
 	seen := make(map[string]bool, len(databasePlugins))
+	modelExtras := model.GetTaskPluginModelExtras()
 	for _, plugin := range databasePlugins {
 		seen[plugin.Key] = true
-		if current := currentOverrides[plugin.Key]; current != nil && taskPluginSyncState.hashes[plugin.Key] == plugin.SourceHash {
+		// Adapted models are compiled into the plugin, so a change to them
+		// recompiles it like a source change.
+		entries := model.TaskPluginModelEntries(modelExtras, plugin.Key)
+		loadHash := plugin.SourceHash
+		if len(entries) > 0 {
+			encoded, _ := common.Marshal(entries)
+			loadHash += ":" + common.Sha1(encoded)
+		}
+		if current := currentOverrides[plugin.Key]; current != nil && taskPluginSyncState.hashes[plugin.Key] == loadHash {
 			nextOverrides = append(nextOverrides, current)
-			nextHashes[plugin.Key] = plugin.SourceHash
+			nextHashes[plugin.Key] = loadHash
 			logger.LogDebug(
 				ctx,
 				"task_plugin subsystem=sync event=plugin plugin=%q version=%q action=reuse",
@@ -774,7 +783,7 @@ func syncTaskPluginsOnceContext(ctx context.Context) error {
 		if compileErr != nil {
 			compileErr = fmt.Errorf("load source: %w", compileErr)
 		} else {
-			compiled, compileErr = jsplugin.CompilePlugin(string(source), jsplugin.Options{Key: plugin.Key, Version: plugin.Version})
+			compiled, compileErr = jsplugin.CompilePlugin(string(source), jsplugin.Options{Key: plugin.Key, Version: plugin.Version, ModelExtras: entries})
 		}
 		if compileErr != nil {
 			retainedIncumbent := false
@@ -797,7 +806,7 @@ func syncTaskPluginsOnceContext(ctx context.Context) error {
 			continue
 		}
 		nextOverrides = append(nextOverrides, compiled)
-		nextHashes[plugin.Key] = plugin.SourceHash
+		nextHashes[plugin.Key] = loadHash
 		delete(taskPluginSyncState.errors, plugin.Key)
 		logger.LogDebug(
 			ctx,

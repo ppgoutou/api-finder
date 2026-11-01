@@ -729,7 +729,6 @@
     "Async task polling": "Опрос асинхронных задач",
     "Supplier price check": "Проверка цен поставщика",
     "Plugin update needed": "Нужно обновить плагин",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "Плагин отмеченного канала пока не поддерживает эту модель. Вызовы через этот канал будут завершаться ошибкой, пока плагин не обновлён.",
     "Async Task Public Address": "Публичный адрес асинхронных задач",
     "Async task refund": "Возврат асинхронной задачи",
     "At least one model regex pattern is required": "Требуется хотя бы один шаблон регулярного выражения модели",
@@ -7702,6 +7701,13 @@
     "Model available again": "Модель снова доступна",
     "This model is temporarily unavailable: {{reason}}": "Модель временно недоступна: {{reason}}",
     "This model is temporarily unavailable. Pick another model.": "Модель временно недоступна. Выберите другую.",
-    "Switch to {{model}}": "Переключиться на {{model}}"
+    "Switch to {{model}}": "Переключиться на {{model}}",
+    "Plugin adapted automatically": "Плагин адаптирован автоматически",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "Разрешение и тарификация берутся у поставщика; длительности и соотношения сторон — как у {{model}}. Проверьте их перед запуском.",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "Плагин отмеченного канала пока не поддерживает эту модель. Каждая проверка цен источника по возможности адаптирует плагин по ценам поставщика.",
+    "This plugin cannot adapt to new models by itself": "Этот плагин не умеет сам адаптироваться к новым моделям",
+    "The supplier has not priced this model yet": "Поставщик ещё не назначил цену этой модели",
+    "The plugin could not work out this model's parameters": "Плагину не удалось определить параметры этой модели",
+    "The plugin rejected the parameters it worked out for this model": "Плагин отклонил параметры, которые он определил для этой модели"
   }
 }

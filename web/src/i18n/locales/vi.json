@@ -729,7 +729,6 @@
     "Async task polling": "Thăm dò tác vụ bất đồng bộ",
     "Supplier price check": "Kiểm tra giá nhà cung cấp",
     "Plugin update needed": "Cần cập nhật plugin",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "Plugin của kênh được đánh dấu chưa hỗ trợ mô hình này. Các lệnh gọi qua kênh đó sẽ thất bại cho đến khi plugin được cập nhật.",
     "Async Task Public Address": "Địa chỉ công khai của tác vụ bất đồng bộ",
     "Async task refund": "Hoàn tiền tác vụ bất đồng bộ",
     "At least one model regex pattern is required": "Cần ít nhất một mẫu regex mô hình",
@@ -7702,6 +7701,13 @@
     "Model available again": "Mô hình đã khả dụng lại",
     "This model is temporarily unavailable: {{reason}}": "Mô hình này tạm thời không khả dụng: {{reason}}",
     "This model is temporarily unavailable. Pick another model.": "Mô hình này tạm thời không khả dụng. Hãy chọn mô hình khác.",
-    "Switch to {{model}}": "Chuyển sang {{model}}"
+    "Switch to {{model}}": "Chuyển sang {{model}}",
+    "Plugin adapted automatically": "Plugin đã tự thích ứng",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "Độ phân giải và cách tính phí theo nhà cung cấp; thời lượng và tỷ lệ khung hình theo {{model}}. Hãy kiểm tra trước khi mở bán.",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "Plugin của kênh được đánh dấu chưa hỗ trợ mô hình này. Mỗi lần kiểm tra giá nguồn, hệ thống sẽ cố gắng tự thích ứng plugin theo giá nhà cung cấp.",
+    "This plugin cannot adapt to new models by itself": "Plugin này không tự thích ứng với mô hình mới",
+    "The supplier has not priced this model yet": "Nhà cung cấp chưa định giá mô hình này",
+    "The plugin could not work out this model's parameters": "Plugin không xác định được tham số của mô hình này",
+    "The plugin rejected the parameters it worked out for this model": "Plugin từ chối tham số nó đã xác định cho mô hình này"
   }
 }

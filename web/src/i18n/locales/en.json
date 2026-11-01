@@ -729,7 +729,6 @@
     "Async task polling": "Async task polling",
     "Supplier price check": "Supplier price check",
     "Plugin update needed": "Plugin update needed",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.",
     "Async Task Public Address": "Async Task Public Address",
     "Async task refund": "Async task refund",
     "At least one model regex pattern is required": "At least one model regex pattern is required",
@@ -7702,6 +7701,13 @@
     "Model available again": "Model available again",
     "This model is temporarily unavailable: {{reason}}": "This model is temporarily unavailable: {{reason}}",
     "This model is temporarily unavailable. Pick another model.": "This model is temporarily unavailable. Pick another model.",
-    "Switch to {{model}}": "Switch to {{model}}"
+    "Switch to {{model}}": "Switch to {{model}}",
+    "Plugin adapted automatically": "Plugin adapted automatically",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.",
+    "This plugin cannot adapt to new models by itself": "This plugin cannot adapt to new models by itself",
+    "The supplier has not priced this model yet": "The supplier has not priced this model yet",
+    "The plugin could not work out this model's parameters": "The plugin could not work out this model's parameters",
+    "The plugin rejected the parameters it worked out for this model": "The plugin rejected the parameters it worked out for this model"
   }
 }

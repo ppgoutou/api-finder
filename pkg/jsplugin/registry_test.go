@@ -1,6 +1,7 @@
 package jsplugin
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -1311,4 +1312,48 @@ export function parseSubmitEventDelta(){return {changes:[],state:null,done:true}
 			}
 		})
 	}
+}
+
+func TestModelExtrasExtendTheManifestAndDeriveModel(t *testing.T) {
+	source := `
+const MODELS = Object.assign({short: {maxDuration: 15}}, utils.modelExtras);
+export const meta = {
+	apiVersion: 1,
+	key: "extras",
+	name: "extras",
+	version: "1.0.0",
+	author: {name: "Test"},
+	models: Object.keys(MODELS),
+	fetchMode: "per_task",
+	modelLimits: Object.fromEntries(Object.entries(MODELS).map(([name, entry]) => [name, {minDuration: 1, maxDuration: entry.maxDuration}])),
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+export function deriveModel(input) {
+	return {entry: {maxDuration: input.supplier.usageKeys.length * 10}, basedOn: input.declared[0]};
+}
+`
+	plain, err := CompilePlugin(source, Options{})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"short"}, plain.Meta.Models)
+
+	extended, err := CompilePlugin(source, Options{ModelExtras: map[string]any{"long": map[string]any{"maxDuration": 30}}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"short", "long"}, extended.Meta.Models)
+	limits, declared := extended.Meta.LimitsForModel("long")
+	require.True(t, declared)
+	assert.Equal(t, 30, limits.MaxDuration)
+
+	require.True(t, extended.Engine.HasExport("deriveModel"))
+	derived, err := extended.Engine.Call(context.Background(), "deriveModel", map[string]any{
+		"model":    "longer",
+		"declared": extended.Meta.Models,
+		"supplier": map[string]any{"usageKeys": []any{"seconds", "resolution"}},
+	})
+	require.NoError(t, err)
+	encoded, err := common.Marshal(derived)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"entry":{"maxDuration":20},"basedOn":"short"}`, string(encoded))
 }

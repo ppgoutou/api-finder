@@ -583,6 +583,7 @@ func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string,
 	if err := writeOnboardingOption(onboardingPriceSnapshotOption, snapshots); err != nil {
 		return nil, nil, err
 	}
+	adaptPluginsToSupplierModels(ctx, snapshots)
 	return rows, applied, nil
 }
 

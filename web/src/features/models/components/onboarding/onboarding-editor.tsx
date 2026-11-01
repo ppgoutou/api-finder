@@ -236,7 +236,7 @@ function OnboardingChannelsCard(props: {
             {pending.some((channel) => channel.plugin_missing) && (
               <p className='text-muted-foreground text-xs'>
                 {t(
-                  'The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.'
+                  'The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.'
                 )}
               </p>
             )}
@@ -344,8 +344,33 @@ function ChannelLabel(props: { channel: OnboardingChannel }) {
           copyable={false}
         />
       )}
+      {props.channel.plugin_adaptation?.adapted && (
+        <StatusBadge
+          variant='success'
+          label={t('Plugin adapted automatically')}
+          copyable={false}
+        />
+      )}
+      <PluginAdaptationNote channel={props.channel} />
     </span>
   )
+}
+
+function PluginAdaptationNote(props: { channel: OnboardingChannel }) {
+  const { t } = useTranslation()
+  const adaptation = props.channel.plugin_adaptation
+  if (!adaptation) return null
+  let note = ''
+  if (!adaptation.adapted && adaptation.error) {
+    note = t(adaptation.error)
+  } else if (adaptation.based_on) {
+    note = t(
+      'Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.',
+      { model: adaptation.based_on }
+    )
+  }
+  if (!note) return null
+  return <span className='text-muted-foreground w-full text-xs'>{note}</span>
 }
 
 function OnboardingCategoryCard(props: {

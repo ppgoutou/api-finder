@@ -729,7 +729,6 @@
     "Async task polling": "异步任务轮询",
     "Supplier price check": "供应商价格检查",
     "Plugin update needed": "需更新插件",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "标记的渠道所用插件尚不支持此模型，插件更新前经由该渠道的调用都会失败。",
     "Async Task Public Address": "异步任务对外地址",
     "Async task refund": "异步任务退款",
     "At least one model regex pattern is required": "至少需要一个模型正则匹配模式",
@@ -7702,6 +7701,13 @@
     "Model available again": "已恢复可用",
     "This model is temporarily unavailable: {{reason}}": "该模型暂不可用：{{reason}}",
     "This model is temporarily unavailable. Pick another model.": "该模型暂不可用，请换一个模型。",
-    "Switch to {{model}}": "切换到 {{model}}"
+    "Switch to {{model}}": "切换到 {{model}}",
+    "Plugin adapted automatically": "插件已自动适配",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "分辨率和计费方式按供应商设置，时长和画幅参照 {{model}}，上架前请确认。",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "标记的渠道所用插件还不支持这个模型。每次检查上游价格时，系统会尽量按供应商价格自动适配插件。",
+    "This plugin cannot adapt to new models by itself": "这个插件不支持自动适配新模型",
+    "The supplier has not priced this model yet": "供应商还没给这个模型定价",
+    "The plugin could not work out this model's parameters": "插件无法推断这个模型的参数",
+    "The plugin rejected the parameters it worked out for this model": "插件不接受它为这个模型推断的参数"
   }
 }

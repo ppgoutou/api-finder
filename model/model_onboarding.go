@@ -19,6 +19,18 @@ type OnboardingChannel struct {
 	// PluginMissing marks a pending model that the channel's task plugin does
 	// not list, so requests for it fail until the plugin is updated.
 	PluginMissing bool `json:"plugin_missing,omitempty"`
+	// PluginKey is the task plugin a Task Plugin channel is bound to.
+	PluginKey string `json:"plugin_key,omitempty"`
+	// PluginAdaptation is the host's last attempt to adapt that plugin to the
+	// pending model from the supplier's pricing.
+	PluginAdaptation *OnboardingPluginAdaptation `json:"plugin_adaptation,omitempty"`
+}
+
+type OnboardingPluginAdaptation struct {
+	Adapted   bool   `json:"adapted"`
+	BasedOn   string `json:"based_on,omitempty"`
+	Error     string `json:"error,omitempty"`
+	UpdatedAt int64  `json:"updated_at"`
 }
 
 // OnboardingModel is one concrete model name that is either offered by an
@@ -55,6 +67,7 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 		return nil, err
 	}
 
+	extras := GetTaskPluginModelExtras()
 	items := make(map[string]*OnboardingModel)
 	item := func(name string) *OnboardingModel {
 		if existing, ok := items[name]; ok {
@@ -78,8 +91,10 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 			_ = common.UnmarshalJsonStr(channel.OtherSettings, &settings)
 		}
 		var plugin *jsplugin.LoadedPlugin
+		pluginKey := ""
 		if channel.Type == constant.ChannelTypeTaskPlugin {
-			plugin, _ = jsplugin.DefaultRegistry.Get(channel.GetSetting().TaskPluginKey)
+			pluginKey = channel.GetSetting().TaskPluginKey
+			plugin, _ = jsplugin.DefaultRegistry.Get(pluginKey)
 		}
 		for _, name := range normalizeLookupValues(settings.UpstreamModelUpdateLastDetectedModels) {
 			if slices.Contains(configured, name) {
@@ -87,6 +102,10 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 			}
 			pending := ref
 			pending.PluginMissing = plugin != nil && !plugin.Meta.DeclaresModel(name)
+			pending.PluginKey = pluginKey
+			if extra, ok := extras[pluginKey][name]; ok {
+				pending.PluginAdaptation = &OnboardingPluginAdaptation{Adapted: extra.Entry != nil, BasedOn: extra.BasedOn, Error: extra.Error, UpdatedAt: extra.UpdatedAt}
+			}
 			entry := item(name)
 			entry.PendingChannels = append(entry.PendingChannels, pending)
 		}
