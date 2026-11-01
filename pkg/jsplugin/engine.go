@@ -98,6 +98,9 @@ type Options struct {
 	Concurrency int
 	Now         func() time.Time
 	Log         func(string)
+	// ModelExtras is the host-kept model table the plugin reads as
+	// utils.modelExtras while its module evaluates, keyed by model name.
+	ModelExtras map[string]any
 }
 
 type Engine struct {
@@ -106,6 +109,7 @@ type Engine struct {
 	timeout   time.Duration
 	now       func() time.Time
 	log       func(string)
+	extras    map[string]any
 	module    *moejs.Module
 	pool      chan *runtimeInstance
 	semaphore chan struct{}
@@ -179,6 +183,7 @@ func Compile(source string, options Options) (*Engine, error) {
 		timeout:   timeout,
 		now:       now,
 		log:       options.Log,
+		extras:    options.ModelExtras,
 		module:    module,
 		semaphore: make(chan struct{}, concurrency),
 		parked:    make(chan struct{}, concurrency),
@@ -814,7 +819,7 @@ func (e *Engine) newRuntime(ctx context.Context) (*runtimeInstance, error) {
 	}
 	if err := injectGlobals(runtime, func() string {
 		return fmt.Sprintf("[plugin:%s@%s]", e.key, e.version)
-	}, e.now, logOutput, func() *runtimeCall { return instance.call }); err != nil {
+	}, e.now, logOutput, e.extras, func() *runtimeCall { return instance.call }); err != nil {
 		return nil, fmt.Errorf("inject plugin utils: %w", err)
 	}
 	timedOut := errors.New("plugin initialization timed out")

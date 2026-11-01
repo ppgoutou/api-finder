@@ -928,4 +928,9 @@ export const STATIC_I18N_KEYS = [
   'At most 60 characters',
   'At most 80 characters',
   'At most 2000 characters',
+  // Plugin adaptation errors from controller/model_onboarding_plugins.go.
+  'This plugin cannot adapt to new models by itself',
+  'The supplier has not priced this model yet',
+  "The plugin could not work out this model's parameters",
+  'The plugin rejected the parameters it worked out for this model',
 ] as const

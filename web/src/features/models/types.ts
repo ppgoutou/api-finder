@@ -255,6 +255,19 @@ export type OnboardingChannel = {
   status: number
   /** The channel's task plugin does not list this pending model yet. */
   plugin_missing?: boolean
+  /** Task plugin bound to a Task Plugin channel. */
+  plugin_key?: string
+  /** Last attempt to adapt that plugin to the model from supplier prices. */
+  plugin_adaptation?: OnboardingPluginAdaptation
+}
+
+export type OnboardingPluginAdaptation = {
+  adapted: boolean
+  /** Declared model the durations and ratios were copied from. */
+  based_on?: string
+  /** English message key of a failed or waiting attempt. */
+  error?: string
+  updated_at: number
 }
 
 /**

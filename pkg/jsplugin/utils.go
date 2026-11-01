@@ -34,8 +34,12 @@ type volcSignRequest struct {
 // injectGlobals installs utils and console. currentCall returns the hook call
 // running on runtime, or nil outside one; utils.fetch reads its fetcher and
 // budget there, so no request data lives in the runtime's globals.
-func injectGlobals(runtime *moejs.Runtime, identity func() string, now func() time.Time, logOutput func(string), currentCall func() *runtimeCall) error {
+func injectGlobals(runtime *moejs.Runtime, identity func() string, now func() time.Time, logOutput func(string), modelExtras map[string]any, currentCall func() *runtimeCall) error {
+	if modelExtras == nil {
+		modelExtras = map[string]any{}
+	}
 	utils := map[string]any{
+		"modelExtras": modelExtras,
 		"fetch": runtime.Function("fetch", 1, func(r *moejs.Realm, _ moejs.Value, args []moejs.Value) (moejs.Value, error) {
 			call := currentCall()
 			if call == nil {

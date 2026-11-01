@@ -729,7 +729,6 @@
     "Async task polling": "非同期タスクのポーリング",
     "Supplier price check": "サプライヤー価格チェック",
     "Plugin update needed": "プラグインの更新が必要",
-    "The plugin of a marked channel does not support this model yet. Calls through it fail until the plugin is updated.": "印の付いたチャネルのプラグインはまだこのモデルに対応していません。プラグインを更新するまで、このチャネル経由の呼び出しは失敗します。",
     "Async Task Public Address": "非同期タスクの公開アドレス",
     "Async task refund": "非同期タスク返金",
     "At least one model regex pattern is required": "少なくとも1つのモデル正規表現パターンが必要です",
@@ -7702,6 +7701,13 @@
     "Model available again": "利用可能に戻しました",
     "This model is temporarily unavailable: {{reason}}": "このモデルは一時的に利用できません：{{reason}}",
     "This model is temporarily unavailable. Pick another model.": "このモデルは一時的に利用できません。別のモデルを選んでください。",
-    "Switch to {{model}}": "{{model}} に切り替える"
+    "Switch to {{model}}": "{{model}} に切り替える",
+    "Plugin adapted automatically": "プラグインを自動適応しました",
+    "Resolutions and billing follow the supplier; durations and ratios follow {{model}}. Check them before going live.": "解像度と課金方式は供給元に従い、長さとアスペクト比は {{model}} に従います。公開前に確認してください。",
+    "The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.": "マークされたチャネルのプラグインはまだこのモデルに対応していません。上流価格を確認するたびに、可能であれば供給元の価格からプラグインを自動適応します。",
+    "This plugin cannot adapt to new models by itself": "このプラグインは新しいモデルへの自動適応に対応していません",
+    "The supplier has not priced this model yet": "供給元がまだこのモデルの価格を設定していません",
+    "The plugin could not work out this model's parameters": "プラグインがこのモデルのパラメータを判断できませんでした",
+    "The plugin rejected the parameters it worked out for this model": "プラグインが自身で判断したこのモデルのパラメータを受け付けませんでした"
   }
 }

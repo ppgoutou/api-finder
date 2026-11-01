@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 
@@ -217,4 +220,91 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 
 	assert.Equal(t, model.PricingValues{"ModelPrice": 0.5}, pricing("priced-model"))
 	assert.Equal(t, true, models["priced-model"].(map[string]any)["in_sync"])
+}
+
+const adaptingPluginSource = `
+const MODELS = Object.assign({}, utils.modelExtras, {"old-video": {resolutions: ["720p", "1080p"]}});
+export const meta = {
+	apiVersion: 1,
+	key: "adapting",
+	name: "Adapting",
+	version: "1.0.0",
+	author: {name: "Test"},
+	models: Object.keys(MODELS),
+	fetchMode: "per_task",
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+export function deriveModel(input) {
+	const tiers = [...input.supplier.billingExpr.matchAll(/tier\("([^"]+)"/g)].map((match) => match[1]);
+	if (!input.supplier.usageKeys.includes("seconds") || !tiers.length) return null;
+	return {entry: {resolutions: tiers}, basedOn: input.declared[0]};
+}
+`
+
+func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	require.NoError(t, model.DB.AutoMigrate(&model.TaskPlugin{}))
+	service.InitHttpClient()
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{},"data":[
+			{"model_name":"old-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"tier(\"720p\", u(\"seconds\") * 0.1)"},
+			{"model_name":"new-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"u(\"resolution\") == \"480p\" ? tier(\"480p\", u(\"seconds\") * 0.1) : tier(\"720p\", u(\"seconds\") * 0.2)"},
+			{"model_name":"unpriced-video","quota_type":0,"model_ratio":37.5}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+	require.NoError(t, model.SaveTaskPlugin(&model.TaskPlugin{Key: "adapting", APIVersion: 1, Version: "1.0.0", Source: adaptingPluginSource, SourceHash: "adapting-1", Enabled: true}))
+	require.NoError(t, model.ActivateTaskPlugin("adapting", "1.0.0"))
+	require.NoError(t, syncTaskPluginsOnce())
+	t.Cleanup(func() { jsplugin.DefaultRegistry.Unregister("adapting") })
+	baseURL, setting := upstream.URL, `{"task_plugin_key":"adapting"}`
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: constant.ChannelTypeTaskPlugin, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
+		Group: "default", Models: "old-video", BaseURL: &baseURL, Setting: &setting,
+		OtherSettings: `{"upstream_model_update_last_detected_models":["new-video","unpriced-video"]}`,
+	}).Error)
+	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token"}))
+	pending := func() map[string]*model.OnboardingPluginAdaptation {
+		t.Helper()
+		overview, err := model.GetOnboardingOverview()
+		require.NoError(t, err)
+		adaptations := map[string]*model.OnboardingPluginAdaptation{}
+		for _, item := range overview.Items {
+			for _, channel := range item.PendingChannels {
+				assert.Equal(t, "adapting", channel.PluginKey)
+				assert.Equal(t, channel.PluginAdaptation == nil || !channel.PluginAdaptation.Adapted, channel.PluginMissing, item.ModelName)
+				adaptations[item.ModelName] = channel.PluginAdaptation
+			}
+		}
+		return adaptations
+	}
+	before := pending()
+	require.Contains(t, before, "new-video")
+	assert.Nil(t, before["new-video"])
+
+	_, _, err := checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+
+	plugin, ok := jsplugin.DefaultRegistry.Get("adapting")
+	require.True(t, ok)
+	assert.True(t, plugin.Meta.DeclaresModel("new-video"))
+	assert.False(t, plugin.Meta.DeclaresModel("unpriced-video"))
+	after := pending()
+	require.NotNil(t, after["new-video"])
+	assert.True(t, after["new-video"].Adapted)
+	assert.Equal(t, "old-video", after["new-video"].BasedOn)
+	require.NotNil(t, after["unpriced-video"])
+	assert.Equal(t, pluginAdaptErrorUnpriced, after["unpriced-video"].Error)
+	assert.Equal(t, map[string]any{"new-video": map[string]any{"resolutions": []any{"480p", "720p"}}},
+		model.TaskPluginModelEntries(model.GetTaskPluginModelExtras(), "adapting"))
+
+	// A later check keeps the adapted entry instead of deriving it again.
+	_, _, err = checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+	plugin, ok = jsplugin.DefaultRegistry.Get("adapting")
+	require.True(t, ok)
+	assert.True(t, plugin.Meta.DeclaresModel("new-video"))
 }
