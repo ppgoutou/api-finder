@@ -31,6 +31,8 @@ import type {
   PreviewUpstreamDiffResponse,
   MissingModelsResponse,
   OnboardingOverviewResponse,
+  OnboardingDraft,
+  DescriptionLLMConfig,
   UpstreamPriceReportResponse,
   PrefillGroupsResponse,
   SyncLocale,
@@ -321,6 +323,66 @@ export async function setUpstreamPricingToken(request: {
 }): Promise<{ success: boolean; message?: string }> {
   const res = await api.put(
     '/api/models/onboarding/upstream_prices/token',
+    request
+  )
+  return res.data
+}
+
+/**
+ * Queue one run that detects upstream models, checks supplier prices,
+ * adapts task plugins and drafts metadata; returns the system task to follow
+ */
+export async function startOnboardingSync(): Promise<{
+  success: boolean
+  message?: string
+  data?: { task_id: string; status: string; created: boolean }
+}> {
+  const res = await api.post('/api/models/onboarding/upstream_prices/sync')
+  return res.data
+}
+
+/**
+ * Prepare one model's metadata draft again
+ */
+export async function draftOnboardingModel(modelName: string): Promise<{
+  success: boolean
+  message?: string
+  data?: OnboardingDraft
+}> {
+  const res = await api.post('/api/models/onboarding/upstream_prices/draft', {
+    model_name: modelName,
+  })
+  return res.data
+}
+
+/**
+ * The chat endpoint that polishes draft descriptions; the key is never returned
+ */
+export async function getDescriptionLLM(): Promise<{
+  success: boolean
+  message?: string
+  data?: DescriptionLLMConfig
+}> {
+  const res = await api.get(
+    '/api/models/onboarding/upstream_prices/description_llm'
+  )
+  return res.data
+}
+
+/**
+ * Save the chat endpoint; omit api_key to keep the stored one
+ */
+export async function setDescriptionLLM(request: {
+  base_url: string
+  model: string
+  api_key?: string
+}): Promise<{
+  success: boolean
+  message?: string
+  data?: DescriptionLLMConfig
+}> {
+  const res = await api.put(
+    '/api/models/onboarding/upstream_prices/description_llm',
     request
   )
   return res.data

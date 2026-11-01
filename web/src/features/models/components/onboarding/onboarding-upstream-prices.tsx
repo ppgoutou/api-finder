@@ -100,13 +100,11 @@ function ChangeFields(props: { change: UpstreamPriceChange }) {
   )
 }
 
-/** Supplier price watch: tokens, the check button, and changes no workbench model shows. */
+/** Supplier price watch: tokens and the changes no workbench model shows. Checks run from Sync upstream. */
 export function UpstreamPricePanel(props: {
   report: UpstreamPriceReport | undefined
   workbenchModels: Set<string>
-  checking: boolean
   acknowledging: boolean
-  onCheck: () => void
   onAcknowledge: (request: AcknowledgeRequest) => void
   onSaveToken: (channelId: number, token: string) => Promise<void>
 }) {
@@ -150,13 +148,6 @@ export function UpstreamPricePanel(props: {
           >
             <KeyRound aria-hidden className='size-4' />
             {t('Supplier tokens')}
-          </Button>
-          <Button
-            size='sm'
-            disabled={watched.length === 0 || props.checking}
-            onClick={props.onCheck}
-          >
-            {props.checking ? t('Checking...') : t('Check upstream prices')}
           </Button>
         </div>
       }

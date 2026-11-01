@@ -43,6 +43,8 @@ type OnboardingModel struct {
 	Channels        []OnboardingChannel `json:"channels"`
 	MetadataID      int                 `json:"metadata_id"`
 	MetadataRule    string              `json:"metadata_rule,omitempty"`
+	// Draft is the prepared metadata of a model that has none yet.
+	Draft *OnboardingDraft `json:"draft,omitempty"`
 }
 
 type OnboardingOverview struct {
@@ -124,6 +126,7 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 	}
 	slices.Sort(names)
 	resolved := resolveModelMetadata(metadata, names)
+	drafts := GetOnboardingDrafts()
 	overview := &OnboardingOverview{Items: make([]OnboardingModel, 0, len(names))}
 	for _, name := range names {
 		entry := items[name]
@@ -133,6 +136,8 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 			} else {
 				entry.MetadataRule = record.ModelName
 			}
+		} else if draft, ok := drafts[name]; ok {
+			entry.Draft = &draft
 		}
 		overview.Items = append(overview.Items, *entry)
 	}

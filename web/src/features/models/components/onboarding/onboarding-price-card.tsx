@@ -70,6 +70,17 @@ export function OnboardingPriceCard(props: {
         onRetry={() => void query.refetch()}
       />
     )
+  } else if (query.isSuccess && !entry) {
+    body = (
+      <UpstreamPriceStatus
+        upstream={props.upstream}
+        priced={false}
+        applying={props.applying}
+        onApply={props.onApply}
+        acknowledging={props.acknowledging}
+        onAcknowledge={props.onAcknowledge}
+      />
+    )
   } else if (entry) {
     const display = modelPricingDisplay(entry)
     body = (

@@ -25,10 +25,11 @@ func TestParseUpstreamPricingKeepsOnlyPriceFields(t *testing.T) {
 		{"model_name":"  ","model_ratio":1}
 	]}`)
 
-	models, group, err := parseUpstreamPricing(body)
+	models, group, descriptions, err := parseUpstreamPricing(body)
 
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"vip": 1.2}, group)
+	assert.Equal(t, map[string]string{"video-a": "ignored"}, descriptions)
 	assert.Equal(t, map[string]map[string]any{"video-a": {
 		"quota_type":  float64(1),
 		"model_price": 0.5,
@@ -39,7 +40,7 @@ func TestParseUpstreamPricingKeepsOnlyPriceFields(t *testing.T) {
 }
 
 func TestParseUpstreamPricingRejectsFailedResponse(t *testing.T) {
-	_, _, err := parseUpstreamPricing([]byte(`{"success":false,"message":"denied"}`))
+	_, _, _, err := parseUpstreamPricing([]byte(`{"success":false,"message":"denied"}`))
 
 	assert.ErrorContains(t, err, "denied")
 }
@@ -285,8 +286,10 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 	require.Contains(t, before, "new-video")
 	assert.Nil(t, before["new-video"])
 
-	_, _, err := checkUpstreamPrices(context.Background())
+	result, err := checkUpstreamPrices(context.Background())
 	require.NoError(t, err)
+	assert.Equal(t, []string{"new-video"}, result.Adapted)
+	assert.Equal(t, 1, result.Waiting)
 
 	plugin, ok := jsplugin.DefaultRegistry.Get("adapting")
 	require.True(t, ok)
@@ -302,9 +305,66 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 		model.TaskPluginModelEntries(model.GetTaskPluginModelExtras(), "adapting"))
 
 	// A later check keeps the adapted entry instead of deriving it again.
-	_, _, err = checkUpstreamPrices(context.Background())
+	_, err = checkUpstreamPrices(context.Background())
 	require.NoError(t, err)
 	plugin, ok = jsplugin.DefaultRegistry.Get("adapting")
 	require.True(t, ok)
 	assert.True(t, plugin.Meta.DeclaresModel("new-video"))
+}
+
+func TestOnboardingDraftCopiesSiblingAndPolishesWithoutPrices(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	_, err := jsplugin.DefaultRegistry.Register(`
+export const meta = {
+	apiVersion: 1, key: "drafting", name: "Drafting", version: "1.0.0", author: {name: "Test"},
+	models: ["E-video-2.5-x"], fetchMode: "per_task",
+	usageSchema: {seconds: {type: "number", unit: "second"}, resolution: {enum: ["720p"]}},
+	modelLimits: {"E-video-2.5-x": {minDuration: 4, maxDuration: 30, ratios: ["16:9", "9:16"]}},
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+`, jsplugin.Options{})
+	require.NoError(t, err)
+	t.Cleanup(func() { jsplugin.DefaultRegistry.Unregister("drafting") })
+	require.NoError(t, model.DB.Create(&model.Model{ModelName: "E-video-2.5", Icon: "Doubao.Color", Tags: "video", VendorID: 3, Description: "older"}).Error)
+	var metadata []model.Model
+	require.NoError(t, model.DB.Find(&metadata).Error)
+
+	draft := buildOnboardingDraft(context.Background(), "E-video-2.5-x", metadata)
+
+	assert.Equal(t, "E-video-2.5", draft.BasedOn)
+	assert.Equal(t, "Doubao.Color", draft.Icon)
+	assert.Equal(t, 3, draft.VendorID)
+	assert.False(t, draft.Polished)
+	assert.Equal(t, "<!-- lang:zh -->\n支持 720p，每段 4–30 秒，画幅 16:9 / 9:16。按秒计费。\n\n<!-- lang:en -->\nSupports 720p, 4–30 s per clip, aspect ratios 16:9 / 9:16. Billed per second.", draft.Description)
+
+	reply := ""
+	llmServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/v1/chat/completions", r.URL.Path)
+		assert.Equal(t, "Bearer llm-key", r.Header.Get("Authorization"))
+		encoded, _ := common.Marshal(map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": reply}}}})
+		_, _ = w.Write(encoded)
+	}))
+	t.Cleanup(llmServer.Close)
+	require.NoError(t, writeOnboardingOption(onboardingDescriptionLLMOption, onboardingDescriptionLLM{BaseURL: llmServer.URL, Model: "writer", APIKey: "llm-key"}))
+	polished := ""
+	for _, locale := range onboardingDraftLocales {
+		polished += "<!-- lang:" + locale + " -->\n720p, 4-30 s.\n"
+	}
+	reply = polished
+
+	draft = buildOnboardingDraft(context.Background(), "E-video-2.5-x", metadata)
+
+	assert.True(t, draft.Polished)
+	assert.Equal(t, strings.TrimSpace(polished), draft.Description)
+
+	reply = strings.Replace(polished, "720p, 4-30 s.", "720p, ¥0.97 per second.", 1)
+	draft = buildOnboardingDraft(context.Background(), "E-video-2.5-x", metadata)
+
+	assert.False(t, draft.Polished)
+	assert.Equal(t, draftErrorLLMPrice, draft.Error)
+	assert.Contains(t, draft.Description, "按秒计费")
 }

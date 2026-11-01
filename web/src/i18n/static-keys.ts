@@ -933,4 +933,8 @@ export const STATIC_I18N_KEYS = [
   'The supplier has not priced this model yet',
   "The plugin could not work out this model's parameters",
   'The plugin rejected the parameters it worked out for this model',
+  // Draft polish errors from controller/model_onboarding_drafts.go.
+  'The language model request failed',
+  'The language model reply was not usable',
+  'The polished description mentioned a price and was not used',
 ] as const

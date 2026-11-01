@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ScanSearch } from 'lucide-react'
+import { History, PenLine, RefreshCw, ScanSearch } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -43,13 +43,12 @@ import {
   acknowledgeUpstreamPrices,
   applyChannelUpstreamModels,
   applyUpstreamPrice,
-  checkUpstreamPrices,
-  detectAllChannelUpstreamModels,
   getModelOnboarding,
   getUpstreamPrices,
   getVendors,
   setUpstreamPricingToken,
 } from '../../api'
+import { useOnboardingSync } from '../../hooks/use-onboarding-sync'
 import { modelsQueryKeys, vendorsQueryKeys } from '../../lib'
 import {
   hasEffectivePricing,
@@ -65,6 +64,10 @@ import {
 import { OnboardingEditor } from './onboarding-editor'
 import { OnboardingList, type OnboardingRow } from './onboarding-list'
 import {
+  DescriptionLLMDialog,
+  OnboardingSyncHistoryDialog,
+} from './onboarding-sync'
+import {
   UpstreamPricePanel,
   type AcknowledgeRequest,
 } from './onboarding-upstream-prices'
@@ -78,6 +81,8 @@ export function OnboardingSection() {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [editorDirty, setEditorDirty] = useState(false)
   const [pendingSelect, setPendingSelect] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [writerOpen, setWriterOpen] = useState(false)
 
   const overview = useQuery({
     queryKey: modelsQueryKeys.onboarding(),
@@ -183,19 +188,6 @@ export function OnboardingSection() {
     toast.success(t('Categories saved'))
   }
 
-  const checkPrices = useMutation({
-    mutationFn: async () =>
-      requireServerSuccess(await checkUpstreamPrices()).data,
-    onSuccess: async (report) => {
-      queryClient.setQueryData(modelsQueryKeys.upstreamPrices(), report)
-      // A check also prices served models that had no price yet.
-      await queryClient.invalidateQueries({
-        queryKey: ['model-pricing-config'],
-      })
-      toast.success(t('Upstream prices checked'))
-    },
-  })
-
   const acknowledge = useMutation({
     mutationFn: async (request: AcknowledgeRequest) =>
       requireServerSuccess(await acknowledgeUpstreamPrices(request)).data,
@@ -230,19 +222,6 @@ export function OnboardingSection() {
     )
   }
 
-  const detectAll = useMutation({
-    mutationFn: async () => {
-      const response = await detectAllChannelUpstreamModels()
-      if (!response.success) {
-        throw createServerError(response, t('Failed to start detection'))
-      }
-    },
-    onSuccess: () =>
-      toast.success(
-        t('Checking all channels for new models. Refresh in a moment.')
-      ),
-  })
-
   const batchAdd = useMutation({
     mutationFn: async () => {
       const byChannel = new Map<number, string[]>()
@@ -272,6 +251,8 @@ export function OnboardingSection() {
       toast.success(t('Added to {{count}} channels', { count: channelCount }))
     },
   })
+
+  const sync = useOnboardingSync(refresh)
 
   const select = (name: string) => {
     if (name === selected) return
@@ -316,15 +297,30 @@ export function OnboardingSection() {
               })}
             </Button>
           )}
+          <Button size='sm' disabled={sync.running} onClick={sync.start}>
+            <ScanSearch aria-hidden className='size-4' />
+            {sync.running
+              ? t('Syncing... {{progress}}%', { progress: sync.progress ?? 0 })
+              : t('Sync upstream')}
+          </Button>
           <Button
             size='sm'
             variant='outline'
-            disabled={detectAll.isPending}
-            onClick={() => detectAll.mutate()}
+            onClick={() => setHistoryOpen(true)}
           >
-            <ScanSearch aria-hidden className='size-4' />
-            {t('Check upstream now')}
+            <History aria-hidden className='size-4' />
+            {t('Sync history')}
           </Button>
+          {canEditPricing && (
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => setWriterOpen(true)}
+            >
+              <PenLine aria-hidden className='size-4' />
+              {t('Description writer')}
+            </Button>
+          )}
           <Button
             size='sm'
             variant='outline'
@@ -341,9 +337,7 @@ export function OnboardingSection() {
         <UpstreamPricePanel
           report={upstreamPrices.data}
           workbenchModels={workbenchModels}
-          checking={checkPrices.isPending}
           acknowledging={acknowledge.isPending}
-          onCheck={() => checkPrices.mutate()}
           onAcknowledge={(request) => acknowledge.mutate(request)}
           onSaveToken={saveUpstreamToken}
         />
@@ -393,6 +387,11 @@ export function OnboardingSection() {
           />
         )}
       </div>
+      <OnboardingSyncHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
+      <DescriptionLLMDialog open={writerOpen} onOpenChange={setWriterOpen} />
       <ConfirmDialog
         open={pendingSelect !== null}
         onOpenChange={(open) => {

@@ -18,8 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Sparkles } from 'lucide-react'
-import { useEffect } from 'react'
+import { RefreshCw, Sparkles } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -37,6 +37,7 @@ import {
 
 import {
   createModel,
+  draftOnboardingModel,
   getModel,
   previewUpstreamDiff,
   updateModel,
@@ -49,7 +50,13 @@ import {
   type ModelFormValues,
 } from '../../lib/model-form'
 import { joinDescriptions, officialMetadataValues } from '../../lib/onboarding'
-import type { Model, OnboardingModel, SyncLocale, Vendor } from '../../types'
+import type {
+  Model,
+  OnboardingDraft,
+  OnboardingModel,
+  SyncLocale,
+  Vendor,
+} from '../../types'
 import { ModelMetadataFields } from '../model-metadata-fields'
 
 const OFFICIAL_LOCALES: SyncLocale[] = ['zh', 'en']
@@ -69,6 +76,8 @@ export function OnboardingMetadataCard(props: {
   tags: string[]
   onDirtyChange: (dirty: boolean) => void
   onSaved: () => Promise<void>
+  /** Hands the go-live action a way to save unsaved edits first. */
+  onRegisterSave?: (save: (() => Promise<void>) | null) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -94,6 +103,41 @@ export function OnboardingMetadataCard(props: {
       form.reset(transformModelToFormDefaults(detail.data))
     }
   }, [metadataId, detail.data, form])
+
+  // A model without metadata starts from its prepared draft; the draft is
+  // only a suggestion until the admin saves it.
+  const applyDraft = (draft: OnboardingDraft) => {
+    const options = { shouldDirty: true }
+    if (draft.description) {
+      form.setValue('description', draft.description, options)
+    }
+    if (draft.icon) form.setValue('icon', draft.icon, options)
+    const tags = (draft.tags ?? '').split(',').filter(Boolean)
+    if (tags.length > 0) form.setValue('tags', tags, options)
+    if (draft.vendor_id) form.setValue('vendor_id', draft.vendor_id, options)
+  }
+  const usesDraft = metadataId === 0 && !props.item.metadata_rule
+  const draftApplied = useRef(false)
+  useEffect(() => {
+    if (!usesDraft || !props.item.draft || draftApplied.current) return
+    draftApplied.current = true
+    applyDraft(props.item.draft)
+    // Applied once per opened model; later overview refreshes keep edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usesDraft, props.item.draft])
+  const redraft = useMutation({
+    mutationFn: async () =>
+      requireServerSuccess(await draftOnboardingModel(props.item.model_name))
+        .data,
+    onSuccess: async (draft) => {
+      if (!draft) return
+      applyDraft(draft)
+      await queryClient.invalidateQueries({
+        queryKey: modelsQueryKeys.onboarding(),
+      })
+      toast.success(t('Draft prepared. Review and save.'))
+    },
+  })
 
   const dirty = form.formState.isDirty
   const { onDirtyChange } = props
@@ -164,6 +208,25 @@ export function OnboardingMetadataCard(props: {
     },
   })
 
+  const saveForGoLive = async () => {
+    if (!form.formState.isDirty) return
+    let invalid = false
+    await form.handleSubmit(
+      (values) => save.mutateAsync(values),
+      () => {
+        invalid = true
+      }
+    )()
+    if (invalid) throw new Error(t('Fix the description and icon fields first'))
+  }
+  const saveRef = useRef(saveForGoLive)
+  saveRef.current = saveForGoLive
+  const { onRegisterSave } = props
+  useEffect(() => {
+    onRegisterSave?.(() => saveRef.current())
+    return () => onRegisterSave?.(null)
+  }, [onRegisterSave])
+
   let body = (
     <Form {...form}>
       <form
@@ -180,13 +243,15 @@ export function OnboardingMetadataCard(props: {
             </AlertDescription>
           </Alert>
         )}
+        {usesDraft && props.item.draft && (
+          <DraftNote draft={props.item.draft} />
+        )}
         <ModelMetadataFields
           form={form}
           vendors={props.vendors}
           iconKey={props.item.model_name}
           tagSuggestions={props.tags}
           descriptionRows={5}
-          showVendorAndTags={false}
         />
         <div className='flex justify-end'>
           <Button type='submit' disabled={save.isPending || !dirty}>
@@ -214,19 +279,56 @@ export function OnboardingMetadataCard(props: {
         'Prefill from the official catalog, then polish the copy before saving.'
       )}
       action={
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          disabled={official.isPending}
-          onClick={() => official.mutate()}
-        >
-          <Sparkles aria-hidden className='size-4' />
-          {official.isPending ? t('Loading...') : t('Fill from official')}
-        </Button>
+        <div className='flex flex-wrap gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            disabled={redraft.isPending}
+            onClick={() => redraft.mutate()}
+          >
+            <RefreshCw aria-hidden className='size-4' />
+            {redraft.isPending ? t('Drafting...') : t('Draft again')}
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            disabled={official.isPending}
+            onClick={() => official.mutate()}
+          >
+            <Sparkles aria-hidden className='size-4' />
+            {official.isPending ? t('Loading...') : t('Fill from official')}
+          </Button>
+        </div>
       }
     >
       {body}
     </TitledCard>
+  )
+}
+
+function DraftNote(props: { draft: OnboardingDraft }) {
+  const { t } = useTranslation()
+  let text = t(
+    'Filled from a template draft. Set up a description writer to get all seven languages.'
+  )
+  if (props.draft.polished) {
+    text = t(
+      'Filled from a draft written by the description writer. Review it before saving.'
+    )
+  } else if (props.draft.error) {
+    text = t(props.draft.error)
+  }
+  return (
+    <Alert>
+      <AlertDescription>
+        {text}
+        {props.draft.based_on &&
+          ` ${t('Icon, tags and vendor follow {{model}}.', {
+            model: props.draft.based_on,
+          })}`}
+      </AlertDescription>
+    </Alert>
   )
 }
