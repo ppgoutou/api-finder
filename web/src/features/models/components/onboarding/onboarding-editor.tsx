@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation } from '@tanstack/react-query'
 import { Check } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -50,6 +50,7 @@ import type {
   UpstreamModelPrice,
   Vendor,
 } from '../../types'
+import { OnboardingGoLiveCard, type GoLiveSavers } from './onboarding-go-live'
 import { OnboardingMetadataCard } from './onboarding-metadata-card'
 import { OnboardingPriceCard } from './onboarding-price-card'
 
@@ -70,6 +71,33 @@ export function OnboardingEditor(props: {
   onAcknowledgeUpstreamPrice: () => void
 }) {
   const { t } = useTranslation()
+  const savers = useRef<GoLiveSavers>({})
+  const [metadataDirty, setMetadataDirty] = useState(false)
+  const [categoryChosen, setCategoryChosen] = useState(() =>
+    props.categories.some((category) =>
+      category.models.includes(props.item.model_name)
+    )
+  )
+  const { onDirtyChange } = props
+  const handleMetadataDirty = useCallback(
+    (dirty: boolean) => {
+      setMetadataDirty(dirty)
+      onDirtyChange(dirty)
+    },
+    [onDirtyChange]
+  )
+  const registerMetadataSave = useCallback(
+    (save: (() => Promise<void>) | null) => {
+      savers.current.metadata = save ?? undefined
+    },
+    []
+  )
+  const registerCategorySave = useCallback(
+    (save: (() => Promise<void>) | null) => {
+      savers.current.category = save ?? undefined
+    },
+    []
+  )
   const channelWork =
     props.item.channels.length === 0 ||
     props.item.pending_channels.length > 0 ||
@@ -87,6 +115,14 @@ export function OnboardingEditor(props: {
           )}
         </p>
       </div>
+      <OnboardingGoLiveCard
+        item={props.item}
+        upstreamPrice={props.upstreamPrice}
+        metadataDirty={metadataDirty}
+        categoryChosen={categoryChosen}
+        savers={savers}
+        onChanged={props.onChanged}
+      />
       {channelWork && (
         <OnboardingChannelsCard item={props.item} onChanged={props.onChanged} />
       )}
@@ -94,13 +130,16 @@ export function OnboardingEditor(props: {
         item={props.item}
         vendors={props.vendors}
         tags={props.tags}
-        onDirtyChange={props.onDirtyChange}
+        onDirtyChange={handleMetadataDirty}
         onSaved={props.onChanged}
+        onRegisterSave={registerMetadataSave}
       />
       <OnboardingCategoryCard
         modelName={props.item.model_name}
         categories={props.categories}
         onSave={props.onSaveCategories}
+        onRegisterSave={registerCategorySave}
+        onChosenChange={setCategoryChosen}
       />
       <OnboardingPriceCard
         modelName={props.item.model_name}
@@ -377,6 +416,8 @@ function OnboardingCategoryCard(props: {
   modelName: string
   categories: PricingCategory[]
   onSave: (next: PricingCategory[]) => Promise<void>
+  onRegisterSave: (save: (() => Promise<void>) | null) => void
+  onChosenChange: (chosen: boolean) => void
 }) {
   const { t } = useTranslation()
   const owner = props.categories.find((category) =>
@@ -397,6 +438,22 @@ function OnboardingCategoryCard(props: {
         )
       ),
   })
+
+  const savedBadges = owner?.badges?.[props.modelName] ?? []
+  const categoryDirty =
+    categoryId !== (owner?.id ?? NO_CATEGORY) ||
+    badges.join(',') !== savedBadges.join(',')
+  const saveRef = useRef(async () => {})
+  saveRef.current = async () => {
+    if (categoryDirty) await save.mutateAsync()
+  }
+  const { onRegisterSave, onChosenChange } = props
+  useEffect(() => {
+    onRegisterSave(() => saveRef.current())
+    return () => onRegisterSave(null)
+  }, [onRegisterSave])
+  const chosen = categoryId !== NO_CATEGORY
+  useEffect(() => onChosenChange(chosen), [chosen, onChosenChange])
 
   return (
     <TitledCard

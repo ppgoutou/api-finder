@@ -46,6 +46,9 @@ type upstreamPriceSnapshot struct {
 	LatestTime    int64                     `json:"latest_time"`
 	Latest        map[string]map[string]any `json:"latest"`
 	LatestGroup   map[string]any            `json:"latest_group_ratio"`
+	// LatestDescriptions keeps the supplier's model descriptions as material
+	// for onboarding drafts; they never take part in price comparisons.
+	LatestDescriptions map[string]string `json:"latest_descriptions,omitempty"`
 }
 
 type upstreamPriceField struct {
@@ -178,7 +181,7 @@ func sortedKeys(maps ...map[string]any) []string {
 
 // parseUpstreamPricing keeps only the price fields of each row. Values go
 // through JSON so stored snapshots and fresh fetches compare equal.
-func parseUpstreamPricing(body []byte) (map[string]map[string]any, map[string]any, error) {
+func parseUpstreamPricing(body []byte) (map[string]map[string]any, map[string]any, map[string]string, error) {
 	var response struct {
 		Success    bool             `json:"success"`
 		Message    string           `json:"message"`
@@ -186,12 +189,13 @@ func parseUpstreamPricing(body []byte) (map[string]map[string]any, map[string]an
 		GroupRatio map[string]any   `json:"group_ratio"`
 	}
 	if err := common.Unmarshal(body, &response); err != nil {
-		return nil, nil, fmt.Errorf("invalid pricing response: %w", err)
+		return nil, nil, nil, fmt.Errorf("invalid pricing response: %w", err)
 	}
 	if !response.Success {
-		return nil, nil, fmt.Errorf("pricing request failed: %s", response.Message)
+		return nil, nil, nil, fmt.Errorf("pricing request failed: %s", response.Message)
 	}
 	models := make(map[string]map[string]any, len(response.Data))
+	descriptions := make(map[string]string)
 	for _, row := range response.Data {
 		name, _ := row["model_name"].(string)
 		if name = strings.TrimSpace(name); name == "" {
@@ -209,11 +213,14 @@ func parseUpstreamPricing(body []byte) (map[string]map[string]any, map[string]an
 			fields[field] = value
 		}
 		models[name] = fields
+		if description, _ := row["description"].(string); strings.TrimSpace(description) != "" {
+			descriptions[name] = strings.TrimSpace(description)
+		}
 	}
 	if response.GroupRatio == nil {
 		response.GroupRatio = map[string]any{}
 	}
-	return models, response.GroupRatio, nil
+	return models, response.GroupRatio, descriptions, nil
 }
 
 // upstreamModelPricing turns one supplier /api/pricing row into the local
@@ -338,25 +345,25 @@ func pluginVariantPrices(value any) any {
 	return prices
 }
 
-func fetchUpstreamPricing(ctx context.Context, baseURL, token string) (map[string]map[string]any, map[string]any, error) {
+func fetchUpstreamPricing(ctx context.Context, baseURL, token string) (map[string]map[string]any, map[string]any, map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, onboardingPriceFetchTimeout)
 	defer cancel()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+"/api/pricing", nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	request.Header.Set("Authorization", "Bearer "+token)
 	response, err := service.GetHttpClient().Do(request)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("pricing request returned HTTP %d", response.StatusCode)
+		return nil, nil, nil, fmt.Errorf("pricing request returned HTTP %d", response.StatusCode)
 	}
 	body, err := io.ReadAll(io.LimitReader(response.Body, onboardingPriceMaxResponseBytes))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	return parseUpstreamPricing(body)
 }
@@ -496,29 +503,56 @@ func SetOnboardingUpstreamPricingToken(c *gin.Context) {
 // CheckOnboardingUpstreamPrices runs one upstream price check and reports
 // what differs from the acknowledged baseline.
 func CheckOnboardingUpstreamPrices(c *gin.Context) {
-	rows, _, err := checkUpstreamPrices(c.Request.Context())
+	result, err := checkUpstreamPrices(c.Request.Context())
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
-	respondUpstreamPriceReport(c, rows)
+	respondUpstreamPriceReport(c, result.Rows)
+}
+
+// StartOnboardingUpstreamSync queues one run that detects every channel's
+// new and delisted models, checks supplier prices and adapts task plugins.
+// An active run is returned instead of queueing a second one; the caller
+// follows either through the system task API.
+func StartOnboardingUpstreamSync(c *gin.Context) {
+	task, created, err := service.EnqueueSystemTask(model.SystemTaskTypeUpstreamPrice, upstreamPriceCheckPayload{Detect: true})
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if created {
+		recordManageAudit(c, "model.onboarding.upstream_sync", map[string]any{"task_id": task.TaskID})
+	}
+	common.ApiSuccess(c, gin.H{"task_id": task.TaskID, "status": task.Status, "created": created})
+}
+
+// upstreamPriceCheckResult is one supplier price check: the channel rows,
+// the served models it priced and the pending models it adapted plugins to.
+type upstreamPriceCheckResult struct {
+	Rows    []upstreamPriceChannel
+	Applied []string
+	Adapted []string
+	// Waiting counts pending models whose plugin could not be adapted yet.
+	Waiting int
 }
 
 // checkUpstreamPrices fetches every tokened channel's upstream pricing and
 // keeps it as the latest snapshot. A channel's first fetch becomes its
 // baseline. Served models without a charged price get the supplier's price;
 // their names are returned.
-func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string, error) {
+func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) {
 	channels, err := upstreamPriceChannels()
 	if err != nil {
-		return nil, nil, err
+		return upstreamPriceCheckResult{}, err
 	}
 	rows := upstreamPriceChannelRows(channels)
 	tokens := readOnboardingOption[map[string]string](onboardingPricingTokenOption)
 	type fetched struct {
-		models map[string]map[string]any
-		group  map[string]any
-		err    error
+		models       map[string]map[string]any
+		group        map[string]any
+		descriptions map[string]string
+		err          error
 	}
 	results := make([]fetched, len(rows))
 	var wg sync.WaitGroup
@@ -528,8 +562,8 @@ func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string,
 			continue
 		}
 		wg.Go(func() {
-			models, group, err := fetchUpstreamPricing(ctx, row.BaseURL, token)
-			results[i] = fetched{models: models, group: group, err: err}
+			models, group, descriptions, err := fetchUpstreamPricing(ctx, row.BaseURL, token)
+			results[i] = fetched{models: models, group: group, descriptions: descriptions, err: err}
 		})
 	}
 	wg.Wait()
@@ -551,6 +585,7 @@ func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string,
 		key := strconv.Itoa(rows[i].ID)
 		snapshot := snapshots[key]
 		snapshot.Latest, snapshot.LatestGroup, snapshot.LatestTime = results[i].models, results[i].group, now
+		snapshot.LatestDescriptions = results[i].descriptions
 		if snapshot.BaselineTime == 0 {
 			snapshot.Baseline, snapshot.BaselineGroup, snapshot.BaselineTime = results[i].models, results[i].group, now
 			rows[i].Status = "baseline"
@@ -565,7 +600,7 @@ func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string,
 	if len(prices) > 0 {
 		local, err := model.GetModelPricingSnapshot(slices.Collect(maps.Keys(prices)))
 		if err != nil {
-			return nil, nil, err
+			return upstreamPriceCheckResult{}, err
 		}
 		for _, entry := range local.Entries {
 			pricing := prices[entry.ModelName].Pricing
@@ -581,10 +616,10 @@ func checkUpstreamPrices(ctx context.Context) ([]upstreamPriceChannel, []string,
 		acceptUpstreamBaseline(snapshots, applied)
 	}
 	if err := writeOnboardingOption(onboardingPriceSnapshotOption, snapshots); err != nil {
-		return nil, nil, err
+		return upstreamPriceCheckResult{}, err
 	}
-	adaptPluginsToSupplierModels(ctx, snapshots)
-	return rows, applied, nil
+	adapted, waiting := adaptPluginsToSupplierModels(ctx, snapshots)
+	return upstreamPriceCheckResult{Rows: rows, Applied: applied, Adapted: adapted, Waiting: waiting}, nil
 }
 
 // hasUpstreamPricingToken reports whether any channel has a supplier token,

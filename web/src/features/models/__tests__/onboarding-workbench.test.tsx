@@ -112,7 +112,10 @@ function signInAsRoot() {
     .auth.setUser({ id: 1, username: 'administrator', role: 100 })
 }
 
-function mockApi(report = upstreamReport) {
+function mockApi(
+  report = upstreamReport,
+  overviewData: { items: object[]; tags: string[] } = overview
+) {
   vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
     if (url === '/api/models/onboarding/upstream_prices') {
       return { data: { success: true, data: report } }
@@ -138,7 +141,10 @@ function mockApi(report = upstreamReport) {
       }
     }
     if (url === '/api/models/onboarding') {
-      return { data: { success: true, data: overview } }
+      return { data: { success: true, data: overviewData } }
+    }
+    if (url === '/api/system-task/list') {
+      return { data: { success: true, data: [], total: 0 } }
     }
     if (url === '/api/option/') {
       return {
@@ -284,8 +290,8 @@ describe('model onboarding workbench', () => {
     await user.click(await screen.findByRole('button', { name: /gpt-new/ }))
     const save = screen.getByRole('button', { name: 'Save metadata' })
     expect(save).toBeDisabled()
-    expect(screen.queryByText('Vendor')).toBeNull()
-    expect(screen.queryByText('Tags')).toBeNull()
+    expect(screen.getByText('Vendor')).toBeVisible()
+    expect(screen.getByText('Tags')).toBeVisible()
 
     await user.type(screen.getByLabelText('Description'), 'Fast model')
     await user.click(save)
@@ -301,6 +307,59 @@ describe('model onboarding workbench', () => {
         expect.anything()
       )
     )
+  })
+
+  it('starts a model without metadata from its draft and lists what blocks going live', async () => {
+    const user = userEvent.setup()
+    const [draftModel, ...others] = overview.items
+    mockApi(upstreamReport, {
+      ...overview,
+      items: [
+        {
+          ...draftModel,
+          draft: {
+            description: '<!-- lang:zh -->\n草稿说明',
+            icon: 'Doubao.Color',
+            tags: 'video',
+            based_on: 'gpt-done',
+            polished: true,
+            generated_at: 1,
+          },
+        },
+        ...others,
+      ],
+    })
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: /gpt-new/ }))
+
+    expect(screen.getByLabelText('Description')).toHaveValue('草稿说明')
+    expect(screen.getByRole('button', { name: 'Save metadata' })).toBeEnabled()
+    expect(
+      screen.getByText(/Filled from a draft written by the description writer/)
+    ).toBeVisible()
+    expect(
+      screen.getByText(/Icon, tags and vendor follow gpt-done/)
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Confirm and go live' })
+    ).toBeDisabled()
+    expect(screen.getByText(/Pick a category/)).toBeVisible()
+  })
+
+  it('shows a configured, priced model as on sale', async () => {
+    signInAsRoot()
+    const user = userEvent.setup()
+    mockApi({ ...upstreamReport, changes: [] })
+    renderSection()
+
+    await user.click(await screen.findByRole('tab', { name: /All/ }))
+    await user.click(await screen.findByRole('button', { name: /gpt-done/ }))
+
+    expect(await screen.findByText('This model is on sale.')).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Confirm and go live' })
+    ).toBeDisabled()
   })
 
   it('copies the upstream price over a repriced model with one click', async () => {

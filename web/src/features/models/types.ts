@@ -280,6 +280,48 @@ export type OnboardingModel = {
   channels: OnboardingChannel[]
   metadata_id: number
   metadata_rule?: string
+  /** Prepared metadata of a model that has none yet. */
+  draft?: OnboardingDraft
+}
+
+export type OnboardingDraft = {
+  description: string
+  icon?: string
+  /** Comma-separated. */
+  tags?: string
+  vendor_id?: number
+  /** Model whose icon, tags and vendor were copied. */
+  based_on?: string
+  /** A language model wrote the description. */
+  polished: boolean
+  /** English message key of why the description was not polished. */
+  error?: string
+  generated_at: number
+}
+
+/** Result of one upstream sync run (system task upstream_price_check). */
+export type OnboardingSyncSummary = {
+  detection?: {
+    checked_channels: number
+    changed_channels: number
+    detected_add_models: number
+    detected_remove_models: number
+    failed_channels: number
+  }
+  checked_channels: number
+  failed_channels: number
+  failures?: Array<{ channel_name: string; error: string }>
+  changes: number
+  applied_models?: string[]
+  adapted_models?: string[]
+  waiting_models?: number
+  drafted_models?: string[]
+}
+
+export type DescriptionLLMConfig = {
+  base_url: string
+  model: string
+  has_key: boolean
 }
 
 export interface OnboardingOverviewResponse {

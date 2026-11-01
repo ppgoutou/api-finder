@@ -25,12 +25,14 @@ const (
 // edit the plugin for them. The plugin's deriveModel hook turns the supplier's
 // price expression into its own model-table entry; the host keeps the entry
 // and compiles it into the plugin as utils.modelExtras. Entries are derived
-// once; a model the plugin already declares is left alone.
-func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upstreamPriceSnapshot) {
+// once; a model the plugin already declares is left alone. It returns the
+// models adapted by this call and how many pending models still wait.
+func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upstreamPriceSnapshot) (adapted []string, waiting int) {
+	adapted = []string{}
 	overview, err := model.GetOnboardingOverview()
 	if err != nil {
 		common.SysError(common.LogText("failed to adapt task plugins to supplier models: %s", err.Error()))
-		return
+		return adapted, 0
 	}
 	extras := model.GetTaskPluginModelExtras()
 	sources := map[string]string{}
@@ -61,6 +63,11 @@ func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upst
 				record = derivePluginModel(ctx, plugin, name, expression, extras, sources)
 				record.UpdatedAt = now
 			}
+			if record.Entry == nil {
+				waiting++
+			} else {
+				adapted = append(adapted, name)
+			}
 			if recorded && record.Entry == nil && record.Error == previous.Error {
 				continue
 			}
@@ -73,17 +80,18 @@ func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upst
 		}
 	}
 	if !recordsChanged {
-		return
+		return adapted, waiting
 	}
 	if err := writeOnboardingOption(model.TaskPluginModelExtrasOption, extras); err != nil {
 		common.SysError(common.LogText("failed to save adapted task plugin models: %s", err.Error()))
-		return
+		return []string{}, waiting + len(adapted)
 	}
 	if entriesChanged {
 		if err := syncTaskPluginsOnceContext(ctx); err != nil {
 			common.SysError(err.Error())
 		}
 	}
+	return adapted, waiting
 }
 
 // derivePluginModel asks the plugin for its entry of one supplier model and

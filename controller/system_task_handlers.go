@@ -132,25 +132,54 @@ func (upstreamPriceCheckHandler) Interval() time.Duration {
 
 func (upstreamPriceCheckHandler) NewPayload() any { return nil }
 
+// upstreamPriceCheckPayload is set by the onboarding "sync upstream" action,
+// which first detects every channel's new and delisted models so the price
+// check and plugin adaptation see them. Scheduled runs carry no payload.
+type upstreamPriceCheckPayload struct {
+	Detect bool `json:"detect,omitempty"`
+}
+
 type upstreamPriceCheckSummary struct {
-	CheckedChannels int      `json:"checked_channels"`
-	FailedChannels  int      `json:"failed_channels"`
-	Changes         int      `json:"changes"`
-	AppliedModels   []string `json:"applied_models"`
+	Detection       *upstreamModelUpdateSummary `json:"detection,omitempty"`
+	CheckedChannels int                         `json:"checked_channels"`
+	FailedChannels  int                         `json:"failed_channels"`
+	Failures        []upstreamPriceFailure      `json:"failures"`
+	Changes         int                         `json:"changes"`
+	AppliedModels   []string                    `json:"applied_models"`
+	AdaptedModels   []string                    `json:"adapted_models"`
+	WaitingModels   int                         `json:"waiting_models"`
+	DraftedModels   []string                    `json:"drafted_models"`
+}
+
+type upstreamPriceFailure struct {
+	ChannelName string `json:"channel_name"`
+	Error       string `json:"error"`
 }
 
 func (upstreamPriceCheckHandler) Run(ctx context.Context, task *model.SystemTask, runnerID string) {
-	rows, applied, err := checkUpstreamPrices(ctx)
+	payload := upstreamPriceCheckPayload{}
+	if err := task.DecodePayload(&payload); err != nil {
+		finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusFailed, nil, err)
+		return
+	}
+	summary := upstreamPriceCheckSummary{Failures: []upstreamPriceFailure{}}
+	if payload.Detect {
+		detection := runChannelUpstreamModelUpdateTaskOnce(ctx, true, false, service.NewSystemTaskProgressReporter(task, runnerID))
+		summary.Detection = &detection
+	}
+	result, err := checkUpstreamPrices(ctx)
 	if err != nil {
 		finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusFailed, nil, err)
 		return
 	}
+	summary.DraftedModels = prepareOnboardingDrafts(ctx)
 	snapshots := readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)
-	summary := upstreamPriceCheckSummary{AppliedModels: applied}
-	for _, row := range rows {
+	summary.AppliedModels, summary.AdaptedModels, summary.WaitingModels = result.Applied, result.Adapted, result.Waiting
+	for _, row := range result.Rows {
 		switch row.Status {
 		case "error":
 			summary.FailedChannels++
+			summary.Failures = append(summary.Failures, upstreamPriceFailure{ChannelName: row.Name, Error: row.Error})
 		case "ok", "baseline":
 			summary.CheckedChannels++
 		}
