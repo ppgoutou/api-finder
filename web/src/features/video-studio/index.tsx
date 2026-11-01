@@ -62,60 +62,65 @@ export function VideoStudio() {
 
   return (
     <Main>
-      <div className='mx-auto flex w-full max-w-5xl flex-col gap-10 px-3 py-8 sm:px-4 md:py-12'>
-        <section
-          ref={composerRef}
-          className='flex scroll-mt-4 flex-col items-center gap-5'
-        >
-          <h1 className='text-center text-2xl font-bold tracking-tight md:text-3xl'>
-            {kind === 'image'
-              ? t('Create an image, bring your ideas to life')
-              : t('Create a video, bring your ideas to life')}
-          </h1>
-          <Tabs
-            value={kind}
-            onValueChange={(value) => {
-              setEdited(null)
-              navigate({ search: { kind: value as StudioKind }, replace: true })
-            }}
+      <div className='min-h-0 flex-1 overflow-y-auto'>
+        <div className='mx-auto flex w-full max-w-5xl flex-col gap-10 px-3 py-8 sm:px-4 md:py-12'>
+          <section
+            ref={composerRef}
+            className='flex scroll-mt-4 flex-col items-center gap-5'
           >
-            <TabsList>
-              <TabsTrigger value='video'>{t('Video')}</TabsTrigger>
-              <TabsTrigger value='image'>{t('Image')}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className='w-full'>
+            <h1 className='text-center text-2xl font-bold tracking-tight md:text-3xl'>
+              {kind === 'image'
+                ? t('Create an image, bring your ideas to life')
+                : t('Create a video, bring your ideas to life')}
+            </h1>
+            <Tabs
+              value={kind}
+              onValueChange={(value) => {
+                setEdited(null)
+                navigate({
+                  search: { kind: value as StudioKind },
+                  replace: true,
+                })
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value='video'>{t('Video')}</TabsTrigger>
+                <TabsTrigger value='image'>{t('Image')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className='w-full'>
+              {kind === 'image' ? (
+                <ImageComposer
+                  key={editedDraft?.key}
+                  initialModel={search.model}
+                  initialDraft={editedDraft?.draft}
+                  initialSize={editedDraft?.size}
+                />
+              ) : (
+                <Composer
+                  key={editedDraft?.key}
+                  initialModel={search.model}
+                  initialDraft={editedDraft?.draft}
+                  onSubmitted={() =>
+                    queryClient.invalidateQueries({
+                      queryKey: STUDIO_WORKS_QUERY_KEY,
+                    })
+                  }
+                />
+              )}
+            </div>
+          </section>
+          <section className='flex flex-col gap-4'>
+            <h2 className='text-lg font-semibold'>
+              {kind === 'image' ? t('My images') : t('My videos')}
+            </h2>
             {kind === 'image' ? (
-              <ImageComposer
-                key={editedDraft?.key}
-                initialModel={search.model}
-                initialDraft={editedDraft?.draft}
-                initialSize={editedDraft?.size}
-              />
+              <ImageWorksList onEdit={editWork} />
             ) : (
-              <Composer
-                key={editedDraft?.key}
-                initialModel={search.model}
-                initialDraft={editedDraft?.draft}
-                onSubmitted={() =>
-                  queryClient.invalidateQueries({
-                    queryKey: STUDIO_WORKS_QUERY_KEY,
-                  })
-                }
-              />
+              <WorksList onEdit={(draft) => editWork(draft)} />
             )}
-          </div>
-        </section>
-        <section className='flex flex-col gap-4'>
-          <h2 className='text-lg font-semibold'>
-            {kind === 'image' ? t('My images') : t('My videos')}
-          </h2>
-          {kind === 'image' ? (
-            <ImageWorksList onEdit={editWork} />
-          ) : (
-            <WorksList onEdit={(draft) => editWork(draft)} />
-          )}
-        </section>
+          </section>
+        </div>
       </div>
     </Main>
   )
