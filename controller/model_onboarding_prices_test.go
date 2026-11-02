@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -233,6 +234,7 @@ export const meta = {
 	author: {name: "Test"},
 	models: Object.keys(MODELS),
 	fetchMode: "per_task",
+	usageSchema: {seconds: {type: "number", unit: "second", description: "Video generation unit price"}},
 };
 export function buildSubmitRequest() { return {}; }
 export function parseSubmitResponse() { return {}; }
@@ -253,7 +255,8 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{},"data":[
 			{"model_name":"old-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"tier(\"720p\", u(\"seconds\") * 0.1)"},
 			{"model_name":"new-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"u(\"resolution\") == \"480p\" ? tier(\"480p\", u(\"seconds\") * 0.1) : tier(\"720p\", u(\"seconds\") * 0.2)"},
-			{"model_name":"unpriced-video","quota_type":0,"model_ratio":37.5}
+			{"model_name":"unpriced-video","quota_type":0,"model_ratio":37.5},
+			{"model_name":"listed-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"tier(\"720p\", u(\"seconds\") * 0.3)"}
 		]}`))
 	}))
 	t.Cleanup(upstream.Close)
@@ -264,7 +267,7 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 	baseURL, setting := upstream.URL, `{"task_plugin_key":"adapting"}`
 	require.NoError(t, model.DB.Create(&model.Channel{
 		Id: 1, Type: constant.ChannelTypeTaskPlugin, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
-		Group: "default", Models: "old-video", BaseURL: &baseURL, Setting: &setting,
+		Group: "default", Models: "old-video,listed-video", BaseURL: &baseURL, Setting: &setting,
 		OtherSettings: `{"upstream_model_update_last_detected_models":["new-video","unpriced-video"]}`,
 	}).Error)
 	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token"}))
@@ -274,9 +277,10 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 		require.NoError(t, err)
 		adaptations := map[string]*model.OnboardingPluginAdaptation{}
 		for _, item := range overview.Items {
-			for _, channel := range item.PendingChannels {
+			for _, channel := range slices.Concat(item.PendingChannels, item.Channels) {
 				assert.Equal(t, "adapting", channel.PluginKey)
-				assert.Equal(t, channel.PluginAdaptation == nil || !channel.PluginAdaptation.Adapted, channel.PluginMissing, item.ModelName)
+				missing := item.ModelName != "old-video" && (channel.PluginAdaptation == nil || !channel.PluginAdaptation.Adapted)
+				assert.Equal(t, missing, channel.PluginMissing, item.ModelName)
 				adaptations[item.ModelName] = channel.PluginAdaptation
 			}
 		}
@@ -285,11 +289,20 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 	before := pending()
 	require.Contains(t, before, "new-video")
 	assert.Nil(t, before["new-video"])
+	require.Contains(t, before, "listed-video")
+	assert.Nil(t, before["listed-video"])
 
 	result, err := checkUpstreamPrices(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, []string{"new-video"}, result.Adapted)
+	assert.ElementsMatch(t, []string{"new-video", "listed-video"}, result.Adapted)
 	assert.Equal(t, 1, result.Waiting)
+	// A model already listed on the channel is priced by the same check that
+	// adapts the plugin to it.
+	assert.Contains(t, result.Applied, "listed-video")
+	listed, err := model.GetModelPricingSnapshot([]string{"listed-video"})
+	require.NoError(t, err)
+	assert.Equal(t, model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": `tier("720p", u("seconds") * 0.3)`},
+		listed.Entries[0].Configured)
 
 	plugin, ok := jsplugin.DefaultRegistry.Get("adapting")
 	require.True(t, ok)
@@ -301,8 +314,11 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 	assert.Equal(t, "old-video", after["new-video"].BasedOn)
 	require.NotNil(t, after["unpriced-video"])
 	assert.Equal(t, pluginAdaptErrorUnpriced, after["unpriced-video"].Error)
-	assert.Equal(t, map[string]any{"new-video": map[string]any{"resolutions": []any{"480p", "720p"}}},
-		model.TaskPluginModelEntries(model.GetTaskPluginModelExtras(), "adapting"))
+	assert.True(t, plugin.Meta.DeclaresModel("listed-video"))
+	assert.Equal(t, map[string]any{
+		"new-video":    map[string]any{"resolutions": []any{"480p", "720p"}},
+		"listed-video": map[string]any{"resolutions": []any{"720p"}},
+	}, model.TaskPluginModelEntries(model.GetTaskPluginModelExtras(), "adapting"))
 
 	// A later check keeps the adapted entry instead of deriving it again.
 	_, err = checkUpstreamPrices(context.Background())

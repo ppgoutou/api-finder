@@ -21,8 +21,9 @@ const (
 )
 
 // adaptPluginsToSupplierModels lets the task plugin of each Task Plugin
-// channel take the models its supplier newly offers, so the admin does not
-// edit the plugin for them. The plugin's deriveModel hook turns the supplier's
+// channel take the supplier models it does not declare, whether the supplier
+// newly offers them or the admin already listed them on the channel, so the
+// admin does not edit the plugin for them. The plugin's deriveModel hook turns the supplier's
 // price expression into its own model-table entry; the host keeps the entry
 // and compiles it into the plugin as utils.modelExtras. Entries are derived
 // once; a model the plugin already declares is left alone. It returns the
@@ -39,7 +40,7 @@ func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upst
 	entriesChanged, recordsChanged := false, false
 	now := common.GetTimestamp()
 	for _, item := range overview.Items {
-		for _, channel := range item.PendingChannels {
+		for _, channel := range slices.Concat(item.PendingChannels, item.Channels) {
 			if channel.PluginKey == "" {
 				continue
 			}
