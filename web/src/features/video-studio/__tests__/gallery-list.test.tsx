@@ -93,6 +93,7 @@ describe('GalleryList', () => {
             prompt: 'admin prompt for reuse',
             spec: 'custom-model · 1080p · 8s',
             video: 'https://cdn.example/admin.mp4',
+            poster: 'https://cdn.example/admin.jpg',
           },
         ],
       })
@@ -100,6 +101,9 @@ describe('GalleryList', () => {
     const onReuse = renderGallery()
     const user = userEvent.setup()
 
+    expect(
+      await screen.findByRole('img', { name: 'Admin clip' })
+    ).toHaveAttribute('src', 'https://cdn.example/admin.jpg')
     await user.click(
       await screen.findByRole('button', { name: 'Use this work: Admin clip' })
     )
@@ -112,5 +116,48 @@ describe('GalleryList', () => {
       seconds: 8,
     })
     expect(screen.queryByText(SHOWCASE_VIDEOS[0].title)).not.toBeInTheDocument()
+  })
+
+  it('filters gallery cards by category', async () => {
+    mockHomeShowcase(
+      JSON.stringify({
+        hero: {},
+        image_to_video: {},
+        showcase: [
+          {
+            title: 'Rain car',
+            category: 'Product ads',
+            prompt: 'a silver car in the rain',
+            spec: 'seedance-2.0 · 720p · 5s',
+            poster: 'https://cdn.example/car.jpg',
+          },
+          {
+            title: 'Crystal cave',
+            category: 'Fantasy',
+            prompt: 'a glowing crystal cave',
+            spec: 'seedance-2.0 · 720p · 5s',
+            poster: 'https://cdn.example/cave.jpg',
+          },
+        ],
+      })
+    )
+    const user = userEvent.setup()
+    renderGallery()
+
+    expect(await screen.findByText('Rain car')).toBeVisible()
+    expect(screen.getByText('Crystal cave')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Fantasy' }))
+
+    expect(screen.getByText('Crystal cave')).toBeVisible()
+    expect(screen.queryByText('Rain car')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Fantasy' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
   })
 })
