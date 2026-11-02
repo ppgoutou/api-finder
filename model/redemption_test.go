@@ -23,7 +23,8 @@ func TestSearchRedemptionsFiltersAndPaginates(t *testing.T) {
 		{Id: 2, Name: "alpha-future", Key: "00000000000000000000000000000002", Status: common.RedemptionCodeStatusEnabled, ExpiredTime: now + 3600},
 		{Id: 3, Name: "alpha-expired", Key: "00000000000000000000000000000003", Status: common.RedemptionCodeStatusEnabled, ExpiredTime: now - 10},
 		{Id: 4, Name: "beta-disabled", Key: "00000000000000000000000000000004", Status: common.RedemptionCodeStatusDisabled, ExpiredTime: 0},
-		{Id: 5, Name: "beta-used", Key: "00000000000000000000000000000005", Status: common.RedemptionCodeStatusUsed, ExpiredTime: 0},
+		{Id: 5, Name: "beta-used", Key: "00000000000000000000000000000005", Status: common.RedemptionCodeStatusUsed, ExpiredTime: 0, RedeemedTime: now - 60},
+		{Id: 6, Name: "beta-used-earlier", Key: "00000000000000000000000000000006", Status: common.RedemptionCodeStatusUsed, ExpiredTime: 0, RedeemedTime: now - 3600},
 	}
 	require.NoError(t, DB.Create(&redemptions).Error)
 
@@ -37,10 +38,10 @@ func TestSearchRedemptionsFiltersAndPaginates(t *testing.T) {
 		wantIds   []int
 	}{
 		{
-			name:      "no filters returns all rows",
+			name:      "no filters lists latest redeemed first, then newest unused",
 			num:       10,
-			wantTotal: 5,
-			wantIds:   []int{5, 4, 3, 2, 1},
+			wantTotal: 6,
+			wantIds:   []int{5, 6, 4, 3, 2, 1},
 		},
 		{
 			name:      "keyword filters by name prefix",
@@ -74,15 +75,15 @@ func TestSearchRedemptionsFiltersAndPaginates(t *testing.T) {
 			name:      "used status",
 			status:    "3",
 			num:       10,
-			wantTotal: 1,
-			wantIds:   []int{5},
+			wantTotal: 2,
+			wantIds:   []int{5, 6},
 		},
 		{
 			name:      "pagination keeps unpaged total",
 			startIdx:  1,
 			num:       2,
-			wantTotal: 5,
-			wantIds:   []int{4, 3},
+			wantTotal: 6,
+			wantIds:   []int{6, 4},
 		},
 	}
 

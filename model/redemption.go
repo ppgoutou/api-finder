@@ -45,7 +45,7 @@ func GetAllRedemptions(startIdx int, num int) (redemptions []*Redemption, total 
 	}
 
 	// 获取分页数据
-	err = tx.Order("id desc").Limit(num).Offset(startIdx).Find(&redemptions).Error
+	err = tx.Order("redeemed_time desc, id desc").Limit(num).Offset(startIdx).Find(&redemptions).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, 0, err
@@ -110,7 +110,7 @@ func SearchRedemptions(keyword string, status string, startIdx int, num int) (re
 	}
 
 	// Get paginated data
-	err = query.Order("id desc").Limit(num).Offset(startIdx).Find(&redemptions).Error
+	err = query.Order("redeemed_time desc, id desc").Limit(num).Offset(startIdx).Find(&redemptions).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, 0, err
