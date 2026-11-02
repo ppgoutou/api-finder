@@ -240,6 +240,13 @@ function OnboardingChannelsCard(props: {
           ) : (
             <ChannelRows channels={props.item.channels} />
           )}
+          {props.item.channels.some((channel) => channel.plugin_missing) && (
+            <p className='text-muted-foreground text-xs'>
+              {t(
+                'The plugin of a marked channel does not support this model yet. Each upstream price check adapts the plugin from the supplier prices when it can.'
+              )}
+            </p>
+          )}
         </section>
         {removed.length > 0 && (
           <section className='space-y-2'>

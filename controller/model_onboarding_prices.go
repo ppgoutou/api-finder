@@ -595,6 +595,8 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		rows[i].BaselineTime, rows[i].LatestTime = snapshot.BaselineTime, snapshot.LatestTime
 		snapshots[key] = snapshot
 	}
+	// Adapted first, so a model the plugin now declares is priced by this check.
+	adapted, waiting := adaptPluginsToSupplierModels(ctx, snapshots)
 	applied := make([]string, 0)
 	prices := upstreamModelPrices(rows, snapshots)
 	if len(prices) > 0 {
@@ -618,7 +620,6 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 	if err := writeOnboardingOption(onboardingPriceSnapshotOption, snapshots); err != nil {
 		return upstreamPriceCheckResult{}, err
 	}
-	adapted, waiting := adaptPluginsToSupplierModels(ctx, snapshots)
 	return upstreamPriceCheckResult{Rows: rows, Applied: applied, Adapted: adapted, Waiting: waiting}, nil
 }
 

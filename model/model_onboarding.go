@@ -16,14 +16,24 @@ type OnboardingChannel struct {
 	Type   int    `json:"type"`
 	Group  string `json:"group"`
 	Status int    `json:"status"`
-	// PluginMissing marks a pending model that the channel's task plugin does
-	// not list, so requests for it fail until the plugin is updated.
+	// PluginMissing marks a model that the channel's task plugin does not
+	// list, so requests for it fail until the plugin is updated or adapted.
 	PluginMissing bool `json:"plugin_missing,omitempty"`
 	// PluginKey is the task plugin a Task Plugin channel is bound to.
 	PluginKey string `json:"plugin_key,omitempty"`
 	// PluginAdaptation is the host's last attempt to adapt that plugin to the
-	// pending model from the supplier's pricing.
+	// model from the supplier's pricing.
 	PluginAdaptation *OnboardingPluginAdaptation `json:"plugin_adaptation,omitempty"`
+}
+
+// onboardingPluginChannel is a channel's entry for one model, marking whether
+// the channel's task plugin serves the model and how adapting it went.
+func onboardingPluginChannel(ref OnboardingChannel, plugin *jsplugin.LoadedPlugin, extras map[string]map[string]TaskPluginModelExtra, name string) OnboardingChannel {
+	ref.PluginMissing = plugin != nil && !plugin.Meta.DeclaresModel(name)
+	if extra, ok := extras[ref.PluginKey][name]; ok {
+		ref.PluginAdaptation = &OnboardingPluginAdaptation{Adapted: extra.Entry != nil, BasedOn: extra.BasedOn, Error: extra.Error, UpdatedAt: extra.UpdatedAt}
+	}
+	return ref
 }
 
 type OnboardingPluginAdaptation struct {
@@ -80,11 +90,16 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 		return created
 	}
 	for _, channel := range channels {
+		var plugin *jsplugin.LoadedPlugin
 		ref := OnboardingChannel{Id: channel.Id, Name: channel.Name, Type: channel.Type, Group: channel.Group, Status: channel.Status}
+		if channel.Type == constant.ChannelTypeTaskPlugin {
+			ref.PluginKey = channel.GetSetting().TaskPluginKey
+			plugin, _ = jsplugin.DefaultRegistry.Get(ref.PluginKey)
+		}
 		configured := normalizeLookupValues(channel.GetModels())
 		for _, name := range configured {
 			entry := item(name)
-			entry.Channels = append(entry.Channels, ref)
+			entry.Channels = append(entry.Channels, onboardingPluginChannel(ref, plugin, extras, name))
 		}
 		// Parsed here instead of GetOtherSettings, which rewrites malformed
 		// settings with Save and would clobber the unselected columns.
@@ -92,24 +107,12 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 		if channel.OtherSettings != "" {
 			_ = common.UnmarshalJsonStr(channel.OtherSettings, &settings)
 		}
-		var plugin *jsplugin.LoadedPlugin
-		pluginKey := ""
-		if channel.Type == constant.ChannelTypeTaskPlugin {
-			pluginKey = channel.GetSetting().TaskPluginKey
-			plugin, _ = jsplugin.DefaultRegistry.Get(pluginKey)
-		}
 		for _, name := range normalizeLookupValues(settings.UpstreamModelUpdateLastDetectedModels) {
 			if slices.Contains(configured, name) {
 				continue
 			}
-			pending := ref
-			pending.PluginMissing = plugin != nil && !plugin.Meta.DeclaresModel(name)
-			pending.PluginKey = pluginKey
-			if extra, ok := extras[pluginKey][name]; ok {
-				pending.PluginAdaptation = &OnboardingPluginAdaptation{Adapted: extra.Entry != nil, BasedOn: extra.BasedOn, Error: extra.Error, UpdatedAt: extra.UpdatedAt}
-			}
 			entry := item(name)
-			entry.PendingChannels = append(entry.PendingChannels, pending)
+			entry.PendingChannels = append(entry.PendingChannels, onboardingPluginChannel(ref, plugin, extras, name))
 		}
 		for _, name := range normalizeLookupValues(settings.UpstreamModelUpdateLastRemovedModels) {
 			if !slices.Contains(configured, name) {
