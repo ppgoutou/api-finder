@@ -133,7 +133,9 @@ describe('homepage video settings', () => {
     const user = userEvent.setup()
     renderSection()
 
-    const heroVideo = screen.getAllByRole('textbox', { name: 'Video URL' })[0]
+    await user.click(screen.getByRole('button', { name: 'Edit Hero video' }))
+    const hero = screen.getByRole('region', { name: 'Hero video' })
+    const heroVideo = within(hero).getByRole('textbox', { name: 'Video URL' })
     await user.type(heroVideo, 'http://example.com/a.mp4')
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
 
@@ -144,5 +146,34 @@ describe('homepage video settings', () => {
       screen.getByText('Use an uploaded file or an https link')
     ).toBeInTheDocument()
     expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it('keeps existing clips collapsed behind a thumbnail until edited', async () => {
+    const user = userEvent.setup()
+    renderSection(
+      JSON.stringify({
+        showcase: [
+          {
+            title: 'Chase',
+            category: 'Action',
+            video: OLD_CLIP,
+            poster: 'https://cdn.example/chase.jpg',
+          },
+        ],
+      })
+    )
+
+    const clip = await screen.findByRole('region', { name: 'Clip 1' })
+    expect(within(clip).getByText('Chase')).toBeVisible()
+    expect(within(clip).getByText('Action')).toBeVisible()
+    expect(
+      within(clip).queryByRole('textbox', { name: 'Title' })
+    ).not.toBeInTheDocument()
+
+    await user.click(within(clip).getByRole('button', { name: 'Edit Chase' }))
+
+    expect(
+      within(clip).getByRole('textbox', { name: 'Title' })
+    ).toBeVisible()
   })
 })

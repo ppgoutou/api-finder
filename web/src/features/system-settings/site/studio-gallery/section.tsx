@@ -19,8 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,7 @@ import { SettingsForm } from '../../components/settings-form-layout'
 import { SettingsPageFormActions } from '../../components/settings-page-context'
 import { SettingsSection } from '../../components/settings-section'
 import { useUpdateOption } from '../../hooks/use-update-option'
+import { CollapsibleMediaClip } from '../components/collapsible-media-clip'
 import { ShowcaseTextField } from '../home-showcase/item-fields'
 import { MediaField } from '../home-showcase/media-field'
 import {
@@ -65,10 +66,23 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
     defaultValues: initial,
   })
   const clips = useFieldArray({ control: form.control, name: 'items' })
+  const watchedItems = useWatch({ control: form.control, name: 'items' }) ?? []
+  const [openClips, setOpenClips] = useState<Record<string, boolean>>({})
+  const openNewestClip = useRef(false)
 
   useEffect(() => {
     form.reset(initial)
+    setOpenClips({})
+    openNewestClip.current = false
   }, [initial, form])
+
+  useEffect(() => {
+    if (!openNewestClip.current) return
+    const newest = clips.fields.at(-1)
+    if (!newest) return
+    openNewestClip.current = false
+    setOpenClips((current) => ({ ...current, [newest.id]: true }))
+  }, [clips.fields])
 
   const onSubmit = async (values: StudioGalleryFormValues) => {
     const value = serializeStudioGallery(values)
@@ -84,6 +98,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
       (url) => !kept.has(url)
     )
     await Promise.allSettled(removed.map((url) => deleteHomeMedia(url)))
+    setOpenClips({})
   }
 
   return (
@@ -103,7 +118,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
             isSaving={updateOption.isPending}
           />
 
-          <fieldset className='flex flex-col gap-4 rounded-lg border p-4'>
+          <fieldset className='flex flex-col gap-3 rounded-lg border p-4'>
             <legend className='px-1 text-sm font-semibold'>
               {t('Gallery works')}
             </legend>
@@ -112,122 +127,146 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                 {t('No gallery works yet. Add clips for the video studio.')}
               </p>
             )}
-            {clips.fields.map((clip, index) => (
-              <section
-                key={clip.id}
-                aria-label={t('Clip {{number}}', { number: index + 1 })}
-                className='bg-muted/30 flex flex-col gap-4 rounded-md border p-4'
-              >
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <h4 className='text-sm font-semibold'>
-                    {t('Clip {{number}}', { number: index + 1 })}
-                  </h4>
-                  <div className='flex gap-1'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      disabled={index === 0}
-                      aria-label={t('Move clip {{number}} up', {
-                        number: index + 1,
-                      })}
-                      onClick={() => clips.move(index, index - 1)}
-                    >
-                      <ArrowUp />
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      disabled={index === clips.fields.length - 1}
-                      aria-label={t('Move clip {{number}} down', {
-                        number: index + 1,
-                      })}
-                      onClick={() => clips.move(index, index + 1)}
-                    >
-                      <ArrowDown />
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      aria-label={t('Remove clip {{number}}', {
-                        number: index + 1,
-                      })}
-                      onClick={() => clips.remove(index)}
-                    >
-                      <Trash2 />
-                    </Button>
+            {clips.fields.map((clip, index) => {
+              const item = watchedItems[index]
+              const label = t('Clip {{number}}', { number: index + 1 })
+              const subtitle = [item?.category, item?.spec]
+                .filter(Boolean)
+                .join(' · ')
+              return (
+                <CollapsibleMediaClip
+                  key={clip.id}
+                  open={Boolean(openClips[clip.id])}
+                  onOpenChange={(next) =>
+                    setOpenClips((current) => ({
+                      ...current,
+                      [clip.id]: next,
+                    }))
+                  }
+                  label={label}
+                  title={item?.title || label}
+                  subtitle={subtitle}
+                  poster={item?.poster}
+                  video={item?.video}
+                  toolbar={
+                    <>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        disabled={index === 0}
+                        aria-label={t('Move clip {{number}} up', {
+                          number: index + 1,
+                        })}
+                        onClick={() => clips.move(index, index - 1)}
+                      >
+                        <ArrowUp />
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        disabled={index === clips.fields.length - 1}
+                        aria-label={t('Move clip {{number}} down', {
+                          number: index + 1,
+                        })}
+                        onClick={() => clips.move(index, index + 1)}
+                      >
+                        <ArrowDown />
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        aria-label={t('Remove clip {{number}}', {
+                          number: index + 1,
+                        })}
+                        onClick={() => {
+                          clips.remove(index)
+                          setOpenClips((current) => {
+                            const next = { ...current }
+                            delete next[clip.id]
+                            return next
+                          })
+                        }}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </>
+                  }
+                >
+                  <MediaField
+                    control={form.control}
+                    name={`items.${index}.video`}
+                    label={t('Video')}
+                    kind='video'
+                  />
+                  <MediaField
+                    control={form.control}
+                    name={`items.${index}.poster`}
+                    label={t('Cover image (optional)')}
+                    kind='image'
+                  />
+                  <MediaField
+                    control={form.control}
+                    name={`items.${index}.image`}
+                    label={t('Reference image (optional)')}
+                    kind='image'
+                  />
+                  <div className='grid gap-4 sm:grid-cols-3'>
+                    <ShowcaseTextField
+                      control={form.control}
+                      name={`items.${index}.title`}
+                      label={t('Title')}
+                    />
+                    <ShowcaseTextField
+                      control={form.control}
+                      name={`items.${index}.category`}
+                      label={t('Category')}
+                    />
+                    <ShowcaseTextField
+                      control={form.control}
+                      name={`items.${index}.spec`}
+                      label={t('Spec label')}
+                      placeholder='seedance-2.0 · 720p · 5s'
+                    />
                   </div>
-                </div>
-                <MediaField
-                  control={form.control}
-                  name={`items.${index}.video`}
-                  label={t('Video')}
-                  kind='video'
-                />
-                <MediaField
-                  control={form.control}
-                  name={`items.${index}.poster`}
-                  label={t('Cover image (optional)')}
-                  kind='image'
-                />
-                <MediaField
-                  control={form.control}
-                  name={`items.${index}.image`}
-                  label={t('Reference image (optional)')}
-                  kind='image'
-                />
-                <div className='grid gap-4 sm:grid-cols-3'>
                   <ShowcaseTextField
                     control={form.control}
-                    name={`items.${index}.title`}
-                    label={t('Title')}
+                    name={`items.${index}.prompt`}
+                    label={t('Prompt text')}
+                    multiline
                   />
+                  <div className='grid gap-4 sm:grid-cols-3'>
+                    <ShowcaseTextField
+                      control={form.control}
+                      name={`items.${index}.titleZh`}
+                      label={t('Title (Chinese)')}
+                    />
+                    <ShowcaseTextField
+                      control={form.control}
+                      name={`items.${index}.categoryZh`}
+                      label={t('Category (Chinese)')}
+                    />
+                  </div>
                   <ShowcaseTextField
                     control={form.control}
-                    name={`items.${index}.category`}
-                    label={t('Category')}
+                    name={`items.${index}.promptZh`}
+                    label={t('Prompt text (Chinese)')}
+                    multiline
                   />
-                  <ShowcaseTextField
-                    control={form.control}
-                    name={`items.${index}.spec`}
-                    label={t('Spec label')}
-                    placeholder='seedance-2.0 · 720p · 5s'
-                  />
-                </div>
-                <ShowcaseTextField
-                  control={form.control}
-                  name={`items.${index}.prompt`}
-                  label={t('Prompt text')}
-                  multiline
-                />
-                <div className='grid gap-4 sm:grid-cols-3'>
-                  <ShowcaseTextField
-                    control={form.control}
-                    name={`items.${index}.titleZh`}
-                    label={t('Title (Chinese)')}
-                  />
-                  <ShowcaseTextField
-                    control={form.control}
-                    name={`items.${index}.categoryZh`}
-                    label={t('Category (Chinese)')}
-                  />
-                </div>
-                <ShowcaseTextField
-                  control={form.control}
-                  name={`items.${index}.promptZh`}
-                  label={t('Prompt text (Chinese)')}
-                  multiline
-                />
-              </section>
-            ))}
+                </CollapsibleMediaClip>
+              )
+            })}
             <Button
               type='button'
               variant='outline'
               className='self-start'
               disabled={clips.fields.length >= STUDIO_GALLERY_MAX_ITEMS}
-              onClick={() => clips.append(emptyStudioGalleryItem())}
+              onClick={() => {
+                openNewestClip.current = true
+                clips.append(emptyStudioGalleryItem())
+              }}
             >
               <Plus data-icon='inline-start' />
               {t('Add clip')}
