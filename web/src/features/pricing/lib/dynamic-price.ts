@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 
-import { TOKEN_UNIT_DIVISORS } from '../constants'
+import { DEFAULT_TOKEN_UNIT, TOKEN_UNIT_DIVISORS } from '../constants'
 import type {
   BillingUsageSchema,
   BillingUsageUnit,
@@ -36,7 +36,7 @@ import {
   type ParsedTier,
 } from './billing-expr'
 import { compileBillingExpression } from './billing-expression/parser'
-import { getDisplayGroupRatio } from './model-helpers'
+import { getDisplayGroupRatio, isTokenBasedModel } from './model-helpers'
 import { withPluginPricing } from './plugin-pricing'
 import {
   evaluateTaskVisualConfig,
@@ -173,6 +173,24 @@ export function isUnconfiguredTaskUsageModel(model: PricingModel): boolean {
     hasTaskUsageSchema(model) &&
     !isDynamicPricingModel(model)
   )
+}
+
+/** Whether the cached-price column has anything to show for this model. */
+export function hasCachedPrice(model: PricingModel): boolean {
+  const summary = getDynamicPricingSummary(model, {
+    tokenUnit: DEFAULT_TOKEN_UNIT,
+  })
+  if (summary) {
+    return (
+      summary.isSpecialExpression ||
+      summary.entries.some(
+        (entry) =>
+          entry.field === 'cacheReadPrice' || entry.field === 'imageCachePrice'
+      )
+    )
+  }
+  if (isUnconfiguredTaskUsageModel(model)) return false
+  return isTokenBasedModel(model) && model.cache_ratio != null
 }
 
 export function getTaskPricingUnit(
