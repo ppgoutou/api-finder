@@ -41,6 +41,7 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
+export type AffiliateInviteesResponse = ApiResponse<AffiliateInviteesPage>
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -291,4 +292,20 @@ export interface BillingHistoryResponse {
  */
 export interface CompleteOrderRequest {
   trade_no: string
+}
+
+/**
+ * A user who signed up with the caller's invitation code. The server masks
+ * name and email before they reach the inviter.
+ */
+export interface AffiliateInvitee {
+  name: string
+  email: string
+  status: number
+  created_at: number
+}
+
+export interface AffiliateInviteesPage {
+  items: AffiliateInvitee[]
+  total: number
 }

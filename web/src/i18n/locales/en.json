@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Related Projects",
     "footer.defaultCopyright": "All rights reserved.",
-    "footer.new\u0061pi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
+    "footer.newapi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment",
     "For developers": "For developers",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} is on sale",
     "The language model request failed": "The language model request failed",
     "The language model reply was not usable": "The language model reply was not usable",
-    "The polished description mentioned a price and was not used": "The polished description mentioned a price and was not used"
+    "The polished description mentioned a price and was not used": "The polished description mentioned a price and was not used",
+    "Invalid invitation code": "Invalid invitation code",
+    "Invitation code (optional)": "Invitation code (optional)",
+    "Enter invitation code": "Enter invitation code",
+    "Filled in from your invitation link": "Filled in from your invitation link",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "Share your invitation link, or have friends enter your invitation code when they sign up.",
+    "Invitation code": "Invitation code",
+    "Copy invitation code": "Copy invitation code",
+    "Invitation link": "Invitation link",
+    "Invitees": "Invitees",
+    "{{count}} in total": "{{count}} in total",
+    "No invitees yet": "No invitees yet",
+    "Users who sign up with your invitation code or link appear here.": "Users who sign up with your invitation code or link appear here."
   }
 }

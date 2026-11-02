@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Các Dự Án Liên Quan",
     "footer.defaultCopyright": "Bản quyền được bảo lưu.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
+    "footer.newapi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Với kênh tùy chỉnh nâng cao, thiết lập này chỉ áp dụng cho các route /v1/responses không chuyển đổi giao thức.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Đối với các kênh được thêm sau ngày 10 tháng 5 năm 2025, không cần loại bỏ \".\" khỏi tên mô hình trong quá trình triển khai",
     "For developers": "Dành cho nhà phát triển",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} đã được mở bán",
     "The language model request failed": "Yêu cầu tới mô hình ngôn ngữ thất bại",
     "The language model reply was not usable": "Câu trả lời của mô hình ngôn ngữ không dùng được",
-    "The polished description mentioned a price and was not used": "Mô tả đã viết lại có nhắc đến giá nên không được dùng"
+    "The polished description mentioned a price and was not used": "Mô tả đã viết lại có nhắc đến giá nên không được dùng",
+    "Invalid invitation code": "Mã mời không hợp lệ",
+    "Invitation code (optional)": "Mã mời (không bắt buộc)",
+    "Enter invitation code": "Nhập mã mời",
+    "Filled in from your invitation link": "Đã điền từ liên kết mời của bạn",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "Chia sẻ liên kết mời hoặc để bạn bè nhập mã mời của bạn khi đăng ký.",
+    "Invitation code": "Mã mời",
+    "Copy invitation code": "Sao chép mã mời",
+    "Invitation link": "Liên kết mời",
+    "Invitees": "Người được mời",
+    "{{count}} in total": "Tổng cộng {{count}}",
+    "No invitees yet": "Chưa có người được mời",
+    "Users who sign up with your invitation code or link appear here.": "Người dùng đăng ký bằng mã hoặc liên kết mời của bạn sẽ hiển thị tại đây."
   }
 }

@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Projets liés",
     "footer.defaultCopyright": "Tous droits réservés.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
+    "footer.newapi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Pour les canaux personnalisés avancés, ceci ne s’applique qu’aux routes /v1/responses sans conversion de protocole.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Pour les canaux ajoutés après le 10 mai 2025, pas besoin de supprimer \".\" des noms de modèles lors du déploiement",
     "For developers": "Pour les développeurs",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} est en vente",
     "The language model request failed": "La requête au modèle de langage a échoué",
     "The language model reply was not usable": "La réponse du modèle de langage est inutilisable",
-    "The polished description mentioned a price and was not used": "La description réécrite mentionnait un prix et n’a pas été utilisée"
+    "The polished description mentioned a price and was not used": "La description réécrite mentionnait un prix et n’a pas été utilisée",
+    "Invalid invitation code": "Code d'invitation invalide",
+    "Invitation code (optional)": "Code d'invitation (facultatif)",
+    "Enter invitation code": "Saisissez le code d'invitation",
+    "Filled in from your invitation link": "Rempli depuis votre lien d'invitation",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "Partagez votre lien d'invitation ou demandez à vos amis de saisir votre code lors de leur inscription.",
+    "Invitation code": "Code d'invitation",
+    "Copy invitation code": "Copier le code d'invitation",
+    "Invitation link": "Lien d'invitation",
+    "Invitees": "Invités",
+    "{{count}} in total": "{{count}} au total",
+    "No invitees yet": "Aucun invité pour l'instant",
+    "Users who sign up with your invitation code or link appear here.": "Les utilisateurs inscrits avec votre code ou lien d'invitation apparaissent ici."
   }
 }

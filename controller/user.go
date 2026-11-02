@@ -239,6 +239,17 @@ func Register(c *gin.Context) {
 		common.ApiErrorT(c, "Invalid input {{error}}", map[string]any{"error": err.Error()})
 		return
 	}
+	// Check the invitation code before the email code is spent, so a typo
+	// does not cost the user a new verification email.
+	affCode := strings.TrimSpace(user.AffCode) // this code is the inviter's code, not the user's own code
+	inviterId := 0
+	if affCode != "" {
+		inviterId, err = model.GetUserIdByAffCode(affCode)
+		if err != nil {
+			common.ApiErrorT(c, "Invalid invitation code")
+			return
+		}
+	}
 	if common.EmailVerificationEnabled {
 		if user.Email == "" || user.VerificationCode == "" {
 			common.ApiErrorT(c, "Email verification is enabled, please enter email address and verification code")
@@ -271,8 +282,6 @@ func Register(c *gin.Context) {
 		common.ApiErrorT(c, "Username already exists or has been deleted")
 		return
 	}
-	affCode := user.AffCode // this code is the inviter's code, not the user's own code
-	inviterId, _ := model.GetUserIdByAffCode(affCode)
 	cleanUser := model.User{
 		Username:    user.Username,
 		Password:    user.Password,
@@ -450,7 +459,11 @@ func GetAffCode(c *gin.Context) {
 		return
 	}
 	if user.AffCode == "" {
-		user.AffCode = common.GetRandomString(4)
+		user.AffCode, err = model.NewAffCode(model.DB)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
 		if err := user.Update(false); err != nil {
 			common.ApiError(c, err)
 			return
@@ -462,6 +475,49 @@ func GetAffCode(c *gin.Context) {
 		"data":    user.AffCode,
 	})
 	return
+}
+
+type affInviteeItem struct {
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Status    int    `json:"status"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+// GetAffInvitees lists the users who registered with the caller's invitation
+// code. Names and emails are masked: the inviter sees who joined, not who
+// they are.
+func GetAffInvitees(c *gin.Context) {
+	pageInfo := common.GetPageQuery(c)
+	invitees, total, err := model.GetInviteesByInviterId(c.GetInt("id"), pageInfo)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	items := make([]affInviteeItem, 0, len(invitees))
+	for _, invitee := range invitees {
+		name := invitee.DisplayName
+		if name == "" {
+			name = invitee.Username
+		}
+		maskedName := ""
+		if runes := []rune(name); len(runes) > 0 {
+			maskedName = string(runes[0]) + "**"
+		}
+		maskedEmail := ""
+		if local, domain, ok := strings.Cut(invitee.Email, "@"); ok && local != "" {
+			maskedEmail = string([]rune(local)[0]) + "***@" + domain
+		}
+		items = append(items, affInviteeItem{
+			Name:      maskedName,
+			Email:     maskedEmail,
+			Status:    invitee.Status,
+			CreatedAt: invitee.CreatedAt,
+		})
+	}
+	pageInfo.SetTotal(int(total))
+	pageInfo.SetItems(items)
+	common.ApiSuccess(c, pageInfo)
 }
 
 func GetSelf(c *gin.Context) {

@@ -33,13 +33,28 @@ const STORAGE_KEYS = {
 // Affiliate Code Storage
 // ============================================================================
 
+/** An invitation link is remembered for 30 days after the last visit. */
+export const AFFILIATE_CODE_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
+type StoredAffiliateCode = { code: string; savedAt: number }
+
 /**
- * Get affiliate code from localStorage
+ * Get the invitation code remembered from an invitation link, or '' once it
+ * has expired. A plain string written by older builds has no timestamp and
+ * is still returned.
  */
 export function getAffiliateCode(): string {
   if (typeof window === 'undefined') return ''
   try {
-    return window.localStorage.getItem(STORAGE_KEYS.AFFILIATE) ?? ''
+    const raw = window.localStorage.getItem(STORAGE_KEYS.AFFILIATE) ?? ''
+    if (!raw.startsWith('{')) return raw
+    const stored = JSON.parse(raw) as Partial<StoredAffiliateCode>
+    if (typeof stored.code !== 'string') return ''
+    if (Date.now() - Number(stored.savedAt) > AFFILIATE_CODE_TTL_MS) {
+      window.localStorage.removeItem(STORAGE_KEYS.AFFILIATE)
+      return ''
+    }
+    return stored.code
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to get affiliate code:', error)
@@ -48,12 +63,13 @@ export function getAffiliateCode(): string {
 }
 
 /**
- * Save affiliate code to localStorage
+ * Remember an invitation code; the latest invitation link wins.
  */
 export function saveAffiliateCode(code: string): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(STORAGE_KEYS.AFFILIATE, code)
+    const stored: StoredAffiliateCode = { code, savedAt: Date.now() }
+    window.localStorage.setItem(STORAGE_KEYS.AFFILIATE, JSON.stringify(stored))
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to save affiliate code:', error)

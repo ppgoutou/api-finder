@@ -641,3 +641,78 @@ func TestManageUserQuotaCacheUsesCommittedIntegerDifference(t *testing.T) {
 		})
 	}
 }
+
+func TestRegisterRejectsUnknownInvitationCodeAndAcceptsLowerCase(t *testing.T) {
+	db := setupManageUserTestDB(t)
+	previousRegister, previousPassword, previousEmail := common.RegisterEnabled, common.PasswordRegisterEnabled, common.EmailVerificationEnabled
+	common.RegisterEnabled, common.PasswordRegisterEnabled, common.EmailVerificationEnabled = true, true, false
+	t.Cleanup(func() {
+		common.RegisterEnabled, common.PasswordRegisterEnabled, common.EmailVerificationEnabled = previousRegister, previousPassword, previousEmail
+	})
+	inviter := model.User{Username: "inviter", Password: "password123", AffCode: "V72X9N6C", Status: common.UserStatusEnabled}
+	require.NoError(t, db.Create(&inviter).Error)
+
+	register := func(username string, affCode string) map[string]any {
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		body := fmt.Sprintf(`{"username":%q,"password":"password123","aff_code":%q}`, username, affCode)
+		c.Request = httptest.NewRequest(http.MethodPost, "/api/user/register", strings.NewReader(body))
+		Register(c)
+		var response map[string]any
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		return response
+	}
+
+	rejected := register("typo_user", "NOPE0000")
+	assert.Equal(t, false, rejected["success"])
+	assert.Equal(t, "Invalid invitation code", rejected["message"])
+	var count int64
+	require.NoError(t, db.Model(&model.User{}).Where("username = ?", "typo_user").Count(&count).Error)
+	assert.Zero(t, count, "a rejected code must not create the account")
+
+	accepted := register("invited_user", " v72x9n6c ")
+	require.Equal(t, true, accepted["success"], accepted["message"])
+	var invited model.User
+	require.NoError(t, db.Where("username = ?", "invited_user").First(&invited).Error)
+	assert.Equal(t, inviter.Id, invited.InviterId)
+	assert.Regexp(t, `^[A-HJ-NP-Z2-9]{8}$`, invited.AffCode)
+}
+
+func TestGetAffInviteesMasksIdentityAndOnlyListsOwnInvitees(t *testing.T) {
+	db := setupManageUserTestDB(t)
+	inviter := model.User{Username: "inviter", Password: "password123", AffCode: "INVITER1"}
+	other := model.User{Username: "other", Password: "password123", AffCode: "OTHER001"}
+	require.NoError(t, db.Create(&inviter).Error)
+	require.NoError(t, db.Create(&other).Error)
+	require.NoError(t, db.Create(&model.User{Username: "first", DisplayName: "胡小明", Email: "alice@gmail.com", Password: "password123", AffCode: "A0000001", InviterId: inviter.Id, Status: common.UserStatusEnabled}).Error)
+	require.NoError(t, db.Create(&model.User{Username: "second", Password: "password123", AffCode: "A0000002", InviterId: inviter.Id, Status: common.UserStatusDisabled}).Error)
+	require.NoError(t, db.Create(&model.User{Username: "elsewhere", Password: "password123", AffCode: "A0000003", InviterId: other.Id}).Error)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/user/aff/invitees?p=1&page_size=10", nil)
+	c.Set("id", inviter.Id)
+	GetAffInvitees(c)
+
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Total int `json:"total"`
+			Items []struct {
+				Name   string `json:"name"`
+				Email  string `json:"email"`
+				Status int    `json:"status"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.True(t, response.Success)
+	assert.Equal(t, 2, response.Data.Total)
+	require.Len(t, response.Data.Items, 2)
+	assert.Equal(t, "s**", response.Data.Items[0].Name)
+	assert.Equal(t, "", response.Data.Items[0].Email)
+	assert.Equal(t, common.UserStatusDisabled, response.Data.Items[0].Status)
+	assert.Equal(t, "胡**", response.Data.Items[1].Name)
+	assert.Equal(t, "a***@gmail.com", response.Data.Items[1].Email)
+	assert.NotContains(t, recorder.Body.String(), "alice@")
+}

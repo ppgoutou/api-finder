@@ -23,6 +23,7 @@ import { SectionPageLayout } from '@/components/layout'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 
+import { AffiliateInviteesCard } from './components/affiliate-invitees-card'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
@@ -99,6 +100,7 @@ export function Wallet(props: WalletProps) {
     processPayment,
   } = usePayment()
   const {
+    affiliateCode,
     affiliateLink,
     loading: affiliateLoading,
     transferQuota,
@@ -329,6 +331,7 @@ export function Wallet(props: WalletProps) {
 
             <AffiliateRewardsCard
               user={user}
+              affiliateCode={affiliateCode}
               affiliateLink={affiliateLink}
               onTransfer={() => setTransferDialogOpen(true)}
               complianceConfirmed={
@@ -336,6 +339,8 @@ export function Wallet(props: WalletProps) {
               }
               loading={affiliateLoading}
             />
+
+            <AffiliateInviteesCard />
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
