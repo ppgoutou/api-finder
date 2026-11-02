@@ -30,6 +30,7 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('../components/composer', () => ({ Composer: () => null }))
 vi.mock('../components/image-composer', () => ({ ImageComposer: () => null }))
 vi.mock('../components/works-list', () => ({ WorksList: () => null }))
+vi.mock('../components/gallery-list', () => ({ GalleryList: () => null }))
 vi.mock('../components/image-works-list', () => ({
   ImageWorksList: () => null,
 }))
@@ -47,7 +48,10 @@ describe('video studio layout', () => {
     expect(main).toHaveClass('overflow-hidden')
     expect(body).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto')
     expect(body).toContainElement(
-      screen.getByRole('heading', { name: 'My videos' })
+      screen.getByRole('tab', { name: 'My videos' })
+    )
+    expect(body).toContainElement(
+      screen.getByRole('tab', { name: 'Gallery' })
     )
   })
 })
