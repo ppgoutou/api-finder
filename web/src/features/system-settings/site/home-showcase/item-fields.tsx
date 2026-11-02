@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { Control } from 'react-hook-form'
+import type { Control, FieldPath, FieldValues } from 'react-hook-form'
 
 import {
   FormControl,
@@ -28,31 +28,19 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-import type { HomeShowcaseFormValues } from './schema'
-
-type TextFieldName =
-  | `hero.${'title' | 'titleZh' | 'spec' | 'prompt' | 'promptZh'}`
-  | `imageToVideo.${'prompt'}`
-  | `showcase.${number}.${
-      | 'title'
-      | 'titleZh'
-      | 'category'
-      | 'categoryZh'
-      | 'spec'
-      | 'prompt'
-      | 'promptZh'}`
-
-type TextFieldProps = {
-  control: Control<HomeShowcaseFormValues>
-  name: TextFieldName
+type TextFieldProps<T extends FieldValues> = {
+  control: Control<T>
+  name: FieldPath<T>
   label: string
   /** Literal example text, not translated. */
   placeholder?: string
   multiline?: boolean
 }
 
-/** A text field of a home video slot (title, category, spec or prompt). */
-export function ShowcaseTextField(props: TextFieldProps) {
+/** A text field of a home or studio gallery slot (title, category, spec or prompt). */
+export function ShowcaseTextField<T extends FieldValues>(
+  props: TextFieldProps<T>
+) {
   return (
     <FormField
       control={props.control}

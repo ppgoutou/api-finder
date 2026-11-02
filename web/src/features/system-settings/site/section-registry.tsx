@@ -29,6 +29,7 @@ import { SidebarModulesSection } from '../maintenance/sidebar-modules-section'
 import type { SiteSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
 import { HomeShowcaseSection } from './home-showcase/section'
+import { StudioGallerySection } from './studio-gallery/section'
 
 const SITE_SECTIONS = [
   {
@@ -61,6 +62,13 @@ const SITE_SECTIONS = [
     titleKey: 'Homepage videos',
     build: (settings: SiteSettings) => (
       <HomeShowcaseSection defaultValue={settings.HomeShowcase ?? ''} />
+    ),
+  },
+  {
+    id: 'studio-gallery',
+    titleKey: 'Studio gallery',
+    build: (settings: SiteSettings) => (
+      <StudioGallerySection defaultValue={settings.StudioGallery ?? ''} />
     ),
   },
   {

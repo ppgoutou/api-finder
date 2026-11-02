@@ -29,13 +29,8 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { useHomeShowcase } from '@/features/home/hooks/use-home-showcase'
-import {
-  getHomeMediaUrl,
-  SHOWCASE_CATEGORY_LABELS,
-  SHOWCASE_VIDEOS,
-} from '@/features/home/lib/video-home'
 
+import { useStudioGallery } from '../hooks/use-studio-gallery'
 import { draftFromGalleryItem } from '../lib/gallery-draft'
 import type { StudioDraft } from '../types'
 
@@ -86,7 +81,7 @@ function GalleryMedia(props: { card: GalleryCard }) {
             ? t('Play {{title}} with sound', {
                 title: card.title || t('Video preview'),
               })
-            : (card.title || t('Video preview'))
+            : card.title || t('Video preview')
         }
       >
         <img
@@ -139,9 +134,7 @@ function GalleryWorkCard(props: {
         <GalleryMedia card={card} />
       </div>
       <div className='flex flex-col gap-1 p-3'>
-        {card.title && (
-          <p className='text-sm font-medium'>{card.title}</p>
-        )}
+        {card.title && <p className='text-sm font-medium'>{card.title}</p>}
         <p className='text-muted-foreground line-clamp-3 text-sm'>
           {card.prompt || t('Video task')}
         </p>
@@ -179,7 +172,7 @@ function GalleryWorkCard(props: {
 }
 
 /**
- * Curated example videos (admin HomeShowcase, else built-in home clips).
+ * Curated studio gallery works from the admin StudioGallery option.
  * Category filters sit under the gallery tab; covers keep their natural size.
  */
 export function GalleryList(props: {
@@ -187,31 +180,18 @@ export function GalleryList(props: {
 }) {
   const { t } = useTranslation()
   const [category, setCategory] = useState(ALL_CATEGORIES)
-  const configured = useHomeShowcase().showcase.filter(
-    (item) => item.video || item.prompt || item.poster
-  )
-  const cards: GalleryCard[] =
-    configured.length > 0
-      ? configured.map((item, index) => ({
-          key: `${index}:${item.video || item.poster || item.title || item.prompt}`,
-          title: item.title,
-          category: item.category,
-          prompt: item.prompt,
-          spec: item.spec,
-          video: item.video,
-          poster: item.poster,
-          image: item.image,
-        }))
-      : SHOWCASE_VIDEOS.map((video) => ({
-          key: video.name,
-          title: t(video.title),
-          category: t(SHOWCASE_CATEGORY_LABELS[video.category]),
-          prompt: t(video.prompt),
-          spec: video.spec,
-          video: getHomeMediaUrl(`${video.name}.mp4`),
-          poster: getHomeMediaUrl(`${video.name}.jpg`),
-          image: '',
-        }))
+  const cards: GalleryCard[] = useStudioGallery()
+    .items.filter((item) => item.video || item.prompt || item.poster)
+    .map((item, index) => ({
+      key: `${index}:${item.video || item.poster || item.title || item.prompt}`,
+      title: item.title,
+      category: item.category,
+      prompt: item.prompt,
+      spec: item.spec,
+      video: item.video,
+      poster: item.poster,
+      image: item.image,
+    }))
 
   const categories = [
     ...new Set(cards.map((card) => card.category).filter(Boolean)),
@@ -238,7 +218,7 @@ export function GalleryList(props: {
           <EmptyTitle>{t('No gallery works yet')}</EmptyTitle>
           <EmptyDescription>
             {t(
-              'Example videos appear here once the site showcase is configured.'
+              'Example videos appear here once the studio gallery is configured in site settings.'
             )}
           </EmptyDescription>
         </EmptyHeader>

@@ -148,6 +148,7 @@ export type SiteSettings = {
   About: string
   HomePageContent: string
   HomeShowcase: string
+  StudioGallery: string
   ServerAddress: string
   TaskPublicAddress: string
   'general_setting.docs_link': string

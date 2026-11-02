@@ -30,6 +30,8 @@ const (
 	homeMediaURLPrefix       = "/home-media/"
 	homeShowcaseOptionKey    = "HomeShowcase"
 	homeShowcaseMaxItems     = 30
+	studioGalleryOptionKey   = "StudioGallery"
+	studioGalleryMaxItems    = 30
 )
 
 // Sniffed content type → stored extension. SVG and HTML are never accepted, so
@@ -228,6 +230,15 @@ func GetHomeShowcase(c *gin.Context) {
 	serveRevalidatedJSON(c, value)
 }
 
+// GetStudioGallery returns the video-studio gallery settings (a JSON string of
+// curated clips; empty when the gallery has no configured works).
+func GetStudioGallery(c *gin.Context) {
+	common.OptionMapRWMutex.RLock()
+	value := common.OptionMap[studioGalleryOptionKey]
+	common.OptionMapRWMutex.RUnlock()
+	serveRevalidatedJSON(c, value)
+}
+
 type homeShowcaseItem struct {
 	Title    string `json:"title"`
 	Category string `json:"category"`
@@ -249,7 +260,40 @@ type homeShowcaseSettings struct {
 	Showcase     []homeShowcaseItem `json:"showcase"`
 }
 
+type studioGallerySettings struct {
+	Items []homeShowcaseItem `json:"items"`
+}
+
 var errInvalidHomeShowcase = errors.New("invalid home showcase settings")
+var errInvalidStudioGallery = errors.New("invalid studio gallery settings")
+
+func validateShowcaseItem(item homeShowcaseItem) error {
+	if utf8.RuneCountInString(item.Title) > 80 ||
+		utf8.RuneCountInString(item.TitleZh) > 80 ||
+		utf8.RuneCountInString(item.Category) > 20 ||
+		utf8.RuneCountInString(item.CategoryZh) > 20 ||
+		utf8.RuneCountInString(item.Prompt) > 2000 ||
+		utf8.RuneCountInString(item.PromptZh) > 2000 ||
+		utf8.RuneCountInString(item.Spec) > 60 {
+		return errInvalidHomeShowcase
+	}
+	for _, link := range []string{item.Video, item.Poster, item.Image} {
+		if link == "" {
+			continue
+		}
+		if name, ok := strings.CutPrefix(link, homeMediaURLPrefix); ok {
+			if !homeMediaNamePattern.MatchString(name) {
+				return errInvalidHomeShowcase
+			}
+			continue
+		}
+		parsed, err := url.Parse(link)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+			return errInvalidHomeShowcase
+		}
+	}
+	return nil
+}
 
 // validateHomeShowcase checks the HomeShowcase option before it is saved:
 // bounded text, at most homeShowcaseMaxItems clips, and media URLs that are
@@ -273,29 +317,28 @@ func validateHomeShowcase(value string) error {
 		items = append(items, *settings.ImageToVideo)
 	}
 	for _, item := range items {
-		if utf8.RuneCountInString(item.Title) > 80 ||
-			utf8.RuneCountInString(item.TitleZh) > 80 ||
-			utf8.RuneCountInString(item.Category) > 20 ||
-			utf8.RuneCountInString(item.CategoryZh) > 20 ||
-			utf8.RuneCountInString(item.Prompt) > 2000 ||
-			utf8.RuneCountInString(item.PromptZh) > 2000 ||
-			utf8.RuneCountInString(item.Spec) > 60 {
-			return errInvalidHomeShowcase
+		if err := validateShowcaseItem(item); err != nil {
+			return err
 		}
-		for _, link := range []string{item.Video, item.Poster, item.Image} {
-			if link == "" {
-				continue
-			}
-			if name, ok := strings.CutPrefix(link, homeMediaURLPrefix); ok {
-				if !homeMediaNamePattern.MatchString(name) {
-					return errInvalidHomeShowcase
-				}
-				continue
-			}
-			parsed, err := url.Parse(link)
-			if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-				return errInvalidHomeShowcase
-			}
+	}
+	return nil
+}
+
+// validateStudioGallery checks the StudioGallery option before it is saved.
+func validateStudioGallery(value string) error {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	var settings studioGallerySettings
+	if err := common.UnmarshalJsonStr(value, &settings); err != nil {
+		return errInvalidStudioGallery
+	}
+	if len(settings.Items) > studioGalleryMaxItems {
+		return errInvalidStudioGallery
+	}
+	for _, item := range settings.Items {
+		if err := validateShowcaseItem(item); err != nil {
+			return errInvalidStudioGallery
 		}
 	}
 	return nil

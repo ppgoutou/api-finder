@@ -21,12 +21,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { SHOWCASE_VIDEOS } from '@/features/home/lib/video-home'
 import { api } from '@/lib/api'
 
 import { GalleryList } from '../components/gallery-list'
 
-function mockHomeShowcase(value: string) {
+function mockStudioGallery(value: string) {
   vi.spyOn(api, 'get').mockResolvedValue({
     data: { success: true, data: value },
   })
@@ -45,48 +44,61 @@ function renderGallery(onReuse = vi.fn()) {
 }
 
 beforeEach(() => {
-  mockHomeShowcase('')
+  mockStudioGallery('')
 })
 
 describe('GalleryList', () => {
-  it('lists built-in showcase clips when the site showcase is empty', async () => {
+  it('shows an empty state when the studio gallery is not configured', async () => {
     renderGallery()
 
     expect(
-      await screen.findByRole('button', {
-        name: `Use this work: ${SHOWCASE_VIDEOS[0].title}`,
-      })
+      await screen.findByText('No gallery works yet')
     ).toBeVisible()
-    expect(screen.getByText(SHOWCASE_VIDEOS[0].prompt)).toBeVisible()
+    expect(
+      screen.getByText(
+        'Example videos appear here once the studio gallery is configured in site settings.'
+      )
+    ).toBeVisible()
   })
 
   it('hands prompt and parsed parameters to onReuse when Use this work is clicked', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Mechanical watch',
+            category: 'Product ads',
+            prompt: 'a stainless steel watch on black',
+            spec: 'seedance-2.0 · 720p · 5s',
+            poster: 'https://cdn.example/watch.jpg',
+            video: 'https://cdn.example/watch.mp4',
+          },
+        ],
+      })
+    )
     const onReuse = renderGallery()
     const user = userEvent.setup()
-    const clip = SHOWCASE_VIDEOS[1]
 
     await user.click(
       await screen.findByRole('button', {
-        name: `Use this work: ${clip.title}`,
+        name: 'Use this work: Mechanical watch',
       })
     )
 
     expect(onReuse).toHaveBeenCalledOnce()
     expect(onReuse.mock.calls[0][0]).toMatchObject({
       mode: 'reference',
-      prompt: clip.prompt,
+      prompt: 'a stainless steel watch on black',
       model: 'seedance-2.0',
       resolution: '720p',
       seconds: 5,
     })
   })
 
-  it('prefers admin showcase clips that carry a video or prompt', async () => {
-    mockHomeShowcase(
+  it('lists configured studio gallery clips with cover images', async () => {
+    mockStudioGallery(
       JSON.stringify({
-        hero: {},
-        image_to_video: {},
-        showcase: [
+        items: [
           {
             title: 'Admin clip',
             category: 'Product',
@@ -98,32 +110,17 @@ describe('GalleryList', () => {
         ],
       })
     )
-    const onReuse = renderGallery()
-    const user = userEvent.setup()
+    renderGallery()
 
     expect(
       await screen.findByRole('img', { name: 'Admin clip' })
     ).toHaveAttribute('src', 'https://cdn.example/admin.jpg')
-    await user.click(
-      await screen.findByRole('button', { name: 'Use this work: Admin clip' })
-    )
-
-    expect(onReuse).toHaveBeenCalledOnce()
-    expect(onReuse.mock.calls[0][0]).toMatchObject({
-      prompt: 'admin prompt for reuse',
-      model: 'custom-model',
-      resolution: '1080p',
-      seconds: 8,
-    })
-    expect(screen.queryByText(SHOWCASE_VIDEOS[0].title)).not.toBeInTheDocument()
   })
 
   it('filters gallery cards by category', async () => {
-    mockHomeShowcase(
+    mockStudioGallery(
       JSON.stringify({
-        hero: {},
-        image_to_video: {},
-        showcase: [
+        items: [
           {
             title: 'Rain car',
             category: 'Product ads',

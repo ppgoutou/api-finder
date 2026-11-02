@@ -89,7 +89,7 @@ export function HomeShowcaseSection(props: HomeShowcaseSectionProps) {
     <SettingsSection title={t('Homepage videos')}>
       <p className='text-muted-foreground text-sm'>
         {t(
-          'Upload the videos shown on the home page. Slots without a video keep the built-in examples. Changes appear on the home page after saving.'
+          'Upload the videos shown on the home page. Slots without a video keep the built-in examples. Changes appear on the home page after saving. Video studio Gallery works are configured under Studio gallery.'
         )}{' '}
         {t(
           'Chinese fields are shown to simplified and traditional Chinese interfaces; leave them empty to show the default text.'
