@@ -59,9 +59,20 @@ const quotaSchema = z.object({
     .number({ error: () => i18next.t('Please enter a valid number') })
     .min(0)
     .max(100),
-  AffAutoTransferTime: z.string().regex(/^$|^([01]\d|2[0-3]):[0-5]\d$/, {
-    error: () => i18next.t('Invitation quota transfer time must be HH:MM'),
-  }),
+  AffRebateHoldDays: z.coerce
+    .number({ error: () => i18next.t('Please enter a valid number') })
+    .int({
+      error: () =>
+        i18next.t('Rebate holding days must be a whole number from 0 to 365'),
+    })
+    .min(0, {
+      error: () =>
+        i18next.t('Rebate holding days must be a whole number from 0 to 365'),
+    })
+    .max(365, {
+      error: () =>
+        i18next.t('Rebate holding days must be a whole number from 0 to 365'),
+    }),
   TopUpLink: z.string(),
   quota_setting: z.object({
     enable_free_model_pre_consume: z.boolean(),
@@ -307,7 +318,7 @@ export function QuotaSettingsSection({
                   </FormControl>
                   <FormDescription>
                     {t(
-                      "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off."
+                      'Share of each invitee top-up or redemption code paid to the inviter as a rebate. Set to 0 to turn rebates off.'
                     )}
                   </FormDescription>
                   <FormMessage />
@@ -317,18 +328,26 @@ export function QuotaSettingsSection({
 
             <FormField
               control={form.control}
-              name='AffAutoTransferTime'
+              name='AffRebateHoldDays'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {t('Daily invitation quota transfer time')}
-                  </FormLabel>
+                  <FormLabel>{t('Rebate arrival days')}</FormLabel>
                   <FormControl>
-                    <Input type='time' {...field} />
+                    <Input
+                      type='number'
+                      min={0}
+                      max={365}
+                      step={1}
+                      value={field.value ?? ''}
+                      onChange={handleNumberChange(field.onChange)}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                    />
                   </FormControl>
                   <FormDescription>
                     {t(
-                      'Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.'
+                      'Each rebate stays pending for this many days and then moves into the inviter balance automatically. It cannot be transferred early, and a refund during this time cancels it. 0 pays it within 10 minutes.'
                     )}
                   </FormDescription>
                   <FormMessage />

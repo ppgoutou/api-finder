@@ -33,6 +33,7 @@ import {
   getAffiliateCode,
   getAffiliateInvitees,
   getAffiliateRebates,
+  getAffiliateSummary,
   transferAffiliateQuota,
 } from '../api'
 import { generateAffiliateLink } from '../lib'
@@ -132,5 +133,13 @@ export function useAffiliateRebates(page: number) {
       requireServerSuccess(await getAffiliateRebates(page, AFFILIATE_PAGE_SIZE))
         .data,
     placeholderData: (previous) => previous,
+  })
+}
+
+/** The caller's referral totals and the current rebate rules. */
+export function useAffiliateSummary() {
+  return useQuery({
+    queryKey: ['wallet', 'affiliate-summary'],
+    queryFn: async () => requireServerSuccess(await getAffiliateSummary()).data,
   })
 }

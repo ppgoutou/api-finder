@@ -39,7 +39,7 @@ import {
   useTopupInfo,
   usePayment,
   useAffiliate,
-  useAffiliateInvitees,
+  useAffiliateSummary,
   useRedemption,
   useCreemPayment,
   useWaffoPayment,
@@ -108,7 +108,7 @@ export function Wallet(props: WalletProps) {
     transferQuota,
     transferring,
   } = useAffiliate()
-  const { data: affiliateInvitees } = useAffiliateInvitees(1)
+  const { data: affiliateSummary } = useAffiliateSummary()
   const { redeeming, redeemCode } = useRedemption()
   const { processing: creemProcessing, processCreemPayment } = useCreemPayment()
   const { processing: waffoProcessing, processWaffoPayment } = useWaffoPayment()
@@ -336,8 +336,7 @@ export function Wallet(props: WalletProps) {
               user={user}
               affiliateCode={affiliateCode}
               affiliateLink={affiliateLink}
-              inviteeCount={affiliateInvitees?.total}
-              rebatePercent={topupInfo?.aff_rebate_percent}
+              summary={affiliateSummary}
               onTransfer={() => setTransferDialogOpen(true)}
               complianceConfirmed={
                 topupInfo?.payment_compliance_confirmed !== false
@@ -347,9 +346,7 @@ export function Wallet(props: WalletProps) {
 
             <div className='grid items-start gap-4 lg:grid-cols-2'>
               <AffiliateInviteesCard />
-              <AffiliateRebatesCard
-                autoTransferTime={topupInfo?.aff_auto_transfer_time}
-              />
+              <AffiliateRebatesCard holdDays={affiliateSummary?.hold_days} />
             </div>
           </div>
         </SectionPageLayout.Content>

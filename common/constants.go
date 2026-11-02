@@ -135,9 +135,9 @@ var QuotaForInvitee = 0
 // redemption credited to the inviter's pending invitation quota.
 var AffRebatePercent = 0.0
 
-// AffAutoTransferTime ("HH:MM", server time) is when pending invitation
-// quota moves into every user's wallet each day; empty turns it off.
-var AffAutoTransferTime = ""
+// AffRebateHoldDays is how many days each rebate stays pending (and can be
+// taken back by a refund) before it moves into the inviter's wallet.
+var AffRebateHoldDays = 7
 var ChannelDisableThreshold = 5.0
 var AutomaticDisableChannelEnabled = false
 var AutomaticEnableChannelEnabled = false

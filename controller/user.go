@@ -537,6 +537,33 @@ func GetAffInvitees(c *gin.Context) {
 	common.ApiSuccess(c, pageInfo)
 }
 
+// GetAffSummary returns the caller's referral totals together with the
+// current rebate rules, so the wallet can explain them.
+func GetAffSummary(c *gin.Context) {
+	inviterId := c.GetInt("id")
+	summary, err := model.GetAffRebateSummary(inviterId)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	inviteeCount, err := model.CountInvitees(inviterId)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	rebatePercent := 0.0
+	if operation_setting.IsPaymentComplianceConfirmed() {
+		rebatePercent = common.AffRebatePercent
+	}
+	common.ApiSuccess(c, gin.H{
+		"invitee_count":  inviteeCount,
+		"pending_quota":  summary.PendingQuota,
+		"earned_quota":   summary.EarnedQuota,
+		"rebate_percent": rebatePercent,
+		"hold_days":      max(common.AffRebateHoldDays, 0),
+	})
+}
+
 type affRebateItem struct {
 	InviteeName  string `json:"invitee_name"`
 	InviteeEmail string `json:"invitee_email"`
@@ -544,6 +571,7 @@ type affRebateItem struct {
 	RebateQuota  int    `json:"rebate_quota"`
 	Status       string `json:"status"`
 	CreatedAt    int64  `json:"created_at"`
+	AvailableAt  int64  `json:"available_at"`
 }
 
 // GetAffRebates lists the invitation rebates paid to the caller.
@@ -570,6 +598,7 @@ func GetAffRebates(c *gin.Context) {
 			RebateQuota: rebate.RebateQuota,
 			Status:      rebate.Status,
 			CreatedAt:   rebate.CreatedAt,
+			AvailableAt: rebate.AvailableAt,
 		}
 		if invitee := invitees[rebate.InviteeId]; invitee != nil {
 			item.InviteeName, item.InviteeEmail = maskedInviteeIdentity(invitee)

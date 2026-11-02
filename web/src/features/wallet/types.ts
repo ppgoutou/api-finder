@@ -43,6 +43,7 @@ export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
 export type AffiliateInviteesResponse = ApiResponse<AffiliateInviteesPage>
 export type AffiliateRebatesResponse = ApiResponse<AffiliateRebatesPage>
+export type AffiliateSummaryResponse = ApiResponse<AffiliateSummary>
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -156,10 +157,6 @@ export interface TopupInfo {
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */
   payment_compliance_confirmed?: boolean
-  /** Share (0-100) of an invitee's top-up credited to the inviter */
-  aff_rebate_percent?: number
-  /** Daily HH:MM when pending invitation quota moves to the balance */
-  aff_auto_transfer_time?: string
   /** Current compliance terms version */
   payment_compliance_terms_version?: string
 }
@@ -308,7 +305,7 @@ export interface AffiliateInvitee {
   email: string
   status: number
   created_at: number
-  /** Credited rebates earned from this invitee */
+  /** Rebates earned from this invitee, reversed ones excluded */
   rebate_quota: number
 }
 
@@ -319,18 +316,35 @@ export interface AffiliateInviteesPage {
 
 /**
  * One invitation rebate: a share of an invitee's top-up ('topup') or
- * redemption code ('redemption'). A refunded payment turns it 'reversed'.
+ * redemption code ('redemption'). It stays 'pending' until available_at,
+ * then moves into the balance ('settled'); a refunded payment turns it
+ * 'reversed'. 'credited' marks rebates paid before the holding period.
  */
 export interface AffiliateRebate {
   invitee_name: string
   invitee_email: string
   source_type: 'topup' | 'redemption'
   rebate_quota: number
-  status: 'credited' | 'reversed'
+  status: 'pending' | 'settled' | 'reversed' | 'credited'
   created_at: number
+  /** Unix seconds when a pending rebate moves into the balance */
+  available_at: number
 }
 
 export interface AffiliateRebatesPage {
   items: AffiliateRebate[]
   total: number
+}
+
+/** The caller's referral totals and the current rebate rules. */
+export interface AffiliateSummary {
+  invitee_count: number
+  /** Rebates still in their holding period (locked) */
+  pending_quota: number
+  /** Every rebate earned, reversed ones excluded */
+  earned_quota: number
+  /** Share (0-100) of each invitee top-up paid as a rebate; 0 is off */
+  rebate_percent: number
+  /** Days each rebate stays pending before reaching the balance */
+  hold_days: number
 }
