@@ -32,6 +32,7 @@ import type {
   AffiliateCodeResponse,
   AffiliateInviteesResponse,
   AffiliateRebatesResponse,
+  AffiliateSummaryResponse,
   AffiliateTransferResponse,
   BillingHistoryResponse,
   CompleteOrderRequest,
@@ -214,6 +215,14 @@ export async function getAffiliateRebates(
   const res = await api.get('/api/user/aff/rebates', {
     params: { p: page, page_size: pageSize },
   })
+  return res.data
+}
+
+/**
+ * Get the caller's referral totals and the current rebate rules
+ */
+export async function getAffiliateSummary(): Promise<AffiliateSummaryResponse> {
+  const res = await api.get('/api/user/aff/summary')
   return res.data
 }
 

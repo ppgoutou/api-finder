@@ -116,13 +116,6 @@ func GetTopUpInfo(c *gin.Context) {
 		"enable_redemption":                complianceConfirmed,
 		"payment_compliance_confirmed":     complianceConfirmed,
 		"payment_compliance_terms_version": operation_setting.CurrentComplianceTermsVersion,
-		"aff_rebate_percent": func() float64 {
-			if complianceConfirmed {
-				return common.AffRebatePercent
-			}
-			return 0
-		}(),
-		"aff_auto_transfer_time": common.AffAutoTransferTime,
 		"waffo_pay_methods": func() any {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()

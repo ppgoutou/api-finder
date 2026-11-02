@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -210,10 +209,10 @@ func UpdateOption(c *gin.Context) {
 			common.ApiErrorT(c, "Payment, redemption, subscription, and invitation reward features are disabled. The administrator must confirm compliance terms before enabling them.")
 			return
 		}
-	case "AffAutoTransferTime":
-		option.Value = strings.TrimSpace(option.Value.(string))
-		if _, err := time.Parse("15:04", option.Value.(string)); option.Value != "" && err != nil {
-			common.ApiErrorT(c, "Invitation quota transfer time must be HH:MM")
+	case "AffRebateHoldDays":
+		days, err := strconv.Atoi(strings.TrimSpace(option.Value.(string)))
+		if err != nil || days < 0 || days > 365 {
+			common.ApiErrorT(c, "Rebate holding days must be a whole number from 0 to 365")
 			return
 		}
 	default:

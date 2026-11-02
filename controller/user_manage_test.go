@@ -717,13 +717,13 @@ func TestGetAffInviteesMasksIdentityAndOnlyListsOwnInvitees(t *testing.T) {
 	assert.NotContains(t, recorder.Body.String(), "alice@")
 }
 
-func TestAffRebateFollowsTopUpRedemptionReversalAndScheduledMove(t *testing.T) {
+func TestAffRebateHoldsEachRebateThenSettlesAndFollowsRefunds(t *testing.T) {
 	db := setupManageUserTestDB(t)
 	require.NoError(t, db.AutoMigrate(&model.TopUp{}, &model.Redemption{}))
 	confirmPaymentComplianceForTest(t)
-	previousPercent := common.AffRebatePercent
-	common.AffRebatePercent = 3
-	t.Cleanup(func() { common.AffRebatePercent = previousPercent })
+	previousPercent, previousHoldDays := common.AffRebatePercent, common.AffRebateHoldDays
+	common.AffRebatePercent, common.AffRebateHoldDays = 3, 7
+	t.Cleanup(func() { common.AffRebatePercent, common.AffRebateHoldDays = previousPercent, previousHoldDays })
 
 	inviter := model.User{Username: "inviter", Password: "password123", AffCode: "INVITER1", Status: common.UserStatusEnabled}
 	require.NoError(t, db.Create(&inviter).Error)
@@ -732,28 +732,29 @@ func TestAffRebateFollowsTopUpRedemptionReversalAndScheduledMove(t *testing.T) {
 	loner := model.User{Username: "loner", Password: "password123", AffCode: "LONER001", Status: common.UserStatusEnabled}
 	require.NoError(t, db.Create(&loner).Error)
 
-	reloadInviter := func() model.User {
+	inviterWallet := func() int {
 		var user model.User
 		require.NoError(t, db.First(&user, inviter.Id).Error)
-		return user
+		assert.Zero(t, user.AffQuota, "rebates never pass through the manually transferable aff_quota")
+		return user.Quota
 	}
-	rebateStatus := func(sourceType, sourceRef string) string {
+	rebateFor := func(sourceType, sourceRef string) model.AffRebate {
 		var rebate model.AffRebate
 		require.NoError(t, db.Where("source_type = ? AND source_ref = ?", sourceType, sourceRef).First(&rebate).Error)
-		return rebate.Status
+		return rebate
 	}
-
-	for _, tradeNo := range []string{"stripe-invitee", "stripe-loner"} {
-		userId := invitee.Id
-		if tradeNo == "stripe-loner" {
-			userId = loner.Id
-		}
+	topUp := func(tradeNo string, userId int) {
 		require.NoError(t, db.Create(&model.TopUp{UserId: userId, Amount: 10, Money: 10, TradeNo: tradeNo, PaymentMethod: model.PaymentMethodStripe, PaymentProvider: model.PaymentProviderStripe, Status: common.TopUpStatusPending}).Error)
 		require.NoError(t, model.Recharge(tradeNo, "cus_test", "127.0.0.1"))
 	}
-	topUpQuota := int(10 * common.QuotaPerUnit)
-	topUpRebate := topUpQuota * 3 / 100
-	assert.Equal(t, topUpRebate, reloadInviter().AffQuota)
+
+	topUp("stripe-held", invitee.Id)
+	topUp("stripe-loner", loner.Id)
+	topUpRebate := int(10*common.QuotaPerUnit) * 3 / 100
+	held := rebateFor(model.AffRebateSourceTopUp, "stripe-held")
+	assert.Equal(t, model.AffRebateStatusPending, held.Status)
+	assert.Equal(t, topUpRebate, held.RebateQuota)
+	assert.Equal(t, held.CreatedAt+7*24*60*60, held.AvailableAt)
 	var rebateCount int64
 	require.NoError(t, db.Model(&model.AffRebate{}).Count(&rebateCount).Error)
 	assert.Equal(t, int64(1), rebateCount, "a top-up by a user nobody invited earns no rebate")
@@ -762,31 +763,48 @@ func TestAffRebateFollowsTopUpRedemptionReversalAndScheduledMove(t *testing.T) {
 	require.NoError(t, db.Create(&redemption).Error)
 	_, err := model.Redeem(redemption.Key, invitee.Id)
 	require.NoError(t, err)
-	totalRebate := topUpRebate + 30
-	assert.Equal(t, totalRebate, reloadInviter().AffQuota)
-	assert.Equal(t, totalRebate, reloadInviter().AffHistoryQuota)
+	redeemed := rebateFor(model.AffRebateSourceRedemption, strconv.Itoa(redemption.Id))
+	assert.Equal(t, 30, redeemed.RebateQuota)
+	// Earned the same second as the top-up rebate; give it a later date so the
+	// two settle on different runs.
+	require.NoError(t, db.Model(&model.AffRebate{}).Where("id = ?", redeemed.Id).Update("available_at", held.AvailableAt+24*60*60).Error)
+	redeemed.AvailableAt = held.AvailableAt + 24*60*60
 
-	moved, err := model.MovePendingAffQuotaToWallet(inviter.Id)
+	settled, err := model.SettleDueAffRebates(held.AvailableAt - 1)
 	require.NoError(t, err)
-	assert.Equal(t, totalRebate, moved)
-	afterMove := reloadInviter()
-	assert.Zero(t, afterMove.AffQuota)
-	assert.Equal(t, totalRebate, afterMove.Quota)
-	movedAgain, err := model.MovePendingAffQuotaToWallet(inviter.Id)
-	require.NoError(t, err)
-	assert.Zero(t, movedAgain, "a second run has nothing left to move")
+	assert.Zero(t, settled, "nothing reaches the wallet before its holding period ends")
+	assert.Zero(t, inviterWallet())
 
-	_, err = model.ReverseStripeTopUp("stripe-invitee", common.TopUpStatusDisputed, "127.0.0.1")
+	settled, err = model.SettleDueAffRebates(held.AvailableAt)
 	require.NoError(t, err)
-	afterReverse := reloadInviter()
-	assert.Equal(t, totalRebate-topUpRebate, afterReverse.Quota, "a rebate already moved to the wallet is taken from the wallet")
-	assert.Equal(t, 30, afterReverse.AffHistoryQuota)
-	assert.Equal(t, model.AffRebateStatusReversed, rebateStatus(model.AffRebateSourceTopUp, "stripe-invitee"))
+	assert.Equal(t, 1, settled, "only the rebate whose date has come settles")
+	assert.Equal(t, topUpRebate, inviterWallet())
+	assert.Equal(t, model.AffRebateStatusSettled, rebateFor(model.AffRebateSourceTopUp, "stripe-held").Status)
+	settled, err = model.SettleDueAffRebates(held.AvailableAt)
+	require.NoError(t, err)
+	assert.Zero(t, settled, "a settled rebate is never paid twice")
 
-	_, err = model.RestoreDisputedStripeTopUp("stripe-invitee", "127.0.0.1")
+	topUp("stripe-refunded-early", invitee.Id)
+	_, err = model.ReverseStripeTopUp("stripe-refunded-early", common.TopUpStatusRefunded, "127.0.0.1")
 	require.NoError(t, err)
-	assert.Equal(t, topUpRebate, reloadInviter().AffQuota)
-	assert.Equal(t, model.AffRebateStatusCredited, rebateStatus(model.AffRebateSourceTopUp, "stripe-invitee"))
+	assert.Equal(t, model.AffRebateStatusReversed, rebateFor(model.AffRebateSourceTopUp, "stripe-refunded-early").Status)
+	assert.Equal(t, topUpRebate, inviterWallet(), "a refund during the holding period never touches the wallet")
+
+	_, err = model.ReverseStripeTopUp("stripe-held", common.TopUpStatusDisputed, "127.0.0.1")
+	require.NoError(t, err)
+	assert.Zero(t, inviterWallet(), "a settled rebate is taken back from the wallet")
+	_, err = model.RestoreDisputedStripeTopUp("stripe-held", "127.0.0.1")
+	require.NoError(t, err)
+	assert.Equal(t, model.AffRebateStatusPending, rebateFor(model.AffRebateSourceTopUp, "stripe-held").Status)
+	settled, err = model.SettleDueAffRebates(held.AvailableAt)
+	require.NoError(t, err)
+	assert.Equal(t, 1, settled)
+	assert.Equal(t, topUpRebate, inviterWallet())
+
+	summary, err := model.GetAffRebateSummary(inviter.Id)
+	require.NoError(t, err)
+	assert.Equal(t, 30, summary.PendingQuota)
+	assert.Equal(t, topUpRebate+30, summary.EarnedQuota)
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -796,24 +814,24 @@ func TestAffRebateFollowsTopUpRedemptionReversalAndScheduledMove(t *testing.T) {
 	var response struct {
 		Success bool `json:"success"`
 		Data    struct {
-			Total int `json:"total"`
 			Items []struct {
 				InviteeName  string `json:"invitee_name"`
 				InviteeEmail string `json:"invitee_email"`
 				SourceType   string `json:"source_type"`
-				RebateQuota  int    `json:"rebate_quota"`
 				Status       string `json:"status"`
+				AvailableAt  int64  `json:"available_at"`
 			} `json:"items"`
 		} `json:"data"`
 	}
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
 	require.True(t, response.Success)
-	require.Len(t, response.Data.Items, 2)
-	assert.Equal(t, model.AffRebateSourceRedemption, response.Data.Items[0].SourceType)
-	assert.Equal(t, 30, response.Data.Items[0].RebateQuota)
-	assert.Equal(t, "胡**", response.Data.Items[1].InviteeName)
-	assert.Equal(t, "a***@gmail.com", response.Data.Items[1].InviteeEmail)
-	assert.NotContains(t, recorder.Body.String(), "stripe-invitee", "the invitee's order number stays private")
+	require.Len(t, response.Data.Items, 3)
+	assert.Equal(t, model.AffRebateStatusReversed, response.Data.Items[0].Status)
+	assert.Equal(t, model.AffRebateSourceRedemption, response.Data.Items[1].SourceType)
+	assert.Equal(t, redeemed.AvailableAt, response.Data.Items[1].AvailableAt)
+	assert.Equal(t, "胡**", response.Data.Items[2].InviteeName)
+	assert.Equal(t, "a***@gmail.com", response.Data.Items[2].InviteeEmail)
+	assert.NotContains(t, recorder.Body.String(), "stripe-held", "the invitee's order number stays private")
 }
 
 func TestUpdateOptionRejectsInvalidAffRebateSettings(t *testing.T) {
@@ -825,8 +843,9 @@ func TestUpdateOptionRejectsInvalidAffRebateSettings(t *testing.T) {
 		{`{"key":"AffRebatePercent","value":"101"}`, "Invitation rebate percentage must be between 0 and 100"},
 		{`{"key":"AffRebatePercent","value":-1}`, "Invitation rebate percentage must be between 0 and 100"},
 		{`{"key":"AffRebatePercent","value":"three"}`, "Invitation rebate percentage must be between 0 and 100"},
-		{`{"key":"AffAutoTransferTime","value":"24:30"}`, "Invitation quota transfer time must be HH:MM"},
-		{`{"key":"AffAutoTransferTime","value":"9:30pm"}`, "Invitation quota transfer time must be HH:MM"},
+		{`{"key":"AffRebateHoldDays","value":"-1"}`, "Rebate holding days must be a whole number from 0 to 365"},
+		{`{"key":"AffRebateHoldDays","value":"1.5"}`, "Rebate holding days must be a whole number from 0 to 365"},
+		{`{"key":"AffRebateHoldDays","value":"400"}`, "Rebate holding days must be a whole number from 0 to 365"},
 	}
 	for _, tc := range cases {
 		recorder := httptest.NewRecorder()

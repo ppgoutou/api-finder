@@ -45,7 +45,7 @@ function Fixture() {
             QuotaForInviter: 0,
             QuotaForInvitee: 0,
             AffRebatePercent: 0,
-            AffAutoTransferTime: '',
+            AffRebateHoldDays: 7,
             TopUpLink: '',
             quota_setting: {
               enable_free_model_pre_consume: true,
@@ -148,21 +148,21 @@ test.each(['', '-1'])(
   }
 )
 
-test('invitation rebate percentage and transfer time save as typed', async () => {
+test('invitation rebate percentage and arrival days save as typed', async () => {
   await renderSettings()
   fireEvent.change(
     screen.getByRole('spinbutton', { name: 'Invitation rebate percentage' }),
     { target: { value: '3' } }
   )
   fireEvent.change(
-    screen.getByLabelText('Daily invitation quota transfer time'),
-    { target: { value: '00:30' } }
+    screen.getByRole('spinbutton', { name: 'Rebate arrival days' }),
+    { target: { value: '14' } }
   )
   fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
   await waitFor(() =>
     expect(api.put).toHaveBeenCalledWith('/api/option/', {
-      key: 'AffAutoTransferTime',
-      value: '00:30',
+      key: 'AffRebateHoldDays',
+      value: 14,
     })
   )
   expect(api.put).toHaveBeenCalledWith('/api/option/', {
@@ -181,3 +181,17 @@ test('rebate percentage above 100 shows a field error and prevents saving', asyn
   await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'))
   expect(api.put).not.toHaveBeenCalled()
 })
+
+test.each(['1.5', '-1'])(
+  'rebate arrival days "%s" shows a field error and prevents saving',
+  async (value) => {
+    await renderSettings()
+    const input = screen.getByRole('spinbutton', {
+      name: 'Rebate arrival days',
+    })
+    fireEvent.change(input, { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'))
+    expect(api.put).not.toHaveBeenCalled()
+  }
+)
