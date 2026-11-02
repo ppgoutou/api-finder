@@ -7761,6 +7761,21 @@
     "Invitees": "Invités",
     "{{count}} in total": "{{count}} au total",
     "No invitees yet": "Aucun invité pour l'instant",
-    "Users who sign up with your invitation code or link appear here.": "Les utilisateurs inscrits avec votre code ou lien d'invitation apparaissent ici."
+    "Users who sign up with your invitation code or link appear here.": "Les utilisateurs inscrits avec votre code ou lien d'invitation apparaissent ici.",
+    "Redemption code": "Code d'échange",
+    "Reversed": "Annulé",
+    "Rebates": "Remises",
+    "No rebates yet": "Aucune remise pour l'instant",
+    "Moves to your balance daily at {{time}}": "Versé sur votre solde chaque jour à {{time}}",
+    "Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.": "Vos amis inscrits avec votre code ou lien vous rapportent {{percent}} % de chaque recharge et code d'échange utilisé.",
+    "Invitation rebate percentage": "Pourcentage de remise d'invitation",
+    "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off.": "Part de chaque recharge ou code d'échange d'un invité créditée au quota d'invitation en attente de l'invitant. 0 désactive les remises.",
+    "Daily invitation quota transfer time": "Heure de transfert quotidien du quota d'invitation",
+    "Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.": "Chaque jour à cette heure (serveur), le quota d'invitation en attente est versé sur le solde de chaque utilisateur. Laissez vide pour un transfert manuel.",
+    "Invitation quota transfer time must be HH:MM": "L'heure de transfert doit être au format HH:MM",
+    "Invitation rebate percentage must be between 0 and 100": "Le pourcentage de remise doit être compris entre 0 et 100",
+    "Invitation rebate {{quota}} added to pending invitation quota": "Remise d'invitation de {{quota}} ajoutée au quota en attente",
+    "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Remise d'invitation de {{quota}} annulée : le paiement de l'invité a été remboursé ou contesté",
+    "Pending invitation quota {{quota}} moved to balance": "Quota d'invitation en attente de {{quota}} versé sur le solde"
   }
 }

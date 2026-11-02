@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useQuery } from '@tanstack/react-query'
 import i18next from 'i18next'
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
@@ -28,7 +29,12 @@ import {
   requireServerSuccess,
 } from '@/lib/server-error-message'
 
-import { getAffiliateCode, transferAffiliateQuota } from '../api'
+import {
+  getAffiliateCode,
+  getAffiliateInvitees,
+  getAffiliateRebates,
+  transferAffiliateQuota,
+} from '../api'
 import { generateAffiliateLink } from '../lib'
 
 // ============================================================================
@@ -102,4 +108,29 @@ export function useAffiliate() {
     transferQuota,
     refetch: fetchAffiliateCode,
   }
+}
+
+export const AFFILIATE_PAGE_SIZE = 10
+
+/** One page of the users who signed up with the caller's invitation code. */
+export function useAffiliateInvitees(page: number) {
+  return useQuery({
+    queryKey: ['wallet', 'affiliate-invitees', page],
+    queryFn: async () =>
+      requireServerSuccess(
+        await getAffiliateInvitees(page, AFFILIATE_PAGE_SIZE)
+      ).data,
+    placeholderData: (previous) => previous,
+  })
+}
+
+/** One page of the invitation rebates paid to the caller. */
+export function useAffiliateRebates(page: number) {
+  return useQuery({
+    queryKey: ['wallet', 'affiliate-rebates', page],
+    queryFn: async () =>
+      requireServerSuccess(await getAffiliateRebates(page, AFFILIATE_PAGE_SIZE))
+        .data,
+    placeholderData: (previous) => previous,
+  })
 }

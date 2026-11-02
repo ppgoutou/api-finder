@@ -587,6 +587,21 @@ func GetUserIdByAffCode(affCode string) (int, error) {
 	return user.Id, err
 }
 
+// GetInviteeIdentities loads the name and email fields of the given users,
+// deleted ones included, keyed by id.
+func GetInviteeIdentities(ids []int) (map[int]*User, error) {
+	identities := make(map[int]*User, len(ids))
+	if len(ids) == 0 {
+		return identities, nil
+	}
+	var users []*User
+	err := DB.Unscoped().Select("id", "username", "display_name", "email").Where("id IN ?", ids).Find(&users).Error
+	for _, user := range users {
+		identities[user.Id] = user
+	}
+	return identities, err
+}
+
 // GetInviteesByInviterId lists the users who signed up with inviterId's code,
 // newest first, with only the fields the inviter may see.
 func GetInviteesByInviterId(inviterId int, pageInfo *common.PageInfo) ([]*User, int64, error) {

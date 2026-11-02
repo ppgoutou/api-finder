@@ -478,42 +478,103 @@ func GetAffCode(c *gin.Context) {
 }
 
 type affInviteeItem struct {
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Status    int    `json:"status"`
-	CreatedAt int64  `json:"created_at"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Status      int    `json:"status"`
+	CreatedAt   int64  `json:"created_at"`
+	RebateQuota int    `json:"rebate_quota"`
+}
+
+// maskedInviteeIdentity is what an inviter may see of an invitee: the first
+// character of the name and of the email's local part.
+func maskedInviteeIdentity(invitee *model.User) (name string, email string) {
+	displayName := invitee.DisplayName
+	if displayName == "" {
+		displayName = invitee.Username
+	}
+	if runes := []rune(displayName); len(runes) > 0 {
+		name = string(runes[0]) + "**"
+	}
+	if local, domain, ok := strings.Cut(invitee.Email, "@"); ok && local != "" {
+		email = string([]rune(local)[0]) + "***@" + domain
+	}
+	return name, email
 }
 
 // GetAffInvitees lists the users who registered with the caller's invitation
 // code. Names and emails are masked: the inviter sees who joined, not who
 // they are.
 func GetAffInvitees(c *gin.Context) {
+	inviterId := c.GetInt("id")
 	pageInfo := common.GetPageQuery(c)
-	invitees, total, err := model.GetInviteesByInviterId(c.GetInt("id"), pageInfo)
+	invitees, total, err := model.GetInviteesByInviterId(inviterId, pageInfo)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	inviteeIds := make([]int, 0, len(invitees))
+	for _, invitee := range invitees {
+		inviteeIds = append(inviteeIds, invitee.Id)
+	}
+	rebates, err := model.SumAffRebatesByInvitee(inviterId, inviteeIds)
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
 	items := make([]affInviteeItem, 0, len(invitees))
 	for _, invitee := range invitees {
-		name := invitee.DisplayName
-		if name == "" {
-			name = invitee.Username
-		}
-		maskedName := ""
-		if runes := []rune(name); len(runes) > 0 {
-			maskedName = string(runes[0]) + "**"
-		}
-		maskedEmail := ""
-		if local, domain, ok := strings.Cut(invitee.Email, "@"); ok && local != "" {
-			maskedEmail = string([]rune(local)[0]) + "***@" + domain
-		}
+		name, email := maskedInviteeIdentity(invitee)
 		items = append(items, affInviteeItem{
-			Name:      maskedName,
-			Email:     maskedEmail,
-			Status:    invitee.Status,
-			CreatedAt: invitee.CreatedAt,
+			Name:        name,
+			Email:       email,
+			Status:      invitee.Status,
+			CreatedAt:   invitee.CreatedAt,
+			RebateQuota: rebates[invitee.Id],
 		})
+	}
+	pageInfo.SetTotal(int(total))
+	pageInfo.SetItems(items)
+	common.ApiSuccess(c, pageInfo)
+}
+
+type affRebateItem struct {
+	InviteeName  string `json:"invitee_name"`
+	InviteeEmail string `json:"invitee_email"`
+	SourceType   string `json:"source_type"`
+	RebateQuota  int    `json:"rebate_quota"`
+	Status       string `json:"status"`
+	CreatedAt    int64  `json:"created_at"`
+}
+
+// GetAffRebates lists the invitation rebates paid to the caller.
+func GetAffRebates(c *gin.Context) {
+	pageInfo := common.GetPageQuery(c)
+	rebates, total, err := model.GetAffRebatesByInviterId(c.GetInt("id"), pageInfo)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	inviteeIds := make([]int, 0, len(rebates))
+	for _, rebate := range rebates {
+		inviteeIds = append(inviteeIds, rebate.InviteeId)
+	}
+	invitees, err := model.GetInviteeIdentities(inviteeIds)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	items := make([]affRebateItem, 0, len(rebates))
+	for _, rebate := range rebates {
+		item := affRebateItem{
+			SourceType:  rebate.SourceType,
+			RebateQuota: rebate.RebateQuota,
+			Status:      rebate.Status,
+			CreatedAt:   rebate.CreatedAt,
+		}
+		if invitee := invitees[rebate.InviteeId]; invitee != nil {
+			item.InviteeName, item.InviteeEmail = maskedInviteeIdentity(invitee)
+		}
+		items = append(items, item)
 	}
 	pageInfo.SetTotal(int(total))
 	pageInfo.SetItems(items)

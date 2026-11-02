@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -197,9 +198,22 @@ func UpdateOption(c *gin.Context) {
 		option.Value = fmt.Sprintf("%v", option.Value)
 	}
 	switch option.Key {
-	case "QuotaForInviter", "QuotaForInvitee":
+	case "QuotaForInviter", "QuotaForInvitee", "AffRebatePercent":
+		if option.Key == "AffRebatePercent" {
+			percent, err := strconv.ParseFloat(strings.TrimSpace(option.Value.(string)), 64)
+			if err != nil || percent < 0 || percent > 100 {
+				common.ApiErrorT(c, "Invitation rebate percentage must be between 0 and 100")
+				return
+			}
+		}
 		if isPositiveOptionValue(option.Value.(string)) && !operation_setting.IsPaymentComplianceConfirmed() {
 			common.ApiErrorT(c, "Payment, redemption, subscription, and invitation reward features are disabled. The administrator must confirm compliance terms before enabling them.")
+			return
+		}
+	case "AffAutoTransferTime":
+		option.Value = strings.TrimSpace(option.Value.(string))
+		if _, err := time.Parse("15:04", option.Value.(string)); option.Value != "" && err != nil {
+			common.ApiErrorT(c, "Invitation quota transfer time must be HH:MM")
 			return
 		}
 	default:

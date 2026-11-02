@@ -68,7 +68,7 @@ func setupManageUserTestDB(t *testing.T) *gorm.DB {
 			}
 		}
 	})
-	require.NoError(t, db.AutoMigrate(&model.User{}, &model.UserSession{}, &model.CasbinRule{}, &model.AuthzRole{}, &model.AuthFlow{}, &model.TwoFA{}, &model.PasskeyCredential{}, &model.UserAccessToken{}))
+	require.NoError(t, db.AutoMigrate(&model.User{}, &model.UserSession{}, &model.CasbinRule{}, &model.AuthzRole{}, &model.AuthFlow{}, &model.TwoFA{}, &model.PasskeyCredential{}, &model.UserAccessToken{}, &model.AffRebate{}))
 	require.NoError(t, logDB.AutoMigrate(&model.Log{}, &model.AuditLog{}))
 	versionQuery := "SELECT version()"
 	if dialect == "sqlite" {
@@ -715,4 +715,130 @@ func TestGetAffInviteesMasksIdentityAndOnlyListsOwnInvitees(t *testing.T) {
 	assert.Equal(t, "胡**", response.Data.Items[1].Name)
 	assert.Equal(t, "a***@gmail.com", response.Data.Items[1].Email)
 	assert.NotContains(t, recorder.Body.String(), "alice@")
+}
+
+func TestAffRebateFollowsTopUpRedemptionReversalAndScheduledMove(t *testing.T) {
+	db := setupManageUserTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.TopUp{}, &model.Redemption{}))
+	confirmPaymentComplianceForTest(t)
+	previousPercent := common.AffRebatePercent
+	common.AffRebatePercent = 3
+	t.Cleanup(func() { common.AffRebatePercent = previousPercent })
+
+	inviter := model.User{Username: "inviter", Password: "password123", AffCode: "INVITER1", Status: common.UserStatusEnabled}
+	require.NoError(t, db.Create(&inviter).Error)
+	invitee := model.User{Username: "invitee", DisplayName: "胡小明", Email: "alice@gmail.com", Password: "password123", AffCode: "INVITEE1", InviterId: inviter.Id, Status: common.UserStatusEnabled}
+	require.NoError(t, db.Create(&invitee).Error)
+	loner := model.User{Username: "loner", Password: "password123", AffCode: "LONER001", Status: common.UserStatusEnabled}
+	require.NoError(t, db.Create(&loner).Error)
+
+	reloadInviter := func() model.User {
+		var user model.User
+		require.NoError(t, db.First(&user, inviter.Id).Error)
+		return user
+	}
+	rebateStatus := func(sourceType, sourceRef string) string {
+		var rebate model.AffRebate
+		require.NoError(t, db.Where("source_type = ? AND source_ref = ?", sourceType, sourceRef).First(&rebate).Error)
+		return rebate.Status
+	}
+
+	for _, tradeNo := range []string{"stripe-invitee", "stripe-loner"} {
+		userId := invitee.Id
+		if tradeNo == "stripe-loner" {
+			userId = loner.Id
+		}
+		require.NoError(t, db.Create(&model.TopUp{UserId: userId, Amount: 10, Money: 10, TradeNo: tradeNo, PaymentMethod: model.PaymentMethodStripe, PaymentProvider: model.PaymentProviderStripe, Status: common.TopUpStatusPending}).Error)
+		require.NoError(t, model.Recharge(tradeNo, "cus_test", "127.0.0.1"))
+	}
+	topUpQuota := int(10 * common.QuotaPerUnit)
+	topUpRebate := topUpQuota * 3 / 100
+	assert.Equal(t, topUpRebate, reloadInviter().AffQuota)
+	var rebateCount int64
+	require.NoError(t, db.Model(&model.AffRebate{}).Count(&rebateCount).Error)
+	assert.Equal(t, int64(1), rebateCount, "a top-up by a user nobody invited earns no rebate")
+
+	redemption := model.Redemption{Key: "rebate-redemption-key-0000000001", Status: common.RedemptionCodeStatusEnabled, Quota: 1000}
+	require.NoError(t, db.Create(&redemption).Error)
+	_, err := model.Redeem(redemption.Key, invitee.Id)
+	require.NoError(t, err)
+	totalRebate := topUpRebate + 30
+	assert.Equal(t, totalRebate, reloadInviter().AffQuota)
+	assert.Equal(t, totalRebate, reloadInviter().AffHistoryQuota)
+
+	moved, err := model.MovePendingAffQuotaToWallet(inviter.Id)
+	require.NoError(t, err)
+	assert.Equal(t, totalRebate, moved)
+	afterMove := reloadInviter()
+	assert.Zero(t, afterMove.AffQuota)
+	assert.Equal(t, totalRebate, afterMove.Quota)
+	movedAgain, err := model.MovePendingAffQuotaToWallet(inviter.Id)
+	require.NoError(t, err)
+	assert.Zero(t, movedAgain, "a second run has nothing left to move")
+
+	_, err = model.ReverseStripeTopUp("stripe-invitee", common.TopUpStatusDisputed, "127.0.0.1")
+	require.NoError(t, err)
+	afterReverse := reloadInviter()
+	assert.Equal(t, totalRebate-topUpRebate, afterReverse.Quota, "a rebate already moved to the wallet is taken from the wallet")
+	assert.Equal(t, 30, afterReverse.AffHistoryQuota)
+	assert.Equal(t, model.AffRebateStatusReversed, rebateStatus(model.AffRebateSourceTopUp, "stripe-invitee"))
+
+	_, err = model.RestoreDisputedStripeTopUp("stripe-invitee", "127.0.0.1")
+	require.NoError(t, err)
+	assert.Equal(t, topUpRebate, reloadInviter().AffQuota)
+	assert.Equal(t, model.AffRebateStatusCredited, rebateStatus(model.AffRebateSourceTopUp, "stripe-invitee"))
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/user/aff/rebates?p=1&page_size=10", nil)
+	c.Set("id", inviter.Id)
+	GetAffRebates(c)
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Total int `json:"total"`
+			Items []struct {
+				InviteeName  string `json:"invitee_name"`
+				InviteeEmail string `json:"invitee_email"`
+				SourceType   string `json:"source_type"`
+				RebateQuota  int    `json:"rebate_quota"`
+				Status       string `json:"status"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.True(t, response.Success)
+	require.Len(t, response.Data.Items, 2)
+	assert.Equal(t, model.AffRebateSourceRedemption, response.Data.Items[0].SourceType)
+	assert.Equal(t, 30, response.Data.Items[0].RebateQuota)
+	assert.Equal(t, "胡**", response.Data.Items[1].InviteeName)
+	assert.Equal(t, "a***@gmail.com", response.Data.Items[1].InviteeEmail)
+	assert.NotContains(t, recorder.Body.String(), "stripe-invitee", "the invitee's order number stays private")
+}
+
+func TestUpdateOptionRejectsInvalidAffRebateSettings(t *testing.T) {
+	confirmPaymentComplianceForTest(t)
+	cases := []struct {
+		body    string
+		message string
+	}{
+		{`{"key":"AffRebatePercent","value":"101"}`, "Invitation rebate percentage must be between 0 and 100"},
+		{`{"key":"AffRebatePercent","value":-1}`, "Invitation rebate percentage must be between 0 and 100"},
+		{`{"key":"AffRebatePercent","value":"three"}`, "Invitation rebate percentage must be between 0 and 100"},
+		{`{"key":"AffAutoTransferTime","value":"24:30"}`, "Invitation quota transfer time must be HH:MM"},
+		{`{"key":"AffAutoTransferTime","value":"9:30pm"}`, "Invitation quota transfer time must be HH:MM"},
+	}
+	for _, tc := range cases {
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Request = httptest.NewRequest(http.MethodPut, "/api/option/", strings.NewReader(tc.body))
+		UpdateOption(c)
+		var payload struct {
+			Success bool   `json:"success"`
+			Message string `json:"message"`
+		}
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &payload))
+		assert.False(t, payload.Success, tc.body)
+		assert.Equal(t, tc.message, payload.Message, tc.body)
+	}
 }

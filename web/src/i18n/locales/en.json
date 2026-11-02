@@ -7761,6 +7761,21 @@
     "Invitees": "Invitees",
     "{{count}} in total": "{{count}} in total",
     "No invitees yet": "No invitees yet",
-    "Users who sign up with your invitation code or link appear here.": "Users who sign up with your invitation code or link appear here."
+    "Users who sign up with your invitation code or link appear here.": "Users who sign up with your invitation code or link appear here.",
+    "Redemption code": "Redemption code",
+    "Reversed": "Reversed",
+    "Rebates": "Rebates",
+    "No rebates yet": "No rebates yet",
+    "Moves to your balance daily at {{time}}": "Moves to your balance daily at {{time}}",
+    "Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.": "Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.",
+    "Invitation rebate percentage": "Invitation rebate percentage",
+    "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off.": "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off.",
+    "Daily invitation quota transfer time": "Daily invitation quota transfer time",
+    "Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.": "Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.",
+    "Invitation quota transfer time must be HH:MM": "Invitation quota transfer time must be HH:MM",
+    "Invitation rebate percentage must be between 0 and 100": "Invitation rebate percentage must be between 0 and 100",
+    "Invitation rebate {{quota}} added to pending invitation quota": "Invitation rebate {{quota}} added to pending invitation quota",
+    "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed",
+    "Pending invitation quota {{quota}} moved to balance": "Pending invitation quota {{quota}} moved to balance"
   }
 }

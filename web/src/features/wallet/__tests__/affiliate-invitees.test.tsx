@@ -23,12 +23,16 @@ import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import zh from '@/i18n/locales/zh.json'
+import { formatQuota } from '@/lib/format'
 
 import { getAffiliateInvitees } from '../api'
 import { AffiliateInviteesCard } from '../components/affiliate-invitees-card'
 import { generateAffiliateLink } from '../lib'
 
-vi.mock('../api', () => ({ getAffiliateInvitees: vi.fn() }))
+vi.mock('../api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api')>()),
+  getAffiliateInvitees: vi.fn(),
+}))
 
 const i18n = createInstance()
 
@@ -59,15 +63,21 @@ function renderCard() {
   )
 }
 
-it('lists masked invitees with their status and total', async () => {
+it('lists masked invitees with their status, rebate and total', async () => {
   vi.mocked(getAffiliateInvitees).mockResolvedValue({
     success: true,
     message: '',
     data: {
       total: 2,
       items: [
-        { name: '胡**', email: 'a***@gmail.com', status: 1, created_at: 1 },
-        { name: 's**', email: '', status: 2, created_at: 2 },
+        {
+          name: '胡**',
+          email: 'a***@gmail.com',
+          status: 1,
+          created_at: 1,
+          rebate_quota: 150000,
+        },
+        { name: 's**', email: '', status: 2, created_at: 2, rebate_quota: 0 },
       ],
     },
   })
@@ -78,6 +88,7 @@ it('lists masked invitees with their status and total', async () => {
   expect(screen.getByText('共 2 人')).toBeVisible()
   expect(screen.getByText('已启用')).toBeVisible()
   expect(screen.getByText('已禁用')).toBeVisible()
+  expect(screen.getByText(formatQuota(150000))).toBeVisible()
   expect(screen.queryByRole('button', { name: '下一页' })).toBeNull()
 })
 
@@ -98,7 +109,9 @@ it('requests the next page when more than one page exists', async () => {
     message: '',
     data: {
       total: 11,
-      items: [{ name: 'u**', email: '', status: 1, created_at: 3 }],
+      items: [
+        { name: 'u**', email: '', status: 1, created_at: 3, rebate_quota: 0 },
+      ],
     },
   })
   renderCard()

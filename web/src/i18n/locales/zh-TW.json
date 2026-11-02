@@ -7761,6 +7761,21 @@
     "Invitees": "邀請明細",
     "{{count}} in total": "共 {{count}} 人",
     "No invitees yet": "暫無邀請紀錄",
-    "Users who sign up with your invitation code or link appear here.": "透過你的邀請碼或邀請連結註冊的使用者會顯示在這裡。"
+    "Users who sign up with your invitation code or link appear here.": "透過你的邀請碼或邀請連結註冊的使用者會顯示在這裡。",
+    "Redemption code": "兌換碼",
+    "Reversed": "已撤回",
+    "Rebates": "返利到帳",
+    "No rebates yet": "暫無返利紀錄",
+    "Moves to your balance daily at {{time}}": "每天 {{time}} 自動轉入餘額",
+    "Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.": "好友用你的邀請碼或邀請連結註冊後，TA 每次儲值或使用兌換碼，你都能獲得 {{percent}}% 返利。",
+    "Invitation rebate percentage": "邀請返利比例（%）",
+    "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off.": "被邀請人每次儲值或使用兌換碼時，按此比例計入邀請人的待劃轉額度。設為 0 關閉返利。",
+    "Daily invitation quota transfer time": "待劃轉額度每日轉入時間",
+    "Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.": "每天到這個時間（伺服器時區），所有使用者的待劃轉額度自動轉入餘額。留空則由使用者自行手動劃轉。",
+    "Invitation quota transfer time must be HH:MM": "轉入時間格式必須為 HH:MM",
+    "Invitation rebate percentage must be between 0 and 100": "邀請返利比例必須在 0 到 100 之間",
+    "Invitation rebate {{quota}} added to pending invitation quota": "邀請返利 {{quota}} 已計入待劃轉額度",
+    "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "被邀請人的付款已退款或被拒付，邀請返利 {{quota}} 已撤回",
+    "Pending invitation quota {{quota}} moved to balance": "待劃轉邀請額度 {{quota}} 已自動轉入餘額"
   }
 }

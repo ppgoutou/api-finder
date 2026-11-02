@@ -130,6 +130,14 @@ var TelegramBotName = ""
 var QuotaForNewUser = 0
 var QuotaForInviter = 0
 var QuotaForInvitee = 0
+
+// AffRebatePercent is the share (0-100) of an invitee's top-up or
+// redemption credited to the inviter's pending invitation quota.
+var AffRebatePercent = 0.0
+
+// AffAutoTransferTime ("HH:MM", server time) is when pending invitation
+// quota moves into every user's wallet each day; empty turns it off.
+var AffAutoTransferTime = ""
 var ChannelDisableThreshold = 5.0
 var AutomaticDisableChannelEnabled = false
 var AutomaticEnableChannelEnabled = false

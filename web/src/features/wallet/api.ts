@@ -31,6 +31,7 @@ import type {
   StripePaymentResponse,
   AffiliateCodeResponse,
   AffiliateInviteesResponse,
+  AffiliateRebatesResponse,
   AffiliateTransferResponse,
   BillingHistoryResponse,
   CompleteOrderRequest,
@@ -198,6 +199,19 @@ export async function getAffiliateInvitees(
   pageSize: number
 ): Promise<AffiliateInviteesResponse> {
   const res = await api.get('/api/user/aff/invitees', {
+    params: { p: page, page_size: pageSize },
+  })
+  return res.data
+}
+
+/**
+ * List the invitation rebates paid to the caller
+ */
+export async function getAffiliateRebates(
+  page: number,
+  pageSize: number
+): Promise<AffiliateRebatesResponse> {
+  const res = await api.get('/api/user/aff/rebates', {
     params: { p: page, page_size: pageSize },
   })
   return res.data
