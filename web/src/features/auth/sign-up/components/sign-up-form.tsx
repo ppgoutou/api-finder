@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -88,6 +89,13 @@ export function SignUpForm({
     validateTurnstile,
   })
 
+  // A code in the URL wins over one remembered from an earlier visit.
+  const [initialAffCode] = useState(
+    () =>
+      new URLSearchParams(window.location.search).get('aff')?.trim() ||
+      getAffiliateCode()
+  )
+
   const form = useForm<z.infer<typeof registerFormSchema>>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
@@ -95,6 +103,7 @@ export function SignUpForm({
       email: '',
       password: '',
       confirmPassword: '',
+      affCode: initialAffCode,
     },
   })
 
@@ -166,13 +175,15 @@ export function SignUpForm({
         password: data.password,
         email: data.email || undefined,
         verification_code: verificationCode || undefined,
-        aff_code: getAffiliateCode(),
+        aff_code: data.affCode ?? '',
         turnstile: turnstileToken,
       })
 
       if (res?.success) {
         toast.success(t('Account created! Please sign in'))
         redirectToLogin()
+      } else if (res?.message === 'Invalid invitation code') {
+        form.setError('affCode', { message: res.message })
       } else {
         handleServerError(createServerError(res, t('Failed to create account')))
       }
@@ -349,6 +360,29 @@ export function SignUpForm({
             </div>
           </>
         )}
+
+        <FormField
+          control={form.control}
+          name='affCode'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Invitation code (optional)')}</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t('Enter invitation code')}
+                  autoComplete='off'
+                  {...field}
+                />
+              </FormControl>
+              {initialAffCode && field.value === initialAffCode ? (
+                <FormDescription>
+                  {t('Filled in from your invitation link')}
+                </FormDescription>
+              ) : null}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Turnstile */}
         {isTurnstileEnabled && (

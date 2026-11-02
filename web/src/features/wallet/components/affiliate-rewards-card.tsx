@@ -31,6 +31,7 @@ import type { UserWalletData } from '../types'
 
 interface AffiliateRewardsCardProps {
   user: UserWalletData | null
+  affiliateCode: string
   affiliateLink: string
   onTransfer: () => void
   complianceConfirmed?: boolean
@@ -39,6 +40,7 @@ interface AffiliateRewardsCardProps {
 
 export function AffiliateRewardsCard({
   user,
+  affiliateCode,
   affiliateLink,
   onTransfer,
   complianceConfirmed = true,
@@ -75,7 +77,7 @@ export function AffiliateRewardsCard({
             </h3>
             <p className='text-muted-foreground line-clamp-1 text-xs'>
               {t(
-                'Earn rewards when users join through your referral link. Transfer accumulated rewards to your balance anytime.'
+                'Share your invitation link, or have friends enter your invitation code when they sign up.'
               )}
             </p>
           </div>
@@ -98,30 +100,49 @@ export function AffiliateRewardsCard({
           ))}
         </div>
 
-        <div className='flex items-center gap-2'>
-          <Input
-            value={affiliateLink}
-            readOnly
-            className='border-muted bg-background/70 h-9 min-w-0 flex-1 font-mono text-xs'
-          />
-          <CopyButton
-            value={affiliateLink}
-            variant='outline'
-            className='bg-background size-9 shrink-0'
-            iconClassName='size-4'
-            tooltip={t('Copy referral link')}
-            aria-label={t('Copy referral link')}
-          />
-          {hasRewards && (
-            <Button
-              onClick={onTransfer}
-              disabled={!complianceConfirmed}
-              className='h-9 shrink-0 px-3'
-              size='sm'
-            >
-              {t('Transfer to Balance')}
-            </Button>
-          )}
+        <div className='grid gap-2'>
+          <div className='flex items-center gap-2'>
+            <span className='text-muted-foreground shrink-0 text-xs'>
+              {t('Invitation code')}
+            </span>
+            <span className='min-w-0 flex-1 truncate font-mono text-sm font-semibold tracking-widest'>
+              {affiliateCode}
+            </span>
+            <CopyButton
+              value={affiliateCode}
+              variant='outline'
+              className='bg-background size-9 shrink-0'
+              iconClassName='size-4'
+              tooltip={t('Copy invitation code')}
+              aria-label={t('Copy invitation code')}
+            />
+          </div>
+          <div className='flex items-center gap-2'>
+            <Input
+              aria-label={t('Invitation link')}
+              value={affiliateLink}
+              readOnly
+              className='border-muted bg-background/70 h-9 min-w-0 flex-1 font-mono text-xs'
+            />
+            <CopyButton
+              value={affiliateLink}
+              variant='outline'
+              className='bg-background size-9 shrink-0'
+              iconClassName='size-4'
+              tooltip={t('Copy referral link')}
+              aria-label={t('Copy referral link')}
+            />
+            {hasRewards && (
+              <Button
+                onClick={onTransfer}
+                disabled={!complianceConfirmed}
+                className='h-9 shrink-0 px-3'
+                size='sm'
+              >
+                {t('Transfer to Balance')}
+              </Button>
+            )}
+          </div>
         </div>
         {!complianceConfirmed ? (
           <p className='text-muted-foreground text-xs lg:col-span-3'>

@@ -21,9 +21,10 @@ For commercial licensing, please contact support@quantumnous.com
 // ============================================================================
 
 /**
- * Generate affiliate registration link
+ * Generate the invitation link. It points at the home page: the root route
+ * remembers `aff` on any page, so the visitor can browse before signing up.
  */
 export function generateAffiliateLink(affCode: string): string {
   if (typeof window === 'undefined') return ''
-  return `${window.location.origin}/sign-up?aff=${affCode}`
+  return `${window.location.origin}/?aff=${encodeURIComponent(affCode)}`
 }

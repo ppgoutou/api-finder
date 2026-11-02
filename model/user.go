@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/bytedance/gopkg/util/gopool"
+	"github.com/samber/lo"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -548,13 +549,59 @@ func GetSelfUserById(id int) (*User, error) {
 	return &profile.User, err
 }
 
+// affCodeCharset leaves out 0/O and 1/I so a code read aloud or retyped
+// from a screenshot stays unambiguous.
+var affCodeCharset = []rune("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+
+const affCodeLength = 8
+
+// NewAffCode returns an unused invitation code. Codes issued before this
+// format (4 mixed-case characters) stay valid; only new codes use it.
+func NewAffCode(tx *gorm.DB) (string, error) {
+	for range 5 {
+		code := lo.RandomString(affCodeLength, affCodeCharset)
+		var count int64
+		if err := tx.Unscoped().Model(&User{}).Where("aff_code = ?", code).Count(&count).Error; err != nil {
+			return "", err
+		}
+		if count == 0 {
+			return code, nil
+		}
+	}
+	return "", errors.New("failed to generate a unique affiliate code")
+}
+
+// GetUserIdByAffCode resolves an invitation code to its owner. New codes are
+// upper case, so a lower-case entry also matches; legacy mixed-case codes
+// still need an exact match first.
 func GetUserIdByAffCode(affCode string) (int, error) {
+	affCode = strings.TrimSpace(affCode)
 	if affCode == "" {
 		return 0, errors.New("affiliate code is empty")
 	}
 	var user User
 	err := DB.Select("id").First(&user, "aff_code = ?", affCode).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) && strings.ToUpper(affCode) != affCode {
+		err = DB.Select("id").First(&user, "aff_code = ?", strings.ToUpper(affCode)).Error
+	}
 	return user.Id, err
+}
+
+// GetInviteesByInviterId lists the users who signed up with inviterId's code,
+// newest first, with only the fields the inviter may see.
+func GetInviteesByInviterId(inviterId int, pageInfo *common.PageInfo) ([]*User, int64, error) {
+	var invitees []*User
+	var total int64
+	query := DB.Model(&User{}).Where("inviter_id = ?", inviterId)
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := query.Select("id", "username", "display_name", "email", "status", "created_at").
+		Order("id desc").
+		Limit(pageInfo.GetPageSize()).
+		Offset(pageInfo.GetStartIdx()).
+		Find(&invitees).Error
+	return invitees, total, err
 }
 
 // DeleteUserById soft-deletes a user and returns how many scoped access tokens
@@ -710,7 +757,11 @@ func (user *User) Insert(inviterId int) error {
 				return err
 			}
 			user.Quota = common.QuotaForNewUser
-			user.AffCode = common.GetRandomString(4)
+			affCode, err := NewAffCode(tx)
+			if err != nil {
+				return err
+			}
+			user.AffCode = affCode
 
 			// 初始化用户设置，包括默认的边栏配置
 			if user.Setting == "" {
@@ -774,7 +825,11 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 			return err
 		}
 		user.Quota = common.QuotaForNewUser
-		user.AffCode = common.GetRandomString(4)
+		affCode, err := NewAffCode(tx)
+		if err != nil {
+			return err
+		}
+		user.AffCode = affCode
 
 		// 初始化用户设置
 		if user.Setting == "" {

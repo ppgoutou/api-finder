@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "1つのAPI",
     "footer.columns.related.title": "関連プロジェクト",
     "footer.defaultCopyright": "すべての権利を留保します。",
-    "footer.new\u0061pi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
+    "footer.newapi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "高度なカスタムチャネルでは、プロトコル変換を行わない /v1/responses ルートにのみ適用されます。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "2025 年 5 月 10 日以降に追加されたチャネルの場合、デプロイ時にモデル名から「.」を削除する必要はありません",
     "For developers": "開発者向け",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} を公開しました",
     "The language model request failed": "言語モデルへのリクエストに失敗しました",
     "The language model reply was not usable": "言語モデルの返答が使えませんでした",
-    "The polished description mentioned a price and was not used": "書き直した説明に価格が含まれていたため採用しませんでした"
+    "The polished description mentioned a price and was not used": "書き直した説明に価格が含まれていたため採用しませんでした",
+    "Invalid invitation code": "招待コードが無効です",
+    "Invitation code (optional)": "招待コード（任意）",
+    "Enter invitation code": "招待コードを入力",
+    "Filled in from your invitation link": "招待リンクから自動入力されました",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "招待リンクを共有するか、登録時に招待コードを入力してもらいましょう。",
+    "Invitation code": "招待コード",
+    "Copy invitation code": "招待コードをコピー",
+    "Invitation link": "招待リンク",
+    "Invitees": "招待した人",
+    "{{count}} in total": "計 {{count}} 人",
+    "No invitees yet": "まだ招待した人はいません",
+    "Users who sign up with your invitation code or link appear here.": "招待コードまたはリンクで登録したユーザーがここに表示されます。"
   }
 }

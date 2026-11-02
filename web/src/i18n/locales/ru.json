@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "Один API",
     "footer.columns.related.title": "Связанные проекты",
     "footer.defaultCopyright": "Все права защищены.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
+    "footer.newapi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Для расширенных пользовательских каналов это действует только для маршрутов /v1/responses без преобразования протокола.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Для каналов, добавленных после 10 мая 2025 г., не нужно удалять \".\" из имён моделей при развёртывании",
     "For developers": "Для разработчиков",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} выставлена на продажу",
     "The language model request failed": "Запрос к языковой модели не удался",
     "The language model reply was not usable": "Ответ языковой модели непригоден",
-    "The polished description mentioned a price and was not used": "Переписанное описание упоминало цену и не было использовано"
+    "The polished description mentioned a price and was not used": "Переписанное описание упоминало цену и не было использовано",
+    "Invalid invitation code": "Недействительный код приглашения",
+    "Invitation code (optional)": "Код приглашения (необязательно)",
+    "Enter invitation code": "Введите код приглашения",
+    "Filled in from your invitation link": "Заполнено по ссылке-приглашению",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "Поделитесь ссылкой-приглашением или попросите друзей ввести ваш код при регистрации.",
+    "Invitation code": "Код приглашения",
+    "Copy invitation code": "Скопировать код приглашения",
+    "Invitation link": "Ссылка-приглашение",
+    "Invitees": "Приглашённые",
+    "{{count}} in total": "Всего: {{count}}",
+    "No invitees yet": "Пока нет приглашённых",
+    "Users who sign up with your invitation code or link appear here.": "Здесь появятся пользователи, зарегистрировавшиеся по вашему коду или ссылке."
   }
 }

@@ -2951,7 +2951,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "相关项目",
     "footer.defaultCopyright": "版权所有。",
-    "footer.new\u0061pi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
+    "footer.newapi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "高级自定义渠道仅对 /v1/responses 且不做协议转换的路由生效。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "对于 2025 年 5 月 10 日之后添加的渠道，在部署时无需从模型名称中移除 \".\"",
     "For developers": "开发者",
@@ -7749,6 +7749,18 @@
     "{{name}} is on sale": "{{name}} 已上架",
     "The language model request failed": "大模型请求失败",
     "The language model reply was not usable": "大模型的回复不可用",
-    "The polished description mentioned a price and was not used": "润色后的描述提到了价格，未采用"
+    "The polished description mentioned a price and was not used": "润色后的描述提到了价格，未采用",
+    "Invalid invitation code": "邀请码无效",
+    "Invitation code (optional)": "邀请码（选填）",
+    "Enter invitation code": "请输入邀请码",
+    "Filled in from your invitation link": "已通过邀请链接自动填入",
+    "Share your invitation link, or have friends enter your invitation code when they sign up.": "分享邀请链接，或让好友注册时填写你的邀请码。",
+    "Invitation code": "我的邀请码",
+    "Copy invitation code": "复制邀请码",
+    "Invitation link": "邀请链接",
+    "Invitees": "邀请明细",
+    "{{count}} in total": "共 {{count}} 人",
+    "No invitees yet": "暂无邀请记录",
+    "Users who sign up with your invitation code or link appear here.": "通过你的邀请码或邀请链接注册的用户会显示在这里。"
   }
 }
