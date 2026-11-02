@@ -55,6 +55,13 @@ const quotaSchema = z.object({
   QuotaForNewUser: z.coerce.number().min(0),
   QuotaForInviter: z.coerce.number().min(0),
   QuotaForInvitee: z.coerce.number().min(0),
+  AffRebatePercent: z.coerce
+    .number({ error: () => i18next.t('Please enter a valid number') })
+    .min(0)
+    .max(100),
+  AffAutoTransferTime: z.string().regex(/^$|^([01]\d|2[0-3]):[0-5]\d$/, {
+    error: () => i18next.t('Invitation quota transfer time must be HH:MM'),
+  }),
   TopUpLink: z.string(),
   quota_setting: z.object({
     enable_free_model_pre_consume: z.boolean(),
@@ -273,6 +280,56 @@ export function QuotaSettingsSection({
                     {t('Quota given to invited users ({{formattedQuota}})', {
                       formattedQuota: formatQuotaInputValue(field.value),
                     })}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='AffRebatePercent'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Invitation rebate percentage')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={0}
+                      max={100}
+                      step='any'
+                      value={field.value ?? ''}
+                      onChange={handleNumberChange(field.onChange)}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off."
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='AffAutoTransferTime'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {t('Daily invitation quota transfer time')}
+                  </FormLabel>
+                  <FormControl>
+                    <Input type='time' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      'Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

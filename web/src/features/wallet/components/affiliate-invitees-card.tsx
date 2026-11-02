@@ -16,36 +16,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/status-badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatTimestampToDate } from '@/lib/format'
-import { requireServerSuccess } from '@/lib/server-error-message'
+import { formatQuota, formatTimestampToDate } from '@/lib/format'
 
-import { getAffiliateInvitees } from '../api'
+import { AFFILIATE_PAGE_SIZE, useAffiliateInvitees } from '../hooks'
+import { AffiliatePager } from './affiliate-pager'
 
-const PAGE_SIZE = 10
 const USER_STATUS_ENABLED = 1
 
 export function AffiliateInviteesCard() {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useQuery({
-    queryKey: ['wallet', 'affiliate-invitees', page],
-    queryFn: async () =>
-      requireServerSuccess(await getAffiliateInvitees(page, PAGE_SIZE)).data,
-    placeholderData: (previous) => previous,
-  })
+  const { data, isLoading } = useAffiliateInvitees(page)
   const items = data?.items ?? []
   const total = data?.total ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   let body = (
     <ul className='divide-y'>
@@ -63,23 +54,29 @@ export function AffiliateInviteesCard() {
               <div className='truncate text-sm font-medium'>
                 {[invitee.name, invitee.email].filter(Boolean).join(' · ')}
               </div>
-              <div className='text-muted-foreground text-xs tabular-nums'>
+              <div className='text-muted-foreground flex items-center gap-2 text-xs tabular-nums'>
                 {formatTimestampToDate(invitee.created_at)}
+                <StatusBadge
+                  label={
+                    invitee.status === USER_STATUS_ENABLED
+                      ? t('Enabled')
+                      : t('Disabled')
+                  }
+                  variant={
+                    invitee.status === USER_STATUS_ENABLED
+                      ? 'success'
+                      : 'neutral'
+                  }
+                  type='text'
+                  copyable={false}
+                  className='font-normal'
+                />
               </div>
             </div>
           </div>
-          <StatusBadge
-            label={
-              invitee.status === USER_STATUS_ENABLED
-                ? t('Enabled')
-                : t('Disabled')
-            }
-            variant={
-              invitee.status === USER_STATUS_ENABLED ? 'success' : 'neutral'
-            }
-            copyable={false}
-            className='shrink-0 font-normal'
-          />
+          <span className='shrink-0 text-sm font-semibold tabular-nums'>
+            {formatQuota(invitee.rebate_quota ?? 0)}
+          </span>
         </li>
       ))}
     </ul>
@@ -114,33 +111,11 @@ export function AffiliateInviteesCard() {
           </span>
         </div>
         {body}
-        {totalPages > 1 && (
-          <div className='flex items-center justify-end gap-2 border-t pt-3'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage(page - 1)}
-              disabled={page <= 1}
-              className='h-8 w-8 p-0'
-              aria-label={t('Previous page')}
-            >
-              <ChevronLeft className='h-4 w-4' />
-            </Button>
-            <span className='text-muted-foreground text-sm tabular-nums'>
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage(page + 1)}
-              disabled={page >= totalPages}
-              className='h-8 w-8 p-0'
-              aria-label={t('Next page')}
-            >
-              <ChevronRight className='h-4 w-4' />
-            </Button>
-          </div>
-        )}
+        <AffiliatePager
+          page={page}
+          totalPages={Math.max(1, Math.ceil(total / AFFILIATE_PAGE_SIZE))}
+          onPageChange={setPage}
+        />
       </CardContent>
     </Card>
   )

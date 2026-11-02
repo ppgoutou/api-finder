@@ -33,6 +33,10 @@ interface AffiliateRewardsCardProps {
   user: UserWalletData | null
   affiliateCode: string
   affiliateLink: string
+  /** Users who signed up with the code; aff_count misses some older ones */
+  inviteeCount?: number
+  /** Share (0-100) of an invitee's top-up credited as a rebate */
+  rebatePercent?: number
   onTransfer: () => void
   complianceConfirmed?: boolean
   loading?: boolean
@@ -42,6 +46,8 @@ export function AffiliateRewardsCard({
   user,
   affiliateCode,
   affiliateLink,
+  inviteeCount,
+  rebatePercent = 0,
   onTransfer,
   complianceConfirmed = true,
   loading,
@@ -75,10 +81,15 @@ export function AffiliateRewardsCard({
             <h3 className='truncate text-sm font-semibold'>
               {t('Referral Program')}
             </h3>
-            <p className='text-muted-foreground line-clamp-1 text-xs'>
-              {t(
-                'Share your invitation link, or have friends enter your invitation code when they sign up.'
-              )}
+            <p className='text-muted-foreground line-clamp-2 text-xs'>
+              {rebatePercent > 0
+                ? t(
+                    'Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.',
+                    { percent: rebatePercent }
+                  )
+                : t(
+                    'Share your invitation link, or have friends enter your invitation code when they sign up.'
+                  )}
             </p>
           </div>
         </div>
@@ -87,7 +98,7 @@ export function AffiliateRewardsCard({
           {[
             [t('Pending'), formatQuota(user?.aff_quota ?? 0)],
             [t('Total Earned'), formatQuota(user?.aff_history_quota ?? 0)],
-            [t('Invites'), String(user?.aff_count ?? 0)],
+            [t('Invites'), String(inviteeCount ?? user?.aff_count ?? 0)],
           ].map(([label, value]) => (
             <div key={label}>
               <div className='text-muted-foreground truncate text-[10px] font-medium tracking-wider uppercase'>

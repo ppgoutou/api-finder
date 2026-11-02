@@ -7761,6 +7761,21 @@
     "Invitees": "招待した人",
     "{{count}} in total": "計 {{count}} 人",
     "No invitees yet": "まだ招待した人はいません",
-    "Users who sign up with your invitation code or link appear here.": "招待コードまたはリンクで登録したユーザーがここに表示されます。"
+    "Users who sign up with your invitation code or link appear here.": "招待コードまたはリンクで登録したユーザーがここに表示されます。",
+    "Redemption code": "引き換えコード",
+    "Reversed": "取り消し済み",
+    "Rebates": "リベート",
+    "No rebates yet": "まだリベートはありません",
+    "Moves to your balance daily at {{time}}": "毎日 {{time}} に残高へ自動振替",
+    "Friends who sign up with your code or link earn you {{percent}}% of every top-up and redemption code they use.": "あなたのコードまたはリンクで登録した友達がチャージや引き換えコードを使うたびに、{{percent}}% のリベートを獲得できます。",
+    "Invitation rebate percentage": "招待リベート率（%）",
+    "Share of each invitee top-up or redemption code credited to the inviter's pending invitation quota. Set to 0 to turn rebates off.": "被招待者のチャージや引き換えコードごとに、この割合が招待者の振替待ち枠に加算されます。0 でリベートを無効化します。",
+    "Daily invitation quota transfer time": "招待枠の毎日の振替時刻",
+    "Every day at this server time, pending invitation quota moves into each user balance. Leave empty to let users transfer it themselves.": "毎日この時刻（サーバー時間）に、全ユーザーの振替待ち枠が残高へ移されます。空欄ならユーザーが手動で振り替えます。",
+    "Invitation quota transfer time must be HH:MM": "振替時刻は HH:MM 形式で入力してください",
+    "Invitation rebate percentage must be between 0 and 100": "招待リベート率は 0〜100 の範囲で入力してください",
+    "Invitation rebate {{quota}} added to pending invitation quota": "招待リベート {{quota}} を振替待ち枠に追加しました",
+    "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "被招待者の支払いが返金または異議申し立てされたため、招待リベート {{quota}} を取り消しました",
+    "Pending invitation quota {{quota}} moved to balance": "振替待ちの招待枠 {{quota}} を残高へ移しました"
   }
 }

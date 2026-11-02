@@ -42,6 +42,7 @@ export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
 export type AffiliateInviteesResponse = ApiResponse<AffiliateInviteesPage>
+export type AffiliateRebatesResponse = ApiResponse<AffiliateRebatesPage>
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -155,6 +156,10 @@ export interface TopupInfo {
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */
   payment_compliance_confirmed?: boolean
+  /** Share (0-100) of an invitee's top-up credited to the inviter */
+  aff_rebate_percent?: number
+  /** Daily HH:MM when pending invitation quota moves to the balance */
+  aff_auto_transfer_time?: string
   /** Current compliance terms version */
   payment_compliance_terms_version?: string
 }
@@ -303,9 +308,29 @@ export interface AffiliateInvitee {
   email: string
   status: number
   created_at: number
+  /** Credited rebates earned from this invitee */
+  rebate_quota: number
 }
 
 export interface AffiliateInviteesPage {
   items: AffiliateInvitee[]
+  total: number
+}
+
+/**
+ * One invitation rebate: a share of an invitee's top-up ('topup') or
+ * redemption code ('redemption'). A refunded payment turns it 'reversed'.
+ */
+export interface AffiliateRebate {
+  invitee_name: string
+  invitee_email: string
+  source_type: 'topup' | 'redemption'
+  rebate_quota: number
+  status: 'credited' | 'reversed'
+  created_at: number
+}
+
+export interface AffiliateRebatesPage {
+  items: AffiliateRebate[]
   total: number
 }

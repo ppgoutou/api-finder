@@ -44,6 +44,8 @@ function Fixture() {
             QuotaForNewUser: 0,
             QuotaForInviter: 0,
             QuotaForInvitee: 0,
+            AffRebatePercent: 0,
+            AffAutoTransferTime: '',
             TopUpLink: '',
             quota_setting: {
               enable_free_model_pre_consume: true,
@@ -145,3 +147,37 @@ test.each(['', '-1'])(
     expect(api.put).not.toHaveBeenCalled()
   }
 )
+
+test('invitation rebate percentage and transfer time save as typed', async () => {
+  await renderSettings()
+  fireEvent.change(
+    screen.getByRole('spinbutton', { name: 'Invitation rebate percentage' }),
+    { target: { value: '3' } }
+  )
+  fireEvent.change(
+    screen.getByLabelText('Daily invitation quota transfer time'),
+    { target: { value: '00:30' } }
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await waitFor(() =>
+    expect(api.put).toHaveBeenCalledWith('/api/option/', {
+      key: 'AffAutoTransferTime',
+      value: '00:30',
+    })
+  )
+  expect(api.put).toHaveBeenCalledWith('/api/option/', {
+    key: 'AffRebatePercent',
+    value: 3,
+  })
+})
+
+test('rebate percentage above 100 shows a field error and prevents saving', async () => {
+  await renderSettings()
+  const input = screen.getByRole('spinbutton', {
+    name: 'Invitation rebate percentage',
+  })
+  fireEvent.change(input, { target: { value: '101' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'))
+  expect(api.put).not.toHaveBeenCalled()
+})

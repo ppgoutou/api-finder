@@ -24,6 +24,7 @@ import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 
 import { AffiliateInviteesCard } from './components/affiliate-invitees-card'
+import { AffiliateRebatesCard } from './components/affiliate-rebates-card'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
@@ -38,6 +39,7 @@ import {
   useTopupInfo,
   usePayment,
   useAffiliate,
+  useAffiliateInvitees,
   useRedemption,
   useCreemPayment,
   useWaffoPayment,
@@ -106,6 +108,7 @@ export function Wallet(props: WalletProps) {
     transferQuota,
     transferring,
   } = useAffiliate()
+  const { data: affiliateInvitees } = useAffiliateInvitees(1)
   const { redeeming, redeemCode } = useRedemption()
   const { processing: creemProcessing, processCreemPayment } = useCreemPayment()
   const { processing: waffoProcessing, processWaffoPayment } = useWaffoPayment()
@@ -333,6 +336,8 @@ export function Wallet(props: WalletProps) {
               user={user}
               affiliateCode={affiliateCode}
               affiliateLink={affiliateLink}
+              inviteeCount={affiliateInvitees?.total}
+              rebatePercent={topupInfo?.aff_rebate_percent}
               onTransfer={() => setTransferDialogOpen(true)}
               complianceConfirmed={
                 topupInfo?.payment_compliance_confirmed !== false
@@ -340,7 +345,12 @@ export function Wallet(props: WalletProps) {
               loading={affiliateLoading}
             />
 
-            <AffiliateInviteesCard />
+            <div className='grid items-start gap-4 lg:grid-cols-2'>
+              <AffiliateInviteesCard />
+              <AffiliateRebatesCard
+                autoTransferTime={topupInfo?.aff_auto_transfer_time}
+              />
+            </div>
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>

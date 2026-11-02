@@ -196,6 +196,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 
 	var quotaToAdd int
 	topUp := &TopUp{}
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
 			return ErrTopUpNotFound
@@ -225,7 +226,12 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		if err := creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quotaToAdd)
+		return rebateErr
 	})
 	if err != nil {
 		if !errors.Is(err, ErrTopUpNotFound) && !errors.Is(err, ErrPaymentMethodMismatch) && !errors.Is(err, ErrTopUpStatusInvalid) {
@@ -240,6 +246,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 
 	common.SysLog(common.LogText("Epay top-up succeeded trade_no=%s user_id=%d quota_to_add=%d money=%.2f", topUp.TradeNo, topUp.UserId, quotaToAdd, topUp.Money))
 	RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentProviderEpay)
+	recordAffRebateLog(rebate)
 	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 	return false, nil
 }
@@ -257,6 +264,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		refCol = `"trade_no"`
 	}
 
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := lockForUpdate(tx).Where(refCol+" = ?", referenceId).First(topUp).Error
 		if err != nil {
@@ -284,9 +292,14 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		if err != nil || quota <= 0 {
 			return ErrInvalidTopUpQuota
 		}
-		return creditTopUpQuota(tx, topUp.UserId, quota, map[string]any{
+		if err := creditTopUpQuota(tx, topUp.UserId, quota, map[string]any{
 			"stripe_customer": customerId,
-		})
+		}); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quota)
+		return rebateErr
 	})
 
 	if err != nil {
@@ -296,6 +309,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 	syncCreditUserQuotaCache(topUp.UserId, quota, common.LogText("stripe topup"))
 
 	RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quota), "amount": topUp.Amount}), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
+	recordAffRebateLog(rebate)
 	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 
 	return nil
@@ -339,6 +353,8 @@ func ReverseStripeTopUp(tradeNo string, targetStatus string, callerIp string) (a
 
 	var quota int
 	topUp := &TopUp{}
+	var reversedRebate *AffRebate
+	var rebateFromWallet int
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
 			return ErrTopUpNotFound
@@ -369,7 +385,9 @@ func ReverseStripeTopUp(tradeNo string, targetStatus string, callerIp string) (a
 		if result.RowsAffected != 1 {
 			return gorm.ErrRecordNotFound
 		}
-		return nil
+		var rebateErr error
+		reversedRebate, rebateFromWallet, rebateErr = reverseAffRebate(tx, AffRebateSourceTopUp, topUp.TradeNo)
+		return rebateErr
 	})
 	if err != nil || alreadyDone {
 		return alreadyDone, err
@@ -380,6 +398,14 @@ func ReverseStripeTopUp(tradeNo string, targetStatus string, callerIp string) (a
 
 	common.SysLog(common.LogText("Stripe top-up reversed trade_no=%s user_id=%d status=%s quota_deducted=%d", topUp.TradeNo, topUp.UserId, targetStatus, quota))
 	RecordTopupLog(topUp.UserId, common.NewMessage(logKey, map[string]any{"quota": logger.FormatQuota(quota)}), callerIp, topUp.PaymentMethod, PaymentProviderStripe)
+	if reversedRebate != nil {
+		if rebateFromWallet > 0 {
+			if err := cacheDecrUserQuota(reversedRebate.InviterId, int64(rebateFromWallet)); err != nil {
+				common.SysLog(common.LogText("failed to sync %s debit to user quota cache: %s", common.LogText("invitation rebate reversal"), err.Error()))
+			}
+		}
+		RecordLog(reversedRebate.InviterId, LogTypeSystem, common.NewMessage("Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed", map[string]any{"quota": logger.FormatQuota(reversedRebate.RebateQuota)}))
+	}
 	return false, nil
 }
 
@@ -399,6 +425,7 @@ func RestoreDisputedStripeTopUp(tradeNo string, callerIp string) (alreadyDone bo
 
 	var quota int
 	topUp := &TopUp{}
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
 			return ErrTopUpNotFound
@@ -422,7 +449,12 @@ func RestoreDisputedStripeTopUp(tradeNo string, callerIp string) (alreadyDone bo
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
-		return creditTopUpQuota(tx, topUp.UserId, quota, nil)
+		if err := creditTopUpQuota(tx, topUp.UserId, quota, nil); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = restoreAffRebate(tx, AffRebateSourceTopUp, topUp.TradeNo)
+		return rebateErr
 	})
 	if err != nil || alreadyDone {
 		return alreadyDone, err
@@ -431,6 +463,7 @@ func RestoreDisputedStripeTopUp(tradeNo string, callerIp string) (alreadyDone bo
 
 	common.SysLog(common.LogText("Stripe disputed top-up restored trade_no=%s user_id=%d quota_restored=%d", topUp.TradeNo, topUp.UserId, quota))
 	RecordTopupLog(topUp.UserId, common.NewMessage("Stripe dispute closed in your favor, top-up quota restored: {{quota}}", map[string]any{"quota": logger.FormatQuota(quota)}), callerIp, topUp.PaymentMethod, PaymentProviderStripe)
+	recordAffRebateLog(rebate)
 	return false, nil
 }
 
@@ -607,6 +640,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	var payMoney float64
 	var paymentMethod string
 
+	var rebate *AffRebate
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		topUp := &TopUp{}
 		// 行级锁，避免并发补单
@@ -651,6 +685,11 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 		if err := creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil); err != nil {
 			return err
 		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quotaToAdd)
+		if rebateErr != nil {
+			return rebateErr
+		}
 
 		userId = topUp.UserId
 		payMoney = topUp.Money
@@ -665,6 +704,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	// 事务外记录日志，避免阻塞
 	syncCreditUserQuotaCache(userId, quotaToAdd, common.LogText("manual topup"))
 	RecordTopupLog(userId, common.NewMessage("Administrator completed the order, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%f", payMoney)}), callerIp, paymentMethod, "admin")
+	recordAffRebateLog(rebate)
 	notifyTopUpCompleted(userId, tradeNo)
 	return nil
 }
@@ -681,6 +721,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 		refCol = `"trade_no"`
 	}
 
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := lockForUpdate(tx).Where(refCol+" = ?", referenceId).First(topUp).Error
 		if err != nil {
@@ -726,7 +767,12 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 			}
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quota, updateFields)
+		if err := creditTopUpQuota(tx, topUp.UserId, quota, updateFields); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quota)
+		return rebateErr
 	})
 
 	if err != nil {
@@ -736,6 +782,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	syncCreditUserQuotaCache(topUp.UserId, quota, common.LogText("creem topup"))
 
 	RecordTopupLog(topUp.UserId, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Creem", "quota": quota, "amount": fmt.Sprintf("%.2f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentMethodCreem)
+	recordAffRebateLog(rebate)
 	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 
 	return nil
@@ -754,6 +801,7 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 		refCol = `"trade_no"`
 	}
 
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error
 		if err != nil {
@@ -785,7 +833,12 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 			return err
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		if err := creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quotaToAdd)
+		return rebateErr
 	})
 
 	if err != nil {
@@ -796,6 +849,7 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 
 	if quotaToAdd > 0 {
 		RecordTopupLog(topUp.UserId, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Waffo", "quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%.2f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentMethodWaffo)
+		recordAffRebateLog(rebate)
 		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 	}
 
@@ -815,6 +869,7 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 		refCol = `"trade_no"`
 	}
 
+	var rebate *AffRebate
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error
 		if err != nil {
@@ -846,7 +901,12 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 			return err
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		if err := creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil); err != nil {
+			return err
+		}
+		var rebateErr error
+		rebate, rebateErr = creditAffRebate(tx, topUp.UserId, AffRebateSourceTopUp, topUp.TradeNo, quotaToAdd)
+		return rebateErr
 	})
 
 	if err != nil {
@@ -857,6 +917,7 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 
 	if quotaToAdd > 0 {
 		RecordLog(topUp.UserId, LogTypeTopup, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Waffo Pancake", "quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%.2f", topUp.Money)}))
+		recordAffRebateLog(rebate)
 		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 	}
 
