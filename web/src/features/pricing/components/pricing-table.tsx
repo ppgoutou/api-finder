@@ -16,8 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { Row, PaginationState } from '@tanstack/react-table'
-import { useState, useCallback } from 'react'
+import type {
+  Row,
+  PaginationState,
+  VisibilityState,
+} from '@tanstack/react-table'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -28,6 +32,8 @@ import {
 } from '@/components/data-table'
 
 import { DEFAULT_PRICING_PAGE_SIZE, DEFAULT_TOKEN_UNIT } from '../constants'
+import { hasCachedPrice } from '../lib/dynamic-price'
+import { parseTags } from '../lib/filters'
 import type { PricingModel, TokenUnit } from '../types'
 import { usePricingColumns } from './pricing-columns'
 
@@ -68,9 +74,20 @@ export function PricingTable(props: PricingTableProps) {
     selectedGroup,
   })
 
+  // Hide optional columns that would be blank for every model in this table.
+  const columnVisibility = useMemo<VisibilityState>(
+    () => ({
+      cached_price: models.some(hasCachedPrice),
+      vendor_name: models.some((model) => Boolean(model.vendor_name)),
+      tags: models.some((model) => parseTags(model.tags).length > 0),
+    }),
+    [models]
+  )
+
   const { table } = useDataTable({
     data: models,
     columns,
+    columnVisibility,
     pageCount: Math.ceil(models.length / pagination.pageSize),
     pagination,
     onPaginationChange: setPagination,
