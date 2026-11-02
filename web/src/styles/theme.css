@@ -130,7 +130,7 @@ For commercial licensing, please contact support@quantumnous.com
   --aurora-glow-2: 167 139 250;
   --aurora-glow-3: 45 212 191;
   --aurora-pointer: 37 99 235;
-  --aurora-strength: 0.22;
+  --aurora-strength: 0.15;
   --ink: #0b1220;
   --ink-raised: #111a2e;
   --surface-muted: #f6f8fb;
@@ -275,4 +275,23 @@ For commercial licensing, please contact support@quantumnous.com
     var(--foreground) 24%,
     var(--background)
   );
+}
+
+/* The inset sidebar sits straight on the site backdrop, where the near-white
+ * accent and muted fills disappear: show active and hovered items as white
+ * chips instead. */
+:root:not(.dark) [data-variant='inset'] > [data-slot='sidebar-container'] {
+  --sidebar-accent: var(--background);
+  --muted: color-mix(in oklch, var(--background) 60%, transparent);
+}
+
+:root:not(.dark)
+  [data-variant='inset']
+  :is(
+    [data-slot='sidebar-menu-button'],
+    [data-slot='sidebar-menu-sub-button']
+  )[data-active] {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.06),
+    0 0 0 1px rgb(15 23 42 / 0.06);
 }
