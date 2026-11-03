@@ -50,8 +50,6 @@ describe('video studio layout', () => {
     expect(body).toContainElement(
       screen.getByRole('tab', { name: 'My videos' })
     )
-    expect(body).toContainElement(
-      screen.getByRole('tab', { name: 'Gallery' })
-    )
+    expect(body).toContainElement(screen.getByRole('tab', { name: 'Gallery' }))
   })
 })

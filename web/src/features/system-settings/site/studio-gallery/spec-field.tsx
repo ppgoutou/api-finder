@@ -230,9 +230,7 @@ export function GallerySpecField<T extends FieldValues>(
             <FormDescription>
               {props.series.length === 0
                 ? t('No video models are available in the studio yet.')
-                : t(
-                    'Use this work fills the studio form with these parameters.'
-                  )}
+                : t('Use prompt fills the studio form with these parameters.')}
             </FormDescription>
             <FormMessage />
           </FormItem>

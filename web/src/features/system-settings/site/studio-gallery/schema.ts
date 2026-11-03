@@ -45,14 +45,14 @@ const galleryItemSchema = z
     image: mediaUrl,
   })
   // The studio composer caps prompts per model, so a work's prompt must fit
-  // the model it names or "Use this work" would load a prompt it refuses.
+  // the model it names or "Use prompt" would load a prompt it refuses.
   .superRefine((item, ctx) => {
     const max = promptGuide(parseGallerySpec(item.spec).model).maxLength
     if (item.prompt.length > max) {
       ctx.addIssue({
         code: 'custom',
         path: ['prompt'],
-        // 'At most 2000 characters' / 'At most 5000 characters'
+        // 'At most 2000 characters' / 'At most 7500 characters'
         message: `At most ${max} characters`,
       })
     }
