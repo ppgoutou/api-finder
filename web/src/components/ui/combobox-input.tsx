@@ -85,6 +85,8 @@ export function ComboboxInput({
     top: number
     left: number
     width: number
+    maxHeight: number
+    above: boolean
   } | null>(null)
   const pointerFocusRef = React.useRef(false)
   const selectedOption = React.useMemo(
@@ -138,13 +140,35 @@ export function ComboboxInput({
     if (!input) return
     const container =
       input.closest<HTMLElement>('[role="dialog"]') ?? document.body
+    // A centered dialog is translated, which makes it the frame of fixed
+    // descendants: coordinates are then relative to it and scroll with it.
+    const style = getComputedStyle(container)
+    const framed =
+      container !== document.body &&
+      ((style.transform || 'none') !== 'none' ||
+        (style.translate || 'none') !== 'none')
     const measure = () => {
       const rect = input.getBoundingClientRect()
+      const bounds = framed
+        ? container.getBoundingClientRect()
+        : { top: 0, left: 0, bottom: window.innerHeight }
+      const originTop = framed
+        ? bounds.top + container.clientTop - container.scrollTop
+        : 0
+      const originLeft = framed
+        ? bounds.left + container.clientLeft - container.scrollLeft
+        : 0
+      // Open upward when the list would not fit below inside the frame.
+      const spaceBelow = bounds.bottom - rect.bottom - 8
+      const spaceAbove = rect.top - bounds.top - 8
+      const above = spaceBelow < 200 && spaceAbove > spaceBelow
       setDropdown({
         container,
-        top: rect.bottom + 4,
-        left: rect.left,
+        top: (above ? rect.top - 4 : rect.bottom + 4) - originTop,
+        left: rect.left - originLeft,
         width: rect.width,
+        maxHeight: Math.max(80, Math.min(200, above ? spaceAbove : spaceBelow)),
+        above,
       })
     }
     measure()
@@ -294,6 +318,7 @@ export function ComboboxInput({
               top: dropdown.top,
               left: dropdown.left,
               width: dropdown.width,
+              transform: dropdown.above ? 'translateY(-100%)' : undefined,
             }}
             className={cn(
               'bg-popover text-popover-foreground z-100 rounded-md border shadow-md',
@@ -305,7 +330,8 @@ export function ComboboxInput({
                 ref={listRef}
                 id={listId}
                 role='listbox'
-                className='max-h-[200px] overflow-y-auto p-1'
+                style={{ maxHeight: dropdown.maxHeight }}
+                className='overflow-y-auto p-1'
               >
                 {filteredOptions.map((option, index) => (
                   <li
