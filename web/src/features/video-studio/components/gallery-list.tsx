@@ -21,7 +21,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -148,60 +147,46 @@ function GalleryWorkCard(props: {
 }) {
   const { t } = useTranslation()
   const card = props.card
-  const params = card.spec
-    .split(/[·|]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
+  const model = parseGallerySpec(card.spec).model
 
   return (
     <article className='flex flex-col gap-2'>
-      <div className='border-border/60 overflow-hidden rounded-xl border'>
+      <div className='border-border/60 relative overflow-hidden rounded-sm border'>
         <GalleryTile
           card={card}
           ratio={props.ratio}
           onRatio={props.onRatio}
           onOpen={props.onOpen}
         />
+        {model && (
+          <span className='pointer-events-none absolute top-1.5 right-1.5 max-w-[calc(100%-0.75rem)] truncate rounded bg-black/60 px-1.5 py-0.5 text-[11px] leading-4 text-white'>
+            {model}
+          </span>
+        )}
       </div>
-      <div className='flex flex-col gap-1.5 px-0.5'>
-        <div className='flex items-center gap-1'>
-          <p
-            className={cn(
-              'min-w-0 flex-1 truncate text-sm font-medium',
-              !card.title && 'text-muted-foreground'
-            )}
-            title={card.title || undefined}
-          >
-            {card.title || t('Untitled work')}
-          </p>
-          {card.prompt.trim() && (
-            <Button
-              variant='ghost'
-              size='xs'
-              className='text-primary hover:text-primary -me-1.5 shrink-0'
-              onClick={props.onOpen}
-              aria-label={t('View prompt: {{title}}', {
-                title: card.title || card.spec || t('Untitled work'),
-              })}
-            >
-              <ScrollText aria-hidden />
-              {t('Prompt words')}
-            </Button>
+      <div className='flex items-start gap-1 px-0.5'>
+        <p
+          className={cn(
+            'line-clamp-2 min-w-0 flex-1 text-sm leading-5 font-medium',
+            !card.title && 'text-muted-foreground'
           )}
-        </div>
-        {params.length > 0 && (
-          <ul className='flex flex-wrap gap-1' aria-label={t('Parameters')}>
-            {params.map((param) => (
-              <li key={param}>
-                <Badge
-                  variant='outline'
-                  className='text-muted-foreground font-normal'
-                >
-                  {param}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+          title={card.title || undefined}
+        >
+          {card.title || t('Untitled work')}
+        </p>
+        {card.prompt.trim() && (
+          <Button
+            variant='ghost'
+            size='xs'
+            className='text-primary hover:text-primary -me-1.5 -mt-0.5 shrink-0'
+            onClick={props.onOpen}
+            aria-label={t('View prompt: {{title}}', {
+              title: card.title || card.spec || t('Untitled work'),
+            })}
+          >
+            <ScrollText aria-hidden />
+            {t('Prompt words')}
+          </Button>
         )}
       </div>
     </article>
@@ -324,7 +309,7 @@ function GalleryDetailsDialog(props: {
  * Curated studio gallery works from the admin StudioGallery option.
  * Category filters sit under the gallery tab. Works fill 2–4 columns in
  * reading order, each tile keeping its own width / height; a card shows the
- * title and parameters, and the clip, prompt and parameters open in a dialog.
+ * model on the clip and a title of up to two lines, and the clip, prompt and parameters open in a dialog.
  */
 export function GalleryList(props: {
   onReuse: (draft: Partial<StudioDraft>) => void

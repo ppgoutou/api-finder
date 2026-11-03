@@ -155,7 +155,7 @@ describe('GalleryList', () => {
     ).toHaveAttribute('src', 'https://cdn.example/admin.jpg')
   })
 
-  it('shows the title and each parameter as its own tag under a work', async () => {
+  it('shows the model on the clip and leaves the other parameters for the details dialog', async () => {
     mockStudioGallery(
       JSON.stringify({
         items: [
@@ -170,13 +170,10 @@ describe('GalleryList', () => {
     )
     renderGallery()
 
-    const params = await screen.findByRole('list', { name: 'Parameters' })
-    expect(
-      within(params)
-        .getAllByRole('listitem')
-        .map((item) => item.textContent)
-    ).toEqual(['Seedance 2.5', '16:9', '720p', '19s'])
+    expect(await screen.findByText('Seedance 2.5')).toBeVisible()
     expect(screen.getByText('Rain car')).toBeVisible()
+    expect(screen.queryByText('720p')).not.toBeInTheDocument()
+    expect(screen.queryByText('19s')).not.toBeInTheDocument()
     expect(
       screen.queryByText('a silver car in the rain')
     ).not.toBeInTheDocument()
