@@ -7925,6 +7925,9 @@
     "Use this work fills the studio form with these parameters.": "点「使用此作品」时，会用这些参数填写创作表单。",
     "Found {{count}} models": "获取到 {{count}} 个模型",
     "Enter an API key first": "请先填写 API 密钥",
-    "At most 100 characters": "最多 100 个字符"
+    "At most 100 characters": "最多 100 个字符",
+    "At most 5000 characters": "最多 5000 个字符",
+    "Remove this clip?": "确定移除这条作品吗？",
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存后「{{title}}」会从作品集移除，它上传的文件也会一并删除。"
   }
 }

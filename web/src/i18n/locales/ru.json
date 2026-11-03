@@ -7925,6 +7925,9 @@
     "Use this work fills the studio form with these parameters.": "«Использовать работу» заполнит форму студии этими параметрами.",
     "Found {{count}} models": "Найдено моделей: {{count}}",
     "Enter an API key first": "Сначала введите ключ API",
-    "At most 100 characters": "Не более 100 символов"
+    "At most 100 characters": "Не более 100 символов",
+    "At most 5000 characters": "Не более 5000 символов",
+    "Remove this clip?": "Удалить эту работу?",
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "«{{title}}» будет удалена из галереи при сохранении, вместе с загруженными файлами."
   }
 }

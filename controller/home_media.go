@@ -325,7 +325,9 @@ func validateHomeShowcase(value string) error {
 }
 
 // validateStudioGallery checks the StudioGallery option before it is saved:
-// titles of at most 100 characters, prompts of any length, at most
+// titles of at most 100 characters, prompts no longer than the video studio
+// takes for the work's model (2000 characters for MiniMax, 5000 otherwise,
+// as in web/src/features/video-studio/lib/prompt-guide.ts), at most
 // studioGalleryMaxItems works, and media URLs that are uploaded files or
 // https links.
 func validateStudioGallery(value string) error {
@@ -340,8 +342,14 @@ func validateStudioGallery(value string) error {
 		return errInvalidStudioGallery
 	}
 	for _, item := range settings.Items {
+		promptLimit := 5000
+		spec := strings.ToLower(item.Spec)
+		if strings.Contains(spec, "minimax") || strings.Contains(spec, "hailuo") {
+			promptLimit = 2000
+		}
 		if utf8.RuneCountInString(item.Title) > 100 ||
 			utf8.RuneCountInString(item.Category) > 20 ||
+			utf8.RuneCountInString(item.Prompt) > promptLimit ||
 			utf8.RuneCountInString(item.Spec) > 60 ||
 			!showcaseMediaAllowed(item) {
 			return errInvalidStudioGallery

@@ -19,6 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 import * as z from 'zod'
 
 import { HOME_MEDIA_URL_PREFIX } from '@/features/home/lib/home-showcase'
+import { parseGallerySpec } from '@/features/video-studio/lib/gallery-draft'
+import { promptGuide } from '@/features/video-studio/lib/prompt-guide'
 import { STUDIO_GALLERY_MAX_ITEMS } from '@/features/video-studio/lib/studio-gallery'
 
 const mediaUrl = z
@@ -32,15 +34,29 @@ const mediaUrl = z
     { message: 'Use an uploaded file or an https link' }
   )
 
-const galleryItemSchema = z.object({
-  title: z.string().trim().max(100, { message: 'At most 100 characters' }),
-  category: z.string().trim().max(20, { message: 'At most 20 characters' }),
-  prompt: z.string().trim(),
-  spec: z.string().trim().max(60, { message: 'At most 60 characters' }),
-  video: mediaUrl,
-  poster: mediaUrl,
-  image: mediaUrl,
-})
+const galleryItemSchema = z
+  .object({
+    title: z.string().trim().max(100, { message: 'At most 100 characters' }),
+    category: z.string().trim().max(20, { message: 'At most 20 characters' }),
+    prompt: z.string().trim(),
+    spec: z.string().trim().max(60, { message: 'At most 60 characters' }),
+    video: mediaUrl,
+    poster: mediaUrl,
+    image: mediaUrl,
+  })
+  // The studio composer caps prompts per model, so a work's prompt must fit
+  // the model it names or "Use this work" would load a prompt it refuses.
+  .superRefine((item, ctx) => {
+    const max = promptGuide(parseGallerySpec(item.spec).model).maxLength
+    if (item.prompt.length > max) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['prompt'],
+        // 'At most 2000 characters' / 'At most 5000 characters'
+        message: `At most ${max} characters`,
+      })
+    }
+  })
 
 export const studioGalleryFormSchema = z.object({
   items: z.array(galleryItemSchema).max(STUDIO_GALLERY_MAX_ITEMS),

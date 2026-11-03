@@ -23,11 +23,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
 import { STUDIO_GALLERY_QUERY_KEY } from '@/features/video-studio/hooks/use-studio-gallery'
 import { useStudioModels } from '@/features/video-studio/hooks/use-studio-models'
-import { gallerySeries } from '@/features/video-studio/lib/gallery-draft'
+import {
+  gallerySeries,
+  parseGallerySpec,
+} from '@/features/video-studio/lib/gallery-draft'
+import { promptGuide } from '@/features/video-studio/lib/prompt-guide'
 import {
   collectStudioGalleryMedia,
   emptyStudioGalleryItem,
@@ -72,6 +77,12 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
   const clips = useFieldArray({ control: form.control, name: 'items' })
   const watchedItems = useWatch({ control: form.control, name: 'items' }) ?? []
   const [openClips, setOpenClips] = useState<Record<string, boolean>>({})
+  // The clip waiting for the admin to confirm its removal.
+  const [removing, setRemoving] = useState<{
+    index: number
+    id: string
+    title: string
+  } | null>(null)
   const openNewestClip = useRef(false)
 
   useEffect(() => {
@@ -122,7 +133,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
             isSaving={updateOption.isPending}
           />
 
-          <fieldset className='flex flex-col gap-3 rounded-lg border p-4'>
+          <fieldset className='flex min-w-0 flex-col gap-3 rounded-lg border p-4'>
             <legend className='px-1 text-sm font-semibold'>
               {t('Gallery works')}
             </legend>
@@ -134,6 +145,9 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
             {clips.fields.map((clip, index) => {
               const item = watchedItems[index]
               const label = t('Clip {{number}}', { number: index + 1 })
+              const guide = promptGuide(
+                parseGallerySpec(item?.spec ?? '').model
+              )
               const subtitle = [item?.category, item?.spec]
                 .filter(Boolean)
                 .join(' · ')
@@ -185,14 +199,13 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                         aria-label={t('Remove clip {{number}}', {
                           number: index + 1,
                         })}
-                        onClick={() => {
-                          clips.remove(index)
-                          setOpenClips((current) => {
-                            const next = { ...current }
-                            delete next[clip.id]
-                            return next
+                        onClick={() =>
+                          setRemoving({
+                            index,
+                            id: clip.id,
+                            title: item?.title || label,
                           })
-                        }}
+                        }
                       >
                         <Trash2 />
                       </Button>
@@ -239,6 +252,9 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                     name={`items.${index}.prompt`}
                     label={t('Prompt text')}
                     multiline
+                    description={t(guide.hint, {
+                      max: guide.maxLength,
+                    })}
                   />
                 </CollapsibleMediaClip>
               )
@@ -259,6 +275,33 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
           </fieldset>
         </SettingsForm>
       </Form>
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null)
+        }}
+        title={t('Remove this clip?')}
+        desc={
+          <p className='[overflow-wrap:anywhere]'>
+            {t(
+              '"{{title}}" leaves the gallery when you save, and its uploaded files are deleted then.',
+              { title: removing?.title ?? '' }
+            )}
+          </p>
+        }
+        confirmText={t('Remove')}
+        destructive
+        handleConfirm={() => {
+          if (!removing) return
+          clips.remove(removing.index)
+          setOpenClips((current) => {
+            const next = { ...current }
+            delete next[removing.id]
+            return next
+          })
+          setRemoving(null)
+        }}
+      />
     </SettingsSection>
   )
 }

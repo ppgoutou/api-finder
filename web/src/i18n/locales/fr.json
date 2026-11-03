@@ -7925,6 +7925,9 @@
     "Use this work fills the studio form with these parameters.": "« Utiliser cette œuvre » remplit le formulaire du studio avec ces paramètres.",
     "Found {{count}} models": "{{count}} modèles trouvés",
     "Enter an API key first": "Saisissez d'abord une clé API",
-    "At most 100 characters": "100 caractères maximum"
+    "At most 100 characters": "100 caractères maximum",
+    "At most 5000 characters": "5000 caractères maximum",
+    "Remove this clip?": "Retirer cette œuvre ?",
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "« {{title}} » quitte la galerie à l’enregistrement, et ses fichiers importés sont alors supprimés."
   }
 }
