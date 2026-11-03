@@ -307,7 +307,7 @@ function GalleryDetailsDialog(props: {
 
 /**
  * Curated studio gallery works from the admin StudioGallery option.
- * Category filters sit under the gallery tab. Works fill 2–4 columns in
+ * Category filters sit under the gallery tab. Works fill 2–6 columns in
  * reading order, each tile keeping its own width / height; a card shows the
  * model on the clip and a title of up to two lines, and the clip, prompt and parameters open in a dialog.
  */
@@ -325,10 +325,14 @@ export function GalleryList(props: {
   const [category, setCategory] = useState(ALL_CATEGORIES)
   const [ratios, setRatios] = useState<Record<string, number>>({})
   const [openCard, setOpenCard] = useState<GalleryCard | null>(null)
+  const huge = useMediaQuery('(min-width: 1536px)')
+  const large = useMediaQuery('(min-width: 1280px)')
   const wide = useMediaQuery('(min-width: 1024px)')
   const medium = useMediaQuery('(min-width: 768px)')
   let columnCount = 2
-  if (wide) columnCount = 4
+  if (huge) columnCount = 6
+  else if (large) columnCount = 5
+  else if (wide) columnCount = 4
   else if (medium) columnCount = 3
   const cards: GalleryCard[] = useStudioGallery()
     .items.filter((item) => item.video || item.prompt || item.poster)
@@ -412,7 +416,7 @@ export function GalleryList(props: {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className='grid grid-cols-2 items-start gap-3 md:grid-cols-3 lg:grid-cols-4'>
+        <div className='grid grid-cols-2 items-start gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
           {/* Empty columns only trail a gallery shorter than one row. */}
           {columns
             .filter((column) => column.length > 0)

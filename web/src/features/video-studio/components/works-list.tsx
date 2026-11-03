@@ -205,7 +205,7 @@ export function WorksList(props: {
   const pageSize = props.limit ?? WORKS_PAGE_SIZE
   const gridClassName = props.compact
     ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'
-    : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3'
+    : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
   const skeletonCount = Math.min(pageSize, props.compact ? 6 : 3)
   const [hidden, setHidden] = useState(readHiddenTasks)
   const [deleting, setDeleting] = useState<string | null>(null)
