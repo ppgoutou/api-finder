@@ -27,6 +27,7 @@ import { ErrorState } from '@/components/error-state'
 import { LoadingState } from '@/components/loading-state'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
+import { ComboboxInput } from '@/components/ui/combobox-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { listSystemTasks } from '@/features/system-settings/api'
@@ -36,7 +37,11 @@ import {
   requireServerSuccess,
 } from '@/lib/server-error-message'
 
-import { getDescriptionLLM, setDescriptionLLM } from '../../api'
+import {
+  getDescriptionLLM,
+  listDescriptionLLMModels,
+  setDescriptionLLM,
+} from '../../api'
 import { modelsQueryKeys } from '../../lib'
 import {
   SYNC_HISTORY_KEY,
@@ -143,6 +148,27 @@ export function DescriptionLLMDialog(props: {
   const [baseURL, setBaseURL] = useState<string | null>(null)
   const [modelName, setModelName] = useState<string | null>(null)
   const [apiKey, setApiKey] = useState('')
+  const [offeredModels, setOfferedModels] = useState<string[]>([])
+  const currentBaseURL = baseURL ?? config.data?.base_url ?? ''
+  const currentModel = modelName ?? config.data?.model ?? ''
+  const fetchModels = useMutation({
+    mutationFn: async () =>
+      requireServerSuccess(
+        await listDescriptionLLMModels({
+          base_url: currentBaseURL,
+          api_key: apiKey.trim() || undefined,
+        })
+      ).data ?? [],
+    onSuccess: (models) => {
+      setOfferedModels(models)
+      if (models.length === 0) {
+        toast.info(t('No models found'))
+        return
+      }
+      if (!models.includes(currentModel)) setModelName(models[0])
+      toast.success(t('Found {{count}} models', { count: models.length }))
+    },
+  })
   const save = useMutation({
     mutationFn: async (clearKey: boolean) => {
       let key: string | undefined
@@ -150,8 +176,8 @@ export function DescriptionLLMDialog(props: {
       else if (apiKey.trim()) key = apiKey.trim()
       return requireServerSuccess(
         await setDescriptionLLM({
-          base_url: baseURL ?? config.data?.base_url ?? '',
-          model: modelName ?? config.data?.model ?? '',
+          base_url: currentBaseURL,
+          model: currentModel,
           api_key: key,
         })
       ).data
@@ -181,18 +207,40 @@ export function DescriptionLLMDialog(props: {
             <Input
               id='description-llm-base-url'
               placeholder='https://api.openai.com'
-              value={baseURL ?? config.data?.base_url ?? ''}
+              value={currentBaseURL}
               onChange={(event) => setBaseURL(event.target.value)}
             />
           </div>
           <div className='space-y-1.5'>
             <Label htmlFor='description-llm-model'>{t('Model')}</Label>
-            <Input
-              id='description-llm-model'
-              placeholder='gpt-4o-mini'
-              value={modelName ?? config.data?.model ?? ''}
-              onChange={(event) => setModelName(event.target.value)}
-            />
+            <div className='flex gap-2'>
+              <div className='min-w-0 flex-1'>
+                <ComboboxInput
+                  id='description-llm-model'
+                  placeholder='gpt-4o-mini'
+                  options={offeredModels.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  value={currentModel}
+                  onValueChange={setModelName}
+                  allowCustomValue
+                  openOnFocus={offeredModels.length > 0}
+                  emptyText='No models found'
+                />
+              </div>
+              <Button
+                variant='outline'
+                disabled={
+                  fetchModels.isPending ||
+                  !currentBaseURL.trim() ||
+                  (!apiKey.trim() && !config.data?.has_key)
+                }
+                onClick={() => fetchModels.mutate()}
+              >
+                {fetchModels.isPending ? t('Fetching...') : t('Fetch Models')}
+              </Button>
+            </div>
           </div>
           <div className='space-y-1.5'>
             <Label htmlFor='description-llm-key'>{t('API key')}</Label>

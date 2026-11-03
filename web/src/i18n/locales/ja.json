@@ -7922,6 +7922,8 @@
     "Generation parameters": "生成パラメーター",
     "{{model}} (not available)": "{{model}}（利用不可）",
     "No video models are available in the studio yet.": "動画スタジオで使える動画モデルはまだありません。",
-    "Use this work fills the studio form with these parameters.": "「この作品を使う」でこれらのパラメーターがスタジオのフォームに入ります。"
+    "Use this work fills the studio form with these parameters.": "「この作品を使う」でこれらのパラメーターがスタジオのフォームに入ります。",
+    "Found {{count}} models": "{{count}} 件のモデルを取得しました",
+    "Enter an API key first": "先に API キーを入力してください"
   }
 }

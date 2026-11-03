@@ -84,6 +84,75 @@ func SetOnboardingDescriptionLLM(c *gin.Context) {
 	common.ApiSuccess(c, gin.H{"base_url": llm.BaseURL, "model": llm.Model, "has_key": llm.APIKey != ""})
 }
 
+// ListOnboardingDescriptionLLMModels lists the models the endpoint offers so
+// one can be picked. An empty api_key uses the stored one.
+func ListOnboardingDescriptionLLMModels(c *gin.Context) {
+	var request struct {
+		BaseURL string `json:"base_url"`
+		APIKey  string `json:"api_key"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &request); err != nil {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid request parameter format"))
+		return
+	}
+	baseURL := strings.TrimRight(strings.TrimSpace(request.BaseURL), "/")
+	if !strings.HasPrefix(baseURL, "https://") && !strings.HasPrefix(baseURL, "http://") {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid request parameter format"))
+		return
+	}
+	apiKey := strings.TrimSpace(request.APIKey)
+	if apiKey == "" {
+		apiKey = readOnboardingOption[onboardingDescriptionLLM](onboardingDescriptionLLMOption).APIKey
+	}
+	if apiKey == "" {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Enter an API key first"))
+		return
+	}
+	if !strings.HasSuffix(baseURL, "/v1") {
+		baseURL += "/v1"
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+	upstream, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/models", nil)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	upstream.Header.Set("Authorization", "Bearer "+apiKey)
+	response, err := service.GetHttpClient().Do(upstream)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	defer response.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(response.Body, 4<<20))
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if response.StatusCode != http.StatusOK {
+		common.ApiError(c, fmt.Errorf("model list returned HTTP %d", response.StatusCode))
+		return
+	}
+	var list struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := common.Unmarshal(raw, &list); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	models := make([]string, 0, len(list.Data))
+	for _, item := range list.Data {
+		if item.ID != "" && !slices.Contains(models, item.ID) {
+			models = append(models, item.ID)
+		}
+	}
+	slices.Sort(models)
+	common.ApiSuccess(c, models)
+}
+
 // DraftOnboardingModel prepares the metadata draft of one model again.
 func DraftOnboardingModel(c *gin.Context) {
 	var request struct {

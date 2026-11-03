@@ -7922,6 +7922,8 @@
     "Generation parameters": "Параметры генерации",
     "{{model}} (not available)": "{{model}} (недоступна)",
     "No video models are available in the studio yet.": "В студии пока нет доступных видеомоделей.",
-    "Use this work fills the studio form with these parameters.": "«Использовать работу» заполнит форму студии этими параметрами."
+    "Use this work fills the studio form with these parameters.": "«Использовать работу» заполнит форму студии этими параметрами.",
+    "Found {{count}} models": "Найдено моделей: {{count}}",
+    "Enter an API key first": "Сначала введите ключ API"
   }
 }
