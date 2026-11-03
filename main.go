@@ -376,7 +376,7 @@ func InitResources() error {
 	}
 
 	service.StartAuthArtifactCleanup()
-	service.StartAffQuotaAutoTransferTask()
+	service.StartAffRebateSettlementTask()
 
 	return nil
 }

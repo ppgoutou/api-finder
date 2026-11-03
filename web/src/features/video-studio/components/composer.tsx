@@ -40,6 +40,7 @@ import {
   replacementModel,
   validateDraft,
 } from '../lib/draft'
+import { promptGuide } from '../lib/prompt-guide'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 import type { StudioDraft, StudioMode } from '../types'
 import { ChoiceMenu } from './choice-menu'
@@ -175,6 +176,7 @@ export function Composer(props: ComposerProps) {
                 )
           }
           onSubmit={submit}
+          guide={promptGuide(model?.name)}
         />
       </div>
 

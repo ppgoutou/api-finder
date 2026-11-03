@@ -16,11 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Textarea } from '@/components/ui/textarea'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
+
+import type { PromptGuide } from '../lib/prompt-guide'
 
 export interface MentionOption {
   token: string
@@ -36,6 +40,8 @@ interface PromptInputProps {
   onSubmit: () => void
   /** Accessible name of the textarea; "Video prompt" by default. */
   label?: string
+  /** Length limit and advice of the selected model. */
+  guide: PromptGuide
 }
 
 /**
@@ -43,7 +49,9 @@ interface PromptInputProps {
  * picking one inserts its token, such as "@图片1". Ctrl/⌘ + Enter submits.
  */
 export function PromptInput(props: PromptInputProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const hintId = useId()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   // Caret position right after the "@" that opened the list.
   const [mentionAt, setMentionAt] = useState<number | null>(null)
@@ -102,7 +110,8 @@ export function PromptInput(props: PromptInputProps) {
         value={props.value}
         placeholder={props.placeholder}
         aria-label={props.label ?? t('Video prompt')}
-        maxLength={2000}
+        maxLength={props.guide.maxLength}
+        aria-describedby={hintId}
         rows={3}
         className='min-h-20 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent'
         onChange={(event) => {
@@ -121,6 +130,18 @@ export function PromptInput(props: PromptInputProps) {
         onKeyDown={handleKeyDown}
         onBlur={() => closeMenu()}
       />
+      {/* Shown until the user starts typing; screen readers keep it. */}
+      <p
+        id={hintId}
+        className={cn(
+          'text-muted-foreground px-1 text-[11px]',
+          props.value && 'sr-only'
+        )}
+      >
+        {t(props.guide.hint, {
+          max: formatNumber(props.guide.maxLength, locale),
+        })}
+      </p>
       {menuOpen && (
         <div
           role='listbox'

@@ -19,6 +19,11 @@ For commercial licensing, please contact support@quantumnous.com
 // Static translation keys that don't get picked up by the t('...') regex.
 // These cover dynamic labels (e.g. constants, configs) that are passed into t at runtime.
 export const STATIC_I18N_KEYS = [
+  // promptGuide hints in video-studio/lib/prompt-guide
+  'MiniMax takes up to {{max}} characters.',
+  'Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).',
+  'Wan handles long, detailed prompts (up to {{max}} characters).',
+  'Up to {{max}} characters.',
   // EVENT_FIELDS labels in x-pixel-settings-section
   'Sign-up event ID',
   'Top-up event ID',

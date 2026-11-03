@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import dayjs from 'dayjs'
 import { Gift } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -27,11 +28,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatQuota, formatTimestampToDate } from '@/lib/format'
 
 import { AFFILIATE_PAGE_SIZE, useAffiliateRebates } from '../hooks'
+import type { AffiliateRebate } from '../types'
 import { AffiliatePager } from './affiliate-pager'
 
 interface AffiliateRebatesCardProps {
-  /** Daily HH:MM when pending invitation quota moves to the balance */
-  autoTransferTime?: string
+  /** Days each rebate stays pending before reaching the balance */
+  holdDays?: number
 }
 
 export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
@@ -41,10 +43,26 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
   const items = data?.items ?? []
   const total = data?.total ?? 0
 
+  const statusBadge = (rebate: AffiliateRebate) => {
+    if (rebate.status === 'reversed') {
+      return { label: t('Reversed'), variant: 'neutral' as const }
+    }
+    if (rebate.status === 'pending') {
+      return {
+        label: t('Arrives on {{date}}', {
+          date: dayjs.unix(rebate.available_at).format('YYYY-MM-DD'),
+        }),
+        variant: 'warning' as const,
+      }
+    }
+    return { label: t('Arrived'), variant: 'success' as const }
+  }
+
   let body = (
     <ul className='divide-y'>
       {items.map((rebate) => {
         const reversed = rebate.status === 'reversed'
+        const badge = statusBadge(rebate)
         return (
           <li
             key={`${rebate.created_at}-${rebate.source_type}-${rebate.rebate_quota}-${rebate.invitee_name}`}
@@ -56,22 +74,20 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
                   .filter(Boolean)
                   .join(' · ')}
               </div>
-              <div className='text-muted-foreground flex items-center gap-2 text-xs tabular-nums'>
+              <div className='text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs tabular-nums'>
                 {formatTimestampToDate(rebate.created_at)}
                 <span>
                   {rebate.source_type === 'redemption'
                     ? t('Redemption code')
                     : t('Top-up')}
                 </span>
-                {reversed ? (
-                  <StatusBadge
-                    label={t('Reversed')}
-                    variant='neutral'
-                    type='text'
-                    copyable={false}
-                    className='font-normal'
-                  />
-                ) : null}
+                <StatusBadge
+                  label={badge.label}
+                  variant={badge.variant}
+                  type='text'
+                  copyable={false}
+                  className='font-normal'
+                />
               </div>
             </div>
             <span
@@ -110,10 +126,10 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
       <CardContent className='p-3 sm:p-4'>
         <div className='flex items-center justify-between gap-2'>
           <h3 className='text-sm font-semibold'>{t('Rebates')}</h3>
-          {props.autoTransferTime ? (
+          {props.holdDays && props.holdDays > 0 ? (
             <span className='text-muted-foreground text-xs'>
-              {t('Moves to your balance daily at {{time}}', {
-                time: props.autoTransferTime,
+              {t('Each rebate arrives {{days}} days after it is earned', {
+                days: props.holdDays,
               })}
             </span>
           ) : null}

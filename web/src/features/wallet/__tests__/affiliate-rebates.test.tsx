@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import dayjs from 'dayjs'
 import { createInstance } from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -49,62 +50,75 @@ afterEach(() => {
   vi.mocked(getAffiliateRebates).mockReset()
 })
 
-function renderCard(autoTransferTime?: string) {
+function renderCard(holdDays?: number) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <AffiliateRebatesCard autoTransferTime={autoTransferTime} />
+        <AffiliateRebatesCard holdDays={holdDays} />
       </I18nextProvider>
     </QueryClientProvider>
   )
 }
 
-it('lists rebates by source and marks reversed ones', async () => {
+const rebate = {
+  invitee_name: '胡**',
+  invitee_email: 'a***@gmail.com',
+  created_at: 1,
+}
+
+it('shows when a pending rebate arrives, and marks arrived and reversed ones', async () => {
+  const availableAt = dayjs('2026-11-09T12:00:00').unix()
   vi.mocked(getAffiliateRebates).mockResolvedValue({
     success: true,
     message: '',
     data: {
-      total: 2,
+      total: 3,
       items: [
         {
-          invitee_name: '胡**',
-          invitee_email: 'a***@gmail.com',
+          ...rebate,
           source_type: 'redemption',
           rebate_quota: 30000,
-          status: 'credited',
-          created_at: 2,
+          status: 'pending',
+          available_at: availableAt,
         },
         {
-          invitee_name: '胡**',
-          invitee_email: 'a***@gmail.com',
+          ...rebate,
           source_type: 'topup',
           rebate_quota: 150000,
+          status: 'settled',
+          available_at: 1,
+        },
+        {
+          ...rebate,
+          source_type: 'topup',
+          rebate_quota: 60000,
           status: 'reversed',
-          created_at: 1,
+          available_at: 1,
         },
       ],
     },
   })
-  renderCard('00:30')
+  renderCard(7)
 
   expect(await screen.findByText(`+${formatQuota(30000)}`)).toBeVisible()
-  expect(screen.getByText('兑换码')).toBeVisible()
-  expect(screen.getByText('充值')).toBeVisible()
+  expect(screen.getByText('2026-11-09 到账')).toBeVisible()
+  expect(screen.getByText('已到账')).toBeVisible()
   expect(screen.getByText('已撤回')).toBeVisible()
-  expect(screen.getByText('每天 00:30 自动转入余额')).toBeVisible()
+  expect(screen.getByText('兑换码')).toBeVisible()
+  expect(screen.getByText('每笔返利获得 7 天后到账')).toBeVisible()
 })
 
-it('shows the empty state and no schedule when transfer is manual', async () => {
+it('shows the empty state without a holding note when rebates pay at once', async () => {
   vi.mocked(getAffiliateRebates).mockResolvedValue({
     success: true,
     message: '',
     data: { total: 0, items: [] },
   })
-  renderCard('')
+  renderCard(0)
 
   expect(await screen.findByText('暂无返利记录')).toBeVisible()
-  expect(screen.queryByText(/自动转入余额/)).toBeNull()
+  expect(screen.queryByText(/天后到账/)).toBeNull()
 })

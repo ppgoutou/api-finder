@@ -602,6 +602,13 @@ func GetInviteeIdentities(ids []int) (map[int]*User, error) {
 	return identities, err
 }
 
+// CountInvitees counts the live users who signed up with inviterId's code.
+func CountInvitees(inviterId int) (int64, error) {
+	var count int64
+	err := DB.Model(&User{}).Where("inviter_id = ?", inviterId).Count(&count).Error
+	return count, err
+}
+
 // GetInviteesByInviterId lists the users who signed up with inviterId's code,
 // newest first, with only the fields the inviter may see.
 func GetInviteesByInviterId(inviterId int, pageInfo *common.PageInfo) ([]*User, int64, error) {
@@ -612,7 +619,7 @@ func GetInviteesByInviterId(inviterId int, pageInfo *common.PageInfo) ([]*User, 
 		return nil, 0, err
 	}
 	err := query.Select("id", "username", "display_name", "email", "status", "created_at").
-		Order("id desc").
+		Order("created_at desc, id desc").
 		Limit(pageInfo.GetPageSize()).
 		Offset(pageInfo.GetStartIdx()).
 		Find(&invitees).Error
