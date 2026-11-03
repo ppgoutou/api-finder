@@ -392,11 +392,11 @@ describe('Composer balance check', () => {
 })
 
 describe('Composer prompt length guide', () => {
-  it('describes the empty prompt with the Seedance advice and caps it at 5000 characters', () => {
+  it('describes the empty prompt with the Seedance advice and caps it at 7500 characters', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
-    expect(prompt).toHaveAttribute('maxLength', '5000')
+    expect(prompt).toHaveAttribute('maxLength', '7500')
     expect(prompt).toHaveAccessibleDescription(/Seedance works best/)
   })
 
