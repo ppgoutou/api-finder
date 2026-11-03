@@ -31,9 +31,6 @@ describe('studio gallery settings', () => {
           title: 'Watch',
           category: 'Product',
           prompt: 'a watch on black',
-          titleZh: '手表',
-          categoryZh: '产品',
-          promptZh: '黑色背景上的手表',
           spec: 'seedance-2.0 · 720p · 5s',
           video: 'https://cdn.example/watch.mp4',
           poster: 'https://cdn.example/watch.jpg',
@@ -47,9 +44,6 @@ describe('studio gallery settings', () => {
           title: 'Watch',
           category: 'Product',
           prompt: 'a watch on black',
-          title_zh: '手表',
-          category_zh: '产品',
-          prompt_zh: '黑色背景上的手表',
           spec: 'seedance-2.0 · 720p · 5s',
           video: 'https://cdn.example/watch.mp4',
           poster: 'https://cdn.example/watch.jpg',
@@ -59,8 +53,39 @@ describe('studio gallery settings', () => {
     })
     expect(parseStudioGallery(raw).items[0]).toMatchObject({
       title: 'Watch',
-      titleZh: '手表',
       video: 'https://cdn.example/watch.mp4',
+    })
+  })
+
+  it('drops Chinese copies saved by an earlier editor so one title, category and prompt show everywhere', () => {
+    const stored = JSON.stringify({
+      items: [
+        {
+          title: 'Watch',
+          category: 'Product',
+          prompt: 'a watch on black',
+          title_zh: '手表',
+          category_zh: '产品',
+          prompt_zh: '黑色背景上的手表',
+        },
+      ],
+    })
+
+    const [item] = parseStudioGallery(stored).items
+
+    expect(Object.keys(item)).not.toContain('titleZh')
+    expect(JSON.parse(serializeStudioGallery({ items: [item] }))).toEqual({
+      items: [
+        {
+          title: 'Watch',
+          category: 'Product',
+          prompt: 'a watch on black',
+          spec: '',
+          video: '',
+          poster: '',
+          image: '',
+        },
+      ],
     })
   })
 

@@ -113,9 +113,6 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
       <p className='text-muted-foreground text-sm'>
         {t(
           'Works shown under Gallery on the video studio page. Homepage videos are configured separately.'
-        )}{' '}
-        {t(
-          'Chinese fields are shown to simplified and traditional Chinese interfaces; leave them empty to show the default text.'
         )}
       </p>
       <Form {...form}>
@@ -241,24 +238,6 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                     control={form.control}
                     name={`items.${index}.prompt`}
                     label={t('Prompt text')}
-                    multiline
-                  />
-                  <div className='grid gap-4 sm:grid-cols-3'>
-                    <ShowcaseTextField
-                      control={form.control}
-                      name={`items.${index}.titleZh`}
-                      label={t('Title (Chinese)')}
-                    />
-                    <ShowcaseTextField
-                      control={form.control}
-                      name={`items.${index}.categoryZh`}
-                      label={t('Category (Chinese)')}
-                    />
-                  </div>
-                  <ShowcaseTextField
-                    control={form.control}
-                    name={`items.${index}.promptZh`}
-                    label={t('Prompt text (Chinese)')}
                     multiline
                   />
                 </CollapsibleMediaClip>

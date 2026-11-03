@@ -19,16 +19,20 @@ For commercial licensing, please contact support@quantumnous.com
 /**
  * Video-studio gallery settings stored in the `StudioGallery` option as JSON.
  * Separate from the home page `HomeShowcase` so homepage clips and studio
- * gallery works are edited independently.
+ * gallery works are edited independently. Each work has one title, category
+ * and prompt shown in every interface language.
  */
-import {
-  EMPTY_SHOWCASE_ITEM,
-  HOME_MEDIA_URL_PREFIX,
-  type HomeShowcaseItem,
-  localizeShowcaseItem,
-} from '@/features/home/lib/home-showcase'
+import { HOME_MEDIA_URL_PREFIX } from '@/features/home/lib/home-showcase'
 
-export type StudioGalleryItem = HomeShowcaseItem
+export type StudioGalleryItem = {
+  title: string
+  category: string
+  prompt: string
+  spec: string
+  video: string
+  poster: string
+  image: string
+}
 
 export type StudioGallerySettings = {
   items: StudioGalleryItem[]
@@ -47,9 +51,6 @@ function readItem(value: unknown): StudioGalleryItem {
     title: text('title'),
     category: text('category'),
     prompt: text('prompt'),
-    titleZh: text('title_zh'),
-    categoryZh: text('category_zh'),
-    promptZh: text('prompt_zh'),
     spec: text('spec'),
     video: text('video'),
     poster: text('poster'),
@@ -62,9 +63,6 @@ function toStoredItem(item: StudioGalleryItem) {
     title: item.title,
     category: item.category,
     prompt: item.prompt,
-    title_zh: item.titleZh,
-    category_zh: item.categoryZh,
-    prompt_zh: item.promptZh,
     spec: item.spec,
     video: item.video,
     poster: item.poster,
@@ -112,13 +110,14 @@ export function collectStudioGalleryMedia(
     .filter((url) => url.startsWith(HOME_MEDIA_URL_PREFIX))
 }
 
-export function localizeStudioGalleryItem(
-  item: StudioGalleryItem,
-  language: string
-): StudioGalleryItem {
-  return localizeShowcaseItem(item, language)
-}
-
 export function emptyStudioGalleryItem(): StudioGalleryItem {
-  return { ...EMPTY_SHOWCASE_ITEM }
+  return {
+    title: '',
+    category: '',
+    prompt: '',
+    spec: '',
+    video: '',
+    poster: '',
+    image: '',
+  }
 }
