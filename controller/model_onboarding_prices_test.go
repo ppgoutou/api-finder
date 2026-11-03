@@ -384,3 +384,35 @@ export function parseTaskResult() { return {}; }
 	assert.Equal(t, draftErrorLLMPrice, draft.Error)
 	assert.Contains(t, draft.Description, "按秒计费")
 }
+
+func TestListDescriptionLLMModelsFallsBackToStoredKey(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	llmServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/v1/models", r.URL.Path)
+		if r.Header.Get("Authorization") != "Bearer stored-key" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":"gpt-4o-mini"},{"id":"claude-x"},{"id":"gpt-4o-mini"},{"id":""}]}`))
+	}))
+	t.Cleanup(llmServer.Close)
+	list := func(body string) map[string]any {
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		ListOnboardingDescriptionLLMModels(c)
+		var response map[string]any
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		return response
+	}
+
+	assert.Equal(t, false, list(`{"base_url":"` + llmServer.URL + `"}`)["success"])
+
+	require.NoError(t, writeOnboardingOption(onboardingDescriptionLLMOption, onboardingDescriptionLLM{BaseURL: "https://old.example", Model: "writer", APIKey: "stored-key"}))
+	response := list(`{"base_url":"` + llmServer.URL + `/"}`)
+
+	assert.Equal(t, true, response["success"])
+	assert.Equal(t, []any{"claude-x", "gpt-4o-mini"}, response["data"])
+	assert.Equal(t, false, list(`{"base_url":"` + llmServer.URL + `","api_key":"wrong"}`)["success"])
+}

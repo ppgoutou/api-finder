@@ -389,6 +389,24 @@ export async function setDescriptionLLM(request: {
 }
 
 /**
+ * List the models the chat endpoint offers; omit api_key to use the stored one
+ */
+export async function listDescriptionLLMModels(request: {
+  base_url: string
+  api_key?: string
+}): Promise<{
+  success: boolean
+  message?: string
+  data?: string[]
+}> {
+  const res = await api.post(
+    '/api/models/onboarding/upstream_prices/description_llm/models',
+    request
+  )
+  return res.data
+}
+
+/**
  * Queue an upstream model check across every enabled channel
  */
 export async function detectAllChannelUpstreamModels(): Promise<{
