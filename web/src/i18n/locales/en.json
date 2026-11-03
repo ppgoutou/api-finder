@@ -7924,6 +7924,7 @@
     "No video models are available in the studio yet.": "No video models are available in the studio yet.",
     "Use this work fills the studio form with these parameters.": "Use this work fills the studio form with these parameters.",
     "Found {{count}} models": "Found {{count}} models",
-    "Enter an API key first": "Enter an API key first"
+    "Enter an API key first": "Enter an API key first",
+    "At most 100 characters": "At most 100 characters"
   }
 }

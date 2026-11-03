@@ -267,32 +267,25 @@ type studioGallerySettings struct {
 var errInvalidHomeShowcase = errors.New("invalid home showcase settings")
 var errInvalidStudioGallery = errors.New("invalid studio gallery settings")
 
-func validateShowcaseItem(item homeShowcaseItem) error {
-	if utf8.RuneCountInString(item.Title) > 80 ||
-		utf8.RuneCountInString(item.TitleZh) > 80 ||
-		utf8.RuneCountInString(item.Category) > 20 ||
-		utf8.RuneCountInString(item.CategoryZh) > 20 ||
-		utf8.RuneCountInString(item.Prompt) > 2000 ||
-		utf8.RuneCountInString(item.PromptZh) > 2000 ||
-		utf8.RuneCountInString(item.Spec) > 60 {
-		return errInvalidHomeShowcase
-	}
+// showcaseMediaAllowed reports whether every media link of a clip is an
+// uploaded home-media file or an https link.
+func showcaseMediaAllowed(item homeShowcaseItem) bool {
 	for _, link := range []string{item.Video, item.Poster, item.Image} {
 		if link == "" {
 			continue
 		}
 		if name, ok := strings.CutPrefix(link, homeMediaURLPrefix); ok {
 			if !homeMediaNamePattern.MatchString(name) {
-				return errInvalidHomeShowcase
+				return false
 			}
 			continue
 		}
 		parsed, err := url.Parse(link)
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-			return errInvalidHomeShowcase
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
 // validateHomeShowcase checks the HomeShowcase option before it is saved:
@@ -317,14 +310,24 @@ func validateHomeShowcase(value string) error {
 		items = append(items, *settings.ImageToVideo)
 	}
 	for _, item := range items {
-		if err := validateShowcaseItem(item); err != nil {
-			return err
+		if utf8.RuneCountInString(item.Title) > 80 ||
+			utf8.RuneCountInString(item.TitleZh) > 80 ||
+			utf8.RuneCountInString(item.Category) > 20 ||
+			utf8.RuneCountInString(item.CategoryZh) > 20 ||
+			utf8.RuneCountInString(item.Prompt) > 2000 ||
+			utf8.RuneCountInString(item.PromptZh) > 2000 ||
+			utf8.RuneCountInString(item.Spec) > 60 ||
+			!showcaseMediaAllowed(item) {
+			return errInvalidHomeShowcase
 		}
 	}
 	return nil
 }
 
-// validateStudioGallery checks the StudioGallery option before it is saved.
+// validateStudioGallery checks the StudioGallery option before it is saved:
+// titles of at most 100 characters, prompts of any length, at most
+// studioGalleryMaxItems works, and media URLs that are uploaded files or
+// https links.
 func validateStudioGallery(value string) error {
 	if strings.TrimSpace(value) == "" {
 		return nil
@@ -337,7 +340,10 @@ func validateStudioGallery(value string) error {
 		return errInvalidStudioGallery
 	}
 	for _, item := range settings.Items {
-		if err := validateShowcaseItem(item); err != nil {
+		if utf8.RuneCountInString(item.Title) > 100 ||
+			utf8.RuneCountInString(item.Category) > 20 ||
+			utf8.RuneCountInString(item.Spec) > 60 ||
+			!showcaseMediaAllowed(item) {
 			return errInvalidStudioGallery
 		}
 	}

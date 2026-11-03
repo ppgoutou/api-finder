@@ -181,6 +181,9 @@ func TestValidateStudioGallery(t *testing.T) {
 	}{
 		{"empty gallery", "", true},
 		{"one clip with cover", `{"items":[{"title":"Clip","category":"Ads","prompt":"p","spec":"seedance-2.0 · 720p · 5s","video":"` + uploaded + `","poster":"https://media.example.com/p.jpg"}]}`, true},
+		{"title of 100 characters", `{"items":[{"title":"` + strings.Repeat("标", 100) + `"}]}`, true},
+		{"title over 100 characters", `{"items":[{"title":"` + strings.Repeat("标", 101) + `"}]}`, false},
+		{"prompt of any length", `{"items":[{"title":"Clip","prompt":"` + strings.Repeat("p", 20000) + `"}]}`, true},
 		{"javascript url", `{"items":[{"video":"javascript:alert(1)"}]}`, false},
 		{"too many clips", `{"items":` + manyItems + `}`, false},
 		{"not json", `{"items":`, false},

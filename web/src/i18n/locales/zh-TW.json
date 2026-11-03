@@ -7924,6 +7924,7 @@
     "No video models are available in the studio yet.": "影片創作暫時沒有可用的影片模型。",
     "Use this work fills the studio form with these parameters.": "點「使用此作品」時，會用這些參數填寫創作表單。",
     "Found {{count}} models": "取得 {{count}} 個模型",
-    "Enter an API key first": "請先填寫 API 金鑰"
+    "Enter an API key first": "請先填寫 API 金鑰",
+    "At most 100 characters": "最多 100 個字元"
   }
 }

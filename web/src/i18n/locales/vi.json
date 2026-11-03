@@ -7924,6 +7924,7 @@
     "No video models are available in the studio yet.": "Studio chưa có mô hình video nào khả dụng.",
     "Use this work fills the studio form with these parameters.": "“Dùng tác phẩm này” sẽ điền các tham số này vào biểu mẫu studio.",
     "Found {{count}} models": "Tìm thấy {{count}} mô hình",
-    "Enter an API key first": "Hãy nhập khóa API trước"
+    "Enter an API key first": "Hãy nhập khóa API trước",
+    "At most 100 characters": "Tối đa 100 ký tự"
   }
 }
