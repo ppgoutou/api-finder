@@ -21,6 +21,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -32,6 +33,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useStatus } from '@/hooks/use-status'
+import { cn } from '@/lib/utils'
 
 import { useStudioGallery } from '../hooks/use-studio-gallery'
 import { useStudioModels } from '../hooks/use-studio-models'
@@ -146,37 +148,60 @@ function GalleryWorkCard(props: {
 }) {
   const { t } = useTranslation()
   const card = props.card
+  const params = card.spec
+    .split(/[·|]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
 
   return (
-    <article className='bg-card border-border/60 overflow-hidden rounded-xl border'>
-      <GalleryTile
-        card={card}
-        ratio={props.ratio}
-        onRatio={props.onRatio}
-        onOpen={props.onOpen}
-      />
-      <div className='flex items-end gap-2 p-3'>
-        <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
-          {card.title && (
-            <p className='line-clamp-2 text-sm font-medium'>{card.title}</p>
-          )}
-          <p className='text-muted-foreground truncate text-xs'>
-            {card.spec || t('Gallery')}
-          </p>
-        </div>
-        {card.prompt.trim() && (
-          <Button
-            variant='secondary'
-            size='sm'
-            className='shrink-0'
-            onClick={props.onOpen}
-            aria-label={t('View prompt: {{title}}', {
-              title: card.title || card.spec || t('Gallery'),
-            })}
+    <article className='flex flex-col gap-2'>
+      <div className='border-border/60 overflow-hidden rounded-xl border'>
+        <GalleryTile
+          card={card}
+          ratio={props.ratio}
+          onRatio={props.onRatio}
+          onOpen={props.onOpen}
+        />
+      </div>
+      <div className='flex flex-col gap-1.5 px-0.5'>
+        <div className='flex items-center gap-1'>
+          <p
+            className={cn(
+              'min-w-0 flex-1 truncate text-sm font-medium',
+              !card.title && 'text-muted-foreground'
+            )}
+            title={card.title || undefined}
           >
-            <ScrollText className='size-3.5' aria-hidden />
-            {t('Prompt words')}
-          </Button>
+            {card.title || t('Untitled work')}
+          </p>
+          {card.prompt.trim() && (
+            <Button
+              variant='ghost'
+              size='xs'
+              className='text-primary hover:text-primary -me-1.5 shrink-0'
+              onClick={props.onOpen}
+              aria-label={t('View prompt: {{title}}', {
+                title: card.title || card.spec || t('Untitled work'),
+              })}
+            >
+              <ScrollText aria-hidden />
+              {t('Prompt words')}
+            </Button>
+          )}
+        </div>
+        {params.length > 0 && (
+          <ul className='flex flex-wrap gap-1' aria-label={t('Parameters')}>
+            {params.map((param) => (
+              <li key={param}>
+                <Badge
+                  variant='outline'
+                  className='text-muted-foreground font-normal'
+                >
+                  {param}
+                </Badge>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </article>
@@ -217,7 +242,7 @@ function GalleryDetailsDialog(props: {
         autoPlay
         playsInline
         preload='metadata'
-        className='max-h-[70vh] w-full object-contain'
+        className='size-full object-contain'
       />
     )
   } else if (cover) {
@@ -225,7 +250,7 @@ function GalleryDetailsDialog(props: {
       <img
         src={cover}
         alt={card?.title || t('Video preview')}
-        className='max-h-[70vh] w-full object-contain'
+        className='size-full object-contain'
       />
     )
   }
@@ -238,8 +263,8 @@ function GalleryDetailsDialog(props: {
       contentClassName='sm:max-w-5xl'
     >
       {card && (
-        <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_18rem]'>
-          <div className='flex min-h-48 items-center justify-center overflow-hidden rounded-lg bg-black'>
+        <div className='grid gap-4 md:h-[min(78vh,760px)] md:grid-cols-[minmax(0,1fr)_18rem]'>
+          <div className='flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-black md:aspect-auto md:h-full'>
             {media ?? (
               <span className='text-muted-foreground flex flex-col items-center gap-1 text-xs'>
                 <Film className='size-5' aria-hidden />
@@ -247,43 +272,47 @@ function GalleryDetailsDialog(props: {
               </span>
             )}
           </div>
-          <div className='flex min-w-0 flex-col gap-4'>
+          {/* The prompt takes whatever height the parameters and the
+              action leave, so they stay pinned to the bottom. */}
+          <div className='flex min-h-0 min-w-0 flex-col gap-4'>
             {card.prompt.trim() && (
-              <section className='flex flex-col gap-2'>
+              <section className='flex min-h-0 flex-1 flex-col gap-2'>
                 <h3 className='text-muted-foreground text-sm font-medium'>
                   {t('Prompt words')}
                 </h3>
-                <p className='bg-muted/50 max-h-64 overflow-y-auto rounded-lg p-3 text-sm leading-relaxed break-words whitespace-pre-wrap'>
+                <p className='bg-muted/50 max-h-60 min-h-0 flex-1 overflow-y-auto rounded-lg p-3 text-sm leading-relaxed break-words whitespace-pre-wrap md:max-h-none'>
                   {card.prompt}
                 </p>
               </section>
             )}
-            {params.length > 0 && (
-              <section className='flex flex-col gap-2'>
-                <h3 className='text-muted-foreground text-sm font-medium'>
-                  {t('Parameters')}
-                </h3>
-                <dl className='grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm'>
-                  {params.map((param) => (
-                    <div key={param.label} className='contents'>
-                      <dt className='text-muted-foreground'>{param.label}</dt>
-                      <dd className='truncate text-end font-medium'>
-                        {param.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            )}
-            {card.prompt.trim() && (
-              <Button
-                className='mt-auto w-full'
-                onClick={() => props.onUsePrompt(card)}
-              >
-                <Sparkles className='size-4' aria-hidden />
-                {t('Use prompt')}
-              </Button>
-            )}
+            <div className='mt-auto flex shrink-0 flex-col gap-4'>
+              {params.length > 0 && (
+                <section className='flex flex-col gap-2'>
+                  <h3 className='text-muted-foreground text-sm font-medium'>
+                    {t('Parameters')}
+                  </h3>
+                  <dl className='grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm'>
+                    {params.map((param) => (
+                      <div key={param.label} className='contents'>
+                        <dt className='text-muted-foreground'>{param.label}</dt>
+                        <dd className='truncate text-end font-medium'>
+                          {param.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+              {card.prompt.trim() && (
+                <Button
+                  className='w-full'
+                  onClick={() => props.onUsePrompt(card)}
+                >
+                  <Sparkles className='size-4' aria-hidden />
+                  {t('Use prompt')}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
