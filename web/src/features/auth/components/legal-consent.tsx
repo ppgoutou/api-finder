@@ -60,11 +60,11 @@ export function LegalConsent({
         id='legal-consent'
         checked={checked}
         onCheckedChange={handleChange}
-        className='mt-0.5'
+        className='border-muted-foreground/60 bg-background mt-px size-[18px]'
       />
       <Label
         htmlFor='legal-consent'
-        className='text-muted-foreground items-start gap-1 text-left text-xs leading-5 font-normal'
+        className='text-muted-foreground cursor-pointer items-start gap-1 text-left text-xs leading-5 font-normal'
       >
         <span>
           {t('I have read and agree to the')}{' '}

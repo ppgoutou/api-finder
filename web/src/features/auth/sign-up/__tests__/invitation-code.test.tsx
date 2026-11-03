@@ -40,7 +40,12 @@ vi.mock('@/features/auth/hooks/use-auth-redirect', () => ({
     handleLoginResult: vi.fn(),
   }),
 }))
-vi.mock('@/hooks/use-status', () => ({ useStatus: () => ({ status: {} }) }))
+const statusState = vi.hoisted(() => ({
+  current: {} as Record<string, unknown>,
+}))
+vi.mock('@/hooks/use-status', () => ({
+  useStatus: () => ({ status: statusState.current }),
+}))
 
 const i18n = createInstance()
 
@@ -57,6 +62,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.mocked(register).mockReset()
+  statusState.current = {}
   window.localStorage.clear()
 })
 
@@ -117,4 +123,20 @@ it('shows an invalid invitation code under the field', async () => {
     'aria-invalid',
     'true'
   )
+})
+
+it('starts with the legal consent checked so the form can be submitted', () => {
+  statusState.current = {
+    user_agreement_enabled: true,
+    privacy_policy_enabled: true,
+  }
+  renderForm()
+
+  expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByRole('button', { name: '创建账户' })).toBeEnabled()
+
+  fireEvent.click(screen.getByRole('checkbox'))
+
+  expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByRole('button', { name: '创建账户' })).toBeDisabled()
 })
