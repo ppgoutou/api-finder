@@ -22,7 +22,7 @@ import { emptyStudioGalleryItem } from '@/features/video-studio/lib/studio-galle
 
 import { studioGalleryFormSchema } from '../schema'
 
-function validate(item: { title?: string; prompt?: string }) {
+function validate(item: { title?: string; prompt?: string; spec?: string }) {
   return studioGalleryFormSchema.safeParse({
     items: [{ ...emptyStudioGalleryItem(), ...item }],
   })
@@ -37,7 +37,25 @@ describe('studio gallery form limits', () => {
     expect(validate({ title: '标'.repeat(101) }).success).toBe(false)
   })
 
-  it('accepts a prompt of any length', () => {
-    expect(validate({ prompt: 'p'.repeat(20000) }).success).toBe(true)
+  it('accepts a prompt as long as the studio takes, 5000 characters', () => {
+    expect(validate({ prompt: '词'.repeat(5000) }).success).toBe(true)
+  })
+
+  it('rejects a prompt longer than the studio takes', () => {
+    const result = validate({ prompt: 'p'.repeat(5001) })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ['items', 0, 'prompt'],
+      message: 'At most 5000 characters',
+    })
+  })
+
+  it('holds a MiniMax work to the 2000 characters MiniMax takes', () => {
+    const result = validate({
+      prompt: 'p'.repeat(2001),
+      spec: 'MiniMax-H3 · 16:9 · 768p · 6s',
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe('At most 2000 characters')
   })
 })

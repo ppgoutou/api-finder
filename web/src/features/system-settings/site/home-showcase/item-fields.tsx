@@ -20,6 +20,7 @@ import type { Control, FieldPath, FieldValues } from 'react-hook-form'
 
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,6 +36,7 @@ type TextFieldProps<T extends FieldValues> = {
   /** Literal example text, not translated. */
   placeholder?: string
   multiline?: boolean
+  description?: string
 }
 
 /** A text field of a home or studio gallery slot (title, category, spec or prompt). */
@@ -55,6 +57,9 @@ export function ShowcaseTextField<T extends FieldValues>(
               <Input placeholder={props.placeholder} {...field} />
             )}
           </FormControl>
+          {props.description && (
+            <FormDescription>{props.description}</FormDescription>
+          )}
           <FormMessage />
         </FormItem>
       )}

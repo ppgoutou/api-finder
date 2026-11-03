@@ -7925,6 +7925,9 @@
     "Use this work fills the studio form with these parameters.": "“Dùng tác phẩm này” sẽ điền các tham số này vào biểu mẫu studio.",
     "Found {{count}} models": "Tìm thấy {{count}} mô hình",
     "Enter an API key first": "Hãy nhập khóa API trước",
-    "At most 100 characters": "Tối đa 100 ký tự"
+    "At most 100 characters": "Tối đa 100 ký tự",
+    "At most 5000 characters": "Tối đa 5000 ký tự",
+    "Remove this clip?": "Xóa tác phẩm này?",
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "“{{title}}” sẽ bị xóa khỏi bộ sưu tập khi lưu, kèm các tệp đã tải lên."
   }
 }

@@ -7925,6 +7925,9 @@
     "Use this work fills the studio form with these parameters.": "「この作品を使う」でこれらのパラメーターがスタジオのフォームに入ります。",
     "Found {{count}} models": "{{count}} 件のモデルを取得しました",
     "Enter an API key first": "先に API キーを入力してください",
-    "At most 100 characters": "100 文字以内"
+    "At most 100 characters": "100 文字以内",
+    "At most 5000 characters": "5000 文字以内",
+    "Remove this clip?": "この作品を削除しますか？",
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存すると「{{title}}」は作品集から削除され、アップロードしたファイルも削除されます。"
   }
 }
