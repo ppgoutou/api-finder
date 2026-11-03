@@ -22,13 +22,13 @@ import { promptGuide } from '../lib/prompt-guide'
 
 describe('promptGuide', () => {
   it.each([
-    ['C-seedance-2.0', 5000, /^Seedance/],
-    ['sd-2.0-线路1', 5000, /^Seedance/],
-    ['D-sd2.5-G3-1', 5000, /^Seedance/],
-    ['D-wan-3.0-P', 5000, /^Wan/],
+    ['C-seedance-2.0', 7500, /^Seedance/],
+    ['sd-2.0-线路1', 7500, /^Seedance/],
+    ['D-sd2.5-G3-1', 7500, /^Seedance/],
+    ['D-wan-3.0-P', 7500, /^Wan/],
     ['H-MiniMax-H3-Fast', 2000, /^MiniMax/],
-    ['A-seedream-5.0-pro-P', 5000, /^Up to/],
-    [undefined, 5000, /^Up to/],
+    ['A-seedream-5.0-pro-P', 7500, /^Up to/],
+    [undefined, 7500, /^Up to/],
   ])(
     'maps %s to a %i-character limit with its family hint',
     (name, max, hint) => {

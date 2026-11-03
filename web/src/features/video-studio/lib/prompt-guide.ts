@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 /** Longest prompt the studio accepts for any model. */
-export const STUDIO_PROMPT_MAX_LENGTH = 5000
+export const STUDIO_PROMPT_MAX_LENGTH = 7500
 
 export interface PromptGuide {
   /** Longest prompt the selected model accepts. */
