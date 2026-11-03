@@ -155,6 +155,55 @@ describe('GalleryList', () => {
     ).toHaveAttribute('src', 'https://cdn.example/admin.jpg')
   })
 
+  it('shows the title and each parameter as its own tag under a work', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Rain car',
+            prompt: 'a silver car in the rain',
+            spec: 'Seedance 2.5 · 16:9 · 720p · 19s',
+            poster: 'https://cdn.example/car.jpg',
+          },
+        ],
+      })
+    )
+    renderGallery()
+
+    const params = await screen.findByRole('list', { name: 'Parameters' })
+    expect(
+      within(params)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+    ).toEqual(['Seedance 2.5', '16:9', '720p', '19s'])
+    expect(screen.getByText('Rain car')).toBeVisible()
+    expect(
+      screen.queryByText('a silver car in the rain')
+    ).not.toBeInTheDocument()
+  })
+
+  it('labels a work without a title as untitled instead of showing its parameters twice', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            prompt: 'a campus walk',
+            spec: 'Seedance 2.5 · 9:16 · 720p · 10s',
+            poster: 'https://cdn.example/walk.jpg',
+          },
+        ],
+      })
+    )
+    renderGallery()
+
+    expect(await screen.findByText('Untitled work')).toBeVisible()
+    expect(
+      screen.getByRole('button', {
+        name: 'View prompt: Seedance 2.5 · 9:16 · 720p · 10s',
+      })
+    ).toBeVisible()
+  })
+
   it('filters gallery cards by category', async () => {
     mockStudioGallery(
       JSON.stringify({

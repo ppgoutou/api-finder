@@ -7144,6 +7144,7 @@
     "Unsupported verification method: {{method}}": "サポートされていない認証方法です: {{method}}",
     "Until": "まで",
     "Untitled": "無題",
+    "Untitled work": "無題の作品",
     "Untrusted upstream data:": "信頼されていないアップストリームデータ:",
     "Unused": "未使用",
     "Up to 4 strings that stop generation": "生成を停止する文字列を最大 4 個まで",
