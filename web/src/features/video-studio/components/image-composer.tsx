@@ -45,6 +45,7 @@ import {
   replacementModel,
 } from '../lib/draft'
 import { buildImageRequest, validateImageDraft } from '../lib/image-draft'
+import { promptGuide } from '../lib/prompt-guide'
 import type { StudioDraft } from '../types'
 import { ChoiceMenu } from './choice-menu'
 import { PromptInput } from './prompt-input'
@@ -153,6 +154,7 @@ export function ImageComposer(props: ImageComposerProps) {
           )}
           onSubmit={submit}
           label={t('Image prompt')}
+          guide={promptGuide(model?.name)}
         />
       </div>
 

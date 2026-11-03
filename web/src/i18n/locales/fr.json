@@ -7786,6 +7786,10 @@
     "Arrived": "Versée",
     "Each rebate arrives {{days}} days after it is earned": "Chaque remise arrive {{days}} jours après avoir été gagnée",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Remise d'invitation de {{quota}} gagnée, versée sur votre solde le {{date}}",
-    "Invitation rebate {{quota}} moved to balance": "Remise d'invitation de {{quota}} versée sur le solde"
+    "Invitation rebate {{quota}} moved to balance": "Remise d'invitation de {{quota}} versée sur le solde",
+    "MiniMax takes up to {{max}} characters.": "MiniMax accepte jusqu’à {{max}} caractères.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance donne de meilleurs résultats avec au plus 500 caractères chinois ou 1 000 mots anglais (jusqu’à {{max}} caractères).",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan accepte des prompts longs et détaillés (jusqu’à {{max}} caractères).",
+    "Up to {{max}} characters.": "Jusqu’à {{max}} caractères."
   }
 }

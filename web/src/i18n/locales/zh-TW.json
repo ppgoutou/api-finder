@@ -7786,6 +7786,10 @@
     "Arrived": "已到帳",
     "Each rebate arrives {{days}} days after it is earned": "每筆返利獲得 {{days}} 天後到帳",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "獲得邀請返利 {{quota}}，將於 {{date}} 轉入餘額",
-    "Invitation rebate {{quota}} moved to balance": "邀請返利 {{quota}} 已轉入餘額"
+    "Invitation rebate {{quota}} moved to balance": "邀請返利 {{quota}} 已轉入餘額",
+    "MiniMax takes up to {{max}} characters.": "MiniMax 最多支援 {{max}} 字元。",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance 官方建議中文不超過 500 字、英文不超過 1000 詞，效果最佳（最多 {{max}} 字元）。",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan 支援較長的詳細描述（最多 {{max}} 字元）。",
+    "Up to {{max}} characters.": "最多 {{max}} 字元。"
   }
 }

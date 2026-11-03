@@ -7786,6 +7786,10 @@
     "Arrived": "入金済み",
     "Each rebate arrives {{days}} days after it is earned": "各リベートは獲得から {{days}} 日後に入金",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "招待リベート {{quota}} を獲得、{{date}} に残高へ入金されます",
-    "Invitation rebate {{quota}} moved to balance": "招待リベート {{quota}} を残高へ入金しました"
+    "Invitation rebate {{quota}} moved to balance": "招待リベート {{quota}} を残高へ入金しました",
+    "MiniMax takes up to {{max}} characters.": "MiniMax は最大 {{max}} 文字まで入力できます。",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance は中国語 500 字以内、英語 1,000 語以内が推奨です（最大 {{max}} 文字）。",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan は長く詳細なプロンプトに対応しています（最大 {{max}} 文字）。",
+    "Up to {{max}} characters.": "最大 {{max}} 文字。"
   }
 }

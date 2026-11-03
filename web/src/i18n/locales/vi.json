@@ -7786,6 +7786,10 @@
     "Arrived": "Đã về",
     "Each rebate arrives {{days}} days after it is earned": "Mỗi khoản hoa hồng về sau {{days}} ngày",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Nhận hoa hồng mời {{quota}}, sẽ vào số dư ngày {{date}}",
-    "Invitation rebate {{quota}} moved to balance": "Hoa hồng mời {{quota}} đã vào số dư"
+    "Invitation rebate {{quota}} moved to balance": "Hoa hồng mời {{quota}} đã vào số dư",
+    "MiniMax takes up to {{max}} characters.": "MiniMax nhận tối đa {{max}} ký tự.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance cho kết quả tốt nhất với tối đa 500 chữ Hán hoặc 1.000 từ tiếng Anh (tối đa {{max}} ký tự).",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan hỗ trợ prompt dài và chi tiết (tối đa {{max}} ký tự).",
+    "Up to {{max}} characters.": "Tối đa {{max}} ký tự."
   }
 }

@@ -7786,6 +7786,10 @@
     "Arrived": "Зачислено",
     "Each rebate arrives {{days}} days after it is earned": "Каждое вознаграждение зачисляется через {{days}} дн.",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Получено вознаграждение {{quota}}, зачисление на баланс {{date}}",
-    "Invitation rebate {{quota}} moved to balance": "Вознаграждение {{quota}} зачислено на баланс"
+    "Invitation rebate {{quota}} moved to balance": "Вознаграждение {{quota}} зачислено на баланс",
+    "MiniMax takes up to {{max}} characters.": "MiniMax принимает до {{max}} символов.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance лучше всего работает с текстом до 500 китайских иероглифов или 1000 английских слов (максимум {{max}} символов).",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan поддерживает длинные подробные промпты (до {{max}} символов).",
+    "Up to {{max}} characters.": "До {{max}} символов."
   }
 }
