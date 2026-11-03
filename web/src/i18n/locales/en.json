@@ -7786,6 +7786,10 @@
     "Arrived": "Arrived",
     "Each rebate arrives {{days}} days after it is earned": "Each rebate arrives {{days}} days after it is earned",
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}",
-    "Invitation rebate {{quota}} moved to balance": "Invitation rebate {{quota}} moved to balance"
+    "Invitation rebate {{quota}} moved to balance": "Invitation rebate {{quota}} moved to balance",
+    "MiniMax takes up to {{max}} characters.": "MiniMax takes up to {{max}} characters.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).",
+    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan handles long, detailed prompts (up to {{max}} characters).",
+    "Up to {{max}} characters.": "Up to {{max}} characters."
   }
 }

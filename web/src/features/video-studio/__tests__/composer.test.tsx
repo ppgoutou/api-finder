@@ -390,3 +390,43 @@ describe('Composer balance check', () => {
     expect(screen.getByRole('button', { name: 'Generate video' })).toBeEnabled()
   })
 })
+
+describe('Composer prompt length guide', () => {
+  it('describes the empty prompt with the Seedance advice and caps it at 5000 characters', () => {
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+    expect(prompt).toHaveAttribute('maxLength', '5000')
+    expect(prompt).toHaveAccessibleDescription(/Seedance works best/)
+  })
+
+  it('caps the prompt at 2000 characters with the MiniMax hint when a MiniMax model is picked', () => {
+    studioModels.current = [
+      {
+        name: 'H-MiniMax-H3-Fast',
+        resolutions: ['768p', '1080p'],
+        duration: [4, 15],
+        ratios: STUDIO_RATIOS,
+      },
+    ]
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+    expect(prompt).toHaveAttribute('maxLength', '2000')
+    expect(prompt).toHaveAccessibleDescription(/MiniMax takes up to 2,000/)
+  })
+
+  it('hides the hint from view once the user starts typing', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const hint = screen.getByText(/Seedance works best/)
+    expect(hint).not.toHaveClass('sr-only')
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat'
+    )
+
+    expect(hint).toHaveClass('sr-only')
+  })
+})
