@@ -52,4 +52,16 @@ describe('video studio layout', () => {
     )
     expect(body).toContainElement(screen.getByRole('tab', { name: 'Gallery' }))
   })
+  it('widens the works area on large screens while capping the composer width', () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <VideoStudio />
+      </QueryClientProvider>
+    )
+
+    const page = screen.getByRole('main').firstElementChild?.firstElementChild
+    const composer = screen.getByRole('heading', { level: 1 }).parentElement
+    expect(page).toHaveClass('max-w-[1800px]')
+    expect(composer?.lastElementChild).toHaveClass('w-full', 'max-w-5xl')
+  })
 })

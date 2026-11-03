@@ -67,7 +67,7 @@ export function VideoStudio() {
   return (
     <Main>
       <div className='min-h-0 flex-1 overflow-y-auto'>
-        <div className='mx-auto flex w-full max-w-5xl flex-col gap-10 px-3 py-8 sm:px-4 md:py-12'>
+        <div className='mx-auto flex w-full max-w-[1800px] flex-col gap-10 px-3 py-8 sm:px-4 md:py-12'>
           <section
             ref={composerRef}
             className='flex scroll-mt-4 flex-col items-center gap-5'
@@ -92,7 +92,7 @@ export function VideoStudio() {
                 <TabsTrigger value='image'>{t('Image')}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <div className='w-full'>
+            <div className='w-full max-w-5xl'>
               {kind === 'image' ? (
                 <ImageComposer
                   key={editedDraft?.key}
