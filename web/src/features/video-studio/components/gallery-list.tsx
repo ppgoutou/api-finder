@@ -95,7 +95,8 @@ function GalleryTile(props: {
   } else if (card.video) {
     media = (
       <video
-        src={card.video}
+        // Seeking past 0 makes browsers paint the first frame as a cover.
+        src={`${card.video}#t=0.1`}
         muted
         playsInline
         preload='metadata'
