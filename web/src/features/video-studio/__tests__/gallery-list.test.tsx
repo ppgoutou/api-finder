@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -51,9 +51,7 @@ describe('GalleryList', () => {
   it('shows an empty state when the studio gallery is not configured', async () => {
     renderGallery()
 
-    expect(
-      await screen.findByText('No gallery works yet')
-    ).toBeVisible()
+    expect(await screen.findByText('No gallery works yet')).toBeVisible()
     expect(
       screen.getByText(
         'Example videos appear here once the studio gallery is configured in site settings.'
@@ -61,7 +59,46 @@ describe('GalleryList', () => {
     ).toBeVisible()
   })
 
-  it('hands prompt and parsed parameters to onReuse when Use this work is clicked', async () => {
+  it('opens the details dialog with prompt and parameters when the prompt button is clicked', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Mechanical watch',
+            prompt: 'a stainless steel watch on black',
+            spec: 'seedance-2.0 · 16:9 · 720p · 5s',
+            poster: 'https://cdn.example/watch.jpg',
+            video: 'https://cdn.example/watch.mp4',
+          },
+        ],
+      })
+    )
+    renderGallery()
+    const user = userEvent.setup()
+
+    expect(
+      screen.queryByText('a stainless steel watch on black')
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'View prompt: Mechanical watch',
+      })
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByText('a stainless steel watch on black')
+    ).toBeVisible()
+    expect(within(dialog).getByText('720p')).toBeVisible()
+    expect(within(dialog).getByText('16:9')).toBeVisible()
+    expect(within(dialog).getByText('5s')).toBeVisible()
+    expect(
+      within(dialog).getAllByRole('button', { name: 'Use prompt' })
+    ).toHaveLength(1)
+  })
+
+  it('hands prompt and parsed parameters to onReuse when Use prompt is clicked', async () => {
     mockStudioGallery(
       JSON.stringify({
         items: [
@@ -81,9 +118,10 @@ describe('GalleryList', () => {
 
     await user.click(
       await screen.findByRole('button', {
-        name: 'Use this work: Mechanical watch',
+        name: 'View details: Mechanical watch',
       })
     )
+    await user.click(await screen.findByRole('button', { name: 'Use prompt' }))
 
     expect(onReuse).toHaveBeenCalledOnce()
     expect(onReuse.mock.calls[0][0]).toMatchObject({

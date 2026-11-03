@@ -37,16 +37,16 @@ describe('studio gallery form limits', () => {
     expect(validate({ title: '标'.repeat(101) }).success).toBe(false)
   })
 
-  it('accepts a prompt as long as the studio takes, 5000 characters', () => {
-    expect(validate({ prompt: '词'.repeat(5000) }).success).toBe(true)
+  it('accepts a prompt as long as the studio takes, 7500 characters', () => {
+    expect(validate({ prompt: '词'.repeat(7500) }).success).toBe(true)
   })
 
   it('rejects a prompt longer than the studio takes', () => {
-    const result = validate({ prompt: 'p'.repeat(5001) })
+    const result = validate({ prompt: 'p'.repeat(7501) })
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]).toMatchObject({
       path: ['items', 0, 'prompt'],
-      message: 'At most 5000 characters',
+      message: 'At most 7500 characters',
     })
   })
 
