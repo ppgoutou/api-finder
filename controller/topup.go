@@ -31,6 +31,13 @@ func GetTopUpInfo(c *gin.Context) {
 	if !complianceConfirmed {
 		payMethods = []map[string]string{}
 	}
+	// The configured list is the epay gateway's methods; without a working
+	// epay setup they would only lead to a failed payment.
+	if !isEpayTopUpEnabled() {
+		payMethods = lo.Filter(payMethods, func(method map[string]string, _ int) bool {
+			return method["type"] == model.PaymentMethodStripe
+		})
+	}
 
 	// 如果启用了 Stripe 支付，添加到支付方法列表
 	if isStripeTopUpEnabled() {
