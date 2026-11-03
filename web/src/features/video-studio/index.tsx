@@ -22,14 +22,17 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Main } from '@/components/layout'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { Composer } from './components/composer'
+import { GalleryList } from './components/gallery-list'
 import { ImageComposer } from './components/image-composer'
 import { ImageWorksList } from './components/image-works-list'
 import { WorksList } from './components/works-list'
 import { STUDIO_WORKS_QUERY_KEY } from './constants'
 import type { StudioDraft, StudioKind } from './types'
+
+type WorksTab = 'mine' | 'gallery'
 
 /** A past work loaded back into the composer of its kind. */
 interface EditedWork {
@@ -48,6 +51,7 @@ export function VideoStudio() {
   const navigate = useNavigate({ from: '/video-studio/' })
   const kind: StudioKind = search.kind ?? 'video'
   const [edited, setEdited] = useState<EditedWork | null>(null)
+  const [worksTab, setWorksTab] = useState<WorksTab>('mine')
   const composerRef = useRef<HTMLElement>(null)
   const editWork = (draft: Partial<StudioDraft>, size?: string) => {
     setEdited((current) => ({
@@ -111,13 +115,28 @@ export function VideoStudio() {
             </div>
           </section>
           <section className='flex flex-col gap-4'>
-            <h2 className='text-lg font-semibold'>
-              {kind === 'image' ? t('My images') : t('My videos')}
-            </h2>
             {kind === 'image' ? (
-              <ImageWorksList onEdit={editWork} />
+              <>
+                <h2 className='text-lg font-semibold'>{t('My images')}</h2>
+                <ImageWorksList onEdit={editWork} />
+              </>
             ) : (
-              <WorksList onEdit={(draft) => editWork(draft)} />
+              <Tabs
+                value={worksTab}
+                onValueChange={(value) => setWorksTab(value as WorksTab)}
+                className='gap-4'
+              >
+                <TabsList aria-label={t('Works sections')}>
+                  <TabsTrigger value='mine'>{t('My videos')}</TabsTrigger>
+                  <TabsTrigger value='gallery'>{t('Gallery')}</TabsTrigger>
+                </TabsList>
+                <TabsContent value='mine' className='flex flex-col gap-4'>
+                  <WorksList onEdit={(draft) => editWork(draft)} />
+                </TabsContent>
+                <TabsContent value='gallery' className='flex flex-col gap-4'>
+                  <GalleryList onReuse={(draft) => editWork(draft)} />
+                </TabsContent>
+              </Tabs>
             )}
           </section>
         </div>

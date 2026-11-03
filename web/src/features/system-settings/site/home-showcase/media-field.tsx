@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { ImageIcon, PlayCircle, Trash2, Upload } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
-import type { Control, FieldPath } from 'react-hook-form'
+import type { Control, FieldPath, FieldValues } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -38,12 +38,11 @@ import { uploadHomeMedia } from '../../api'
 import {
   HOME_MEDIA_MAX_IMAGE_BYTES,
   HOME_MEDIA_MAX_VIDEO_BYTES,
-  type HomeShowcaseFormValues,
 } from './schema'
 
-type MediaFieldProps = {
-  control: Control<HomeShowcaseFormValues>
-  name: FieldPath<HomeShowcaseFormValues>
+type MediaFieldProps<T extends FieldValues> = {
+  control: Control<T>
+  name: FieldPath<T>
   label: string
   kind: 'video' | 'image'
 }
@@ -52,7 +51,7 @@ type MediaFieldProps = {
  * One media slot: preview, upload button with progress, and the stored URL,
  * which can also be an https link pasted by hand.
  */
-export function MediaField(props: MediaFieldProps) {
+export function MediaField<T extends FieldValues>(props: MediaFieldProps<T>) {
   const { t } = useTranslation()
   const inputId = useId()
   const fileInputRef = useRef<HTMLInputElement>(null)

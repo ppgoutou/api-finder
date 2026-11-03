@@ -170,3 +170,29 @@ func TestValidateHomeShowcase(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateStudioGallery(t *testing.T) {
+	uploaded := "/home-media/0123456789abcdef0123456789abcdef.mp4"
+	manyItems := "[" + strings.TrimSuffix(strings.Repeat(`{"title":"x"},`, studioGalleryMaxItems+1), ",") + "]"
+	cases := []struct {
+		name  string
+		value string
+		valid bool
+	}{
+		{"empty gallery", "", true},
+		{"one clip with cover", `{"items":[{"title":"Clip","category":"Ads","prompt":"p","spec":"seedance-2.0 · 720p · 5s","video":"` + uploaded + `","poster":"https://media.example.com/p.jpg"}]}`, true},
+		{"javascript url", `{"items":[{"video":"javascript:alert(1)"}]}`, false},
+		{"too many clips", `{"items":` + manyItems + `}`, false},
+		{"not json", `{"items":`, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateStudioGallery(tc.value)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}

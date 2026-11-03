@@ -32,6 +32,7 @@ const defaultSiteSettings: SiteSettings = {
   About: '',
   HomePageContent: '',
   HomeShowcase: '',
+  StudioGallery: '',
   ServerAddress: '',
   TaskPublicAddress: '',
   'general_setting.docs_link': '',

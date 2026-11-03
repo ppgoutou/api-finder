@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
+import type { HomePageContentResponse } from '@/features/home/types'
 
 import type {
   ImageGenerationRequest,
@@ -25,6 +26,17 @@ import type {
   VideoTaskRequest,
   VideoTaskResponse,
 } from './types'
+
+/**
+ * Curated video-studio gallery settings (`StudioGallery` option as JSON;
+ * empty when no works are configured).
+ */
+export async function getStudioGallery(): Promise<HomePageContentResponse> {
+  const res = await api.get('/api/studio_gallery', {
+    headers: { 'Cache-Control': null },
+  })
+  return res.data
+}
 
 /** Uploads a reference file and returns its public URL. */
 export async function uploadVideoAsset(

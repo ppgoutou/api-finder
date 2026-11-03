@@ -227,6 +227,12 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
+	if option.Key == studioGalleryOptionKey {
+		if err := validateStudioGallery(option.Value.(string)); err != nil {
+			common.ApiErrorT(c, "Invalid studio gallery settings")
+			return
+		}
+	}
 	if option.Key == pricingCategoriesOptionKey {
 		var conflict *pricingCategoryConflictError
 		if err := validatePricingCategories(option.Value.(string)); errors.As(err, &conflict) {

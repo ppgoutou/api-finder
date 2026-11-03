@@ -30,25 +30,31 @@ import { HomeShowcaseSection } from '../section'
 const UPLOADED = '/home-media/0123456789abcdef0123456789abcdef.mp4'
 const OLD_CLIP = '/home-media/fedcba9876543210fedcba9876543210.mp4'
 
-function Fixture(props: { defaultValue: string }) {
+function Fixture(props: {
+  defaultValue: string
+  sharedMedia: readonly string[]
+}) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null)
   return (
     <>
       <div ref={setContainer} />
       <SettingsPageProvider actionsContainer={container}>
-        <HomeShowcaseSection defaultValue={props.defaultValue} />
+        <HomeShowcaseSection
+          defaultValue={props.defaultValue}
+          sharedMedia={props.sharedMedia}
+        />
       </SettingsPageProvider>
     </>
   )
 }
 
-function renderSection(defaultValue = '') {
+function renderSection(defaultValue = '', sharedMedia: readonly string[] = []) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   render(
     <QueryClientProvider client={client}>
-      <Fixture defaultValue={defaultValue} />
+      <Fixture defaultValue={defaultValue} sharedMedia={sharedMedia} />
     </QueryClientProvider>
   )
 }
@@ -129,11 +135,32 @@ describe('homepage video settings', () => {
     })
   })
 
+  it('keeps the file of a removed clip when the studio gallery still uses it', async () => {
+    const user = userEvent.setup()
+    renderSection(
+      JSON.stringify({ showcase: [{ title: 'Old', video: OLD_CLIP }] }),
+      [OLD_CLIP]
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove clip 1' }))
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() =>
+      expect(api.put).toHaveBeenCalledWith('/api/option/', {
+        key: 'HomeShowcase',
+        value: '',
+      })
+    )
+    expect(api.delete).not.toHaveBeenCalled()
+  })
+
   it('blocks saving a media link that is neither uploaded nor https', async () => {
     const user = userEvent.setup()
     renderSection()
 
-    const heroVideo = screen.getAllByRole('textbox', { name: 'Video URL' })[0]
+    await user.click(screen.getByRole('button', { name: 'Edit Hero video' }))
+    const hero = screen.getByRole('region', { name: 'Hero video' })
+    const heroVideo = within(hero).getByRole('textbox', { name: 'Video URL' })
     await user.type(heroVideo, 'http://example.com/a.mp4')
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
 
@@ -144,5 +171,32 @@ describe('homepage video settings', () => {
       screen.getByText('Use an uploaded file or an https link')
     ).toBeInTheDocument()
     expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it('keeps existing clips collapsed behind a thumbnail until edited', async () => {
+    const user = userEvent.setup()
+    renderSection(
+      JSON.stringify({
+        showcase: [
+          {
+            title: 'Chase',
+            category: 'Action',
+            video: OLD_CLIP,
+            poster: 'https://cdn.example/chase.jpg',
+          },
+        ],
+      })
+    )
+
+    const clip = await screen.findByRole('region', { name: 'Clip 1' })
+    expect(within(clip).getByText('Chase')).toBeVisible()
+    expect(within(clip).getByText('Action')).toBeVisible()
+    expect(
+      within(clip).queryByRole('textbox', { name: 'Title' })
+    ).not.toBeInTheDocument()
+
+    await user.click(within(clip).getByRole('button', { name: 'Edit Chase' }))
+
+    expect(within(clip).getByRole('textbox', { name: 'Title' })).toBeVisible()
   })
 })
