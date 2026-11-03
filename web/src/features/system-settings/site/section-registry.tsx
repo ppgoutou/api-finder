@@ -1,3 +1,12 @@
+import {
+  collectUploadedMedia,
+  parseHomeShowcase,
+} from '@/features/home/lib/home-showcase'
+import {
+  collectStudioGalleryMedia,
+  parseStudioGallery,
+} from '@/features/video-studio/lib/studio-gallery'
+
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -61,14 +70,24 @@ const SITE_SECTIONS = [
     id: 'home-videos',
     titleKey: 'Homepage videos',
     build: (settings: SiteSettings) => (
-      <HomeShowcaseSection defaultValue={settings.HomeShowcase ?? ''} />
+      <HomeShowcaseSection
+        defaultValue={settings.HomeShowcase ?? ''}
+        sharedMedia={collectStudioGalleryMedia(
+          parseStudioGallery(settings.StudioGallery)
+        )}
+      />
     ),
   },
   {
     id: 'studio-gallery',
     titleKey: 'Studio gallery',
     build: (settings: SiteSettings) => (
-      <StudioGallerySection defaultValue={settings.StudioGallery ?? ''} />
+      <StudioGallerySection
+        defaultValue={settings.StudioGallery ?? ''}
+        sharedMedia={collectUploadedMedia(
+          parseHomeShowcase(settings.HomeShowcase)
+        )}
+      />
     ),
   },
   {

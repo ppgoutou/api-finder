@@ -26,6 +26,8 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
 import { STUDIO_GALLERY_QUERY_KEY } from '@/features/video-studio/hooks/use-studio-gallery'
+import { useStudioModels } from '@/features/video-studio/hooks/use-studio-models'
+import { gallerySeries } from '@/features/video-studio/lib/gallery-draft'
 import {
   collectStudioGalleryMedia,
   emptyStudioGalleryItem,
@@ -43,20 +45,22 @@ import { useUpdateOption } from '../../hooks/use-update-option'
 import { CollapsibleMediaClip } from '../components/collapsible-media-clip'
 import { ShowcaseTextField } from '../home-showcase/item-fields'
 import { MediaField } from '../home-showcase/media-field'
-import {
-  studioGalleryFormSchema,
-  type StudioGalleryFormValues,
-} from './schema'
+import { studioGalleryFormSchema, type StudioGalleryFormValues } from './schema'
+import { GallerySpecField } from './spec-field'
 
 type StudioGallerySectionProps = {
   /** The stored `StudioGallery` option. */
   defaultValue: string
+  /** Uploaded files the homepage videos use too, never deleted from here. */
+  sharedMedia: readonly string[]
 }
 
 export function StudioGallerySection(props: StudioGallerySectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const updateOption = useUpdateOption()
+  const studioModels = useStudioModels()
+  const series = useMemo(() => gallerySeries(studioModels), [studioModels])
   const initial = useMemo(
     () => parseStudioGallery(props.defaultValue),
     [props.defaultValue]
@@ -93,7 +97,10 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
     })
     if (!result.success) return
     await queryClient.invalidateQueries({ queryKey: STUDIO_GALLERY_QUERY_KEY })
-    const kept = new Set(collectStudioGalleryMedia(values))
+    const kept = new Set([
+      ...collectStudioGalleryMedia(values),
+      ...props.sharedMedia,
+    ])
     const removed = collectStudioGalleryMedia(initial).filter(
       (url) => !kept.has(url)
     )
@@ -213,7 +220,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                     label={t('Reference image (optional)')}
                     kind='image'
                   />
-                  <div className='grid gap-4 sm:grid-cols-3'>
+                  <div className='grid gap-4 sm:grid-cols-2'>
                     <ShowcaseTextField
                       control={form.control}
                       name={`items.${index}.title`}
@@ -224,13 +231,12 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                       name={`items.${index}.category`}
                       label={t('Category')}
                     />
-                    <ShowcaseTextField
-                      control={form.control}
-                      name={`items.${index}.spec`}
-                      label={t('Spec label')}
-                      placeholder='seedance-2.0 · 720p · 5s'
-                    />
                   </div>
+                  <GallerySpecField
+                    control={form.control}
+                    name={`items.${index}.spec`}
+                    series={series}
+                  />
                   <ShowcaseTextField
                     control={form.control}
                     name={`items.${index}.prompt`}

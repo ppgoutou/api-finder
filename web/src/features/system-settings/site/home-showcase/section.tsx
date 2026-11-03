@@ -48,6 +48,8 @@ import { homeShowcaseFormSchema, type HomeShowcaseFormValues } from './schema'
 type HomeShowcaseSectionProps = {
   /** The stored `HomeShowcase` option. */
   defaultValue: string
+  /** Uploaded files the studio gallery uses too, never deleted from here. */
+  sharedMedia: readonly string[]
 }
 
 type OpenSlots = {
@@ -103,7 +105,10 @@ export function HomeShowcaseSection(props: HomeShowcaseSectionProps) {
     })
     if (!result.success) return
     await queryClient.invalidateQueries({ queryKey: HOME_SHOWCASE_QUERY_KEY })
-    const kept = new Set(collectUploadedMedia(values))
+    const kept = new Set([
+      ...collectUploadedMedia(values),
+      ...props.sharedMedia,
+    ])
     const removed = collectUploadedMedia(initial).filter(
       (url) => !kept.has(url)
     )

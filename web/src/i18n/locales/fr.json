@@ -7794,6 +7794,10 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Generation parameters": "Paramètres de génération",
+    "{{model}} (not available)": "{{model}} (indisponible)",
+    "No video models are available in the studio yet.": "Aucun modèle vidéo n’est encore disponible dans le studio.",
+    "Use this work fills the studio form with these parameters.": "« Utiliser cette œuvre » remplit le formulaire du studio avec ces paramètres."
   }
 }

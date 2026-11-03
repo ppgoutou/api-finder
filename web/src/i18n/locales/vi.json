@@ -7794,6 +7794,10 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Generation parameters": "Tham số tạo",
+    "{{model}} (not available)": "{{model}} (không khả dụng)",
+    "No video models are available in the studio yet.": "Studio chưa có mô hình video nào khả dụng.",
+    "Use this work fills the studio form with these parameters.": "“Dùng tác phẩm này” sẽ điền các tham số này vào biểu mẫu studio."
   }
 }

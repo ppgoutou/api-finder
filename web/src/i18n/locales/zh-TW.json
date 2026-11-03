@@ -7794,6 +7794,10 @@
     "Zhipu": "智譜",
     "Zhipu GLM": "智譜GLM",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Generation parameters": "生成參數",
+    "{{model}} (not available)": "{{model}}（已不可用）",
+    "No video models are available in the studio yet.": "影片創作暫時沒有可用的影片模型。",
+    "Use this work fills the studio form with these parameters.": "點「使用此作品」時，會用這些參數填寫創作表單。"
   }
 }

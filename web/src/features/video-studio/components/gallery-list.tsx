@@ -29,8 +29,11 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useStatus } from '@/hooks/use-status'
 
+import type { StudioModel } from '../constants'
 import { useStudioGallery } from '../hooks/use-studio-gallery'
+import { useStudioModels } from '../hooks/use-studio-models'
 import { draftFromGalleryItem } from '../lib/gallery-draft'
 import type { StudioDraft } from '../types'
 
@@ -113,7 +116,7 @@ function GalleryMedia(props: { card: GalleryCard }) {
   }
 
   return (
-    <div className='text-muted-foreground flex min-h-28 w-full flex-col items-center justify-center gap-1 bg-muted/40 px-3 py-8 text-xs'>
+    <div className='text-muted-foreground bg-muted/40 flex min-h-28 w-full flex-col items-center justify-center gap-1 px-3 py-8 text-xs'>
       <Film className='size-5' aria-hidden />
       {t('No preview')}
     </div>
@@ -122,6 +125,7 @@ function GalleryMedia(props: { card: GalleryCard }) {
 
 function GalleryWorkCard(props: {
   card: GalleryCard
+  studio: { serverAddress: string; models: readonly StudioModel[] }
   onReuse: (draft: Partial<StudioDraft>) => void
 }) {
   const { t } = useTranslation()
@@ -149,11 +153,14 @@ function GalleryWorkCard(props: {
               className='shrink-0'
               onClick={() =>
                 props.onReuse(
-                  draftFromGalleryItem({
-                    prompt: card.prompt,
-                    spec: card.spec,
-                    image: card.image,
-                  })
+                  draftFromGalleryItem(
+                    {
+                      prompt: card.prompt,
+                      spec: card.spec,
+                      image: card.image,
+                    },
+                    props.studio
+                  )
                 )
               }
               aria-label={t('Use this work: {{title}}', {
@@ -179,6 +186,13 @@ export function GalleryList(props: {
   onReuse: (draft: Partial<StudioDraft>) => void
 }) {
   const { t } = useTranslation()
+  const { status } = useStatus()
+  const models = useStudioModels()
+  const studio = {
+    serverAddress:
+      (status?.server_address as string | undefined) || window.location.origin,
+    models,
+  }
   const [category, setCategory] = useState(ALL_CATEGORIES)
   const cards: GalleryCard[] = useStudioGallery()
     .items.filter((item) => item.video || item.prompt || item.poster)
@@ -264,6 +278,7 @@ export function GalleryList(props: {
             <GalleryWorkCard
               key={card.key}
               card={card}
+              studio={studio}
               onReuse={props.onReuse}
             />
           ))}
