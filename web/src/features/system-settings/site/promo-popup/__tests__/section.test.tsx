@@ -213,7 +213,11 @@ describe('promotion popup settings', () => {
       '720p'
     )
     expect((sale as HTMLInputElement).value).toMatch(/6(\.00)?$/)
+    expect(sale).toBeDisabled()
 
+    await user.click(
+      screen.getByRole('switch', { name: 'Keep price in sync with the model' })
+    )
     await user.clear(sale)
     await user.type(sale, '¥9')
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
@@ -223,7 +227,42 @@ describe('promotion popup settings', () => {
     expect(JSON.parse(body.value).cards[0]).toMatchObject({
       model_name: 'G-seedance-2.5',
       sale_price: '¥9',
+      auto_price: false,
+      price_option: '720p',
       icon: 'Doubao.Color',
+    })
+  })
+
+  it('follows the picked price and keeps the entered original on sync', async () => {
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(screen.getByRole('button', { name: 'Add card' }))
+    await user.click(
+      await screen.findByRole('combobox', {
+        name: 'Choose from existing models',
+      })
+    )
+    await user.click(
+      await screen.findByRole('option', { name: /G-seedance-2\.5/ })
+    )
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Price option' }),
+      '720p'
+    )
+    await user.type(
+      screen.getByRole('textbox', { name: 'Original price' }),
+      '¥20'
+    )
+    await user.click(screen.getByRole('button', { name: 'Sync again' }))
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() => expect(api.put).toHaveBeenCalled())
+    const body = vi.mocked(api.put).mock.calls[0][1] as { value: string }
+    expect(JSON.parse(body.value).cards[0]).toMatchObject({
+      auto_price: true,
+      price_option: '720p',
+      original_price: '¥20',
     })
   })
 

@@ -35,9 +35,15 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
+import { useStatus } from '@/hooks/use-status'
 import { cn } from '@/lib/utils'
 
 import type { PromoCard } from '../../lib/promo-popup'
+import {
+  applyLivePromoPrices,
+  promoCardsFollowPrices,
+} from '../../lib/promo-prices'
 import { PromoCardView } from './promo-cards'
 
 type PromoDialogProps = {
@@ -53,7 +59,17 @@ export function PromoDialog(props: PromoDialogProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [selected, setSelected] = useState(0)
   const [hideToday, setHideToday] = useState(false)
-  const count = props.cards.length
+  const followsPrices = promoCardsFollowPrices(props.cards)
+  const pricing = usePricingData(followsPrices, false, true)
+  const status = useStatus()
+  // Stay closed until prices are in, so a stale stored price never flashes.
+  const loadingPrices = followsPrices && (pricing.isLoading || status.loading)
+  const cards = applyLivePromoPrices(props.cards, pricing.models, {
+    priceRate: pricing.priceRate,
+    usdExchangeRate: pricing.usdExchangeRate,
+    t,
+  })
+  const count = cards.length
   const index = Math.min(selected, Math.max(count - 1, 0))
   const multiple = count > 1
 
@@ -80,12 +96,12 @@ export function PromoDialog(props: PromoDialogProps) {
   const cardLabels: Record<PromoCard['kind'], string> = {
     model: t('Limited-time price'),
     recharge: t('Top-up offer'),
-    list: t('Deals this week'),
+    list: t('Limited-time deals'),
   }
 
   return (
     <Dialog
-      open={props.open}
+      open={props.open && !loadingPrices}
       onOpenChange={(next) => {
         if (!next) close()
       }}
@@ -120,7 +136,7 @@ export function PromoDialog(props: PromoDialogProps) {
           aria-label={t('Limited-time offers')}
         >
           <CarouselContent className='ml-0 max-sm:-ml-3'>
-            {props.cards.map((card, cardIndex) => {
+            {cards.map((card, cardIndex) => {
               const active = cardIndex === index
               return (
                 <CarouselItem
@@ -155,7 +171,7 @@ export function PromoDialog(props: PromoDialogProps) {
                 <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
               </Button>
               <div className='flex min-w-0 flex-1 gap-2'>
-                {props.cards.map((card, cardIndex) => {
+                {cards.map((card, cardIndex) => {
                   const active = cardIndex === index
                   const label =
                     card.kind === 'model'
@@ -213,7 +229,7 @@ export function PromoDialog(props: PromoDialogProps) {
                   {index + 1} / {count}
                 </span>
                 <div aria-hidden className='flex gap-1.5 sm:hidden'>
-                  {props.cards.map((card, cardIndex) => (
+                  {cards.map((card, cardIndex) => (
                     <span
                       key={JSON.stringify(card)}
                       className={cn(

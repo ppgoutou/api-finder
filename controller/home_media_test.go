@@ -213,6 +213,8 @@ func TestValidatePromoPopup(t *testing.T) {
 		{"empty means no popup", "", true},
 		{"all card kinds", `{"enabled":true,"cards":[{"kind":"model","model_name":"Seedance 2.5","sale_price":"¥0.10","original_price":"¥0.20","unit":"/秒","ends_at":"2026-11-30","href":"/pricing"},{"kind":"recharge","tiers":[{"pay":"¥100","bonus":"¥10"}]},{"kind":"list","deals":[{"model_name":"Wan 3.0","sale_price":"¥0.10"}],"href":"https://example.com/deals"}]}`, true},
 		{"daily limit and icons", `{"enabled":true,"daily_limit":20,"cards":[{"kind":"model","icon":"Doubao.Color"},{"kind":"list","deals":[{"icon":"Wan"}]}]}`, true},
+		{"followed prices", `{"cards":[{"kind":"model","auto_price":true,"price_option":"720p"},{"kind":"list","deals":[{"auto_price":true,"price_option":"720p"}]}]}`, true},
+		{"price option too long", `{"cards":[{"kind":"model","price_option":"` + strings.Repeat("x", 61) + `"}]}`, false},
 		{"negative daily limit", `{"daily_limit":-1}`, false},
 		{"daily limit too high", `{"daily_limit":21}`, false},
 		{"icon too long", `{"cards":[{"kind":"model","icon":"` + strings.Repeat("x", 101) + `"}]}`, false},

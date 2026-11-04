@@ -254,7 +254,7 @@ function ListPromoCard(props: PromoCardProps) {
     <article className={CARD_CLASS}>
       <div className={cn(MEDIA_CLASS, 'bg-ink py-5 max-sm:py-4')}>
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
-          <span className={DEAL_PILL_CLASS}>{t('Deals this week')}</span>
+          <span className={DEAL_PILL_CLASS}>{t('Limited-time deals')}</span>
           {endLabel && (
             <span className='text-[13px] text-white/70'>{endLabel}</span>
           )}

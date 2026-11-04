@@ -24,21 +24,30 @@ import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { Switch } from '@/components/ui/switch'
+import {
+  getPromoModelPrices,
+  type PromoModelPrice,
+} from '@/features/home/lib/promo-prices'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import type { PricingModel } from '@/features/pricing/types'
 import { getLobeIcon } from '@/lib/lobe-icon'
-
-import { getPromoModelPrices, type PromoModelPrice } from './model-snapshot'
 
 export type PromoModelSelection = {
   model: PricingModel
   /** Empty when the model's price can't be read automatically. */
   price: PromoModelPrice | null
+  /** Whether the card should keep following this price. */
+  autoPrice: boolean
 }
 
 type PromoModelPickerProps = {
   /** The model name stored on the card, selected again when it still exists. */
   currentName: string
+  /** The price option stored on the card. */
+  currentOption: string
+  /** Whether the card follows the model's price. */
+  autoPrice: boolean
   onSelect: (selection: PromoModelSelection) => void
 }
 
@@ -47,7 +56,7 @@ export function PromoModelPicker(props: PromoModelPickerProps) {
   const { t } = useTranslation()
   const pricing = usePricingData()
   const [picked, setPicked] = useState(props.currentName)
-  const [option, setOption] = useState('')
+  const [option, setOption] = useState(props.currentOption)
 
   const options = useMemo(
     () =>
@@ -69,19 +78,17 @@ export function PromoModelPicker(props: PromoModelPickerProps) {
       })
     : []
 
-  const apply = (next: PricingModel, nextOption: string) => {
+  const apply = (next: PricingModel, nextOption: string, auto: boolean) => {
     const nextPrices = getPromoModelPrices(next, {
       priceRate: pricing.priceRate,
       usdExchangeRate: pricing.usdExchangeRate,
       t,
     })
-    props.onSelect({
-      model: next,
-      price:
-        nextPrices.find((price) => price.option === nextOption) ??
-        nextPrices[0] ??
-        null,
-    })
+    const price =
+      nextPrices.find((item) => item.option === nextOption) ??
+      nextPrices[0] ??
+      null
+    props.onSelect({ model: next, price, autoPrice: auto && price !== null })
   }
 
   return (
@@ -103,7 +110,7 @@ export function PromoModelPicker(props: PromoModelPickerProps) {
               if (!next) return
               setPicked(name)
               setOption('')
-              apply(next, '')
+              apply(next, '', true)
             }}
           />
         </div>
@@ -113,7 +120,7 @@ export function PromoModelPicker(props: PromoModelPickerProps) {
             value={option || prices[0].option}
             onChange={(event) => {
               setOption(event.target.value)
-              apply(model, event.target.value)
+              apply(model, event.target.value, props.autoPrice)
             }}
           >
             {prices.map((price) => (
@@ -128,18 +135,28 @@ export function PromoModelPicker(props: PromoModelPickerProps) {
             type='button'
             variant='outline'
             size='sm'
-            onClick={() => apply(model, option)}
+            onClick={() => apply(model, option, props.autoPrice)}
           >
             <RefreshCw data-icon='inline-start' />
             {t('Sync again')}
           </Button>
         )}
       </div>
+      <Label className='flex items-center gap-2 font-normal'>
+        <Switch
+          checked={props.autoPrice}
+          disabled={!model || prices.length === 0}
+          onCheckedChange={(checked) => {
+            if (model) apply(model, option, checked)
+          }}
+        />
+        {t('Keep price in sync with the model')}
+      </Label>
       <p className='text-muted-foreground text-xs'>
         {model && prices.length === 0
           ? t("This model's price can't be read automatically. Enter it below.")
           : t(
-              'Copies the current name, selling price, description and logo. You can edit them below; later model changes need Sync again.'
+              'Copies the current name, description and logo. With automatic pricing on, visitors always see the current selling price; turn it off to enter your own price.'
             )}
       </p>
     </div>

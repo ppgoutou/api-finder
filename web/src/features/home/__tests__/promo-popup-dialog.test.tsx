@@ -63,6 +63,21 @@ function mockSettings(value: string) {
   })
 }
 
+const LIVE_SETTINGS = JSON.stringify({
+  enabled: true,
+  cards: [
+    {
+      kind: 'model',
+      model_name: 'Seedance 2.5',
+      sale_price: 'stored price',
+      original_price: 'stored original',
+      unit: '/s',
+      auto_price: true,
+      price_option: '',
+    },
+  ],
+})
+
 function renderPopup() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -107,6 +122,41 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+})
+
+describe('promo popup live prices', () => {
+  it('shows the current price once loaded when a card follows its model', async () => {
+    vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+      if (url === '/api/pricing') {
+        return {
+          data: {
+            success: true,
+            vendors: [],
+            group_ratio: { default: 1 },
+            data: [
+              {
+                id: 1,
+                model_name: 'Seedance 2.5',
+                quota_type: 1,
+                model_price: 3,
+                model_ratio: 1,
+                completion_ratio: 1,
+                enable_groups: ['default'],
+              },
+            ],
+          },
+        }
+      }
+      if (url === '/api/status') return { data: { success: true, data: {} } }
+      return { data: { success: true, data: LIVE_SETTINGS } }
+    })
+
+    renderPopup()
+
+    expect(await screen.findByText(/Seedance 2\.5/)).toBeInTheDocument()
+    expect(screen.queryByText(/stored price/)).not.toBeInTheDocument()
+    expect(screen.getByText('$3')).toBeInTheDocument()
+  })
 })
 
 describe('home promotion popup', () => {
@@ -163,7 +213,7 @@ describe('home promotion popup', () => {
     renderPopup()
 
     await user.click(
-      await screen.findByRole('button', { name: 'Deals this week' })
+      await screen.findByRole('button', { name: 'Limited-time deals' })
     )
 
     expect(screen.getByRole('heading', { name: 'Seedance sale' })).toBeVisible()

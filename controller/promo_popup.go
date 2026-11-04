@@ -33,6 +33,8 @@ type promoPopupDeal struct {
 	SalePrice     string `json:"sale_price"`
 	OriginalPrice string `json:"original_price"`
 	Unit          string `json:"unit"`
+	AutoPrice     bool   `json:"auto_price"`
+	PriceOption   string `json:"price_option"`
 	Icon          string `json:"icon"`
 }
 
@@ -48,6 +50,8 @@ type promoPopupCard struct {
 	SalePrice     string           `json:"sale_price"`
 	OriginalPrice string           `json:"original_price"`
 	Unit          string           `json:"unit"`
+	AutoPrice     bool             `json:"auto_price"`
+	PriceOption   string           `json:"price_option"`
 	Icon          string           `json:"icon"`
 	Tiers         []promoPopupTier `json:"tiers"`
 	Deals         []promoPopupDeal `json:"deals"`
@@ -102,7 +106,7 @@ func promoPopupCardAllowed(card promoPopupCard) bool {
 	if len(card.Tiers) > promoPopupMaxTiers || len(card.Deals) > promoPopupMaxDeals {
 		return false
 	}
-	if !promoPopupTextFits(60, card.Title, card.TitleZh, card.ModelName) ||
+	if !promoPopupTextFits(60, card.Title, card.TitleZh, card.ModelName, card.PriceOption) ||
 		!promoPopupTextFits(160, card.Description, card.DescriptionZh) ||
 		!promoPopupTextFits(16, card.SalePrice, card.OriginalPrice) ||
 		!promoPopupTextFits(16, card.Unit) ||
@@ -117,7 +121,7 @@ func promoPopupCardAllowed(card promoPopupCard) bool {
 		}
 	}
 	for _, deal := range card.Deals {
-		if !promoPopupTextFits(60, deal.ModelName) ||
+		if !promoPopupTextFits(60, deal.ModelName, deal.PriceOption) ||
 			!promoPopupTextFits(16, deal.SalePrice, deal.OriginalPrice) ||
 			!promoPopupTextFits(16, deal.Unit) ||
 			!promoPopupTextFits(100, deal.Icon) {

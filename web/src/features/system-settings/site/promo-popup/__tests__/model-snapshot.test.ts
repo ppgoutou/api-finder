@@ -19,12 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 import type { TFunction } from 'i18next'
 import { describe, expect, it } from 'vitest'
 
+import { getPromoModelPrices } from '@/features/home/lib/promo-prices'
 import type { PricingModel } from '@/features/pricing/types'
 
-import {
-  getPromoModelDescriptions,
-  getPromoModelPrices,
-} from '../model-snapshot'
+import { getPromoModelDescriptions } from '../model-snapshot'
 
 const t = ((key: string) => key) as unknown as TFunction
 const CONTEXT = { priceRate: 1, usdExchangeRate: 1, t }
