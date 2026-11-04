@@ -233,6 +233,12 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
+	if option.Key == promoPopupOptionKey {
+		if err := validatePromoPopup(option.Value.(string)); err != nil {
+			common.ApiErrorT(c, "Invalid promotion popup settings")
+			return
+		}
+	}
 	if option.Key == pricingCategoriesOptionKey {
 		var conflict *pricingCategoryConflictError
 		if err := validatePricingCategories(option.Value.(string)); errors.As(err, &conflict) {

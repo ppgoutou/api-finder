@@ -39,6 +39,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/home_page_content", controller.GetHomePageContent)
 		apiRouter.GET("/home_showcase", controller.GetHomeShowcase)
 		apiRouter.GET("/studio_gallery", controller.GetStudioGallery)
+		apiRouter.GET("/promo_popup", controller.GetPromoPopup)
 		apiRouter.POST("/video_assets", middleware.UserAuth(), controller.UploadVideoAsset)
 		homeMediaRoute := apiRouter.Group("/home_media")
 		homeMediaRoute.Use(middleware.RootAuth())

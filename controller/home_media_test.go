@@ -202,3 +202,37 @@ func TestValidateStudioGallery(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePromoPopup(t *testing.T) {
+	manyCards := strings.TrimSuffix(strings.Repeat(`{"kind":"model"},`, promoPopupMaxCards+1), ",")
+	cases := []struct {
+		name  string
+		value string
+		valid bool
+	}{
+		{"empty means no popup", "", true},
+		{"all card kinds", `{"enabled":true,"cards":[{"kind":"model","model_name":"Seedance 2.5","sale_price":"¥0.10","original_price":"¥0.20","unit":"/秒","ends_at":"2026-11-30","href":"/pricing"},{"kind":"recharge","tiers":[{"pay":"¥100","bonus":"¥10"}]},{"kind":"list","deals":[{"model_name":"Wan 3.0","sale_price":"¥0.10"}],"href":"https://example.com/deals"}]}`, true},
+		{"unknown kind", `{"cards":[{"kind":"banner"}]}`, false},
+		{"too many cards", `{"cards":[` + manyCards + `]}`, false},
+		{"javascript link", `{"cards":[{"kind":"model","href":"javascript:alert(1)"}]}`, false},
+		{"plain http link", `{"cards":[{"kind":"model","href":"http://example.com"}]}`, false},
+		{"scheme relative link", `{"cards":[{"kind":"model","href":"//example.com"}]}`, false},
+		{"backslash redirect link", `{"cards":[{"kind":"model","href":"/\\example.com"}]}`, false},
+		{"impossible end date", `{"cards":[{"kind":"model","ends_at":"2026-02-30"}]}`, false},
+		{"too many tiers", `{"cards":[{"kind":"recharge","tiers":[{},{},{},{}]}]}`, false},
+		{"too many deals", `{"cards":[{"kind":"list","deals":[{},{},{},{},{}]}]}`, false},
+		{"title too long", `{"cards":[{"kind":"model","title":"` + strings.Repeat("长", 61) + `"}]}`, false},
+		{"deal name too long", `{"cards":[{"kind":"list","deals":[{"model_name":"` + strings.Repeat("x", 61) + `"}]}]}`, false},
+		{"not json", `{"cards":`, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validatePromoPopup(tc.value)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}

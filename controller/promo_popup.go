@@ -1,0 +1,142 @@
+package controller
+
+import (
+	"errors"
+	"net/url"
+	"strings"
+	"time"
+	"unicode/utf8"
+
+	"github.com/QuantumNous/new-api/common"
+
+	"github.com/gin-gonic/gin"
+)
+
+const (
+	promoPopupOptionKey = "PromoPopup"
+	promoPopupMaxCards  = 5
+	promoPopupMaxTiers  = 3
+	promoPopupMaxDeals  = 4
+)
+
+var errInvalidPromoPopup = errors.New("invalid promo popup settings")
+
+type promoPopupTier struct {
+	Pay   string `json:"pay"`
+	Bonus string `json:"bonus"`
+}
+
+type promoPopupDeal struct {
+	ModelName     string `json:"model_name"`
+	SalePrice     string `json:"sale_price"`
+	OriginalPrice string `json:"original_price"`
+	Unit          string `json:"unit"`
+}
+
+type promoPopupCard struct {
+	Kind          string           `json:"kind"`
+	Title         string           `json:"title"`
+	TitleZh       string           `json:"title_zh"`
+	Description   string           `json:"description"`
+	DescriptionZh string           `json:"description_zh"`
+	EndsAt        string           `json:"ends_at"`
+	Href          string           `json:"href"`
+	ModelName     string           `json:"model_name"`
+	SalePrice     string           `json:"sale_price"`
+	OriginalPrice string           `json:"original_price"`
+	Unit          string           `json:"unit"`
+	Tiers         []promoPopupTier `json:"tiers"`
+	Deals         []promoPopupDeal `json:"deals"`
+}
+
+type promoPopupSettings struct {
+	Enabled bool             `json:"enabled"`
+	Cards   []promoPopupCard `json:"cards"`
+}
+
+// GetPromoPopup returns the home page promotion popup settings (a JSON string,
+// empty when no popup is configured).
+func GetPromoPopup(c *gin.Context) {
+	common.OptionMapRWMutex.RLock()
+	value := common.OptionMap[promoPopupOptionKey]
+	common.OptionMapRWMutex.RUnlock()
+	serveRevalidatedJSON(c, value)
+}
+
+func promoPopupTextFits(limit int, values ...string) bool {
+	for _, value := range values {
+		if utf8.RuneCountInString(value) > limit {
+			return false
+		}
+	}
+	return true
+}
+
+// promoPopupHrefAllowed accepts a same-site path or an https link, so a saved
+// card can never carry a script URL or a scheme-relative redirect.
+func promoPopupHrefAllowed(href string) bool {
+	if href == "" {
+		return true
+	}
+	if strings.HasPrefix(href, "/") {
+		return !strings.HasPrefix(href, "//") && !strings.Contains(href, "\\")
+	}
+	parsed, err := url.Parse(href)
+	return err == nil && parsed.Scheme == "https" && parsed.Host != ""
+}
+
+func promoPopupCardAllowed(card promoPopupCard) bool {
+	if card.Kind != "model" && card.Kind != "recharge" && card.Kind != "list" {
+		return false
+	}
+	if card.EndsAt != "" {
+		if _, err := time.Parse(time.DateOnly, card.EndsAt); err != nil {
+			return false
+		}
+	}
+	if len(card.Tiers) > promoPopupMaxTiers || len(card.Deals) > promoPopupMaxDeals {
+		return false
+	}
+	if !promoPopupTextFits(60, card.Title, card.TitleZh, card.ModelName) ||
+		!promoPopupTextFits(160, card.Description, card.DescriptionZh) ||
+		!promoPopupTextFits(16, card.SalePrice, card.OriginalPrice) ||
+		!promoPopupTextFits(8, card.Unit) ||
+		!promoPopupTextFits(500, card.Href) ||
+		!promoPopupHrefAllowed(card.Href) {
+		return false
+	}
+	for _, tier := range card.Tiers {
+		if !promoPopupTextFits(16, tier.Pay, tier.Bonus) {
+			return false
+		}
+	}
+	for _, deal := range card.Deals {
+		if !promoPopupTextFits(60, deal.ModelName) ||
+			!promoPopupTextFits(16, deal.SalePrice, deal.OriginalPrice) ||
+			!promoPopupTextFits(8, deal.Unit) {
+			return false
+		}
+	}
+	return true
+}
+
+// validatePromoPopup checks the PromoPopup option before it is saved: known
+// card kinds, bounded text and lists, real end dates and safe links.
+func validatePromoPopup(value string) error {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	var settings promoPopupSettings
+	if err := common.UnmarshalJsonStr(value, &settings); err != nil {
+		return errInvalidPromoPopup
+	}
+	if len(settings.Cards) > promoPopupMaxCards {
+		return errInvalidPromoPopup
+	}
+	for _, card := range settings.Cards {
+		if !promoPopupCardAllowed(card) {
+			return errInvalidPromoPopup
+		}
+	}
+	return nil
+}

@@ -33,6 +33,7 @@ const defaultSiteSettings: SiteSettings = {
   HomePageContent: '',
   HomeShowcase: '',
   StudioGallery: '',
+  PromoPopup: '',
   ServerAddress: '',
   TaskPublicAddress: '',
   'general_setting.docs_link': '',
