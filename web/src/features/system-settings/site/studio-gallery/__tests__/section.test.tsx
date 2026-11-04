@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -61,6 +61,28 @@ beforeEach(() => {
 })
 
 describe('studio gallery settings', () => {
+  it('adds a new clip above the existing ones and opens it when Add clip is pressed', async () => {
+    const user = userEvent.setup()
+    renderSection()
+
+    const add = await screen.findByRole('button', { name: 'Add clip' })
+    const existing = screen.getByRole('region', { name: 'Clip 1' })
+    expect(
+      add.compareDocumentPosition(existing) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    await user.click(add)
+
+    const added = screen.getByRole('region', { name: 'Clip 1' })
+    await waitFor(() =>
+      expect(within(added).getByLabelText('Title')).toBeVisible()
+    )
+    expect(
+      within(screen.getByRole('region', { name: 'Clip 2' })).getByText(
+        'Ocean drone'
+      )
+    ).toBeInTheDocument()
+  })
+
   it('keeps a clip when its removal is cancelled', async () => {
     const user = userEvent.setup()
     renderSection()

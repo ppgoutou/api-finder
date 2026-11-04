@@ -51,7 +51,11 @@ export function AuthenticatedLayout(props: AuthenticatedLayoutProps) {
               className={cn(
                 '@container/content',
                 'h-[calc(100svh-var(--app-header-height,0px))]',
-                'min-h-0 overflow-hidden',
+                // Clip, not hidden: absolutely positioned descendants such as
+                // sr-only file inputs overflow this element, and focusing one
+                // would scroll a hidden container and push the page header
+                // with its save button off screen.
+                'min-h-0 overflow-clip',
                 'peer-data-[variant=inset]:h-[calc(100svh-var(--app-header-height,0px)-(var(--spacing)*4))]'
               )}
             >

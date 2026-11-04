@@ -93,7 +93,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
 
   useEffect(() => {
     if (!openNewestClip.current) return
-    const newest = clips.fields.at(-1)
+    const newest = clips.fields.at(0)
     if (!newest) return
     openNewestClip.current = false
     setOpenClips((current) => ({ ...current, [newest.id]: true }))
@@ -137,6 +137,19 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
             <legend className='px-1 text-sm font-semibold'>
               {t('Gallery works')}
             </legend>
+            <Button
+              type='button'
+              variant='outline'
+              className='self-start'
+              disabled={clips.fields.length >= STUDIO_GALLERY_MAX_ITEMS}
+              onClick={() => {
+                openNewestClip.current = true
+                clips.prepend(emptyStudioGalleryItem())
+              }}
+            >
+              <Plus data-icon='inline-start' />
+              {t('Add clip')}
+            </Button>
             {clips.fields.length === 0 && (
               <p className='text-muted-foreground text-sm'>
                 {t('No gallery works yet. Add clips for the video studio.')}
@@ -259,19 +272,6 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                 </CollapsibleMediaClip>
               )
             })}
-            <Button
-              type='button'
-              variant='outline'
-              className='self-start'
-              disabled={clips.fields.length >= STUDIO_GALLERY_MAX_ITEMS}
-              onClick={() => {
-                openNewestClip.current = true
-                clips.append(emptyStudioGalleryItem())
-              }}
-            >
-              <Plus data-icon='inline-start' />
-              {t('Add clip')}
-            </Button>
           </fieldset>
         </SettingsForm>
       </Form>
