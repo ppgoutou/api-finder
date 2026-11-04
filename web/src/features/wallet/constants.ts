@@ -20,9 +20,9 @@ For commercial licensing, please contact support@quantumnous.com
 // Wallet Constants
 // ============================================================================
 
-/** Borderless raised surface shared by the wallet page's cards. */
+/** Outlined raised surface shared by the wallet page's cards. */
 export const WALLET_SURFACE_CLASS =
-  'border-0 shadow-[0_1px_2px_rgb(11_18_32/0.04),0_8px_24px_rgb(11_18_32/0.05)]'
+  'border-foreground/25 hover:border-brand shadow-[0_1px_2px_rgb(11_18_32/0.04),0_8px_24px_rgb(11_18_32/0.05)] transition-[border-color,box-shadow] duration-200 hover:shadow-[0_12px_28px_rgb(11_18_32/0.12)]'
 
 /** Removes the divider and tightens the header of a wallet TitledCard. */
 export const WALLET_CARD_HEADER_CLASS = 'border-b-0 p-4 !pb-0 sm:p-6 sm:!pb-0'

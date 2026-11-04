@@ -27,6 +27,9 @@ import { formatQuota } from '@/lib/format'
 
 import type { AffiliateSummary, UserWalletData } from '../types'
 
+const AFFILIATE_SURFACE_CLASS =
+  'bg-brand-soft border-brand/35 hover:border-brand py-0 shadow-none transition-colors duration-200'
+
 interface AffiliateRewardsCardProps {
   user: UserWalletData | null
   affiliateCode: string
@@ -42,10 +45,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
   const { t } = useTranslation()
   if (props.loading) {
     return (
-      <Card
-        data-card-hover='false'
-        className='bg-brand-soft border-0 py-0 shadow-none'
-      >
+      <Card data-card-hover='false' className={AFFILIATE_SURFACE_CLASS}>
         <CardContent className='grid gap-4 p-4 sm:p-7 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-14'>
           <div>
             <Skeleton className='h-7 w-56' />
@@ -76,10 +76,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
   }
 
   return (
-    <Card
-      data-card-hover='false'
-      className='bg-brand-soft border-0 py-0 shadow-none'
-    >
+    <Card data-card-hover='false' className={AFFILIATE_SURFACE_CLASS}>
       <CardContent className='grid gap-5 p-4 sm:p-7'>
         <div className='grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-center lg:gap-x-14 lg:gap-y-4'>
           <div className='min-w-0'>
