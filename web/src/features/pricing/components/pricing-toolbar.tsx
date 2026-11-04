@@ -46,12 +46,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
 import { getSortLabels, type SortOption, type ViewMode } from '../constants'
-import type {
-  PricingCategory,
-  PricingModel,
-  PricingVendor,
-  TokenUnit,
-} from '../types'
+import type { PricingCategory, PricingModel, TokenUnit } from '../types'
 import { PricingSidebar } from './pricing-sidebar'
 
 export interface PricingToolbarProps {
@@ -66,21 +61,12 @@ export interface PricingToolbarProps {
   viewMode: ViewMode
   onViewModeChange: (value: ViewMode) => void
   quotaTypeFilter: string
-  endpointTypeFilter: string
-  vendorFilter: string
+  modelTypeFilter: string
   categoryFilter: string
-  groupFilter: string
-  tagFilter: string
   onQuotaTypeChange: (value: string) => void
-  onEndpointTypeChange: (value: string) => void
-  onVendorChange: (value: string) => void
+  onModelTypeChange: (value: string) => void
   onCategoryChange: (value: string) => void
-  onGroupChange: (value: string) => void
-  onTagChange: (value: string) => void
-  vendors: PricingVendor[]
   categories: PricingCategory[]
-  groups: string[]
-  tags: string[]
   models: PricingModel[]
   hasActiveFilters: boolean
   activeFilterCount: number
@@ -206,27 +192,18 @@ export function PricingToolbar(props: PricingToolbarProps) {
           <SheetHeader className={sideDrawerHeaderClassName()}>
             <SheetTitle>{t('Filter')}</SheetTitle>
             <SheetDescription>
-              {t('Filter models by provider, group, type, endpoint, and tags.')}
+              {t('Refine models by category, pricing type, and model type.')}
             </SheetDescription>
           </SheetHeader>
           <div className={sideDrawerFormClassName('gap-0')}>
             <PricingSidebar
               quotaTypeFilter={props.quotaTypeFilter}
-              endpointTypeFilter={props.endpointTypeFilter}
-              vendorFilter={props.vendorFilter}
+              modelTypeFilter={props.modelTypeFilter}
               categoryFilter={props.categoryFilter}
-              groupFilter={props.groupFilter}
-              tagFilter={props.tagFilter}
               onQuotaTypeChange={props.onQuotaTypeChange}
-              onEndpointTypeChange={props.onEndpointTypeChange}
-              onVendorChange={props.onVendorChange}
+              onModelTypeChange={props.onModelTypeChange}
               onCategoryChange={props.onCategoryChange}
-              onGroupChange={props.onGroupChange}
-              onTagChange={props.onTagChange}
-              vendors={props.vendors}
               categories={props.categories}
-              groups={props.groups}
-              tags={props.tags}
               models={props.models}
               hasActiveFilters={props.hasActiveFilters}
               onClearFilters={props.onClearFilters}

@@ -25,13 +25,13 @@ import {
   FILTER_ALL,
   SORT_OPTIONS,
   QUOTA_TYPES,
-  ENDPOINT_TYPES,
+  MODEL_TYPES,
   DEFAULT_TOKEN_UNIT,
   VIEW_MODES,
   type ViewMode,
 } from '../constants'
 import { filterByCategory } from '../lib/categories'
-import { filterAndSortModels, extractAllTags } from '../lib/filters'
+import { filterAndSortModels } from '../lib/filters'
 import type { PricingCategory, PricingModel, TokenUnit } from '../types'
 
 type FilterState = {
@@ -41,7 +41,7 @@ type FilterState = {
   category?: string
   group?: string
   quotaType?: string
-  endpointType?: string
+  modelType?: string
   tag?: string
   tokenUnit?: TokenUnit
   view?: ViewMode
@@ -67,7 +67,7 @@ export function useFilters(
     category: search.category,
     group: search.group,
     quotaType: search.quotaType,
-    endpointType: search.endpointType,
+    modelType: search.modelType,
     tag: search.tag,
     tokenUnit: search.tokenUnit,
     view: search.view,
@@ -81,7 +81,7 @@ export function useFilters(
   const categoryFilter = filterState.category || FILTER_ALL
   const groupFilter = filterState.group || FILTER_ALL
   const quotaTypeFilter = filterState.quotaType || QUOTA_TYPES.ALL
-  const endpointTypeFilter = filterState.endpointType || ENDPOINT_TYPES.ALL
+  const modelTypeFilter = filterState.modelType || MODEL_TYPES.ALL
   const tagFilter = filterState.tag || FILTER_ALL
   const tokenUnit: TokenUnit =
     filterState.tokenUnit === 'K' ? 'K' : DEFAULT_TOKEN_UNIT
@@ -109,17 +109,9 @@ export function useFilters(
       updateFilters({ sort: v === SORT_OPTIONS.NAME ? undefined : v }),
     [updateFilters]
   )
-  const setVendorFilter = useCallback(
-    (v: string) => updateFilters({ vendor: v === FILTER_ALL ? undefined : v }),
-    [updateFilters]
-  )
   const setCategoryFilter = useCallback(
     (v: string) =>
       updateFilters({ category: v === FILTER_ALL ? undefined : v }),
-    [updateFilters]
-  )
-  const setGroupFilter = useCallback(
-    (v: string) => updateFilters({ group: v === FILTER_ALL ? undefined : v }),
     [updateFilters]
   )
   const setQuotaTypeFilter = useCallback(
@@ -127,15 +119,11 @@ export function useFilters(
       updateFilters({ quotaType: v === QUOTA_TYPES.ALL ? undefined : v }),
     [updateFilters]
   )
-  const setEndpointTypeFilter = useCallback(
+  const setModelTypeFilter = useCallback(
     (v: string) =>
       updateFilters({
-        endpointType: v === ENDPOINT_TYPES.ALL ? undefined : v,
+        modelType: v === MODEL_TYPES.ALL ? undefined : v,
       }),
-    [updateFilters]
-  )
-  const setTagFilter = useCallback(
-    (v: string) => updateFilters({ tag: v === FILTER_ALL ? undefined : v }),
     [updateFilters]
   )
   const setTokenUnit = useCallback(
@@ -153,11 +141,6 @@ export function useFilters(
     [updateFilters]
   )
 
-  const availableTags = useMemo(() => {
-    if (!models || models.length === 0) return []
-    return extractAllTags(models)
-  }, [models])
-
   const filteredModels = useMemo(() => {
     if (!models || models.length === 0) return []
 
@@ -168,7 +151,7 @@ export function useFilters(
         vendor: vendorFilter,
         group: groupFilter,
         quotaType: quotaTypeFilter,
-        endpointType: endpointTypeFilter,
+        modelType: modelTypeFilter,
         tag: tagFilter,
         sortBy,
       }
@@ -181,7 +164,7 @@ export function useFilters(
     vendorFilter,
     groupFilter,
     quotaTypeFilter,
-    endpointTypeFilter,
+    modelTypeFilter,
     tagFilter,
     sortBy,
   ])
@@ -192,14 +175,14 @@ export function useFilters(
       categoryFilter !== FILTER_ALL ||
       groupFilter !== FILTER_ALL ||
       quotaTypeFilter !== QUOTA_TYPES.ALL ||
-      endpointTypeFilter !== ENDPOINT_TYPES.ALL ||
+      modelTypeFilter !== MODEL_TYPES.ALL ||
       tagFilter !== FILTER_ALL,
     [
       vendorFilter,
       categoryFilter,
       groupFilter,
       quotaTypeFilter,
-      endpointTypeFilter,
+      modelTypeFilter,
       tagFilter,
     ]
   )
@@ -210,14 +193,14 @@ export function useFilters(
       (categoryFilter !== FILTER_ALL ? 1 : 0) +
       (groupFilter !== FILTER_ALL ? 1 : 0) +
       (quotaTypeFilter !== QUOTA_TYPES.ALL ? 1 : 0) +
-      (endpointTypeFilter !== ENDPOINT_TYPES.ALL ? 1 : 0) +
+      (modelTypeFilter !== MODEL_TYPES.ALL ? 1 : 0) +
       (tagFilter !== FILTER_ALL ? 1 : 0),
     [
       vendorFilter,
       categoryFilter,
       groupFilter,
       quotaTypeFilter,
-      endpointTypeFilter,
+      modelTypeFilter,
       tagFilter,
     ]
   )
@@ -228,7 +211,7 @@ export function useFilters(
       category: undefined,
       group: undefined,
       quotaType: undefined,
-      endpointType: undefined,
+      modelType: undefined,
       tag: undefined,
     })
   }, [updateFilters])
@@ -244,26 +227,22 @@ export function useFilters(
     categoryFilter,
     groupFilter,
     quotaTypeFilter,
-    endpointTypeFilter,
+    modelTypeFilter,
     tagFilter,
     tokenUnit,
     viewMode,
     showRechargePrice,
     setSearchInput,
     setSortBy,
-    setVendorFilter,
     setCategoryFilter,
-    setGroupFilter,
     setQuotaTypeFilter,
-    setEndpointTypeFilter,
-    setTagFilter,
+    setModelTypeFilter,
     setTokenUnit,
     setViewMode,
     setShowRechargePrice,
     filteredModels,
     hasActiveFilters,
     activeFilterCount,
-    availableTags,
     clearFilters,
     clearSearch,
   }

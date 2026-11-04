@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type TFunction } from 'i18next'
+import type { TFunction } from 'i18next'
 
 import type { TokenUnit } from './types'
 
@@ -62,40 +62,27 @@ export function getQuotaTypeLabels(
     [QUOTA_TYPES.ALL]: t('All Models'),
     [QUOTA_TYPES.TOKEN]: t('Token-based'),
     [QUOTA_TYPES.REQUEST]: t('Per Request'),
-    [QUOTA_TYPES.TASK]: t('Task billing'),
+    [QUOTA_TYPES.TASK]: t('Duration billing'),
   }
 }
 
-/** Endpoint type options */
-export const ENDPOINT_TYPES = {
+/** Model type options */
+export const MODEL_TYPES = {
   ALL: 'all',
-  OPENAI: 'openai',
-  OPENAI_RESPONSE: 'openai-response',
-  ANTHROPIC: 'anthropic',
-  GEMINI: 'gemini',
-  JINA_RERANK: 'jina-rerank',
-  IMAGE_GENERATION: 'image-generation',
-  EMBEDDINGS: 'embeddings',
-  OPENAI_VIDEO: 'openai-video',
+  VIDEO: 'video',
+  IMAGE: 'image',
 } as const
 
-export type EndpointTypeOption =
-  (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES]
+export type ModelTypeOption = (typeof MODEL_TYPES)[keyof typeof MODEL_TYPES]
 
-/** Endpoint type labels */
-export function getEndpointTypeLabels(
+/** Model type labels */
+export function getModelTypeLabels(
   t: TFunction
-): Record<EndpointTypeOption, string> {
+): Record<ModelTypeOption, string> {
   return {
-    [ENDPOINT_TYPES.ALL]: t('All Types'),
-    [ENDPOINT_TYPES.OPENAI]: 'Chat',
-    [ENDPOINT_TYPES.OPENAI_RESPONSE]: 'Response',
-    [ENDPOINT_TYPES.ANTHROPIC]: 'Anthropic',
-    [ENDPOINT_TYPES.GEMINI]: 'Gemini',
-    [ENDPOINT_TYPES.JINA_RERANK]: 'Rerank',
-    [ENDPOINT_TYPES.IMAGE_GENERATION]: t('Image'),
-    [ENDPOINT_TYPES.EMBEDDINGS]: t('Embeddings'),
-    [ENDPOINT_TYPES.OPENAI_VIDEO]: t('Video'),
+    [MODEL_TYPES.ALL]: t('All Types'),
+    [MODEL_TYPES.VIDEO]: t('Video Models'),
+    [MODEL_TYPES.IMAGE]: t('Image Models'),
   }
 }
 

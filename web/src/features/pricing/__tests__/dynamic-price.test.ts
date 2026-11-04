@@ -340,7 +340,7 @@ describe('task dynamic pricing', () => {
     assert.equal(isUnconfiguredTaskUsageModel(secondsModel), true)
     assert.equal(getDynamicPricingSummary(secondsModel, summaryOptions), null)
     assert.equal(getBillingModeLabelKey(secondsModel), 'Task billing')
-    assert.equal(getBillingModeLabelKey(countModel), 'Task billing')
+    assert.equal(getBillingModeLabelKey(countModel), 'Per Request')
   })
 
   test('does not mark configured task usage pricing as unconfigured', () => {
@@ -485,7 +485,7 @@ describe('task dynamic pricing', () => {
           },
         })
       ),
-      'Task billing'
+      'Per Request'
     )
     assert.equal(
       getBillingModeLabelKey(
