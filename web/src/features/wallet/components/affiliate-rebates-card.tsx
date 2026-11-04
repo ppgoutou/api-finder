@@ -23,12 +23,13 @@ import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/status-badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatQuota, formatTimestampToDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 import { AFFILIATE_PAGE_SIZE, useAffiliateRebates } from '../hooks'
 import type { AffiliateRebate } from '../types'
+import { AffiliateAvatar } from './affiliate-avatar'
 import { AffiliatePager } from './affiliate-pager'
 
 interface AffiliateRebatesCardProps {
@@ -45,7 +46,11 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
 
   const statusBadge = (rebate: AffiliateRebate) => {
     if (rebate.status === 'reversed') {
-      return { label: t('Reversed'), variant: 'neutral' as const }
+      return {
+        label: t('Reversed'),
+        variant: 'neutral' as const,
+        tint: 'bg-muted',
+      }
     }
     if (rebate.status === 'pending') {
       return {
@@ -53,13 +58,18 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
           date: dayjs.unix(rebate.available_at).format('YYYY-MM-DD'),
         }),
         variant: 'warning' as const,
+        tint: 'bg-warning/10 text-highlight',
       }
     }
-    return { label: t('Arrived'), variant: 'success' as const }
+    return {
+      label: t('Arrived'),
+      variant: 'success' as const,
+      tint: 'bg-success/10',
+    }
   }
 
   let body = (
-    <ul className='divide-y'>
+    <ul>
       {items.map((rebate) => {
         const reversed = rebate.status === 'reversed'
         const badge = statusBadge(rebate)
@@ -68,34 +78,43 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
             key={`${rebate.created_at}-${rebate.source_type}-${rebate.rebate_quota}-${rebate.invitee_name}`}
             className='flex items-center justify-between gap-3 py-3'
           >
-            <div className='min-w-0'>
-              <div className='truncate text-sm font-medium'>
-                {[rebate.invitee_name, rebate.invitee_email]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </div>
-              <div className='text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs tabular-nums'>
-                {formatTimestampToDate(rebate.created_at)}
-                <span>
-                  {rebate.source_type === 'redemption'
-                    ? t('Redemption code')
-                    : t('Top-up')}
-                </span>
-                <StatusBadge
-                  label={badge.label}
-                  variant={badge.variant}
-                  type='text'
-                  copyable={false}
-                  className='font-normal'
-                />
+            <div className='flex min-w-0 items-center gap-3'>
+              <AffiliateAvatar
+                label={rebate.invitee_name || rebate.invitee_email}
+              />
+              <div className='min-w-0'>
+                <div className='truncate text-sm font-medium'>
+                  {[rebate.invitee_name, rebate.invitee_email]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+                <div className='text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] tabular-nums'>
+                  {formatTimestampToDate(rebate.created_at)}
+                  <span>
+                    {rebate.source_type === 'redemption'
+                      ? t('Redemption code')
+                      : t('Top-up')}
+                  </span>
+                  <StatusBadge
+                    label={badge.label}
+                    variant={badge.variant}
+                    type='badge'
+                    copyable={false}
+                    className={cn('font-normal', badge.tint)}
+                  />
+                </div>
               </div>
             </div>
             <span
-              className={
+              className={cn(
+                'shrink-0 text-[15px] tabular-nums',
                 reversed
-                  ? 'text-muted-foreground shrink-0 text-sm tabular-nums line-through'
-                  : 'shrink-0 text-sm font-semibold tabular-nums'
-              }
+                  ? 'text-muted-foreground line-through'
+                  : 'font-semibold',
+                rebate.status !== 'reversed' &&
+                  rebate.status !== 'pending' &&
+                  'text-success'
+              )}
             >
               +{formatQuota(rebate.rebate_quota)}
             </span>
@@ -122,25 +141,23 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
   }
 
   return (
-    <Card data-card-hover='false' className='py-0'>
-      <CardContent className='p-3 sm:p-4'>
-        <div className='flex items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold'>{t('Rebates')}</h3>
-          {props.holdDays && props.holdDays > 0 ? (
-            <span className='text-muted-foreground text-xs'>
-              {t('Each rebate arrives {{days}} days after it is earned', {
-                days: props.holdDays,
-              })}
-            </span>
-          ) : null}
-        </div>
-        {body}
-        <AffiliatePager
-          page={page}
-          totalPages={Math.max(1, Math.ceil(total / AFFILIATE_PAGE_SIZE))}
-          onPageChange={setPage}
-        />
-      </CardContent>
-    </Card>
+    <section className='min-w-0 p-4 sm:p-6'>
+      <div className='mb-2 flex items-baseline justify-between gap-2'>
+        <h3 className='text-base font-semibold'>{t('Rebates')}</h3>
+        {props.holdDays && props.holdDays > 0 ? (
+          <span className='text-muted-foreground text-[13px]'>
+            {t('Each rebate arrives {{days}} days after it is earned', {
+              days: props.holdDays,
+            })}
+          </span>
+        ) : null}
+      </div>
+      {body}
+      <AffiliatePager
+        page={page}
+        totalPages={Math.max(1, Math.ceil(total / AFFILIATE_PAGE_SIZE))}
+        onPageChange={setPage}
+      />
+    </section>
   )
 }

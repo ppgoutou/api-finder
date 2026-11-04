@@ -34,6 +34,8 @@ type TitledCardProps = {
   description?: ReactNode
   icon?: ReactNode
   action?: ReactNode
+  /** Keep a small action beside the title on phones instead of below it. */
+  inlineAction?: boolean
   children?: ReactNode
   disableHoverEffect?: boolean
   className?: string
@@ -50,6 +52,7 @@ export function TitledCard({
   description,
   icon,
   action,
+  inlineAction,
   children,
   disableHoverEffect,
   className,
@@ -68,7 +71,14 @@ export function TitledCard({
       <CardHeader
         className={cn('border-b p-3 !pb-3 sm:p-5 sm:!pb-5', headerClassName)}
       >
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div
+          className={cn(
+            'flex gap-3',
+            inlineAction
+              ? 'items-start justify-between'
+              : 'flex-col sm:flex-row sm:items-start sm:justify-between'
+          )}
+        >
           <div className='flex min-w-0 items-center gap-3'>
             {icon != null && (
               <IconBadge size='title' tone={iconTone} className={iconClassName}>
@@ -94,7 +104,11 @@ export function TitledCard({
             </div>
           </div>
           {action != null && (
-            <div className='w-full shrink-0 sm:w-auto'>{action}</div>
+            <div
+              className={cn('shrink-0', !inlineAction && 'w-full sm:w-auto')}
+            >
+              {action}
+            </div>
           )}
         </div>
       </CardHeader>

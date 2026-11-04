@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "At most 5000 characters",
     "At most 7500 characters": "At most 7500 characters",
     "Remove this clip?": "Remove this clip?",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then."
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.",
+    "Pay {{amount}} with {{method}}": "Pay {{amount}} with {{method}}",
+    "Invite friends, earn {{percent}}% back": "Invite friends, earn {{percent}}% back",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use."
   }
 }

@@ -20,6 +20,17 @@ For commercial licensing, please contact support@quantumnous.com
 // Wallet Constants
 // ============================================================================
 
+/** Borderless raised surface shared by the wallet page's cards. */
+export const WALLET_SURFACE_CLASS =
+  'border-0 shadow-[0_1px_2px_rgb(11_18_32/0.04),0_8px_24px_rgb(11_18_32/0.05)]'
+
+/** Removes the divider and tightens the header of a wallet TitledCard. */
+export const WALLET_CARD_HEADER_CLASS = 'border-b-0 p-4 !pb-0 sm:p-6 sm:!pb-0'
+
+/** Quiet text action in a wallet card header, such as the order history. */
+export const WALLET_HEADER_ACTION_CLASS =
+  'text-muted-foreground hover:text-foreground h-auto px-0 py-0.5 font-normal hover:bg-transparent'
+
 /**
  * Default preset amount multipliers
  * Used to generate quick select amounts based on minimum topup

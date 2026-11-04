@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "最多 5000 个字符",
     "At most 7500 characters": "最多 7500 个字符",
     "Remove this clip?": "确定移除这条作品吗？",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存后「{{title}}」会从作品集移除，它上传的文件也会一并删除。"
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存后「{{title}}」会从作品集移除，它上传的文件也会一并删除。",
+    "Pay {{amount}} with {{method}}": "{{method}} 付款 {{amount}}",
+    "Invite friends, earn {{percent}}% back": "邀请好友，得 {{percent}}% 返利",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "好友用你的邀请码或邀请链接注册后，TA 每次充值或使用兑换码，你都能获得返利。"
   }
 }

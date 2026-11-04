@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Loader2, Receipt, WalletCards } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,6 +37,11 @@ import { formatLocalCurrencyAmount } from '@/lib/currency'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
+import {
+  WALLET_CARD_HEADER_CLASS,
+  WALLET_HEADER_ACTION_CLASS,
+  WALLET_SURFACE_CLASS,
+} from '../constants'
 import { getDiscountLabel, getPaymentIcon, getMinTopupAmount } from '../lib'
 import type {
   PaymentMethod,
@@ -136,12 +141,15 @@ export function RechargeFormCard({
 
   if (loading) {
     return (
-      <Card data-card-hover='false' className='gap-0 overflow-hidden py-0'>
-        <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
+      <Card
+        data-card-hover='false'
+        className={cn('gap-0 overflow-hidden py-0', WALLET_SURFACE_CLASS)}
+      >
+        <CardHeader className={WALLET_CARD_HEADER_CLASS}>
           <Skeleton className='h-6 w-32' />
           <Skeleton className='mt-2 h-4 w-48' />
         </CardHeader>
-        <CardContent className='space-y-4 p-3 sm:space-y-6 sm:p-5'>
+        <CardContent className='space-y-4 p-4 sm:space-y-6 sm:p-6'>
           <div className='space-y-4 sm:space-y-6'>
             {/* Preset Amounts Skeleton */}
             <div className='space-y-3'>
@@ -180,24 +188,23 @@ export function RechargeFormCard({
     <TitledCard
       title={t('Online Top-up')}
       description={t('Pay online and the credit arrives right away')}
-      icon={<WalletCards className='h-4 w-4' />}
-      iconClassName='bg-brand rounded-full text-white'
       disableHoverEffect
-      className='h-full'
+      className={cn('h-full', WALLET_SURFACE_CLASS)}
+      headerClassName={WALLET_CARD_HEADER_CLASS}
+      inlineAction
       action={
         onOpenBilling ? (
           <Button
-            variant='outline'
+            variant='ghost'
             size='sm'
             onClick={onOpenBilling}
-            className='w-full gap-2 sm:w-auto'
+            className={WALLET_HEADER_ACTION_CLASS}
           >
-            <Receipt className='h-4 w-4' />
             {t('Order History')}
           </Button>
         ) : null
       }
-      contentClassName='flex flex-1 flex-col gap-4 sm:gap-6'
+      contentClassName='flex flex-1 flex-col gap-4 p-4 sm:gap-5 sm:p-6'
     >
       {/* Online Topup Section */}
       {hasAnyTopup ? (
@@ -205,10 +212,7 @@ export function RechargeFormCard({
           {hasConfigurableTopup && (
             <>
               <div className='flex flex-1 flex-col gap-2.5 sm:gap-3'>
-                <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  {t('Amount')}
-                </Label>
-                <div className='grid flex-1 auto-rows-fr grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-3'>
+                <div className='grid flex-1 auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5'>
                   {/* The sixth tile is the custom amount, so at most five presets show. */}
                   {presetAmounts.slice(0, 5).map((preset) => {
                     const discount =
@@ -219,18 +223,18 @@ export function RechargeFormCard({
                     return (
                       <Button
                         key={preset.value}
-                        variant='outline'
+                        variant='ghost'
                         aria-pressed={selectedPreset === preset.value}
                         className={cn(
-                          'flex h-full min-h-16 flex-col items-start justify-center rounded-lg px-3 py-2.5 text-left whitespace-normal sm:min-h-[72px] sm:p-4',
+                          'flex h-full min-h-[60px] flex-col items-center justify-center rounded-xl px-3 py-2.5 text-center whitespace-normal sm:min-h-[68px]',
                           selectedPreset === preset.value
-                            ? 'border-brand bg-brand-soft text-brand-hover dark:text-brand-on-dark'
-                            : 'border-border'
+                            ? 'bg-brand/15 text-brand-hover hover:bg-brand/20 hover:text-brand-hover dark:text-brand-on-dark dark:hover:text-brand-on-dark'
+                            : 'bg-muted hover:bg-muted/70'
                         )}
                         onClick={() => onSelectPreset(preset)}
                       >
-                        <div className='flex w-full items-center justify-between'>
-                          <div className='text-base font-semibold sm:text-lg'>
+                        <div className='flex w-full items-center justify-center gap-2'>
+                          <div className='text-lg font-bold tabular-nums sm:text-xl'>
                             {formatCredit(preset.value)}
                           </div>
                           {hasDiscount && (
@@ -269,10 +273,10 @@ export function RechargeFormCard({
                     }
                     placeholder={t('Custom Amount')}
                     className={cn(
-                      'h-full min-h-16 rounded-lg px-3 text-base font-semibold sm:min-h-[72px] sm:px-4 sm:text-lg',
-                      selectedPreset === null && localAmount !== ''
-                        ? 'border-brand bg-brand-soft text-brand-hover dark:text-brand-on-dark'
-                        : 'border-border'
+                      'h-full min-h-[60px] rounded-xl border-0 px-3 text-center text-base font-semibold sm:min-h-[68px]',
+                      selectedPreset === null && topupAmount > 0
+                        ? 'bg-brand/15 text-brand-hover dark:bg-brand/15 dark:text-brand-on-dark'
+                        : 'bg-muted dark:bg-muted'
                     )}
                   />
                 </div>
@@ -290,12 +294,22 @@ export function RechargeFormCard({
               </div>
 
               <div className='space-y-2.5 sm:space-y-3'>
-                <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  {t('Payment Method')}
-                </Label>
                 {hasStandardPaymentMethods ? (
-                  <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
-                    {topupInfo?.pay_methods?.map((method) => {
+                  <div
+                    className={cn(
+                      'grid gap-2 sm:gap-2.5',
+                      (topupInfo?.pay_methods?.length ?? 0) > 1 && 'grid-cols-2'
+                    )}
+                  >
+                    {topupInfo?.pay_methods?.map((method, index) => {
+                      const isPrimary = index === 0
+                      const payLabel =
+                        topupAmount > 0
+                          ? t('Pay {{amount}} with {{method}}', {
+                              amount: formatCredit(topupAmount),
+                              method: method.name,
+                            })
+                          : method.name
                       const minTopup = Math.max(
                         method.min_topup || 0,
                         getMinTopupAmount(topupInfo)
@@ -313,33 +327,40 @@ export function RechargeFormCard({
                       const button = (
                         <Button
                           key={method.type}
-                          variant='outline'
+                          variant={isPrimary ? 'default' : 'secondary'}
                           onClick={() => onPaymentMethodSelect(method)}
                           disabled={disabled || !!paymentLoading}
                           title={disabledReason}
                           aria-label={
                             disabledReason
-                              ? `${method.name}. ${disabledReason}`
-                              : method.name
+                              ? `${payLabel}. ${disabledReason}`
+                              : payLabel
                           }
-                          className='min-h-14 min-w-0 justify-start gap-2 rounded-lg px-3 py-2 text-left'
+                          className={cn(
+                            'min-h-13 min-w-0 gap-2 rounded-xl px-3 py-2 text-base font-semibold',
+                            isPrimary
+                              ? 'bg-brand hover:bg-brand-hover text-white'
+                              : 'text-foreground'
+                          )}
                         >
-                          {paymentLoading === method.type ? (
+                          {paymentLoading === method.type && (
                             <Loader2 className='h-4 w-4 animate-spin' />
-                          ) : (
+                          )}
+                          {/* Brand-colored payment icons lose contrast on the blue button. */}
+                          {paymentLoading !== method.type &&
+                            !isPrimary &&
                             getPaymentIcon(
                               method.type,
                               'h-4 w-4',
                               method.icon,
                               method.name
-                            )
-                          )}
-                          <span className='flex min-w-0 flex-col items-start gap-0.5'>
+                            )}
+                          <span className='flex min-w-0 flex-col items-center gap-0.5'>
                             <span className='max-w-full truncate'>
-                              {method.name}
+                              {payLabel}
                             </span>
                             {disabledLabel && (
-                              <span className='text-muted-foreground max-w-full truncate text-[11px] leading-4 font-normal'>
+                              <span className='max-w-full truncate text-[11px] leading-4 font-normal opacity-80'>
                                 {disabledLabel}
                               </span>
                             )}
@@ -478,7 +499,6 @@ export function RechargeFormCard({
             />
           </div>
         )}
-
     </TitledCard>
   )
 }

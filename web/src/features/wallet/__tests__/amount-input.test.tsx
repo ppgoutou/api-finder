@@ -127,7 +127,6 @@ it('shows at most five presets and keeps the custom tile empty while a preset is
   expect(custom).toHaveAttribute('placeholder', '自定义金额')
 })
 
-
 it('marks only the selected preset tile as pressed', () => {
   render(
     <I18nextProvider i18n={i18n}>
@@ -156,4 +155,47 @@ it('marks only the selected preset tile as pressed', () => {
   const [fifty, hundred] = screen.getAllByRole('button')
   expect(fifty).toHaveAttribute('aria-pressed', 'false')
   expect(hundred).toHaveAttribute('aria-pressed', 'true')
+})
+
+function renderPayMethods(topupAmount: number, onSelect = vi.fn()) {
+  render(
+    <I18nextProvider i18n={i18n}>
+      <RechargeFormCard
+        topupInfo={{
+          enable_online_topup: false,
+          enable_stripe_topup: true,
+          pay_methods: [{ name: 'Stripe', type: 'stripe' }],
+          min_topup: 10,
+          stripe_min_topup: 10,
+          amount_options: [],
+          discount: {},
+        }}
+        presetAmounts={[]}
+        selectedPreset={null}
+        topupAmount={topupAmount}
+        amountUnit='CNY'
+        paymentLoading={null}
+        onSelectPreset={vi.fn()}
+        onTopupAmountChange={vi.fn()}
+        onPaymentMethodSelect={onSelect}
+      />
+    </I18nextProvider>
+  )
+  return onSelect
+}
+
+it('names the selected amount on the pay button and starts payment on click', () => {
+  const onSelect = renderPayMethods(100)
+
+  const pay = screen.getByRole('button', { name: /^Stripe 付款 .*100/ })
+  fireEvent.click(pay)
+
+  expect(onSelect).toHaveBeenCalledWith({ name: 'Stripe', type: 'stripe' })
+})
+
+it('disables the pay button below the minimum and states the minimum', () => {
+  renderPayMethods(5)
+
+  const pay = screen.getByRole('button', { name: /最低充值金额：10/ })
+  expect(pay).toBeDisabled()
 })

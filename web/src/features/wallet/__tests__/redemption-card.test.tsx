@@ -59,13 +59,11 @@ function renderCard(
 it('links the buy button to the configured shop in a new tab', () => {
   renderCard({ topupLink: 'https://shop.example/store' })
 
-  const links = screen.getAllByRole('link', { name: /购买兑换码/ })
-  expect(links).toHaveLength(2)
-  for (const link of links) {
-    expect(link).toHaveAttribute('href', 'https://shop.example/store')
-    expect(link).toHaveAttribute('target', '_blank')
-  }
+  const link = screen.getByRole('link', { name: /购买兑换码/ })
+  expect(link).toHaveAttribute('href', 'https://shop.example/store')
+  expect(link).toHaveAttribute('target', '_blank')
   expect(screen.getByText('去小店下单')).toBeVisible()
+  expect(screen.getByText('兑换后额度永久有效')).toBeVisible()
 })
 
 it('hides the buy panel when no shop link is configured', () => {
@@ -105,7 +103,6 @@ it('links redemption records to the shop order lookup in a new tab', () => {
   expect(records).toHaveAttribute('href', 'https://wzyp.cn/order')
   expect(records).toHaveAttribute('target', '_blank')
 })
-
 
 it('shows only a skeleton, without the title, while top-up info loads', () => {
   renderCard({ loading: true, topupLink: 'https://shop.example/store' })

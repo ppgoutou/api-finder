@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ExternalLink, Gift, History, Loader2 } from 'lucide-react'
+import { ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -28,7 +28,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TitledCard } from '@/components/ui/titled-card'
 import { cn } from '@/lib/utils'
 
-import { REDEMPTION_ORDERS_URL } from '../constants'
+import {
+  REDEMPTION_ORDERS_URL,
+  WALLET_CARD_HEADER_CLASS,
+  WALLET_HEADER_ACTION_CLASS,
+  WALLET_SURFACE_CLASS,
+} from '../constants'
 
 interface RedemptionCardProps {
   /** Where codes are sold (the admin's top-up link); hides the buy panel when empty. */
@@ -66,13 +71,16 @@ export function RedemptionCard(props: RedemptionCardProps) {
       <Card
         data-card-hover='false'
         data-testid='redemption-card-skeleton'
-        className='h-full gap-0 overflow-hidden py-0'
+        className={cn(
+          'h-full gap-0 overflow-hidden py-0',
+          WALLET_SURFACE_CLASS
+        )}
       >
-        <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
+        <CardHeader className={WALLET_CARD_HEADER_CLASS}>
           <Skeleton className='h-6 w-32' />
           <Skeleton className='mt-2 h-4 w-48' />
         </CardHeader>
-        <CardContent className='space-y-4 p-3 sm:p-5'>
+        <CardContent className='space-y-4 p-4 sm:p-6'>
           <Skeleton className='h-48 w-full rounded-lg' />
           <Skeleton className='h-28 w-full rounded-lg' />
         </CardContent>
@@ -84,43 +92,42 @@ export function RedemptionCard(props: RedemptionCardProps) {
     <TitledCard
       title={t('Redemption Code Top-up')}
       description={t('Buy with WeChat Pay or Alipay, delivered automatically')}
-      icon={<Gift className='h-4 w-4' />}
-      iconClassName='bg-brand rounded-full text-white'
       disableHoverEffect
-      className='h-full'
+      className={cn('h-full', WALLET_SURFACE_CLASS)}
+      headerClassName={WALLET_CARD_HEADER_CLASS}
+      inlineAction
       action={
         <a
           href={REDEMPTION_ORDERS_URL}
           target='_blank'
           rel='noopener noreferrer'
           className={cn(
-            buttonVariants({ variant: 'outline', size: 'sm' }),
-            'w-full gap-2 sm:w-auto'
+            buttonVariants({ variant: 'ghost', size: 'sm' }),
+            WALLET_HEADER_ACTION_CLASS
           )}
         >
-          <History className='h-4 w-4' aria-hidden='true' />
           {t('Redemption Records')}
         </a>
       }
-      contentClassName='flex flex-1 flex-col gap-4'
+      contentClassName='flex flex-1 flex-col gap-5 p-4 sm:p-6'
     >
       <>
         {props.topupLink && (
-          <div className='border-brand/15 bg-brand-soft flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border px-4 py-6 text-center sm:px-6'>
-            <ol className='grid w-full grid-cols-3 gap-2 sm:gap-4'>
+          <>
+            <ol className='grid flex-1 content-center gap-2.5 sm:grid-cols-3 sm:gap-4'>
               {purchaseSteps.map((step, index) => (
                 <li
                   key={step.title}
-                  className='flex flex-col items-center gap-1'
+                  className='flex gap-2.5 sm:flex-col sm:gap-1'
                 >
-                  <span className='bg-background border-brand/30 text-brand dark:text-brand-on-dark mb-1 flex size-7 items-center justify-center rounded-full border text-xs font-semibold'>
+                  <span className='text-brand dark:text-brand-on-dark text-[13px] font-bold'>
                     {index + 1}
                   </span>
-                  <span className='text-xs leading-snug font-semibold sm:text-sm'>
-                    {step.title}
-                  </span>
-                  <span className='text-muted-foreground text-xs leading-snug'>
-                    {step.detail}
+                  <span className='flex min-w-0 flex-col gap-0.5'>
+                    <span className='text-sm font-semibold'>{step.title}</span>
+                    <span className='text-muted-foreground text-[13px]'>
+                      {step.detail}
+                    </span>
                   </span>
                 </li>
               ))}
@@ -131,39 +138,41 @@ export function RedemptionCard(props: RedemptionCardProps) {
               rel='noopener noreferrer'
               className={cn(
                 buttonVariants(),
-                'h-11 gap-2 bg-brand hover:bg-brand-hover px-6 text-base text-white'
+                'bg-brand hover:bg-brand-hover h-13 gap-2 rounded-xl text-base font-semibold text-white'
               )}
             >
-              <Gift className='h-4 w-4' aria-hidden='true' />
               {t('Buy redemption code')}
               <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
             </a>
-            <p className='text-muted-foreground text-xs'>
-              {t('Credit never expires after redeeming')}
-            </p>
-          </div>
+          </>
         )}
 
         {props.redemptionEnabled ? (
-          <div className='space-y-3 rounded-lg border p-4'>
+          <div
+            className={cn(
+              'space-y-2',
+              props.topupLink && 'border-t border-border/60 pt-4'
+            )}
+          >
             <Label
               htmlFor='redemption-code'
-              className='text-muted-foreground text-xs font-medium'
+              className='text-muted-foreground text-[13px] font-normal'
             >
               {t('Enter redemption code')}
             </Label>
-            <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-2'>
+            <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-2.5'>
               <Input
                 id='redemption-code'
                 value={props.redemptionCode}
                 onChange={(e) => props.onRedemptionCodeChange(e.target.value)}
                 placeholder={t('Paste your redemption code')}
-                className='h-11 min-w-0'
+                className='bg-muted h-11 min-w-0 border-0'
               />
               <Button
+                variant='secondary'
                 onClick={props.onRedeem}
                 disabled={props.redeeming}
-                className='bg-brand hover:bg-brand-hover h-11 px-5 text-white'
+                className='text-foreground h-11 px-4 font-semibold sm:px-5'
               >
                 {props.redeeming && (
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -171,19 +180,9 @@ export function RedemptionCard(props: RedemptionCardProps) {
                 {t('Redeem')}
               </Button>
             </div>
-            {props.topupLink && (
-              <p className='text-muted-foreground text-xs'>
-                {t('Need a redemption code?')}{' '}
-                <a
-                  href={props.topupLink}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-brand dark:text-brand-on-dark underline underline-offset-4'
-                >
-                  {t('Buy redemption code')}
-                </a>
-              </p>
-            )}
+            <p className='text-muted-foreground text-[13px]'>
+              {t('Credit never expires after redeeming')}
+            </p>
           </div>
         ) : (
           <Alert>

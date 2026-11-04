@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "5000 caractères maximum",
     "At most 7500 characters": "7500 caractères maximum",
     "Remove this clip?": "Retirer cette œuvre ?",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "« {{title}} » quitte la galerie à l’enregistrement, et ses fichiers importés sont alors supprimés."
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "« {{title}} » quitte la galerie à l’enregistrement, et ses fichiers importés sont alors supprimés.",
+    "Pay {{amount}} with {{method}}": "Payer {{amount}} avec {{method}}",
+    "Invite friends, earn {{percent}}% back": "Invitez vos amis, gagnez {{percent}} % de remise",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "Vos amis inscrits avec votre code ou lien vous rapportent une remise à chaque recharge et code d’échange utilisé."
   }
 }

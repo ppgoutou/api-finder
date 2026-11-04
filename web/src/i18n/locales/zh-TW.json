@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "最多 5000 個字元",
     "At most 7500 characters": "最多 7500 個字元",
     "Remove this clip?": "確定移除這條作品嗎？",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "儲存後「{{title}}」會從作品集移除，它上傳的檔案也會一併刪除。"
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "儲存後「{{title}}」會從作品集移除，它上傳的檔案也會一併刪除。",
+    "Pay {{amount}} with {{method}}": "{{method}} 付款 {{amount}}",
+    "Invite friends, earn {{percent}}% back": "邀請好友，得 {{percent}}% 返利",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "好友用你的邀請碼或邀請連結註冊後，對方每次儲值或使用兌換碼，你都能獲得返利。"
   }
 }
