@@ -75,6 +75,8 @@ const cardSchema = z
     salePrice: amount,
     originalPrice: amount,
     unit,
+    autoPrice: z.boolean(),
+    priceOption: shortText,
     icon,
     tiers: z
       .array(z.object({ pay: amount, bonus: amount }))
@@ -86,6 +88,8 @@ const cardSchema = z
           salePrice: amount,
           originalPrice: amount,
           unit,
+          autoPrice: z.boolean(),
+          priceOption: shortText,
           icon,
         })
       )

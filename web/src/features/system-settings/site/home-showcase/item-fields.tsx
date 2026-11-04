@@ -37,6 +37,7 @@ type TextFieldProps<T extends FieldValues> = {
   placeholder?: string
   multiline?: boolean
   description?: string
+  disabled?: boolean
 }
 
 /** A text field of a home or studio gallery slot (title, category, spec or prompt). */
@@ -54,7 +55,11 @@ export function ShowcaseTextField<T extends FieldValues>(
             {props.multiline ? (
               <Textarea rows={3} placeholder={props.placeholder} {...field} />
             ) : (
-              <Input placeholder={props.placeholder} {...field} />
+              <Input
+                placeholder={props.placeholder}
+                {...field}
+                disabled={props.disabled}
+              />
             )}
           </FormControl>
           {props.description && (

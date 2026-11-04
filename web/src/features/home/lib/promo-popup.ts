@@ -19,8 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 
 /**
  * Home page promotion popup settings stored in the `PromoPopup` option as
- * JSON. Prices are display text written by the admin; nothing here affects
- * what a request is billed.
+ * JSON. Prices are display text, written by the admin or read from the model
+ * when a line follows it; nothing here affects what a request is billed.
  */
 import { normalizeInterfaceLanguage } from '@/i18n/languages'
 
@@ -36,16 +36,24 @@ export type PromoCardKind = (typeof PROMO_CARD_KINDS)[number]
 
 export type PromoTier = { pay: string; bonus: string }
 
-export type PromoDeal = {
+/** A model price shown on a card. */
+export type PromoPriceLine = {
   modelName: string
   salePrice: string
   originalPrice: string
   unit: string
+  /** Show the model's current selling price over the stored one. */
+  autoPrice: boolean
+  /** Which of the model's prices to follow, such as `720p`. */
+  priceOption: string
+}
+
+export type PromoDeal = PromoPriceLine & {
   /** Lobe icon name, usually copied from the model. */
   icon: string
 }
 
-export type PromoCard = {
+export type PromoCard = PromoPriceLine & {
   kind: PromoCardKind
   title: string
   titleZh: string
@@ -55,10 +63,6 @@ export type PromoCard = {
   endsAt: string
   /** Same-site path or https link; empty uses the card kind's default page. */
   href: string
-  modelName: string
-  salePrice: string
-  originalPrice: string
-  unit: string
   /** Lobe icon name, usually copied from the model. */
   icon: string
   tiers: PromoTier[]
@@ -97,10 +101,20 @@ export function emptyPromoCard(kind: PromoCardKind = 'model'): PromoCard {
     salePrice: '',
     originalPrice: '',
     unit: '',
+    autoPrice: false,
+    priceOption: '',
     icon: '',
     tiers: [{ pay: '', bonus: '' }],
     deals: [
-      { modelName: '', salePrice: '', originalPrice: '', unit: '', icon: '' },
+      {
+        modelName: '',
+        salePrice: '',
+        originalPrice: '',
+        unit: '',
+        autoPrice: false,
+        priceOption: '',
+        icon: '',
+      },
     ],
   }
 }
@@ -134,6 +148,8 @@ function readCard(value: unknown): PromoCard | null {
     salePrice: readText(source, 'sale_price'),
     originalPrice: readText(source, 'original_price'),
     unit: readText(source, 'unit'),
+    autoPrice: source.auto_price === true,
+    priceOption: readText(source, 'price_option'),
     icon: readText(source, 'icon'),
     tiers: tiers.map((tier) => {
       const row = asRecord(tier)
@@ -146,6 +162,8 @@ function readCard(value: unknown): PromoCard | null {
         salePrice: readText(row, 'sale_price'),
         originalPrice: readText(row, 'original_price'),
         unit: readText(row, 'unit'),
+        autoPrice: row.auto_price === true,
+        priceOption: readText(row, 'price_option'),
         icon: readText(row, 'icon'),
       }
     }),
@@ -207,6 +225,8 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
         sale_price: card.salePrice,
         original_price: card.originalPrice,
         unit: card.unit,
+        auto_price: card.autoPrice,
+        price_option: card.priceOption,
         icon: card.icon,
       }),
       ...(card.kind === 'recharge' && { tiers: card.tiers }),
@@ -216,6 +236,8 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
           sale_price: deal.salePrice,
           original_price: deal.originalPrice,
           unit: deal.unit,
+          auto_price: deal.autoPrice,
+          price_option: deal.priceOption,
           icon: deal.icon,
         })),
       }),

@@ -21,6 +21,7 @@ import {
   type Control,
   useFieldArray,
   useFormContext,
+  type UseFormReturn,
   useWatch,
 } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -54,6 +55,39 @@ type PromoCardFieldsProps = {
 
 const SET_OPTIONS = { shouldDirty: true, shouldValidate: true }
 
+/**
+ * Copies a picked model into a card or deal. The admin's original price stays
+ * when the same price is synced again and the model publishes none of its own.
+ */
+function applyModelSelection(
+  form: UseFormReturn<PromoPopupFormValues>,
+  path: `cards.${number}` | `cards.${number}.deals.${number}`,
+  selection: PromoModelSelection
+) {
+  const model = selection.model
+  const price = selection.price
+  const previousOption = form.getValues(`${path}.priceOption`)
+  const samePrice =
+    form.getValues(`${path}.modelName`) === model.model_name &&
+    (!previousOption || previousOption === price?.option)
+  const keptOriginal = samePrice ? form.getValues(`${path}.originalPrice`) : ''
+  form.setValue(`${path}.modelName`, model.model_name, SET_OPTIONS)
+  form.setValue(
+    `${path}.icon`,
+    model.icon || model.vendor_icon || '',
+    SET_OPTIONS
+  )
+  form.setValue(`${path}.salePrice`, price?.salePrice ?? '', SET_OPTIONS)
+  form.setValue(
+    `${path}.originalPrice`,
+    price?.originalPrice || keptOriginal,
+    SET_OPTIONS
+  )
+  form.setValue(`${path}.unit`, price?.unit ?? '', SET_OPTIONS)
+  form.setValue(`${path}.priceOption`, price?.option ?? '', SET_OPTIONS)
+  form.setValue(`${path}.autoPrice`, selection.autoPrice, SET_OPTIONS)
+}
+
 function LogoField(props: {
   control: Control<PromoPopupFormValues>
   name: `cards.${number}.icon` | `cards.${number}.deals.${number}.icon`
@@ -80,37 +114,26 @@ function ModelFields(props: PromoCardFieldsProps) {
   const { t } = useTranslation()
   const form = useFormContext<PromoPopupFormValues>()
   const card = `cards.${props.index}` as const
+  const autoPrice = useWatch({
+    control: props.control,
+    name: `${card}.autoPrice`,
+  })
   const applyModel = (selection: PromoModelSelection) => {
     const descriptions = getPromoModelDescriptions(selection.model)
-    const model = selection.model
-    form.setValue(`${card}.modelName`, model.model_name, SET_OPTIONS)
-    form.setValue(
-      `${card}.icon`,
-      model.icon || model.vendor_icon || '',
-      SET_OPTIONS
-    )
+    applyModelSelection(form, card, selection)
     form.setValue(`${card}.description`, descriptions.description, SET_OPTIONS)
     form.setValue(
       `${card}.descriptionZh`,
       descriptions.descriptionZh,
       SET_OPTIONS
     )
-    form.setValue(
-      `${card}.salePrice`,
-      selection.price?.salePrice ?? '',
-      SET_OPTIONS
-    )
-    form.setValue(
-      `${card}.originalPrice`,
-      selection.price?.originalPrice ?? '',
-      SET_OPTIONS
-    )
-    form.setValue(`${card}.unit`, selection.price?.unit ?? '', SET_OPTIONS)
   }
   return (
     <>
       <PromoModelPicker
         currentName={form.getValues(`${card}.modelName`)}
+        currentOption={form.getValues(`${card}.priceOption`)}
+        autoPrice={autoPrice}
         onSelect={applyModel}
       />
       <div className='grid gap-4 sm:grid-cols-2'>
@@ -123,11 +146,13 @@ function ModelFields(props: PromoCardFieldsProps) {
           control={props.control}
           name={`${card}.unit`}
           label={t('Price unit')}
+          disabled={autoPrice}
         />
         <ShowcaseTextField
           control={props.control}
           name={`${card}.salePrice`}
           label={t('Sale price')}
+          disabled={autoPrice}
         />
         <ShowcaseTextField
           control={props.control}
@@ -198,44 +223,26 @@ function DealFields(props: PromoCardFieldsProps) {
     control: props.control,
     name: `cards.${props.index}.deals`,
   })
+  const dealValues = useWatch({
+    control: props.control,
+    name: `cards.${props.index}.deals`,
+  })
   return (
     <div className='flex flex-col gap-4'>
       {deals.fields.map((deal, dealIndex) => {
         const path = `cards.${props.index}.deals.${dealIndex}` as const
+        const autoPrice = dealValues?.[dealIndex]?.autoPrice ?? false
         return (
           <div key={deal.id} className='flex flex-col gap-3 border-b pb-4'>
             <div className='flex items-start gap-2'>
               <div className='min-w-0 flex-1'>
                 <PromoModelPicker
                   currentName={form.getValues(`${path}.modelName`)}
-                  onSelect={(selection) => {
-                    const model = selection.model
-                    form.setValue(
-                      `${path}.modelName`,
-                      model.model_name,
-                      SET_OPTIONS
-                    )
-                    form.setValue(
-                      `${path}.icon`,
-                      model.icon || model.vendor_icon || '',
-                      SET_OPTIONS
-                    )
-                    form.setValue(
-                      `${path}.salePrice`,
-                      selection.price?.salePrice ?? '',
-                      SET_OPTIONS
-                    )
-                    form.setValue(
-                      `${path}.originalPrice`,
-                      selection.price?.originalPrice ?? '',
-                      SET_OPTIONS
-                    )
-                    form.setValue(
-                      `${path}.unit`,
-                      selection.price?.unit ?? '',
-                      SET_OPTIONS
-                    )
-                  }}
+                  currentOption={form.getValues(`${path}.priceOption`)}
+                  autoPrice={autoPrice}
+                  onSelect={(selection) =>
+                    applyModelSelection(form, path, selection)
+                  }
                 />
               </div>
               <Button
@@ -260,6 +267,7 @@ function DealFields(props: PromoCardFieldsProps) {
                 control={props.control}
                 name={`${path}.salePrice`}
                 label={t('Sale price')}
+                disabled={autoPrice}
               />
               <ShowcaseTextField
                 control={props.control}
@@ -270,6 +278,7 @@ function DealFields(props: PromoCardFieldsProps) {
                 control={props.control}
                 name={`${path}.unit`}
                 label={t('Price unit')}
+                disabled={autoPrice}
               />
             </div>
             <LogoField control={props.control} name={`${path}.icon`} />
@@ -288,6 +297,8 @@ function DealFields(props: PromoCardFieldsProps) {
             salePrice: '',
             originalPrice: '',
             unit: '',
+            autoPrice: false,
+            priceOption: '',
             icon: '',
           })
         }
