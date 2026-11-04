@@ -17,9 +17,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Plus, Trash2 } from 'lucide-react'
-import { type Control, useFieldArray, useWatch } from 'react-hook-form'
+import {
+  type Control,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
+import { LobeIconField } from '@/components/lobe-icon-field'
 import { Button } from '@/components/ui/button'
 import {
   FormControl,
@@ -37,6 +43,8 @@ import {
 } from '@/features/home/lib/promo-popup'
 
 import { ShowcaseTextField } from '../home-showcase/item-fields'
+import { PromoModelPicker, type PromoModelSelection } from './model-picker'
+import { getPromoModelDescriptions } from './model-snapshot'
 import type { PromoPopupFormValues } from './schema'
 
 type PromoCardFieldsProps = {
@@ -44,35 +52,91 @@ type PromoCardFieldsProps = {
   index: number
 }
 
-function ModelFields(props: PromoCardFieldsProps) {
+const SET_OPTIONS = { shouldDirty: true, shouldValidate: true }
+
+function LogoField(props: {
+  control: Control<PromoPopupFormValues>
+  name: `cards.${number}.icon` | `cards.${number}.deals.${number}.icon`
+}) {
   const { t } = useTranslation()
   return (
-    <div className='grid gap-4 sm:grid-cols-2'>
-      <ShowcaseTextField
-        control={props.control}
-        name={`cards.${props.index}.modelName`}
-        label={t('Model name')}
-        placeholder='Seedance 2.5'
+    <FormField
+      control={props.control}
+      name={props.name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{t('Logo')}</FormLabel>
+          <FormControl>
+            <LobeIconField value={field.value} onChange={field.onChange} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
+function ModelFields(props: PromoCardFieldsProps) {
+  const { t } = useTranslation()
+  const form = useFormContext<PromoPopupFormValues>()
+  const card = `cards.${props.index}` as const
+  const applyModel = (selection: PromoModelSelection) => {
+    const descriptions = getPromoModelDescriptions(selection.model)
+    const model = selection.model
+    form.setValue(`${card}.modelName`, model.model_name, SET_OPTIONS)
+    form.setValue(
+      `${card}.icon`,
+      model.icon || model.vendor_icon || '',
+      SET_OPTIONS
+    )
+    form.setValue(`${card}.description`, descriptions.description, SET_OPTIONS)
+    form.setValue(
+      `${card}.descriptionZh`,
+      descriptions.descriptionZh,
+      SET_OPTIONS
+    )
+    form.setValue(
+      `${card}.salePrice`,
+      selection.price?.salePrice ?? '',
+      SET_OPTIONS
+    )
+    form.setValue(
+      `${card}.originalPrice`,
+      selection.price?.originalPrice ?? '',
+      SET_OPTIONS
+    )
+    form.setValue(`${card}.unit`, selection.price?.unit ?? '', SET_OPTIONS)
+  }
+  return (
+    <>
+      <PromoModelPicker
+        currentName={form.getValues(`${card}.modelName`)}
+        onSelect={applyModel}
       />
-      <ShowcaseTextField
-        control={props.control}
-        name={`cards.${props.index}.unit`}
-        label={t('Price unit')}
-        placeholder='/s'
-      />
-      <ShowcaseTextField
-        control={props.control}
-        name={`cards.${props.index}.salePrice`}
-        label={t('Sale price')}
-        placeholder='¥0.10'
-      />
-      <ShowcaseTextField
-        control={props.control}
-        name={`cards.${props.index}.originalPrice`}
-        label={t('Original price')}
-        placeholder='¥0.20'
-      />
-    </div>
+      <div className='grid gap-4 sm:grid-cols-2'>
+        <ShowcaseTextField
+          control={props.control}
+          name={`${card}.modelName`}
+          label={t('Model name')}
+        />
+        <ShowcaseTextField
+          control={props.control}
+          name={`${card}.unit`}
+          label={t('Price unit')}
+        />
+        <ShowcaseTextField
+          control={props.control}
+          name={`${card}.salePrice`}
+          label={t('Sale price')}
+        />
+        <ShowcaseTextField
+          control={props.control}
+          name={`${card}.originalPrice`}
+          label={t('Original price')}
+        />
+      </div>
+      <LogoField control={props.control} name={`${card}.icon`} />
+    </>
   )
 }
 
@@ -129,52 +193,89 @@ function TierFields(props: PromoCardFieldsProps) {
 
 function DealFields(props: PromoCardFieldsProps) {
   const { t } = useTranslation()
+  const form = useFormContext<PromoPopupFormValues>()
   const deals = useFieldArray({
     control: props.control,
     name: `cards.${props.index}.deals`,
   })
   return (
-    <div className='flex flex-col gap-3'>
-      {deals.fields.map((deal, dealIndex) => (
-        <div key={deal.id} className='flex items-start gap-2'>
-          <div className='grid flex-1 gap-3 sm:grid-cols-4'>
-            <ShowcaseTextField
-              control={props.control}
-              name={`cards.${props.index}.deals.${dealIndex}.modelName`}
-              label={t('Model name')}
-              placeholder='Wan 3.0'
-            />
-            <ShowcaseTextField
-              control={props.control}
-              name={`cards.${props.index}.deals.${dealIndex}.salePrice`}
-              label={t('Sale price')}
-              placeholder='¥0.10'
-            />
-            <ShowcaseTextField
-              control={props.control}
-              name={`cards.${props.index}.deals.${dealIndex}.originalPrice`}
-              label={t('Original price')}
-              placeholder='¥0.20'
-            />
-            <ShowcaseTextField
-              control={props.control}
-              name={`cards.${props.index}.deals.${dealIndex}.unit`}
-              label={t('Price unit')}
-              placeholder='/s'
-            />
+    <div className='flex flex-col gap-4'>
+      {deals.fields.map((deal, dealIndex) => {
+        const path = `cards.${props.index}.deals.${dealIndex}` as const
+        return (
+          <div key={deal.id} className='flex flex-col gap-3 border-b pb-4'>
+            <div className='flex items-start gap-2'>
+              <div className='min-w-0 flex-1'>
+                <PromoModelPicker
+                  currentName={form.getValues(`${path}.modelName`)}
+                  onSelect={(selection) => {
+                    const model = selection.model
+                    form.setValue(
+                      `${path}.modelName`,
+                      model.model_name,
+                      SET_OPTIONS
+                    )
+                    form.setValue(
+                      `${path}.icon`,
+                      model.icon || model.vendor_icon || '',
+                      SET_OPTIONS
+                    )
+                    form.setValue(
+                      `${path}.salePrice`,
+                      selection.price?.salePrice ?? '',
+                      SET_OPTIONS
+                    )
+                    form.setValue(
+                      `${path}.originalPrice`,
+                      selection.price?.originalPrice ?? '',
+                      SET_OPTIONS
+                    )
+                    form.setValue(
+                      `${path}.unit`,
+                      selection.price?.unit ?? '',
+                      SET_OPTIONS
+                    )
+                  }}
+                />
+              </div>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                aria-label={t('Remove model {{number}}', {
+                  number: dealIndex + 1,
+                })}
+                onClick={() => deals.remove(dealIndex)}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+            <div className='grid gap-3 sm:grid-cols-4'>
+              <ShowcaseTextField
+                control={props.control}
+                name={`${path}.modelName`}
+                label={t('Model name')}
+              />
+              <ShowcaseTextField
+                control={props.control}
+                name={`${path}.salePrice`}
+                label={t('Sale price')}
+              />
+              <ShowcaseTextField
+                control={props.control}
+                name={`${path}.originalPrice`}
+                label={t('Original price')}
+              />
+              <ShowcaseTextField
+                control={props.control}
+                name={`${path}.unit`}
+                label={t('Price unit')}
+              />
+            </div>
+            <LogoField control={props.control} name={`${path}.icon`} />
           </div>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='mt-6'
-            aria-label={t('Remove model {{number}}', { number: dealIndex + 1 })}
-            onClick={() => deals.remove(dealIndex)}
-          >
-            <Trash2 />
-          </Button>
-        </div>
-      ))}
+        )
+      })}
       <Button
         type='button'
         variant='outline'
@@ -187,6 +288,7 @@ function DealFields(props: PromoCardFieldsProps) {
             salePrice: '',
             originalPrice: '',
             unit: '',
+            icon: '',
           })
         }
       >

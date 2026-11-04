@@ -50,8 +50,45 @@ function renderSection(stored = '') {
   )
 }
 
+const LISTED_MODEL = {
+  id: 1,
+  model_name: 'G-seedance-2.5',
+  description:
+    '<!-- lang:zh -->\n按秒计费的视频模型\n<!-- lang:en -->\nA video model billed per second',
+  icon: 'Doubao.Color',
+  quota_type: 0,
+  model_ratio: 1,
+  completion_ratio: 1,
+  enable_groups: ['default'],
+  billing_mode: 'tiered_expr',
+  billing_expr:
+    'u("resolution") == "480p" ? tier("480p", u("seconds") * 1) : tier("720p", u("seconds") * 3)',
+  billing_usage_schema: {
+    seconds: { type: 'number', unit: 'second' },
+    resolution: { enum: ['480p', '720p'] },
+  },
+}
+
 beforeEach(() => {
   vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } })
+  vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+    if (url === '/api/pricing') {
+      return {
+        data: {
+          success: true,
+          data: [LISTED_MODEL],
+          vendors: [{ id: 9, name: 'Vendor' }],
+          group_ratio: { default: 2 },
+          usable_group: { default: 'Default' },
+          auto_groups: [],
+          categories: [],
+          supported_endpoint: {},
+          pricing_version: 'test',
+        },
+      }
+    }
+    return { data: { success: true, data: {} } }
+  })
 })
 
 describe('promotion popup settings', () => {
@@ -144,5 +181,73 @@ describe('promotion popup settings', () => {
     )
 
     expect(preview).toBeEnabled()
+  })
+
+  it('fills the card from a listed model at its selling price and keeps it editable', async () => {
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(screen.getByRole('button', { name: 'Add card' }))
+    await user.click(
+      await screen.findByRole('combobox', {
+        name: 'Choose from existing models',
+      })
+    )
+    await user.click(
+      await screen.findByRole('option', { name: /G-seedance-2\.5/ })
+    )
+
+    const name = screen.getByRole('textbox', { name: 'Model name' })
+    const sale = screen.getByRole('textbox', { name: 'Sale price' })
+    expect(name).toHaveValue('G-seedance-2.5')
+    expect((sale as HTMLInputElement).value).toMatch(/2(\.00)?$/)
+    expect(screen.getByRole('textbox', { name: 'Description' })).toHaveValue(
+      'A video model billed per second'
+    )
+    expect(
+      screen.getByRole('textbox', { name: 'Description (Chinese)' })
+    ).toHaveValue('按秒计费的视频模型')
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Price option' }),
+      '720p'
+    )
+    expect((sale as HTMLInputElement).value).toMatch(/6(\.00)?$/)
+
+    await user.clear(sale)
+    await user.type(sale, '¥9')
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() => expect(api.put).toHaveBeenCalled())
+    const body = vi.mocked(api.put).mock.calls[0][1] as { value: string }
+    expect(JSON.parse(body.value).cards[0]).toMatchObject({
+      model_name: 'G-seedance-2.5',
+      sale_price: '¥9',
+      icon: 'Doubao.Color',
+    })
+  })
+
+  it('saves the daily limit and rejects one out of range', async () => {
+    const user = userEvent.setup()
+    renderSection()
+    const limit = screen.getByRole('spinbutton', {
+      name: 'Daily displays per browser',
+    })
+    expect(limit).toHaveValue(1)
+
+    await user.clear(limit)
+    await user.type(limit, '21')
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    expect(
+      await screen.findByText('Enter a whole number from 1 to 20')
+    ).toBeInTheDocument()
+    expect(api.put).not.toHaveBeenCalled()
+
+    await user.clear(limit)
+    await user.type(limit, '3')
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await waitFor(() => expect(api.put).toHaveBeenCalled())
+    const body = vi.mocked(api.put).mock.calls[0][1] as { value: string }
+    expect(JSON.parse(body.value).daily_limit).toBe(3)
   })
 })

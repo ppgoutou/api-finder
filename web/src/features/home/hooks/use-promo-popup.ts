@@ -28,8 +28,8 @@ import {
 
 export const PROMO_POPUP_QUERY_KEY = ['promo-popup'] as const
 
-/** Promotion cards to show today in the interface language; empty on failure. */
-export function usePromoCards() {
+/** Today's promotion cards in the interface language; empty on failure. */
+export function usePromoPopup() {
   const { i18n } = useTranslation()
   const { data } = useQuery({
     queryKey: PROMO_POPUP_QUERY_KEY,
@@ -37,9 +37,13 @@ export function usePromoCards() {
     staleTime: 60 * 1000,
     meta: { errorToast: false },
   })
-  return selectPromoCards(
-    parsePromoPopup(data?.success ? data.data : ''),
-    i18n.resolvedLanguage || i18n.language,
-    toPromoDay(new Date())
-  )
+  const settings = parsePromoPopup(data?.success ? data.data : '')
+  return {
+    dailyLimit: settings.dailyLimit,
+    cards: selectPromoCards(
+      settings,
+      i18n.resolvedLanguage || i18n.language,
+      toPromoDay(new Date())
+    ),
+  }
 }

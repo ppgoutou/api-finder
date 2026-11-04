@@ -21,6 +21,7 @@ import * as z from 'zod'
 import {
   PROMO_CARD_KINDS,
   PROMO_POPUP_MAX_CARDS,
+  PROMO_POPUP_MAX_DAILY_LIMIT,
   PROMO_POPUP_MAX_DEALS,
   PROMO_POPUP_MAX_TIERS,
 } from '@/features/home/lib/promo-popup'
@@ -35,7 +36,8 @@ const longText = z
   .trim()
   .max(160, { message: 'At most 160 characters' })
 const amount = z.string().trim().max(16, { message: 'At most 16 characters' })
-const unit = z.string().trim().max(8, { message: 'At most 8 characters' })
+const unit = amount
+const icon = z.string().trim().max(100, { message: 'At most 100 characters' })
 
 const href = z
   .string()
@@ -58,6 +60,7 @@ const endsAt = z
   })
 
 const REQUIRED = 'This field is required'
+const DAILY_LIMIT_MESSAGE = 'Enter a whole number from 1 to 20'
 
 const cardSchema = z
   .object({
@@ -72,6 +75,7 @@ const cardSchema = z
     salePrice: amount,
     originalPrice: amount,
     unit,
+    icon,
     tiers: z
       .array(z.object({ pay: amount, bonus: amount }))
       .max(PROMO_POPUP_MAX_TIERS),
@@ -82,6 +86,7 @@ const cardSchema = z
           salePrice: amount,
           originalPrice: amount,
           unit,
+          icon,
         })
       )
       .max(PROMO_POPUP_MAX_DEALS),
@@ -110,6 +115,11 @@ const cardSchema = z
 
 export const promoPopupFormSchema = z.object({
   enabled: z.boolean(),
+  dailyLimit: z
+    .number({ message: DAILY_LIMIT_MESSAGE })
+    .int({ message: DAILY_LIMIT_MESSAGE })
+    .min(1, { message: DAILY_LIMIT_MESSAGE })
+    .max(PROMO_POPUP_MAX_DAILY_LIMIT, { message: DAILY_LIMIT_MESSAGE }),
   cards: z.array(cardSchema).max(PROMO_POPUP_MAX_CARDS),
 })
 

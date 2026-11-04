@@ -73,6 +73,8 @@ export type PricingModel = {
   id: number
   model_name: string
   description?: string
+  /** The description with every language, before `description` is localized. */
+  description_blocks?: string
   icon?: string
   vendor_id?: number
   vendor_name?: string

@@ -28,6 +28,8 @@ export const PROMO_POPUP_OPTION_KEY = 'PromoPopup'
 export const PROMO_POPUP_MAX_CARDS = 5
 export const PROMO_POPUP_MAX_TIERS = 3
 export const PROMO_POPUP_MAX_DEALS = 4
+export const PROMO_POPUP_DEFAULT_DAILY_LIMIT = 1
+export const PROMO_POPUP_MAX_DAILY_LIMIT = 20
 
 export const PROMO_CARD_KINDS = ['model', 'recharge', 'list'] as const
 export type PromoCardKind = (typeof PROMO_CARD_KINDS)[number]
@@ -39,6 +41,8 @@ export type PromoDeal = {
   salePrice: string
   originalPrice: string
   unit: string
+  /** Lobe icon name, usually copied from the model. */
+  icon: string
 }
 
 export type PromoCard = {
@@ -55,12 +59,16 @@ export type PromoCard = {
   salePrice: string
   originalPrice: string
   unit: string
+  /** Lobe icon name, usually copied from the model. */
+  icon: string
   tiers: PromoTier[]
   deals: PromoDeal[]
 }
 
 export type PromoPopupSettings = {
   enabled: boolean
+  /** How many times one browser can see the popup per day. */
+  dailyLimit: number
   cards: PromoCard[]
 }
 
@@ -72,6 +80,7 @@ export const PROMO_DEFAULT_HREF: Record<PromoCardKind, string> = {
 
 export const EMPTY_PROMO_POPUP: PromoPopupSettings = {
   enabled: false,
+  dailyLimit: PROMO_POPUP_DEFAULT_DAILY_LIMIT,
   cards: [],
 }
 
@@ -88,8 +97,11 @@ export function emptyPromoCard(kind: PromoCardKind = 'model'): PromoCard {
     salePrice: '',
     originalPrice: '',
     unit: '',
+    icon: '',
     tiers: [{ pay: '', bonus: '' }],
-    deals: [{ modelName: '', salePrice: '', originalPrice: '', unit: '' }],
+    deals: [
+      { modelName: '', salePrice: '', originalPrice: '', unit: '', icon: '' },
+    ],
   }
 }
 
@@ -122,6 +134,7 @@ function readCard(value: unknown): PromoCard | null {
     salePrice: readText(source, 'sale_price'),
     originalPrice: readText(source, 'original_price'),
     unit: readText(source, 'unit'),
+    icon: readText(source, 'icon'),
     tiers: tiers.map((tier) => {
       const row = asRecord(tier)
       return { pay: readText(row, 'pay'), bonus: readText(row, 'bonus') }
@@ -133,9 +146,19 @@ function readCard(value: unknown): PromoCard | null {
         salePrice: readText(row, 'sale_price'),
         originalPrice: readText(row, 'original_price'),
         unit: readText(row, 'unit'),
+        icon: readText(row, 'icon'),
       }
     }),
   }
+}
+
+function readDailyLimit(value: unknown): number {
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= PROMO_POPUP_MAX_DAILY_LIMIT
+    ? value
+    : PROMO_POPUP_DEFAULT_DAILY_LIMIT
 }
 
 export function parsePromoPopup(
@@ -152,6 +175,7 @@ export function parsePromoPopup(
   const cards = Array.isArray(source.cards) ? source.cards : []
   return {
     enabled: source.enabled === true,
+    dailyLimit: readDailyLimit(source.daily_limit),
     cards: cards
       .map(readCard)
       .filter((card): card is PromoCard => card !== null),
@@ -160,9 +184,16 @@ export function parsePromoPopup(
 
 /** Stores only the fields the card's kind shows. */
 export function serializePromoPopup(settings: PromoPopupSettings): string {
-  if (!settings.enabled && settings.cards.length === 0) return ''
+  if (
+    !settings.enabled &&
+    settings.cards.length === 0 &&
+    settings.dailyLimit === PROMO_POPUP_DEFAULT_DAILY_LIMIT
+  ) {
+    return ''
+  }
   return JSON.stringify({
     enabled: settings.enabled,
+    daily_limit: settings.dailyLimit,
     cards: settings.cards.map((card) => ({
       kind: card.kind,
       title: card.title,
@@ -176,6 +207,7 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
         sale_price: card.salePrice,
         original_price: card.originalPrice,
         unit: card.unit,
+        icon: card.icon,
       }),
       ...(card.kind === 'recharge' && { tiers: card.tiers }),
       ...(card.kind === 'list' && {
@@ -184,6 +216,7 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
           sale_price: deal.salePrice,
           original_price: deal.originalPrice,
           unit: deal.unit,
+          icon: deal.icon,
         })),
       }),
     })),
@@ -263,26 +296,46 @@ export function getPromoBonusShare(tier: PromoTier): number | null {
 }
 
 const DISMISSED_DAY_KEY = 'promo-popup-dismissed-day'
-const SEEN_SESSION_KEY = 'promo-popup-seen'
+const VIEWS_KEY = 'promo-popup-views'
+
+/** How many times this browser has shown the popup on `today`. */
+function readViewCount(today: string): number {
+  const raw = localStorage.getItem(VIEWS_KEY)
+  if (!raw) return 0
+  try {
+    const views = asRecord(JSON.parse(raw))
+    return views.day === today && typeof views.count === 'number'
+      ? views.count
+      : 0
+  } catch {
+    return 0
+  }
+}
 
 /**
- * Whether the popup should stay closed: dismissed for today on this browser,
- * or already shown in this tab. Blocked storage counts as not dismissed.
+ * Whether the popup should stay closed: this browser turned it off for today
+ * or has reached the daily limit. Blocked storage counts as neither.
  */
-export function isPromoPopupSuppressed(today: string): boolean {
+export function isPromoPopupSuppressed(
+  today: string,
+  dailyLimit: number
+): boolean {
   try {
     return (
       localStorage.getItem(DISMISSED_DAY_KEY) === today ||
-      sessionStorage.getItem(SEEN_SESSION_KEY) === '1'
+      readViewCount(today) >= dailyLimit
     )
   } catch {
     return false
   }
 }
 
-export function markPromoPopupSeen(): void {
+export function recordPromoPopupView(today: string): void {
   try {
-    sessionStorage.setItem(SEEN_SESSION_KEY, '1')
+    localStorage.setItem(
+      VIEWS_KEY,
+      JSON.stringify({ day: today, count: readViewCount(today) + 1 })
+    )
   } catch {
     // Without storage the popup simply shows again next time.
   }

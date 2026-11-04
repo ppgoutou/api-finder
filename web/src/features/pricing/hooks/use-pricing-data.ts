@@ -72,6 +72,7 @@ export function usePricingData(enabled = true, live = false) {
       return {
         ...model,
         key: model.model_name,
+        description_blocks: model.description,
         description: model.description
           ? selectLanguageBlock(model.description, language)
           : model.description,
