@@ -21,10 +21,12 @@ import {
   FILTER_ALL,
   QUOTA_TYPES,
   QUOTA_TYPE_VALUES,
-  ENDPOINT_TYPES,
+  MODEL_TYPES,
+  type ModelTypeOption,
+  type QuotaTypeOption,
 } from '../constants'
 import type { PricingModel } from '../types'
-import { hasTaskUsageSchema } from './dynamic-price'
+import { hasTaskUsageSchema, isPerCountTaskModel } from './dynamic-price'
 
 // ----------------------------------------------------------------------------
 // Filter Utilities
@@ -72,6 +74,18 @@ export function filterByGroup(
 }
 
 /**
+ * The pricing type bucket of a model. Items billed per count, such as per
+ * video, are per-request; other task-usage models are metered by duration.
+ */
+export function getModelQuotaType(model: PricingModel): QuotaTypeOption | null {
+  if (isPerCountTaskModel(model)) return QUOTA_TYPES.REQUEST
+  if (hasTaskUsageSchema(model)) return QUOTA_TYPES.TASK
+  if (model.quota_type === QUOTA_TYPE_VALUES.TOKEN) return QUOTA_TYPES.TOKEN
+  if (model.quota_type === QUOTA_TYPE_VALUES.REQUEST) return QUOTA_TYPES.REQUEST
+  return null
+}
+
+/**
  * Filter models by quota type
  */
 export function filterByQuotaType(
@@ -79,30 +93,28 @@ export function filterByQuotaType(
   quotaType: string
 ): PricingModel[] {
   if (quotaType === QUOTA_TYPES.ALL) return models
-  // Task-usage models form their own bucket, disjoint from token/request.
-  if (quotaType === QUOTA_TYPES.TASK) {
-    return models.filter((m) => hasTaskUsageSchema(m))
-  }
-  const targetType =
-    quotaType === QUOTA_TYPES.TOKEN
-      ? QUOTA_TYPE_VALUES.TOKEN
-      : QUOTA_TYPE_VALUES.REQUEST
-  return models.filter(
-    (m) => m.quota_type === targetType && !hasTaskUsageSchema(m)
+  return models.filter((m) => getModelQuotaType(m) === quotaType)
+}
+
+const IMAGE_ENDPOINT_TYPES = new Set(['image-generation', 'image-edit'])
+
+/** A model is an image model when it serves an image endpoint, else video. */
+export function getModelType(model: PricingModel): ModelTypeOption {
+  const isImage = model.supported_endpoint_types?.some((endpoint) =>
+    IMAGE_ENDPOINT_TYPES.has(endpoint)
   )
+  return isImage ? MODEL_TYPES.IMAGE : MODEL_TYPES.VIDEO
 }
 
 /**
- * Filter models by endpoint type
+ * Filter models by model type
  */
-export function filterByEndpointType(
+export function filterByModelType(
   models: PricingModel[],
-  endpointType: string
+  modelType: string
 ): PricingModel[] {
-  if (endpointType === ENDPOINT_TYPES.ALL) return models
-  return models.filter((m) =>
-    m.supported_endpoint_types?.includes(endpointType)
-  )
+  if (modelType === MODEL_TYPES.ALL) return models
+  return models.filter((m) => getModelType(m) === modelType)
 }
 
 /**
@@ -148,7 +160,7 @@ export function filterAndSortModels(
     vendor: string
     group: string
     quotaType: string
-    endpointType: string
+    modelType: string
     tag: string
     sortBy: string
   }
@@ -157,7 +169,7 @@ export function filterAndSortModels(
   result = filterByVendor(result, filters.vendor)
   result = filterByGroup(result, filters.group)
   result = filterByQuotaType(result, filters.quotaType)
-  result = filterByEndpointType(result, filters.endpointType)
+  result = filterByModelType(result, filters.modelType)
   result = filterByTag(result, filters.tag)
   result = sortModels(result, filters.sortBy)
 
@@ -173,24 +185,6 @@ export function parseTags(tagsString?: string): string[] {
     .split(/[,;|\s]+/)
     .map((t) => t.trim())
     .filter(Boolean)
-}
-
-/**
- * Extract all unique tags from models
- */
-export function extractAllTags(models: PricingModel[]): string[] {
-  const tagSet = new Set<string>()
-
-  models.forEach((model) => {
-    if (model.tags) {
-      const tags = parseTags(model.tags)
-      tags.forEach((tag) => {
-        tagSet.add(tag.toLowerCase())
-      })
-    }
-  })
-
-  return Array.from(tagSet).sort((a, b) => a.localeCompare(b))
 }
 
 /**

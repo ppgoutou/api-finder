@@ -156,6 +156,12 @@ export function hasTaskUsageSchema(model: PricingModel): boolean {
   return Object.keys(model.billing_usage_schema ?? {}).length > 0
 }
 
+/** Whether the model is billed per delivered item, such as per video. */
+export function isPerCountTaskModel(model: PricingModel): boolean {
+  const fields = getTaskNumberFields(model.billing_usage_schema)
+  return fields.length > 0 && fields.every((entry) => entry[1].unit === 'count')
+}
+
 export function isTaskUsagePricingModel(model: PricingModel): boolean {
   return model.billing_mode === 'tiered_expr' && hasTaskUsageSchema(model)
 }

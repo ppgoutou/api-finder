@@ -34,7 +34,7 @@ import {
   ModelCardGrid,
   ModelDistribution,
 } from './components'
-import { EXCLUDED_GROUPS, VIEW_MODES } from './constants'
+import { VIEW_MODES } from './constants'
 import { useFilters } from './hooks/use-filters'
 import { usePricingData } from './hooks/use-pricing-data'
 import {
@@ -60,7 +60,6 @@ export function Pricing() {
 
   const {
     models,
-    vendors,
     categories,
     groupRatio,
     usableGroup,
@@ -74,30 +73,24 @@ export function Pricing() {
   const {
     searchInput,
     sortBy,
-    vendorFilter,
     categoryFilter,
     groupFilter,
     quotaTypeFilter,
-    endpointTypeFilter,
-    tagFilter,
+    modelTypeFilter,
     tokenUnit,
     viewMode,
     showRechargePrice,
     setSearchInput,
     setSortBy,
-    setVendorFilter,
     setCategoryFilter,
-    setGroupFilter,
     setQuotaTypeFilter,
-    setEndpointTypeFilter,
-    setTagFilter,
+    setModelTypeFilter,
     setTokenUnit,
     setViewMode,
     setShowRechargePrice,
     filteredModels,
     hasActiveFilters,
     activeFilterCount,
-    availableTags,
     clearFilters,
     clearSearch,
   } = useFilters(models || [], categories)
@@ -121,14 +114,6 @@ export function Pricing() {
           ) || null
         : null,
     [models, selectedModelName]
-  )
-
-  const availableGroups = useMemo(
-    () =>
-      Object.keys(usableGroup || {}).filter(
-        (g) => !EXCLUDED_GROUPS.includes(g)
-      ),
-    [usableGroup]
   )
 
   const handleClearAll = useCallback(() => {
@@ -287,21 +272,12 @@ export function Pricing() {
           <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
             <PricingSidebar
               quotaTypeFilter={quotaTypeFilter}
-              endpointTypeFilter={endpointTypeFilter}
-              vendorFilter={vendorFilter}
+              modelTypeFilter={modelTypeFilter}
               categoryFilter={categoryFilter}
-              groupFilter={groupFilter}
-              tagFilter={tagFilter}
               onQuotaTypeChange={setQuotaTypeFilter}
-              onEndpointTypeChange={setEndpointTypeFilter}
-              onVendorChange={setVendorFilter}
+              onModelTypeChange={setModelTypeFilter}
               onCategoryChange={setCategoryFilter}
-              onGroupChange={setGroupFilter}
-              onTagChange={setTagFilter}
-              vendors={vendors || []}
               categories={categories}
-              groups={availableGroups}
-              tags={availableTags}
               models={models || []}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={clearFilters}
@@ -321,21 +297,12 @@ export function Pricing() {
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 quotaTypeFilter={quotaTypeFilter}
-                endpointTypeFilter={endpointTypeFilter}
-                vendorFilter={vendorFilter}
+                modelTypeFilter={modelTypeFilter}
                 categoryFilter={categoryFilter}
-                groupFilter={groupFilter}
-                tagFilter={tagFilter}
                 onQuotaTypeChange={setQuotaTypeFilter}
-                onEndpointTypeChange={setEndpointTypeFilter}
-                onVendorChange={setVendorFilter}
+                onModelTypeChange={setModelTypeFilter}
                 onCategoryChange={setCategoryFilter}
-                onGroupChange={setGroupFilter}
-                onTagChange={setTagFilter}
-                vendors={vendors || []}
                 categories={categories}
-                groups={availableGroups}
-                tags={availableTags}
                 models={models || []}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}

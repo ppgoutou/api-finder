@@ -36,25 +36,16 @@ function toolbarProps(): PricingToolbarProps {
     showRechargePrice: false,
     viewMode: 'card',
     quotaTypeFilter: 'all',
-    endpointTypeFilter: 'all',
-    vendorFilter: 'all',
+    modelTypeFilter: 'all',
     categoryFilter: 'all',
-    groupFilter: 'all',
-    tagFilter: 'all',
     onSortChange: vi.fn(),
     onTokenUnitChange: vi.fn(),
     onRechargePriceChange: vi.fn(),
     onViewModeChange: vi.fn(),
     onQuotaTypeChange: vi.fn(),
-    onEndpointTypeChange: vi.fn(),
-    onVendorChange: vi.fn(),
+    onModelTypeChange: vi.fn(),
     onCategoryChange: vi.fn(),
-    onGroupChange: vi.fn(),
-    onTagChange: vi.fn(),
-    vendors: [],
     categories: [],
-    groups: ['default', 'premium'],
-    tags: [],
     models: [],
     hasActiveFilters: false,
     activeFilterCount: 0,
@@ -63,58 +54,38 @@ function toolbarProps(): PricingToolbarProps {
 }
 
 describe('pricing controls', () => {
-  it('counts each model once per filter and updates counts when the catalog changes', () => {
+  it('counts models by pricing and model type and updates when the catalog changes', () => {
     const props = toolbarProps()
     const base: PricingModel = {
       id: 1,
-      model_name: 'text-model',
+      model_name: 'image-model',
       vendor_name: 'Vendor A',
       quota_type: 0,
       model_ratio: 1,
       completion_ratio: 1,
       enable_groups: ['default'],
-      tags: 'Chat,chat',
-      supported_endpoint_types: ['openai', 'openai'],
+      tags: 'Image',
+      supported_endpoint_types: ['openai', 'image-generation'],
     }
     const models: PricingModel[] = [
       base,
       {
         ...base,
         id: 2,
-        model_name: 'image-model',
-        quota_type: 1,
-        tags: 'chat,Image',
-        supported_endpoint_types: ['image-generation'],
+        model_name: 'per-video-model',
+        supported_endpoint_types: ['openai'],
+        billing_usage_schema: { videos: { type: 'number', unit: 'count' } },
       },
       {
         ...base,
         id: 3,
-        model_name: 'task-model',
-        vendor_name: 'Vendor B',
-        tags: 'Video',
-        supported_endpoint_types: ['openai-video'],
+        model_name: 'per-second-model',
+        supported_endpoint_types: ['openai'],
         billing_usage_schema: { seconds: { type: 'number', unit: 'second' } },
       },
     ]
-    const sidebarProps = {
-      ...props,
-      vendors: [
-        { id: 1, name: 'Vendor A' },
-        { id: 2, name: 'Vendor B' },
-      ],
-      tags: ['Chat', 'Image', 'Video'],
-    }
-    const { rerender } = render(
-      <PricingSidebar {...sidebarProps} models={models} />
-    )
+    const { rerender } = render(<PricingSidebar {...props} models={models} />)
 
-    expect(
-      screen.getByRole('button', { name: /^All Vendors\s*3$/ })
-    ).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Vendor A\s*2$/ })).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Vendor B\s*1$/ })).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Chat\s*2$/ })).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Chat\s*1$/ })).toBeVisible()
     expect(
       screen.getByRole('button', { name: /^Token-based\s*1$/ })
     ).toBeVisible()
@@ -122,23 +93,49 @@ describe('pricing controls', () => {
       screen.getByRole('button', { name: /^Per Request\s*1$/ })
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: /^Task billing\s*1$/ })
+      screen.getByRole('button', { name: /^Duration billing\s*1$/ })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: /^Video Models\s*2$/ })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: /^Image Models\s*1$/ })
     ).toBeVisible()
 
-    rerender(<PricingSidebar {...sidebarProps} models={[models[1]]} />)
+    rerender(<PricingSidebar {...props} models={[models[0]]} />)
     expect(
-      screen.getByRole('button', { name: /^All Vendors\s*1$/ })
-    ).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Vendor A\s*1$/ })).toBeVisible()
-    expect(screen.queryByRole('button', { name: /^Vendor B\s*1$/ })).toBeNull()
-    expect(screen.getByRole('button', { name: /^Chat\s*1$/ })).toBeVisible()
-    expect(screen.getByRole('button', { name: /^Chat\s*0$/ })).toBeVisible()
-    expect(
-      screen.getByRole('button', { name: /^Token-based\s*0$/ })
+      screen.getByRole('button', { name: /^Duration billing\s*0$/ })
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: /^Task billing\s*0$/ })
+      screen.getByRole('button', { name: /^Video Models\s*0$/ })
     ).toBeVisible()
+  })
+
+  it('shows only the category, pricing and model type sections when rendered', () => {
+    render(
+      <PricingSidebar
+        {...toolbarProps()}
+        categories={[{ id: 'c1', name: 'Seedance', models: ['m'] }]}
+        models={[
+          {
+            id: 1,
+            model_name: 'm',
+            vendor_name: 'Vendor A',
+            quota_type: 0,
+            model_ratio: 1,
+            completion_ratio: 1,
+            enable_groups: ['default'],
+            tags: 'Video',
+            supported_endpoint_types: ['openai'],
+          },
+        ]}
+      />
+    )
+
+    const sections = screen
+      .getAllByRole('button', { expanded: true })
+      .map((section) => section.textContent)
+    expect(sections).toEqual(['Categories', 'Pricing Type', 'Model Type'])
   })
 
   it('changes the token unit and keeps the selected unit pressed when clicked again', async () => {
@@ -199,7 +196,7 @@ describe('pricing controls', () => {
     expect(props.onSortChange).toHaveBeenCalledWith('price-low')
   })
 
-  it('opens mobile filters from the left, selects a group, and restores focus on close', async () => {
+  it('opens mobile filters from the left, selects a pricing type, and restores focus on close', async () => {
     const props = toolbarProps()
     const user = userEvent.setup()
     const { rerender } = render(<PricingToolbar {...props} />)
@@ -207,18 +204,20 @@ describe('pricing controls', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Filter' })
     expect(dialog).toHaveAttribute('data-side', 'left')
     expect(within(dialog).getByRole('button', { name: 'Reset' })).toBeDisabled()
-    await user.click(within(dialog).getByRole('button', { name: /premium/ }))
-    expect(props.onGroupChange).toHaveBeenCalledWith('premium')
+    await user.click(
+      within(dialog).getByRole('button', { name: /Per Request/ })
+    )
+    expect(props.onQuotaTypeChange).toHaveBeenCalledWith('request')
     rerender(
       <PricingToolbar
         {...props}
-        groupFilter='premium'
+        quotaTypeFilter='request'
         hasActiveFilters
         activeFilterCount={1}
       />
     )
     expect(
-      within(dialog).getByRole('button', { name: /premium/ })
+      within(dialog).getByRole('button', { name: /Per Request/ })
     ).toHaveAttribute('aria-pressed', 'true')
     await user.click(within(dialog).getByRole('button', { name: 'Reset' }))
     expect(props.onClearFilters).toHaveBeenCalledOnce()
