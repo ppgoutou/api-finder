@@ -37,9 +37,10 @@ import {
   VideoHero,
 } from './components'
 import { HomePlaybackProvider } from './components/home-playback'
+import { PromoPopup } from './components/promo-popup/promo-popup'
 import { useHomePageContent } from './hooks'
 
-export function Home() {
+function HomeContent() {
   const { i18n, t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { resolvedTheme } = useTheme()
@@ -144,5 +145,14 @@ export function Home() {
       <VideoCta isAuthenticated={isAuthenticated} />
       <Footer />
     </PublicLayout>
+  )
+}
+
+export function Home() {
+  return (
+    <>
+      <HomeContent />
+      <PromoPopup />
+    </>
   )
 }

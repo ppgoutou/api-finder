@@ -48,3 +48,14 @@ export async function getHomeShowcase(): Promise<HomePageContentResponse> {
   })
   return res.data
 }
+
+/**
+ * Get the home page promotion popup settings (the `PromoPopup` option as a
+ * JSON string; empty when no popup is configured).
+ */
+export async function getPromoPopup(): Promise<HomePageContentResponse> {
+  const res = await api.get('/api/promo_popup', {
+    headers: { 'Cache-Control': null },
+  })
+  return res.data
+}
