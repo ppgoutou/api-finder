@@ -22,11 +22,12 @@ import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/status-badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatQuota, formatTimestampToDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 import { AFFILIATE_PAGE_SIZE, useAffiliateInvitees } from '../hooks'
+import { AffiliateAvatar } from './affiliate-avatar'
 import { AffiliatePager } from './affiliate-pager'
 
 const USER_STATUS_ENABLED = 1
@@ -39,22 +40,19 @@ export function AffiliateInviteesCard() {
   const total = data?.total ?? 0
 
   let body = (
-    <ul className='divide-y'>
+    <ul>
       {items.map((invitee) => (
         <li
           key={`${invitee.created_at}-${invitee.name}-${invitee.email}`}
           className='flex items-center justify-between gap-3 py-3'
         >
           <div className='flex min-w-0 items-center gap-3'>
-            <Users
-              className='text-muted-foreground size-4 shrink-0'
-              aria-hidden='true'
-            />
+            <AffiliateAvatar label={invitee.name || invitee.email} />
             <div className='min-w-0'>
               <div className='truncate text-sm font-medium'>
                 {[invitee.name, invitee.email].filter(Boolean).join(' · ')}
               </div>
-              <div className='text-muted-foreground flex items-center gap-2 text-xs tabular-nums'>
+              <div className='text-muted-foreground mt-0.5 flex items-center gap-2 text-[13px] tabular-nums'>
                 {formatTimestampToDate(invitee.created_at)}
                 <StatusBadge
                   label={
@@ -67,16 +65,26 @@ export function AffiliateInviteesCard() {
                       ? 'success'
                       : 'neutral'
                   }
-                  type='text'
+                  type='badge'
                   copyable={false}
-                  className='font-normal'
+                  className={cn(
+                    'font-normal',
+                    invitee.status === USER_STATUS_ENABLED
+                      ? 'bg-success/10'
+                      : 'bg-muted'
+                  )}
                 />
               </div>
             </div>
           </div>
-          <span className='shrink-0 text-sm font-semibold tabular-nums'>
-            {formatQuota(invitee.rebate_quota ?? 0)}
-          </span>
+          <div className='shrink-0 text-right'>
+            <div className='text-[15px] font-semibold tabular-nums'>
+              {formatQuota(invitee.rebate_quota ?? 0)}
+            </div>
+            <div className='text-muted-foreground mt-0.5 text-xs'>
+              {t('Total rebates')}
+            </div>
+          </div>
         </li>
       ))}
     </ul>
@@ -102,21 +110,19 @@ export function AffiliateInviteesCard() {
   }
 
   return (
-    <Card data-card-hover='false' className='py-0'>
-      <CardContent className='p-3 sm:p-4'>
-        <div className='flex items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold'>{t('Invitees')}</h3>
-          <span className='text-muted-foreground text-xs'>
-            {t('{{count}} in total', { count: total })}
-          </span>
-        </div>
-        {body}
-        <AffiliatePager
-          page={page}
-          totalPages={Math.max(1, Math.ceil(total / AFFILIATE_PAGE_SIZE))}
-          onPageChange={setPage}
-        />
-      </CardContent>
-    </Card>
+    <section className='min-w-0 p-4 sm:p-6'>
+      <div className='mb-2 flex items-baseline justify-between gap-2'>
+        <h3 className='text-base font-semibold'>{t('Invitees')}</h3>
+        <span className='text-muted-foreground text-[13px]'>
+          {t('{{count}} in total', { count: total })}
+        </span>
+      </div>
+      {body}
+      <AffiliatePager
+        page={page}
+        totalPages={Math.max(1, Math.ceil(total / AFFILIATE_PAGE_SIZE))}
+        onPageChange={setPage}
+      />
+    </section>
   )
 }

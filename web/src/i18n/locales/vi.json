@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "Tối đa 5000 ký tự",
     "At most 7500 characters": "Tối đa 7500 ký tự",
     "Remove this clip?": "Xóa tác phẩm này?",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "“{{title}}” sẽ bị xóa khỏi bộ sưu tập khi lưu, kèm các tệp đã tải lên."
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "“{{title}}” sẽ bị xóa khỏi bộ sưu tập khi lưu, kèm các tệp đã tải lên.",
+    "Pay {{amount}} with {{method}}": "Thanh toán {{amount}} qua {{method}}",
+    "Invite friends, earn {{percent}}% back": "Mời bạn bè, nhận hoàn {{percent}}%",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "Bạn bè đăng ký bằng mã hoặc liên kết của bạn sẽ mang lại khoản hoàn tiền cho bạn mỗi lần nạp tiền hoặc dùng mã đổi."
   }
 }

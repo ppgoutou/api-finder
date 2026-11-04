@@ -32,9 +32,9 @@ export function AffiliatePager(props: AffiliatePagerProps) {
   const { t } = useTranslation()
   if (props.totalPages <= 1) return null
   return (
-    <div className='flex items-center justify-end gap-2 border-t pt-3'>
+    <div className='flex items-center justify-end gap-1 pt-1'>
       <Button
-        variant='outline'
+        variant='ghost'
         size='sm'
         onClick={() => props.onPageChange(props.page - 1)}
         disabled={props.page <= 1}
@@ -47,7 +47,7 @@ export function AffiliatePager(props: AffiliatePagerProps) {
         {props.page} / {props.totalPages}
       </span>
       <Button
-        variant='outline'
+        variant='ghost'
         size='sm'
         onClick={() => props.onPageChange(props.page + 1)}
         disabled={props.page >= props.totalPages}

@@ -84,10 +84,23 @@ it('follows a changed percentage and pays at once when days is 0', () => {
   expect(guide).toHaveTextContent('10 分钟内转入余额')
 })
 
+it('headlines the configured percentage and labels the link copy action', () => {
+  renderCard()
+
+  expect(
+    screen.getByRole('heading', { name: '邀请好友，得 3% 返利' })
+  ).toBeVisible()
+  expect(
+    screen.getByRole('button', { name: '复制推荐链接' })
+  ).toHaveTextContent('复制推荐链接')
+})
+
 it('says rebates are not open when the percentage is 0', () => {
   renderCard({ summary: { ...summary, rebate_percent: 0 } })
 
   expect(screen.getByText(/邀请返利暂未开启/)).toBeVisible()
+  expect(screen.getByRole('heading', { name: '推荐计划' })).toBeVisible()
+  expect(screen.queryByRole('heading', { name: /0%/ })).toBeNull()
 })
 
 it('offers manual transfer only for earlier invitation rewards', () => {

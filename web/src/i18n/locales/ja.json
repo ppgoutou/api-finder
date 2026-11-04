@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "5000 文字以内",
     "At most 7500 characters": "7500 文字以内",
     "Remove this clip?": "この作品を削除しますか？",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存すると「{{title}}」は作品集から削除され、アップロードしたファイルも削除されます。"
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "保存すると「{{title}}」は作品集から削除され、アップロードしたファイルも削除されます。",
+    "Pay {{amount}} with {{method}}": "{{method}} で {{amount}} を支払う",
+    "Invite friends, earn {{percent}}% back": "友達を招待して {{percent}}% 還元",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "あなたのコードまたはリンクで登録した友達がチャージや引き換えコードを利用するたびに、還元を受け取れます。"
   }
 }

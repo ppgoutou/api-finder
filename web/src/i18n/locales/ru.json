@@ -7933,6 +7933,9 @@
     "At most 5000 characters": "Не более 5000 символов",
     "At most 7500 characters": "Не более 7500 символов",
     "Remove this clip?": "Удалить эту работу?",
-    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "«{{title}}» будет удалена из галереи при сохранении, вместе с загруженными файлами."
+    "\"{{title}}\" leaves the gallery when you save, and its uploaded files are deleted then.": "«{{title}}» будет удалена из галереи при сохранении, вместе с загруженными файлами.",
+    "Pay {{amount}} with {{method}}": "Оплатить {{amount}} через {{method}}",
+    "Invite friends, earn {{percent}}% back": "Приглашайте друзей и получайте {{percent}}% бонуса",
+    "Friends who sign up with your code or link earn you a rebate on every top-up and redemption code they use.": "За друзей, зарегистрировавшихся по вашему коду или ссылке, вы получаете бонус с каждого пополнения и использованного кода."
   }
 }

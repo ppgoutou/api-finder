@@ -20,8 +20,10 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
+import { Card } from '@/components/ui/card'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
 import { AffiliateInviteesCard } from './components/affiliate-invitees-card'
 import { AffiliateRebatesCard } from './components/affiliate-rebates-card'
@@ -34,7 +36,11 @@ import { RechargeFormCard } from './components/recharge-form-card'
 import { RedemptionCard } from './components/redemption-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
-import { DEFAULT_DISCOUNT_RATE, PAYMENT_TYPES } from './constants'
+import {
+  DEFAULT_DISCOUNT_RATE,
+  PAYMENT_TYPES,
+  WALLET_SURFACE_CLASS,
+} from './constants'
 import {
   useTopupInfo,
   usePayment,
@@ -344,10 +350,16 @@ export function Wallet(props: WalletProps) {
               loading={affiliateLoading}
             />
 
-            <div className='grid items-start gap-4 lg:grid-cols-2'>
+            <Card
+              data-card-hover='false'
+              className={cn(
+                'divide-border/60 grid gap-0 divide-y py-0 lg:grid-cols-2 lg:divide-x lg:divide-y-0',
+                WALLET_SURFACE_CLASS
+              )}
+            >
               <AffiliateInviteesCard />
               <AffiliateRebatesCard holdDays={affiliateSummary?.hold_days} />
-            </div>
+            </Card>
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
