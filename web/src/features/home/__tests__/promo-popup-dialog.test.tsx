@@ -74,7 +74,6 @@ function renderPopup() {
 
 beforeEach(() => {
   localStorage.clear()
-  sessionStorage.clear()
   vi.stubGlobal(
     'IntersectionObserver',
     class {
@@ -171,7 +170,7 @@ describe('home promotion popup', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('does not reopen in the same tab after closing', async () => {
+  it('stops showing once the default limit of one a day is reached', async () => {
     const user = userEvent.setup()
     mockSettings(SETTINGS)
     const first = renderPopup()
@@ -186,12 +185,36 @@ describe('home promotion popup', () => {
 
     await waitFor(() => expect(api.get).toHaveBeenCalled())
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(localStorage.length).toBe(0)
   })
 
-  it('stays closed in a new tab after being turned off for today', async () => {
+  it('shows up to the configured limit in the same browser', async () => {
     const user = userEvent.setup()
-    mockSettings(SETTINGS)
+    mockSettings(JSON.stringify({ ...JSON.parse(SETTINGS), daily_limit: 2 }))
+
+    const first = renderPopup()
+    await screen.findByRole('dialog')
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    )
+    first.unmount()
+
+    const second = renderPopup()
+    await screen.findByRole('dialog')
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    )
+    second.unmount()
+
+    renderPopup()
+    await waitFor(() => expect(api.get).toHaveBeenCalled())
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('stays closed after being turned off for today, whatever the limit', async () => {
+    const user = userEvent.setup()
+    mockSettings(JSON.stringify({ ...JSON.parse(SETTINGS), daily_limit: 5 }))
     const first = renderPopup()
 
     await screen.findByRole('dialog')
@@ -203,7 +226,6 @@ describe('home promotion popup', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     )
     first.unmount()
-    sessionStorage.clear()
     renderPopup()
 
     await waitFor(() => expect(api.get).toHaveBeenCalled())
@@ -212,6 +234,10 @@ describe('home promotion popup', () => {
 
   it('shows again the next day after being turned off', async () => {
     localStorage.setItem('promo-popup-dismissed-day', '2000-01-01')
+    localStorage.setItem(
+      'promo-popup-views',
+      JSON.stringify({ day: '2000-01-01', count: 9 })
+    )
     mockSettings(SETTINGS)
     renderPopup()
 

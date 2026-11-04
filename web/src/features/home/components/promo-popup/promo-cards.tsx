@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import { buttonVariants } from '@/components/ui/button'
 import { toIntlLocale } from '@/i18n/languages'
+import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
 import {
@@ -110,9 +111,16 @@ function ModelPromoCard(props: PromoCardProps) {
             <span className='text-[13px] text-white/70'>{endLabel}</span>
           )}
         </div>
-        <p className='mt-4 truncate font-mono text-[40px] leading-12 font-semibold tracking-tight max-sm:mt-3 max-sm:text-[28px] max-sm:leading-9'>
-          {card.modelName}
-        </p>
+        <div className='mt-4 flex min-w-0 items-center gap-3 max-sm:mt-3'>
+          {card.icon && (
+            <span className='shrink-0' aria-hidden>
+              {getLobeIcon(card.icon, 36)}
+            </span>
+          )}
+          <p className='min-w-0 truncate font-mono text-[40px] leading-12 font-semibold tracking-tight max-sm:text-[28px] max-sm:leading-9'>
+            {card.modelName}
+          </p>
+        </div>
         {ratio === null ? (
           <p className='mt-auto text-[32px] leading-10 font-bold text-amber-400'>
             {card.salePrice}
@@ -270,6 +278,11 @@ function ListPromoCard(props: PromoCardProps) {
                   onClick={props.onNavigate}
                   className='hover:text-brand-hover dark:hover:text-brand-on-dark flex h-[66px] items-center gap-3 max-sm:h-[56px]'
                 >
+                  {deal.icon && (
+                    <span className='shrink-0' aria-hidden>
+                      {getLobeIcon(deal.icon, 20)}
+                    </span>
+                  )}
                   <span className='min-w-0 flex-1 truncate font-mono text-[15px] font-semibold max-sm:text-sm'>
                     {deal.modelName}
                   </span>

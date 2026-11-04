@@ -17,6 +17,8 @@ const (
 	promoPopupMaxCards  = 5
 	promoPopupMaxTiers  = 3
 	promoPopupMaxDeals  = 4
+	// A stored limit of 0 means the setting is absent, which shows once a day.
+	promoPopupMaxDailyLimit = 20
 )
 
 var errInvalidPromoPopup = errors.New("invalid promo popup settings")
@@ -31,6 +33,7 @@ type promoPopupDeal struct {
 	SalePrice     string `json:"sale_price"`
 	OriginalPrice string `json:"original_price"`
 	Unit          string `json:"unit"`
+	Icon          string `json:"icon"`
 }
 
 type promoPopupCard struct {
@@ -45,13 +48,15 @@ type promoPopupCard struct {
 	SalePrice     string           `json:"sale_price"`
 	OriginalPrice string           `json:"original_price"`
 	Unit          string           `json:"unit"`
+	Icon          string           `json:"icon"`
 	Tiers         []promoPopupTier `json:"tiers"`
 	Deals         []promoPopupDeal `json:"deals"`
 }
 
 type promoPopupSettings struct {
-	Enabled bool             `json:"enabled"`
-	Cards   []promoPopupCard `json:"cards"`
+	Enabled    bool             `json:"enabled"`
+	DailyLimit int              `json:"daily_limit"`
+	Cards      []promoPopupCard `json:"cards"`
 }
 
 // GetPromoPopup returns the home page promotion popup settings (a JSON string,
@@ -100,7 +105,8 @@ func promoPopupCardAllowed(card promoPopupCard) bool {
 	if !promoPopupTextFits(60, card.Title, card.TitleZh, card.ModelName) ||
 		!promoPopupTextFits(160, card.Description, card.DescriptionZh) ||
 		!promoPopupTextFits(16, card.SalePrice, card.OriginalPrice) ||
-		!promoPopupTextFits(8, card.Unit) ||
+		!promoPopupTextFits(16, card.Unit) ||
+		!promoPopupTextFits(100, card.Icon) ||
 		!promoPopupTextFits(500, card.Href) ||
 		!promoPopupHrefAllowed(card.Href) {
 		return false
@@ -113,21 +119,25 @@ func promoPopupCardAllowed(card promoPopupCard) bool {
 	for _, deal := range card.Deals {
 		if !promoPopupTextFits(60, deal.ModelName) ||
 			!promoPopupTextFits(16, deal.SalePrice, deal.OriginalPrice) ||
-			!promoPopupTextFits(8, deal.Unit) {
+			!promoPopupTextFits(16, deal.Unit) ||
+			!promoPopupTextFits(100, deal.Icon) {
 			return false
 		}
 	}
 	return true
 }
 
-// validatePromoPopup checks the PromoPopup option before it is saved: known
-// card kinds, bounded text and lists, real end dates and safe links.
+// validatePromoPopup checks the PromoPopup option before it is saved: a bounded
+// daily limit, known card kinds, bounded text and lists, real end dates and safe links.
 func validatePromoPopup(value string) error {
 	if strings.TrimSpace(value) == "" {
 		return nil
 	}
 	var settings promoPopupSettings
 	if err := common.UnmarshalJsonStr(value, &settings); err != nil {
+		return errInvalidPromoPopup
+	}
+	if settings.DailyLimit < 0 || settings.DailyLimit > promoPopupMaxDailyLimit {
 		return errInvalidPromoPopup
 	}
 	if len(settings.Cards) > promoPopupMaxCards {

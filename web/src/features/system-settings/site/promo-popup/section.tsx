@@ -34,15 +34,20 @@ import {
   FormControl,
   FormDescription,
   FormField,
+  FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { PromoDialog } from '@/features/home/components/promo-popup/promo-dialog'
 import { PROMO_POPUP_QUERY_KEY } from '@/features/home/hooks/use-promo-popup'
 import {
   emptyPromoCard,
   parsePromoPopup,
+  PROMO_POPUP_DEFAULT_DAILY_LIMIT,
   PROMO_POPUP_MAX_CARDS,
+  PROMO_POPUP_MAX_DAILY_LIMIT,
   PROMO_POPUP_OPTION_KEY,
   type PromoCard,
   selectPromoCards,
@@ -123,7 +128,11 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
 
   const save = form.handleSubmit(onSubmit, openInvalidCards)
   const previewCards = selectPromoCards(
-    { enabled: true, cards: (watched.cards ?? []) as PromoCard[] },
+    {
+      enabled: true,
+      dailyLimit: PROMO_POPUP_DEFAULT_DAILY_LIMIT,
+      cards: (watched.cards ?? []) as PromoCard[],
+    },
     i18n.resolvedLanguage || i18n.language,
     toPromoDay(new Date())
   )
@@ -154,7 +163,7 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
                   <FormLabel>{t('Show the popup')}</FormLabel>
                   <FormDescription>
                     {t(
-                      'Each visitor sees it once per browser tab, unless they turn it off for the day.'
+                      'Turn this off to hide the popup without removing its cards.'
                     )}
                   </FormDescription>
                 </SettingsSwitchContent>
@@ -165,6 +174,37 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
                   />
                 </FormControl>
               </SettingsSwitchItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='dailyLimit'
+            render={({ field }) => (
+              <FormItem className='max-w-xs'>
+                <FormLabel>{t('Daily displays per browser')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={1}
+                    max={PROMO_POPUP_MAX_DAILY_LIMIT}
+                    step={1}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={Number.isNaN(field.value) ? '' : field.value}
+                    onChange={(event) =>
+                      field.onChange(event.target.valueAsNumber)
+                    }
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'How many times one browser can see the popup each day. Visitors can still turn it off for the day.'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
             )}
           />
 

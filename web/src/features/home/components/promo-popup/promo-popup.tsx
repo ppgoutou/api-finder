@@ -16,13 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 
-import { usePromoCards } from '../../hooks/use-promo-popup'
+import { usePromoPopup } from '../../hooks/use-promo-popup'
 import {
   dismissPromoPopupForDay,
   isPromoPopupSuppressed,
-  markPromoPopupSeen,
+  recordPromoPopupView,
   toPromoDay,
 } from '../../lib/promo-popup'
 
@@ -30,26 +30,31 @@ const PromoDialog = lazy(() =>
   import('./promo-dialog').then((module) => ({ default: module.PromoDialog }))
 )
 
-/** Opens the promotion popup once per tab unless dismissed for today. */
+/** Opens the promotion popup up to the daily limit of this browser. */
 export function PromoPopup() {
-  const cards = usePromoCards()
-  const [suppressed] = useState(() =>
-    isPromoPopupSuppressed(toPromoDay(new Date()))
-  )
+  const popup = usePromoPopup()
+  const hasCards = popup.cards.length > 0
+  const decided = useRef(false)
+  const [shown, setShown] = useState(false)
   const [closed, setClosed] = useState(false)
-  const shouldShow = !suppressed && cards.length > 0
 
+  // Decide once per visit, so a settings refetch can't reopen or recount it.
   useEffect(() => {
-    if (shouldShow) markPromoPopupSeen()
-  }, [shouldShow])
+    if (decided.current || !hasCards) return
+    decided.current = true
+    const today = toPromoDay(new Date())
+    if (isPromoPopupSuppressed(today, popup.dailyLimit)) return
+    recordPromoPopupView(today)
+    setShown(true)
+  }, [hasCards, popup.dailyLimit])
 
-  if (!shouldShow) return null
+  if (!shown || !hasCards) return null
 
   return (
     <Suspense fallback={null}>
       <PromoDialog
         open={!closed}
-        cards={cards}
+        cards={popup.cards}
         onClose={() => setClosed(true)}
         onDismissToday={() => dismissPromoPopupForDay(toPromoDay(new Date()))}
       />

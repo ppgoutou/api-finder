@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { describe, expect, it } from 'vitest'
 
 import {
+  EMPTY_PROMO_POPUP,
   emptyPromoCard,
   getPromoPriceRatio,
   parsePromoPopup,
@@ -40,7 +41,7 @@ describe('promo popup settings', () => {
   it.each(['', '   ', '{not json', '42', 'null'])(
     'reads %j as a disabled popup',
     (raw) => {
-      expect(parsePromoPopup(raw)).toEqual({ enabled: false, cards: [] })
+      expect(parsePromoPopup(raw)).toEqual(EMPTY_PROMO_POPUP)
     }
   )
 
@@ -60,10 +61,42 @@ describe('promo popup settings', () => {
       modelName: 'left over from another kind',
       tiers: [{ pay: '¥100', bonus: '¥10' }],
     }
-    const raw = serializePromoPopup({ enabled: true, cards: [card] })
+    const raw = serializePromoPopup({
+      enabled: true,
+      dailyLimit: 1,
+      cards: [card],
+    })
 
     expect(JSON.parse(raw).cards[0]).not.toHaveProperty('model_name')
     expect(parsePromoPopup(raw).cards[0].tiers).toEqual(card.tiers)
+  })
+})
+
+describe('promo popup daily limit', () => {
+  it.each([
+    [undefined, 1],
+    [3, 3],
+    [20, 20],
+    [0, 1],
+    [21, 1],
+    [1.5, 1],
+    ['3', 1],
+  ])('reads a stored limit of %j as %i', (stored, expected) => {
+    const raw = JSON.stringify({ enabled: true, daily_limit: stored })
+    expect(parsePromoPopup(raw).dailyLimit).toBe(expected)
+  })
+
+  it('keeps a changed limit even without cards', () => {
+    const raw = serializePromoPopup({
+      enabled: false,
+      dailyLimit: 3,
+      cards: [],
+    })
+    expect(parsePromoPopup(raw).dailyLimit).toBe(3)
+  })
+
+  it('stores nothing for untouched settings', () => {
+    expect(serializePromoPopup(EMPTY_PROMO_POPUP)).toBe('')
   })
 })
 
@@ -72,7 +105,11 @@ describe('promo card selection', () => {
 
   it('shows nothing while the popup is disabled', () => {
     expect(
-      selectPromoCards({ enabled: false, cards: [modelCard()] }, 'en', today)
+      selectPromoCards(
+        { enabled: false, dailyLimit: 1, cards: [modelCard()] },
+        'en',
+        today
+      )
     ).toEqual([])
   })
 
@@ -83,7 +120,7 @@ describe('promo card selection', () => {
   ])('with last day %j keeps %i cards on the day', (endsAt, expected) => {
     expect(
       selectPromoCards(
-        { enabled: true, cards: [modelCard({ endsAt })] },
+        { enabled: true, dailyLimit: 1, cards: [modelCard({ endsAt })] },
         'en',
         today
       )
@@ -93,7 +130,7 @@ describe('promo card selection', () => {
   it('hides a card without its required content', () => {
     expect(
       selectPromoCards(
-        { enabled: true, cards: [modelCard({ salePrice: '' })] },
+        { enabled: true, dailyLimit: 1, cards: [modelCard({ salePrice: '' })] },
         'en',
         today
       )
@@ -108,6 +145,7 @@ describe('promo card selection', () => {
     const [card] = selectPromoCards(
       {
         enabled: true,
+        dailyLimit: 1,
         cards: [modelCard({ title: 'Sale', titleZh: '特价' })],
       },
       language,
