@@ -66,6 +66,21 @@ it('links the buy button to the configured shop in a new tab', () => {
   expect(screen.getByText('兑换后额度永久有效')).toBeVisible()
 })
 
+it('places the code input between the steps and the buy button', () => {
+  renderCard({ topupLink: 'https://shop.example/store' })
+
+  const firstStep = screen.getByText('去小店下单')
+  const codeInput = screen.getByLabelText('输入兑换码')
+  const buyLink = screen.getByRole('link', { name: /购买兑换码/ })
+
+  expect(firstStep.compareDocumentPosition(codeInput)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  )
+  expect(codeInput.compareDocumentPosition(buyLink)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  )
+})
+
 it('hides the buy panel when no shop link is configured', () => {
   renderCard()
 

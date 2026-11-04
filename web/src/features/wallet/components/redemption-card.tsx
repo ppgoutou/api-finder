@@ -113,38 +113,24 @@ export function RedemptionCard(props: RedemptionCardProps) {
     >
       <>
         {props.topupLink && (
-          <>
-            <ol className='grid flex-1 content-center gap-2.5 sm:grid-cols-3 sm:gap-4'>
-              {purchaseSteps.map((step, index) => (
-                <li
-                  key={step.title}
-                  className='flex gap-2.5 sm:flex-col sm:gap-1'
-                >
-                  <span className='text-brand dark:text-brand-on-dark text-[13px] font-bold'>
-                    {index + 1}
+          <ol className='grid gap-2.5 sm:grid-cols-3 sm:gap-4'>
+            {purchaseSteps.map((step, index) => (
+              <li
+                key={step.title}
+                className='flex gap-2.5 sm:flex-col sm:gap-1'
+              >
+                <span className='text-brand dark:text-brand-on-dark text-[13px] font-bold'>
+                  {index + 1}
+                </span>
+                <span className='flex min-w-0 flex-col gap-0.5'>
+                  <span className='text-sm font-semibold'>{step.title}</span>
+                  <span className='text-muted-foreground text-[13px]'>
+                    {step.detail}
                   </span>
-                  <span className='flex min-w-0 flex-col gap-0.5'>
-                    <span className='text-sm font-semibold'>{step.title}</span>
-                    <span className='text-muted-foreground text-[13px]'>
-                      {step.detail}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <a
-              href={props.topupLink}
-              target='_blank'
-              rel='noopener noreferrer'
-              className={cn(
-                buttonVariants(),
-                'bg-brand hover:bg-brand-hover h-13 gap-2 rounded-xl text-base font-semibold text-white'
-              )}
-            >
-              {t('Buy redemption code')}
-              <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
-            </a>
-          </>
+                </span>
+              </li>
+            ))}
+          </ol>
         )}
 
         {props.redemptionEnabled ? (
@@ -192,6 +178,22 @@ export function RedemptionCard(props: RedemptionCardProps) {
               )}
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* mt-auto lines this up with the payment button of the card beside it. */}
+        {props.topupLink && (
+          <a
+            href={props.topupLink}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={cn(
+              buttonVariants(),
+              'bg-brand hover:bg-brand-hover mt-auto h-13 gap-2 rounded-xl text-base font-semibold text-white'
+            )}
+          >
+            {t('Buy redemption code')}
+            <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
+          </a>
         )}
       </>
     </TitledCard>
