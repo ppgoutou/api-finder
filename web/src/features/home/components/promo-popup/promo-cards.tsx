@@ -248,74 +248,113 @@ function ListPromoCard(props: PromoCardProps) {
   const card = props.card
   const endLabel = useEndDateLabel(card.endsAt)
   const href = card.href || PROMO_DEFAULT_HREF.list
+  // Up to two models get large price tiles; more share the height in slim rows.
+  const roomy = card.deals.length <= 2
   return (
     <article className={CARD_CLASS}>
-      <div
-        className={cn(
-          MEDIA_CLASS,
-          'bg-ink h-[104px] py-5 max-sm:h-[92px] max-sm:py-4'
-        )}
-      >
+      <div className={cn(MEDIA_CLASS, 'bg-ink py-5 max-sm:py-4')}>
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
           <span className={DEAL_PILL_CLASS}>{t('Deals this week')}</span>
           {endLabel && (
             <span className='text-[13px] text-white/70'>{endLabel}</span>
           )}
         </div>
-        <h3 className='mt-2.5 truncate text-[22px] leading-[30px] font-bold max-sm:mt-1.5 max-sm:text-lg'>
+        <h3 className='mt-2.5 line-clamp-2 text-2xl leading-8 font-bold max-sm:mt-1.5 max-sm:text-lg max-sm:leading-7 sm:truncate'>
           {card.title || t('These models are on sale')}
         </h3>
+        {card.description && (
+          <p
+            className={cn(
+              'mt-1.5 line-clamp-2 text-sm leading-[22px] text-white/75 max-sm:mt-1 max-sm:text-xs max-sm:leading-[18px]',
+              !roomy && 'max-sm:line-clamp-1'
+            )}
+          >
+            {card.description}
+          </p>
+        )}
       </div>
-      <div className='flex min-h-0 flex-1 flex-col px-8 pt-1.5 pb-6 max-sm:px-5 max-sm:pb-4'>
-        <ul className='min-h-0'>
+      <div className='flex min-h-0 flex-1 flex-col gap-3 px-8 pt-4 pb-6 max-sm:gap-2 max-sm:px-4 max-sm:pt-3 max-sm:pb-4'>
+        <ul className='flex min-h-0 flex-1 flex-col gap-2'>
           {card.deals.map((deal) => {
             const ratio = getPromoPriceRatio(deal.salePrice, deal.originalPrice)
             const discount = ratio === null ? null : getPriceDiscount(ratio)
             return (
-              <li key={deal.modelName} className='border-b'>
+              <li key={deal.modelName} className='flex max-h-40 min-h-0 flex-1'>
                 <a
                   href={href}
                   onClick={props.onNavigate}
-                  className='hover:text-brand-hover dark:hover:text-brand-on-dark flex h-[66px] items-center gap-3 max-sm:h-[56px]'
+                  className='bg-surface-muted dark:bg-muted hover:ring-brand/40 flex min-w-0 flex-1 items-center gap-3 rounded-xl px-4 ring-1 ring-transparent transition-shadow max-sm:px-3'
                 >
                   {deal.icon && (
                     <span className='shrink-0' aria-hidden>
-                      {getLobeIcon(deal.icon, 20)}
+                      {getLobeIcon(deal.icon, roomy ? 32 : 20)}
                     </span>
                   )}
-                  <span className='min-w-0 flex-1 truncate font-mono text-[15px] font-semibold max-sm:text-sm'>
-                    {deal.modelName}
-                  </span>
-                  {ratio !== null && (
-                    <span className='text-muted-foreground text-[13px] line-through max-sm:hidden'>
-                      {deal.originalPrice}
-                    </span>
-                  )}
-                  <span
-                    className={cn(
-                      'text-[17px] font-bold whitespace-nowrap',
-                      SALE_TEXT_CLASS
-                    )}
-                  >
-                    {deal.salePrice}
-                    <span className='text-xs font-normal'> {deal.unit}</span>
-                  </span>
-                  {discount && (
+                  <span className='min-w-0 flex-1'>
                     <span
                       className={cn(
-                        'bg-surface-muted dark:bg-muted rounded-md px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap',
-                        SALE_TEXT_CLASS
+                        'block truncate font-mono font-semibold',
+                        roomy ? 'text-base max-sm:text-sm' : 'text-sm'
                       )}
                     >
-                      {t('{{percentOff}}% off', discount)}
+                      {deal.modelName}
                     </span>
-                  )}
+                    {(discount || ratio !== null) && (
+                      <span
+                        className={cn(
+                          'flex items-center gap-2',
+                          roomy ? 'mt-2' : 'mt-0.5'
+                        )}
+                      >
+                        {discount && (
+                          <span
+                            className={cn(
+                              'text-ink rounded-md bg-amber-400 font-bold whitespace-nowrap',
+                              roomy
+                                ? 'px-2 py-0.5 text-sm'
+                                : 'px-1.5 text-[11px]'
+                            )}
+                          >
+                            {t('{{percentOff}}% off', discount)}
+                          </span>
+                        )}
+                        {ratio !== null && (
+                          <span className='text-muted-foreground truncate text-xs line-through'>
+                            {deal.originalPrice}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                  <span className='shrink-0 text-right'>
+                    <span
+                      className={cn(
+                        'block font-bold whitespace-nowrap',
+                        SALE_TEXT_CLASS,
+                        roomy
+                          ? 'text-[32px] leading-10 max-sm:text-2xl max-sm:leading-8'
+                          : 'text-lg leading-6'
+                      )}
+                    >
+                      {deal.salePrice}
+                    </span>
+                    {deal.unit && (
+                      <span
+                        className={cn(
+                          'text-muted-foreground block whitespace-nowrap',
+                          roomy ? 'text-xs' : 'text-[11px]'
+                        )}
+                      >
+                        {deal.unit}
+                      </span>
+                    )}
+                  </span>
                 </a>
               </li>
             )
           })}
         </ul>
-        <div className='mt-auto flex'>
+        <div className='flex shrink-0'>
           <PromoLink href={href} onNavigate={props.onNavigate}>
             {t('View all deals')}
           </PromoLink>
