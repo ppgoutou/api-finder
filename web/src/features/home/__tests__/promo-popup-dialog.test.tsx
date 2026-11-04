@@ -43,6 +43,8 @@ const SETTINGS = JSON.stringify({
     },
     {
       kind: 'list',
+      title: 'Seedance sale',
+      description: 'Prices compared with official rates.',
       deals: [
         {
           model_name: 'Wan 3.0',
@@ -153,6 +155,21 @@ describe('home promotion popup', () => {
       'href',
       '/wallet'
     )
+  })
+
+  it('shows the title and description of a list card', async () => {
+    const user = userEvent.setup()
+    mockSettings(SETTINGS)
+    renderPopup()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Deals this week' })
+    )
+
+    expect(screen.getByRole('heading', { name: 'Seedance sale' })).toBeVisible()
+    expect(
+      screen.getByText('Prices compared with official rates.')
+    ).toBeVisible()
   })
 
   it('hides the arrows and tabs for a single card', async () => {
