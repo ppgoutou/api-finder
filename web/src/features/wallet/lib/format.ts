@@ -74,6 +74,14 @@ export function formatPaymentAmount(
 ): string {
   if (!currency) return formatCurrency(amount)
   if (!Number.isFinite(amount)) return '-'
+  // USDT is no ISO currency, and an underpaid transfer is short by decimals.
+  if (currency === 'USDT') {
+    const usdt = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+    }).format(amount)
+    return `${usdt} USDT`
+  }
 
   return new Intl.NumberFormat(undefined, {
     style: 'currency',

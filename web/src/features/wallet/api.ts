@@ -29,6 +29,8 @@ import type {
   AmountResponse,
   PaymentResponse,
   StripePaymentResponse,
+  USDTAmountResponse,
+  USDTPaymentResponse,
   AffiliateCodeResponse,
   AffiliateInviteesResponse,
   AffiliateRebatesResponse,
@@ -131,6 +133,30 @@ export async function requestStripePayment(
   request: PaymentRequest
 ): Promise<StripePaymentResponse> {
   const res = await api.post('/api/user/stripe/pay', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Calculate the USDT payable for a topup amount
+ */
+export async function calculateUSDTAmount(
+  request: AmountRequest
+): Promise<USDTAmountResponse> {
+  const res = await api.post('/api/user/usdt/amount', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Request USDT payment
+ */
+export async function requestUSDTPayment(
+  request: AmountRequest
+): Promise<USDTPaymentResponse> {
+  const res = await api.post('/api/user/usdt/pay', request, {
     skipBusinessError: true,
   } as Record<string, unknown>)
   return res.data

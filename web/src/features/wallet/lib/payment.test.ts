@@ -20,8 +20,10 @@ import { describe, expect, test } from 'vitest'
 
 import { PAYMENT_TYPES } from '../constants'
 import type { TopupInfo } from '../types'
+import { formatPaymentAmount } from './format'
 import {
   dispatchSelectedPayment,
+  getPaymentCurrency,
   hasOnlineTopup,
   isStripePayment,
   isWaffoPayment,
@@ -55,6 +57,10 @@ describe('online top-up availability', () => {
     expect(hasOnlineTopup({ ...noGateway, enable_stripe_topup: true })).toBe(
       true
     )
+  })
+
+  test('reports one when USDT is the only gateway on', () => {
+    expect(hasOnlineTopup({ ...noGateway, enable_usdt_topup: true })).toBe(true)
   })
 })
 
@@ -103,5 +109,15 @@ describe('payment dispatch', () => {
 
     expect(success).toBe(false)
     expect(called).toBe(false)
+  })
+})
+
+describe('USDT payable amounts', () => {
+  test('labels USDT payments with their own unit', () => {
+    expect(getPaymentCurrency(PAYMENT_TYPES.USDT)).toBe('USDT')
+  })
+
+  test('keeps the six decimals of a USDT amount instead of treating it as an ISO currency', () => {
+    expect(formatPaymentAmount(14.705883, 'USDT')).toContain('14.705883 USDT')
   })
 })

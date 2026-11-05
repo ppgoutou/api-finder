@@ -108,6 +108,15 @@ func InitOptionMap() {
 	common.OptionMap["StripePriceId"] = setting.StripePriceId
 	common.OptionMap["StripeUnitPrice"] = strconv.FormatFloat(setting.StripeUnitPrice, 'f', -1, 64)
 	common.OptionMap["StripePromotionCodesEnabled"] = strconv.FormatBool(setting.StripePromotionCodesEnabled)
+	common.OptionMap["USDTEnabled"] = strconv.FormatBool(setting.USDTEnabled)
+	common.OptionMap["USDTGatewayAddress"] = setting.USDTGatewayAddress
+	common.OptionMap["USDTClientId"] = setting.USDTClientId
+	common.OptionMap["USDTApiSecret"] = setting.USDTApiSecret
+	common.OptionMap["USDTWebhookSecret"] = setting.USDTWebhookSecret
+	common.OptionMap["USDTEnvironment"] = setting.USDTEnvironment
+	common.OptionMap["USDTContractAddress"] = setting.USDTContractAddress
+	common.OptionMap["USDTMinTopUp"] = strconv.Itoa(setting.USDTMinTopUp)
+	common.OptionMap["USDTReconcileCursor"] = setting.USDTReconcileCursor
 	common.OptionMap["CreemApiKey"] = setting.CreemApiKey
 	common.OptionMap["CreemProducts"] = setting.CreemProducts
 	common.OptionMap["CreemTestMode"] = strconv.FormatBool(setting.CreemTestMode)
@@ -544,6 +553,24 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.StripeMinTopUp, _ = strconv.Atoi(value)
 	case "StripePromotionCodesEnabled":
 		setting.StripePromotionCodesEnabled = value == "true"
+	case "USDTEnabled":
+		setting.USDTEnabled = value == "true"
+	case "USDTGatewayAddress":
+		setting.USDTGatewayAddress = value
+	case "USDTClientId":
+		setting.USDTClientId = value
+	case "USDTApiSecret":
+		setting.USDTApiSecret = value
+	case "USDTWebhookSecret":
+		setting.USDTWebhookSecret = value
+	case "USDTEnvironment":
+		setting.USDTEnvironment = value
+	case "USDTContractAddress":
+		setting.USDTContractAddress = value
+	case "USDTMinTopUp":
+		setting.USDTMinTopUp, _ = strconv.Atoi(value)
+	case "USDTReconcileCursor":
+		setting.USDTReconcileCursor = value
 	case "CreemApiKey":
 		setting.CreemApiKey = value
 	case "CreemProducts":

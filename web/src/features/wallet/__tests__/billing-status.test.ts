@@ -32,6 +32,13 @@ describe('getStatusConfig', () => {
     }
   )
 
+  it('shows a failed top-up as Failed instead of pending', () => {
+    expect(getStatusConfig('failed')).toEqual({
+      label: 'Failed',
+      variant: 'danger',
+    })
+  })
+
   it('falls back to pending for a status the console does not know', () => {
     expect(getStatusConfig('unknown' as TopupStatus).label).toBe('Pending')
   })

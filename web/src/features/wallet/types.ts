@@ -35,10 +35,18 @@ export interface ApiResponse<T = unknown> {
 export type TopupInfoResponse = ApiResponse<TopupInfo>
 export type RedemptionResponse = ApiResponse<number>
 export type AmountResponse = ApiResponse<string>
+export type USDTAmountResponse = AmountResponse & {
+  /** The order paying now would open, while the gateway keeps it locked */
+  active_order?: { expires_at: number }
+}
 export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
   url?: string
 }
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
+export type USDTPaymentResponse = ApiResponse<{
+  pay_link: string
+  reused: boolean
+}>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
 export type AffiliateInviteesResponse = ApiResponse<AffiliateInviteesPage>
@@ -133,6 +141,10 @@ export interface TopupInfo {
   min_topup: number
   /** Minimum topup amount for Stripe */
   stripe_min_topup: number
+  /** Whether USDT topup is enabled */
+  enable_usdt_topup?: boolean
+  /** Minimum topup amount for USDT */
+  usdt_min_topup?: number
   /** Preset amount options */
   amount_options: number[]
   /** Discount rates by amount */
@@ -253,6 +265,7 @@ export interface UserWalletData {
 export type TopupStatus =
   | 'success'
   | 'pending'
+  | 'failed'
   | 'expired'
   | 'refunded'
   | 'disputed'

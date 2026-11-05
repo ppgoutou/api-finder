@@ -111,7 +111,14 @@ export function isWaffoPancakePayment(paymentType: string): boolean {
   return paymentType === PAYMENT_TYPES.WAFFO_PANCAKE
 }
 
-export type PaymentCurrency = 'USD' | 'CNY'
+/**
+ * Check if payment method is USDT
+ */
+export function isUSDTPayment(paymentType: string): boolean {
+  return paymentType === PAYMENT_TYPES.USDT
+}
+
+export type PaymentCurrency = 'USD' | 'CNY' | 'USDT'
 
 /**
  * Currency the gateway actually charges in, so payable amounts can carry a
@@ -124,6 +131,7 @@ export function getPaymentCurrency(
 ): PaymentCurrency | undefined {
   if (!paymentType) return undefined
   if (isStripePayment(paymentType)) return 'USD'
+  if (isUSDTPayment(paymentType)) return 'USDT'
   if (
     isWaffoPayment(paymentType) ||
     isWaffoPancakePayment(paymentType) ||
@@ -167,6 +175,7 @@ export function hasOnlineTopup(topupInfo: TopupInfo): boolean {
   return Boolean(
     topupInfo.enable_online_topup ||
     topupInfo.enable_stripe_topup ||
+    topupInfo.enable_usdt_topup ||
     topupInfo.enable_creem_topup ||
     topupInfo.enable_waffo_topup ||
     topupInfo.enable_waffo_pancake_topup
@@ -198,6 +207,10 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
     return PAYMENT_TYPES.WAFFO_PANCAKE
   }
 
+  if (topupInfo.enable_usdt_topup) {
+    return PAYMENT_TYPES.USDT
+  }
+
   return DEFAULT_PAYMENT_TYPE
 }
 
@@ -223,6 +236,10 @@ export function getMinTopupAmount(topupInfo: TopupInfo | null): number {
 
   if (topupInfo.enable_waffo_pancake_topup) {
     return topupInfo.waffo_pancake_min_topup || DEFAULT_MIN_TOPUP
+  }
+
+  if (topupInfo.enable_usdt_topup) {
+    return topupInfo.usdt_min_topup || DEFAULT_MIN_TOPUP
   }
 
   return DEFAULT_MIN_TOPUP

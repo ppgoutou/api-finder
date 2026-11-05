@@ -99,8 +99,8 @@ export function Wallet(props: WalletProps) {
       ? 1
       : currency?.usdExchangeRate || 1
   }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
-  // With quota shown in CNY, amounts are entered in yuan and only Stripe
-  // (which converts them to USD) is offered.
+  // With quota shown in CNY, amounts are entered in yuan and only Stripe and
+  // USDT (which convert them to USD) are offered.
   const amountsInCNY = currency?.quotaDisplayType === 'CNY'
   const creditExchangeRate = amountsInCNY ? 1 : effectiveUsdExchangeRate
   let amountUnit: 'USD' | 'CNY' | undefined = 'USD'
@@ -112,6 +112,7 @@ export function Wallet(props: WalletProps) {
     processing,
     calculatePaymentAmount,
     processPayment,
+    usdtActiveOrderExpiresAt,
   } = usePayment()
   const {
     affiliateCode,
@@ -405,6 +406,7 @@ export function Wallet(props: WalletProps) {
         processing={processing || waffoProcessing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={creditExchangeRate}
+        usdtActiveOrderExpiresAt={usdtActiveOrderExpiresAt}
       />
 
       <TransferDialog
