@@ -53,7 +53,11 @@ import {
   useWaffoPayment,
   useWaffoPancakePayment,
 } from './hooks'
-import { getMinTopupAmount, dispatchSelectedPayment } from './lib'
+import {
+  getMinTopupAmount,
+  dispatchSelectedPayment,
+  hasOnlineTopup,
+} from './lib'
 import type {
   UserWalletData,
   PaymentMethod,
@@ -287,6 +291,10 @@ export function Wallet(props: WalletProps) {
     return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
   }, [topupInfo, topupAmount])
 
+  // With every gateway off the online card has nothing to offer; a failed
+  // top-up info request keeps it, since its notice is then the only feedback.
+  const showRechargeCard = !topupInfo || hasOnlineTopup(topupInfo)
+
   return (
     <>
       <SectionPageLayout>
@@ -295,38 +303,50 @@ export function Wallet(props: WalletProps) {
           <CardStaggerContainer className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
             <WalletStatsCard user={user} loading={userLoading} />
 
-            <div className='grid items-stretch gap-4 lg:grid-cols-2'>
-              <WalletTiltCard>
-                <div id='wallet-add-funds' className='h-full scroll-mt-4'>
-                  <RechargeFormCard
-                    topupInfo={topupInfo}
-                    presetAmounts={presetAmounts}
-                    selectedPreset={selectedPreset}
-                    onSelectPreset={handleSelectPreset}
-                    topupAmount={topupAmount}
-                    onTopupAmountChange={handleTopupAmountChange}
-                    onPaymentMethodSelect={handlePaymentMethodSelect}
-                    paymentLoading={paymentLoading}
-                    loading={topupLoading}
-                    usdExchangeRate={creditExchangeRate}
-                    amountUnit={amountUnit}
-                    onOpenBilling={() => setBillingDialogOpen(true)}
-                    creemProducts={topupInfo?.creem_products}
-                    enableCreemTopup={topupInfo?.enable_creem_topup}
-                    onCreemProductSelect={handleCreemProductSelect}
-                    enableWaffoTopup={topupInfo?.enable_waffo_topup}
-                    waffoPayMethods={topupInfo?.waffo_pay_methods}
-                    waffoMinTopup={topupInfo?.waffo_min_topup}
-                    onWaffoMethodSelect={handleWaffoMethodSelect}
-                    enableWaffoPancakeTopup={
-                      topupInfo?.enable_waffo_pancake_topup
-                    }
-                  />
-                </div>
-              </WalletTiltCard>
+            <div
+              className={cn(
+                'grid items-stretch gap-4',
+                showRechargeCard && 'lg:grid-cols-2'
+              )}
+            >
+              {showRechargeCard && (
+                <WalletTiltCard>
+                  <div id='wallet-add-funds' className='h-full scroll-mt-4'>
+                    <RechargeFormCard
+                      topupInfo={topupInfo}
+                      presetAmounts={presetAmounts}
+                      selectedPreset={selectedPreset}
+                      onSelectPreset={handleSelectPreset}
+                      topupAmount={topupAmount}
+                      onTopupAmountChange={handleTopupAmountChange}
+                      onPaymentMethodSelect={handlePaymentMethodSelect}
+                      paymentLoading={paymentLoading}
+                      loading={topupLoading}
+                      usdExchangeRate={creditExchangeRate}
+                      amountUnit={amountUnit}
+                      onOpenBilling={() => setBillingDialogOpen(true)}
+                      creemProducts={topupInfo?.creem_products}
+                      enableCreemTopup={topupInfo?.enable_creem_topup}
+                      onCreemProductSelect={handleCreemProductSelect}
+                      enableWaffoTopup={topupInfo?.enable_waffo_topup}
+                      waffoPayMethods={topupInfo?.waffo_pay_methods}
+                      waffoMinTopup={topupInfo?.waffo_min_topup}
+                      onWaffoMethodSelect={handleWaffoMethodSelect}
+                      enableWaffoPancakeTopup={
+                        topupInfo?.enable_waffo_pancake_topup
+                      }
+                    />
+                  </div>
+                </WalletTiltCard>
+              )}
 
               <WalletTiltCard>
                 <RedemptionCard
+                  onOpenBilling={
+                    showRechargeCard
+                      ? undefined
+                      : () => setBillingDialogOpen(true)
+                  }
                   topupLink={topupInfo?.topup_link}
                   redemptionEnabled={topupInfo?.enable_redemption !== false}
                   redemptionCode={redemptionCode}

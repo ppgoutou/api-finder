@@ -7905,6 +7905,9 @@
     "/video": "/video",
     "/image": "/ảnh",
     "/request": "/lượt",
-    "/1M tokens": "/1 triệu token"
+    "/1M tokens": "/1 triệu token",
+    "Enable Stripe": "Bật Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Khi tắt, người dùng không thể bắt đầu thanh toán Stripe và ví sẽ ẩn Stripe. Webhook vẫn hoạt động nên các đơn đã thanh toán và khoản hoàn tiền vẫn được xử lý.",
+    "Stripe payment is disabled": "Thanh toán Stripe đã bị tắt"
   }
 }
