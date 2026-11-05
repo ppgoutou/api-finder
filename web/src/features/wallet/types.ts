@@ -261,6 +261,7 @@ export interface UserWalletData {
 export type TopupStatus =
   | 'success'
   | 'pending'
+  | 'failed'
   | 'expired'
   | 'refunded'
   | 'disputed'
