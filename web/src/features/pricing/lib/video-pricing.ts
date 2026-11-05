@@ -90,6 +90,9 @@ export type VideoPricing = {
   rows: VideoPricingRow[]
 }
 
+/** Usage enum whose non-`none` value marks an order with a reference video. */
+const REFERENCE_SWITCH_FIELD = 'video_input'
+
 type VideoSchemaFields = {
   secondsField: string
   referenceField?: string
@@ -106,12 +109,15 @@ function getVideoSchemaFields(
   const tokens = numberFields.filter((entry) => entry[1].unit === 'token')
   if (seconds.length !== 1 || tokens.length > 1) return null
   if (seconds.length + tokens.length !== numberFields.length) return null
-  // With a second enum, that one must switch reference pricing on or off.
+  // A second enum must be the reference video switch; any other is unknown
+  // pricing that a resolution row cannot label.
   const switches =
     enumFields.length > 1
       ? enumFields.filter(
           (entry) =>
-            entry[1].enum?.length === 2 && entry[1].enum.includes('none')
+            entry[0] === REFERENCE_SWITCH_FIELD &&
+            entry[1].enum?.length === 2 &&
+            entry[1].enum.includes('none')
         )
       : []
   const optionFields = enumFields.filter((entry) => !switches.includes(entry))
@@ -128,7 +134,7 @@ function getVideoSchemaFields(
 /**
  * A video schema meters output seconds (optionally plus reference-order
  * tokens) and selects the price by exactly one enum, such as resolution,
- * optionally with a `none`/other enum that switches on reference pricing.
+ * optionally with the `video_input` enum that switches on reference pricing.
  */
 export function isVideoPricingSchema(
   schema: BillingUsageSchema | null | undefined
