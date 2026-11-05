@@ -104,19 +104,31 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// USDT converts amounts itself, so it stays available in yuan mode too.
+	enableUSDT := service.IsUSDTTopUpEnabled()
+	if enableUSDT {
+		payMethods = append(payMethods, map[string]string{
+			"name":      "USDT (TRC-20)",
+			"type":      model.PaymentMethodUSDT,
+			"color":     "#26A17B",
+			"min_topup": strconv.Itoa(setting.USDTMinTopUp),
+		})
+	}
+
 	enableEpay := isEpayTopUpEnabled()
 	if topUpAmountsInCNY() {
 		enableEpay = false
 		enableWaffo = false
 		enableWaffoPancake = false
 		payMethods = lo.Filter(payMethods, func(method map[string]string, _ int) bool {
-			return method["type"] == model.PaymentMethodStripe
+			return method["type"] == model.PaymentMethodStripe || method["type"] == model.PaymentMethodUSDT
 		})
 	}
 
 	data := gin.H{
 		"enable_online_topup":              enableEpay,
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
+		"enable_usdt_topup":                enableUSDT,
 		"enable_creem_topup":               isCreemTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
@@ -133,6 +145,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"pay_methods":             payMethods,
 		"min_topup":               operation_setting.MinTopUp,
 		"stripe_min_topup":        setting.StripeMinTopUp,
+		"usdt_min_topup":          setting.USDTMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,

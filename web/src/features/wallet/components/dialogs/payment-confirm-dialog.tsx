@@ -38,6 +38,7 @@ import {
   getPaymentCurrency,
   getPaymentIcon,
   isStripePayment,
+  isUSDTPayment,
 } from '../../lib'
 import type { PaymentMethod } from '../../types'
 
@@ -122,6 +123,14 @@ export function PaymentConfirmDialog({
             <p className='text-muted-foreground text-xs'>
               {t(
                 'The final charge is shown on the Stripe payment page and may be displayed in your local currency.'
+              )}
+            </p>
+          )}
+
+          {paymentMethod && isUSDTPayment(paymentMethod.type) && (
+            <p className='text-muted-foreground text-xs'>
+              {t(
+                'Send USDT on the TRON network (TRC-20) only. Your balance is credited by the amount received, so a short transfer or exchange withdrawal fee reduces it.'
               )}
             </p>
           )}

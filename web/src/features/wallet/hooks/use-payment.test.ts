@@ -41,10 +41,28 @@ describe('payment amount routing', () => {
         calls.push('pancake')
         return { success: true, data: '4' }
       },
+      usdt: async () => {
+        calls.push('usdt')
+        return { success: true, data: '5' }
+      },
     })
 
     expect(amount).toBe(18.75)
     expect(calls).toEqual(['waffo:120'])
+  })
+
+  test('uses the USDT quote with its six decimals for USDT payments', async () => {
+    const other = async () => ({ success: true, data: '1' })
+
+    const amount = await requestPaymentAmount(100, PAYMENT_TYPES.USDT, {
+      regular: other,
+      stripe: other,
+      waffo: other,
+      waffoPancake: other,
+      usdt: async () => ({ success: true, data: '14.705883' }),
+    })
+
+    expect(amount).toBe(14.705883)
   })
 
   test('rejects with the server response as cause when the amount is refused', async () => {
@@ -61,6 +79,7 @@ describe('payment amount routing', () => {
         stripe: async () => refused,
         waffo: ok,
         waffoPancake: ok,
+        usdt: ok,
       })
     ).rejects.toMatchObject({ cause: refused })
   })

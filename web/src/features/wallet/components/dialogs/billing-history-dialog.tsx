@@ -248,9 +248,10 @@ export function BillingHistoryDialog({
                             {t('Amount')}
                           </Label>
                           <div className='text-sm font-semibold'>
-                            {/* Stripe credits money (USD); its amount may be yuan */}
+                            {/* Stripe and USDT credit money (USD); their amount may be yuan */}
                             {formatCurrencyFromUSD(
-                              record.payment_method === 'stripe'
+                              record.payment_method === 'stripe' ||
+                                record.payment_method === 'usdt'
                                 ? record.money
                                 : record.amount,
                               {

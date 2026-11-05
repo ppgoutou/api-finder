@@ -26,14 +26,17 @@ import { createServerError } from '@/lib/server-error-message'
 import {
   calculateAmount,
   calculateStripeAmount,
+  calculateUSDTAmount,
   calculateWaffoAmount,
   calculateWaffoPancakeAmount,
   requestPayment,
   requestStripePayment,
+  requestUSDTPayment,
   isApiSuccess,
 } from '../api'
 import {
   isStripePayment,
+  isUSDTPayment,
   isWaffoPayment,
   isWaffoPancakePayment,
   submitPaymentForm,
@@ -51,6 +54,7 @@ export interface PaymentAmountCalculators {
   stripe: AmountCalculator
   waffo: AmountCalculator
   waffoPancake: AmountCalculator
+  usdt: AmountCalculator
 }
 
 const defaultPaymentAmountCalculators: PaymentAmountCalculators = {
@@ -58,6 +62,7 @@ const defaultPaymentAmountCalculators: PaymentAmountCalculators = {
   stripe: calculateStripeAmount,
   waffo: calculateWaffoAmount,
   waffoPancake: calculateWaffoPancakeAmount,
+  usdt: calculateUSDTAmount,
 }
 
 export async function requestPaymentAmount(
@@ -72,6 +77,8 @@ export async function requestPaymentAmount(
     calculator = calculators.waffo
   } else if (isWaffoPancakePayment(paymentType)) {
     calculator = calculators.waffoPancake
+  } else if (isUSDTPayment(paymentType)) {
+    calculator = calculators.usdt
   }
 
   const response = await calculator({ amount: topupAmount })
@@ -118,6 +125,25 @@ export function usePayment() {
 
         const isStripe = isStripePayment(paymentType)
         const amount = Math.floor(topupAmount)
+
+        if (isUSDTPayment(paymentType)) {
+          const response = await requestUSDTPayment({ amount })
+          if (!isApiSuccess(response) || !response.data?.pay_link) {
+            handleServerError(response, i18next.t('Payment request failed'))
+            return false
+          }
+          window.open(response.data.pay_link, '_blank')
+          if (response.data.reused) {
+            toast.info(
+              i18next.t(
+                'You have an unfinished USDT order, so its payment page was opened. Whatever you send to it is credited by the amount received.'
+              )
+            )
+          } else {
+            toast.success(i18next.t('Redirecting to payment page...'))
+          }
+          return true
+        }
 
         const response = isStripe
           ? await requestStripePayment({

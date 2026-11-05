@@ -31,6 +31,7 @@ const (
 	PaymentMethodWaffo        = "waffo"
 	PaymentMethodWaffoPancake = "waffo_pancake"
 	PaymentMethodBalance      = "balance"
+	PaymentMethodUSDT         = "usdt"
 )
 
 const (
@@ -40,6 +41,7 @@ const (
 	PaymentProviderWaffo        = "waffo"
 	PaymentProviderWaffoPancake = "waffo_pancake"
 	PaymentProviderBalance      = "balance"
+	PaymentProviderUSDT         = "usdt"
 )
 
 var (
@@ -655,6 +657,12 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 
 		if topUp.Status != common.TopUpStatusPending {
 			return common.NewMessage("Order is not pending payment and cannot be completed")
+		}
+
+		// USDT orders credit what actually arrived on chain; their Amount is
+		// a yuan figure the fallback below would credit as USD.
+		if topUp.PaymentProvider == PaymentProviderUSDT {
+			return common.NewMessage("USDT orders are credited from on-chain transfers and cannot be completed manually")
 		}
 
 		// 计算应充值额度：

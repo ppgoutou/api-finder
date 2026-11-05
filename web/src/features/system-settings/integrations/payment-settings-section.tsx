@@ -65,6 +65,10 @@ import { AmountOptionsVisualEditor } from './amount-options-visual-editor'
 import { CreemProductsVisualEditor } from './creem-products-visual-editor'
 import { PaymentMethodsVisualEditor } from './payment-methods-visual-editor'
 import {
+  UsdtSettingsSection,
+  type UsdtSettingsValues,
+} from './usdt-settings-section'
+import {
   formatJsonForEditor,
   getJsonError,
   normalizeJsonForComparison,
@@ -178,13 +182,23 @@ const paymentSchema = z.object({
   WaffoPancakeMerchantID: z.string(),
   WaffoPancakePrivateKey: z.string(),
   WaffoPancakeReturnURL: z.string(),
+  USDTEnabled: z.boolean(),
+  USDTGatewayAddress: z.string(),
+  USDTClientId: z.string(),
+  USDTApiSecret: z.string(),
+  USDTWebhookSecret: z.string(),
+  USDTEnvironment: z.string(),
+  USDTContractAddress: z.string(),
+  USDTMinTopUp: z.coerce.number().min(1),
 })
 
 type PaymentFormValues = z.infer<typeof paymentSchema>
 type WaffoFormFieldValues = Omit<WaffoSettingsValues, 'WaffoPayMethods'>
 type PaymentBaseFormValues = Omit<
   PaymentFormValues,
-  keyof WaffoFormFieldValues | keyof WaffoPancakeSettingsValues
+  | keyof WaffoFormFieldValues
+  | keyof WaffoPancakeSettingsValues
+  | keyof UsdtSettingsValues
 >
 
 const CURRENT_COMPLIANCE_TERMS_VERSION = 'v1'
@@ -201,6 +215,7 @@ type PaymentSettingsSectionProps = {
   defaultValues: PaymentBaseFormValues
   waffoDefaultValues: WaffoSettingsValues
   waffoPancakeDefaultValues: WaffoPancakeSettingsValues
+  usdtDefaultValues: UsdtSettingsValues
   waffoPancakeProvisionedStoreID?: string
   waffoPancakeProvisionedProductID?: string
   complianceDefaults: PaymentComplianceDefaults
@@ -219,6 +234,7 @@ export function PaymentSettingsSection({
   defaultValues,
   waffoDefaultValues,
   waffoPancakeDefaultValues,
+  usdtDefaultValues,
   waffoPancakeProvisionedStoreID,
   waffoPancakeProvisionedProductID,
   complianceDefaults,
@@ -231,8 +247,14 @@ export function PaymentSettingsSection({
       ...defaultValues,
       ...waffoDefaultValues,
       ...waffoPancakeDefaultValues,
+      ...usdtDefaultValues,
     }),
-    [defaultValues, waffoDefaultValues, waffoPancakeDefaultValues]
+    [
+      defaultValues,
+      waffoDefaultValues,
+      waffoPancakeDefaultValues,
+      usdtDefaultValues,
+    ]
   )
   const initialRef = React.useRef(initialFormValues)
   const defaultsSignature = React.useMemo(
@@ -384,6 +406,19 @@ export function PaymentSettingsSection({
     <K extends keyof WaffoFormFieldValues>(
       key: K,
       value: WaffoFormFieldValues[K]
+    ) => {
+      setPaymentValue(
+        key as keyof PaymentFormValues,
+        value as PaymentFormValues[keyof PaymentFormValues]
+      )
+    },
+    [setPaymentValue]
+  )
+
+  const setUsdtValue = React.useCallback(
+    <K extends keyof UsdtSettingsValues>(
+      key: K,
+      value: UsdtSettingsValues[K]
     ) => {
       setPaymentValue(
         key as keyof PaymentFormValues,
@@ -703,6 +738,52 @@ export function PaymentSettingsSection({
       updates.push({ key: 'WaffoPayMethods', value: sanitized.WaffoPayMethods })
     }
 
+    const usdtTextUpdates = [
+      {
+        key: 'USDTGatewayAddress',
+        next: removeTrailingSlash(values.USDTGatewayAddress.trim()),
+        previous: removeTrailingSlash(
+          initialRef.current.USDTGatewayAddress.trim()
+        ),
+      },
+      {
+        key: 'USDTClientId',
+        next: values.USDTClientId.trim(),
+        previous: initialRef.current.USDTClientId.trim(),
+      },
+      {
+        key: 'USDTEnvironment',
+        next: values.USDTEnvironment.trim(),
+        previous: initialRef.current.USDTEnvironment.trim(),
+      },
+      {
+        key: 'USDTContractAddress',
+        next: values.USDTContractAddress.trim(),
+        previous: initialRef.current.USDTContractAddress.trim(),
+      },
+    ]
+    for (const update of usdtTextUpdates) {
+      if (update.next !== update.previous) {
+        updates.push({ key: update.key, value: update.next })
+      }
+    }
+    if (values.USDTEnabled !== initialRef.current.USDTEnabled) {
+      updates.push({ key: 'USDTEnabled', value: values.USDTEnabled })
+    }
+    if (values.USDTMinTopUp !== initialRef.current.USDTMinTopUp) {
+      updates.push({ key: 'USDTMinTopUp', value: values.USDTMinTopUp })
+    }
+    // Saved secrets never reach the browser, so a blank field keeps them.
+    if (values.USDTApiSecret.trim()) {
+      updates.push({ key: 'USDTApiSecret', value: values.USDTApiSecret.trim() })
+    }
+    if (values.USDTWebhookSecret.trim()) {
+      updates.push({
+        key: 'USDTWebhookSecret',
+        value: values.USDTWebhookSecret.trim(),
+      })
+    }
+
     const hasWaffoPancakeChanges =
       sanitized.WaffoPancakeMerchantID !== initial.WaffoPancakeMerchantID ||
       sanitized.WaffoPancakePrivateKey.length > 0 ||
@@ -795,6 +876,17 @@ export function PaymentSettingsSection({
     WaffoReturnUrl: currentFormValues.WaffoReturnUrl,
     WaffoPayMethods: JSON.stringify(waffoPayMethods),
   }
+  const usdtValues: UsdtSettingsValues = {
+    USDTEnabled: currentFormValues.USDTEnabled,
+    USDTGatewayAddress: currentFormValues.USDTGatewayAddress,
+    USDTClientId: currentFormValues.USDTClientId,
+    USDTApiSecret: currentFormValues.USDTApiSecret,
+    USDTWebhookSecret: currentFormValues.USDTWebhookSecret,
+    USDTEnvironment: currentFormValues.USDTEnvironment,
+    USDTContractAddress: currentFormValues.USDTContractAddress,
+    USDTMinTopUp: currentFormValues.USDTMinTopUp,
+  }
+
   const waffoPancakeValues: WaffoPancakeSettingsValues = {
     WaffoPancakeMerchantID: currentFormValues.WaffoPancakeMerchantID,
     WaffoPancakePrivateKey: currentFormValues.WaffoPancakePrivateKey,
@@ -882,10 +974,11 @@ export function PaymentSettingsSection({
           />
           <Tabs defaultValue='general' className='min-w-0'>
             <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[44rem] grid-cols-6'>
+              <TabsList className='grid min-w-[50rem] grid-cols-7'>
                 <TabsTrigger value='general'>{t('General')}</TabsTrigger>
                 <TabsTrigger value='epay'>Epay</TabsTrigger>
                 <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
+                <TabsTrigger value='usdt'>USDT</TabsTrigger>
                 <TabsTrigger value='creem'>Creem</TabsTrigger>
                 <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
                 <TabsTrigger value='waffo'>Waffo</TabsTrigger>
@@ -1448,6 +1541,13 @@ export function PaymentSettingsSection({
                   />
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value='usdt' className={paymentTabContentClassName}>
+              <UsdtSettingsSection
+                values={usdtValues}
+                onValueChange={setUsdtValue}
+              />
             </TabsContent>
 
             <TabsContent value='creem' className={paymentTabContentClassName}>
