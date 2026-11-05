@@ -237,6 +237,49 @@ describe('model onboarding workbench', () => {
     expect(screen.getByRole('button', { name: /gpt-done/ })).toBeVisible()
   })
 
+  it('ignores the checked models through the workbench and offers restoring ignored ones', async () => {
+    const user = userEvent.setup()
+    const { post } = mockApi()
+    renderSection()
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Select gpt-new' })
+    )
+    await user.click(screen.getByRole('button', { name: 'Ignore 1 selected' }))
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/api/models/onboarding/ignore', {
+        model_names: ['gpt-new'],
+        ignored: true,
+      })
+    )
+  })
+
+  it('moves an ignored model from To do to Ignored and restores it from the editor', async () => {
+    const user = userEvent.setup()
+    const { post } = mockApi(upstreamReport, {
+      ...overview,
+      items: overview.items.map((item) =>
+        item.model_name === 'gpt-new' ? { ...item, ignored: true } : item
+      ),
+    })
+    renderSection()
+
+    await screen.findByRole('tab', { name: /Ignored \(1\)/ })
+    expect(screen.queryByRole('button', { name: /gpt-new/ })).toBeNull()
+
+    await user.click(screen.getByRole('tab', { name: /Ignored/ }))
+    await user.click(screen.getByRole('button', { name: /gpt-new/ }))
+    await user.click(screen.getByRole('button', { name: 'Restore' }))
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/api/models/onboarding/ignore', {
+        model_names: ['gpt-new'],
+        ignored: false,
+      })
+    )
+  })
+
   it('adds the selected model only to the checked upstream channels', async () => {
     const user = userEvent.setup()
     const { post } = mockApi()

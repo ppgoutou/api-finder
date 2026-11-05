@@ -7949,6 +7949,15 @@
     "/1M tokens": "/1M tokens",
     "Enable Stripe": "Activer Stripe",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Une fois désactivé, les utilisateurs ne peuvent plus lancer de paiement Stripe et le portefeuille masque Stripe. Les webhooks restent actifs pour traiter les commandes payées et les remboursements.",
-    "Stripe payment is disabled": "Le paiement Stripe est désactivé"
+    "Stripe payment is disabled": "Le paiement Stripe est désactivé",
+    "Ignored": "Ignoré",
+    "Restore": "Restaurer",
+    "No ignored models": "Aucun modèle ignoré",
+    "Models you set aside wait here until you restore them.": "Les modèles mis de côté restent ici jusqu’à leur restauration.",
+    "Ignore {{count}} selected": "Ignorer {{count}} sélectionnés",
+    "Restore {{count}} selected": "Restaurer {{count}} sélectionnés",
+    "Ignored {{count}} models": "{{count}} modèles ignorés",
+    "Restored {{count}} models": "{{count}} modèles restaurés",
+    "Ignore this model": "Ignorer ce modèle"
   }
 }

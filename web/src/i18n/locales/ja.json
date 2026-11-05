@@ -7949,6 +7949,15 @@
     "/1M tokens": "/100万トークン",
     "Enable Stripe": "Stripe を有効にする",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "オフにすると、ユーザーは Stripe 決済を開始できず、ウォレットにも Stripe が表示されません。Webhook は動作を続けるため、支払い済みの注文と返金は引き続き処理されます。",
-    "Stripe payment is disabled": "Stripe 決済は無効になっています"
+    "Stripe payment is disabled": "Stripe 決済は無効になっています",
+    "Ignored": "無視済み",
+    "Restore": "復元",
+    "No ignored models": "無視中のモデルはありません",
+    "Models you set aside wait here until you restore them.": "保留したモデルは復元するまでここに表示されます。",
+    "Ignore {{count}} selected": "選択した {{count}} 件を無視",
+    "Restore {{count}} selected": "選択した {{count}} 件を復元",
+    "Ignored {{count}} models": "{{count}} 件のモデルを無視しました",
+    "Restored {{count}} models": "{{count}} 件のモデルを復元しました",
+    "Ignore this model": "このモデルを無視"
   }
 }

@@ -39,9 +39,16 @@ export type OnboardingStatus = {
   hasMetadata: boolean
   hasPrice: boolean | undefined
   category: string | undefined
+  ignored: boolean
 }
 
-export type OnboardingFilter = 'todo' | 'pending' | 'removed' | 'priced' | 'all'
+export type OnboardingFilter =
+  | 'todo'
+  | 'pending'
+  | 'removed'
+  | 'priced'
+  | 'ignored'
+  | 'all'
 
 /** A model counts as priced when any effective price other than the display-only official price exists. */
 export function hasEffectivePricing(entry: ModelPricingEntry): boolean {
@@ -83,6 +90,7 @@ export function onboardingStatus(
     hasMetadata: item.metadata_id > 0 || Boolean(item.metadata_rule),
     hasPrice: priced ? priced.has(item.model_name) : undefined,
     category: categoryOwners.get(item.model_name),
+    ignored: Boolean(item.ignored),
   }
 }
 
@@ -102,11 +110,14 @@ export function matchesOnboardingFilter(
   status: OnboardingStatus,
   filter: OnboardingFilter
 ): boolean {
+  if (filter === 'all') return true
+  if (status.ignored || filter === 'ignored') {
+    return status.ignored && filter === 'ignored'
+  }
   if (filter === 'pending') return status.pending
   if (filter === 'removed') return status.removed
   if (filter === 'priced') return status.priceChanged
-  if (filter === 'todo') return isOnboardingUnfinished(status)
-  return true
+  return isOnboardingUnfinished(status)
 }
 
 /** Distinct groups served by the given channels, in first-seen order. */

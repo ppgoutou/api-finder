@@ -7949,6 +7949,15 @@
     "/1M tokens": "/1 млн токенов",
     "Enable Stripe": "Включить Stripe",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Когда выключено, пользователи не могут начать оплату через Stripe, а кошелёк скрывает Stripe. Вебхуки продолжают работать, поэтому оплаченные заказы и возвраты обрабатываются.",
-    "Stripe payment is disabled": "Оплата через Stripe отключена"
+    "Stripe payment is disabled": "Оплата через Stripe отключена",
+    "Ignored": "Игнорируется",
+    "Restore": "Восстановить",
+    "No ignored models": "Нет игнорируемых моделей",
+    "Models you set aside wait here until you restore them.": "Отложенные модели находятся здесь, пока вы их не восстановите.",
+    "Ignore {{count}} selected": "Игнорировать выбранные: {{count}}",
+    "Restore {{count}} selected": "Восстановить выбранные: {{count}}",
+    "Ignored {{count}} models": "Игнорируется моделей: {{count}}",
+    "Restored {{count}} models": "Восстановлено моделей: {{count}}",
+    "Ignore this model": "Игнорировать модель"
   }
 }

@@ -197,7 +197,7 @@ func prepareOnboardingDrafts(ctx context.Context) []string {
 		if len(drafted) >= onboardingDraftsPerRun {
 			break
 		}
-		if len(item.PendingChannels) == 0 || item.MetadataID > 0 || item.MetadataRule != "" || item.Draft != nil {
+		if item.Ignored || len(item.PendingChannels) == 0 || item.MetadataID > 0 || item.MetadataRule != "" || item.Draft != nil {
 			continue
 		}
 		drafts[item.ModelName] = buildOnboardingDraft(ctx, item.ModelName, metadata)

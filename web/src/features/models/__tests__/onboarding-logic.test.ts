@@ -57,6 +57,34 @@ describe('onboarding status', () => {
     expect(matchesOnboardingFilter(status, 'all')).toBe(true)
   })
 
+  it('keeps an ignored model only under ignored and all whatever work it has', () => {
+    const status = onboardingStatus(
+      item({
+        ignored: true,
+        channels: [],
+        pending_channels: [channel],
+        removed_channels: [channel],
+        metadata_id: 0,
+      }),
+      new Set(),
+      new Map(),
+      new Set(['gpt-new'])
+    )
+
+    expect(matchesOnboardingFilter(status, 'ignored')).toBe(true)
+    expect(matchesOnboardingFilter(status, 'all')).toBe(true)
+    expect(matchesOnboardingFilter(status, 'todo')).toBe(false)
+    expect(matchesOnboardingFilter(status, 'pending')).toBe(false)
+    expect(matchesOnboardingFilter(status, 'removed')).toBe(false)
+    expect(matchesOnboardingFilter(status, 'priced')).toBe(false)
+  })
+
+  it('leaves a model that is not ignored out of the ignored filter', () => {
+    const status = onboardingStatus(item({}), new Set(), new Map())
+
+    expect(matchesOnboardingFilter(status, 'ignored')).toBe(false)
+  })
+
   it('lists a model offered upstream but on no channel under to-do and new upstream', () => {
     const status = onboardingStatus(
       item({ pending_channels: [channel], channels: [], metadata_id: 0 }),

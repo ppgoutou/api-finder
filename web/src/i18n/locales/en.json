@@ -7949,6 +7949,15 @@
     "/1M tokens": "/1M tokens",
     "Enable Stripe": "Enable Stripe",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.",
-    "Stripe payment is disabled": "Stripe payment is disabled"
+    "Stripe payment is disabled": "Stripe payment is disabled",
+    "Ignored": "Ignored",
+    "Restore": "Restore",
+    "No ignored models": "No ignored models",
+    "Models you set aside wait here until you restore them.": "Models you set aside wait here until you restore them.",
+    "Ignore {{count}} selected": "Ignore {{count}} selected",
+    "Restore {{count}} selected": "Restore {{count}} selected",
+    "Ignored {{count}} models": "Ignored {{count}} models",
+    "Restored {{count}} models": "Restored {{count}} models",
+    "Ignore this model": "Ignore this model"
   }
 }

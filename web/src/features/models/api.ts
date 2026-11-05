@@ -271,6 +271,17 @@ export async function applyChannelUpstreamModels(request: {
 }
 
 /**
+ * Set models aside on the onboarding workbench, or restore them
+ */
+export async function setOnboardingIgnored(request: {
+  model_names: string[]
+  ignored: boolean
+}): Promise<{ success: boolean; message?: string }> {
+  const res = await api.post('/api/models/onboarding/ignore', request)
+  return res.data
+}
+
+/**
  * Last upstream pricing check, without fetching again
  */
 export async function getUpstreamPrices(): Promise<UpstreamPriceReportResponse> {

@@ -79,6 +79,9 @@ export function OnboardingList(props: {
           <TabsTrigger value='priced'>
             {t('Upstream repriced')} ({props.counts.priced})
           </TabsTrigger>
+          <TabsTrigger value='ignored'>
+            {t('Ignored')} ({props.counts.ignored})
+          </TabsTrigger>
           <TabsTrigger value='all'>
             {t('All')} ({props.counts.all})
           </TabsTrigger>
@@ -116,10 +119,16 @@ export function OnboardingList(props: {
         {props.rows.length === 0 ? (
           <EmptyState
             className='min-h-[200px]'
-            title={t('Nothing to onboard')}
-            description={t(
-              'New upstream models appear here after a channel check.'
-            )}
+            title={
+              props.filter === 'ignored'
+                ? t('No ignored models')
+                : t('Nothing to onboard')
+            }
+            description={
+              props.filter === 'ignored'
+                ? t('Models you set aside wait here until you restore them.')
+                : t('New upstream models appear here after a channel check.')
+            }
           />
         ) : (
           <ul className='divide-y'>
@@ -166,6 +175,9 @@ function OnboardingStatusBadges(props: { status: OnboardingStatus }) {
   const status = props.status
   return (
     <span className='mt-1 flex flex-wrap gap-1'>
+      {status.ignored && (
+        <StatusBadge size='sm' variant='neutral' label={t('Ignored')} />
+      )}
       {status.pending && (
         <StatusBadge size='sm' variant='warning' label={t('New upstream')} />
       )}
