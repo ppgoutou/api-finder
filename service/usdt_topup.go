@@ -178,7 +178,7 @@ func StartUSDTTopUp(ctx context.Context, userId int, amount int64, group string,
 	if err != nil {
 		return nil, fmt.Errorf("invalid usdt intent expiry: %w", err)
 	}
-	if err := model.AttachUSDTIntent(tradeNo, intent.Id, intent.CheckoutUrl, expiresAt.Unix()); err != nil {
+	if err := model.AttachUSDTIntent(tradeNo, intent.Id, intent.DepositAddress, intent.CheckoutUrl, expiresAt.Unix()); err != nil {
 		return nil, err
 	}
 	return &USDTPayResult{PayLink: intent.CheckoutUrl}, nil
@@ -249,12 +249,13 @@ func settleUSDTGatewayIntent(intent *usdtGatewayIntent, callerIp string) error {
 		return err
 	}
 	snapshot := &model.USDTIntentSnapshot{
-		IntentId:      intent.Id,
-		TradeNo:       intent.ExternalOrderId,
-		PayerRef:      intent.PayerRef,
-		Status:        intent.Status,
-		ReceivedTotal: intent.ReceivedTotal,
-		Receipts:      make([]model.USDTReceipt, 0, len(intent.Receipts)),
+		IntentId:       intent.Id,
+		TradeNo:        intent.ExternalOrderId,
+		PayerRef:       intent.PayerRef,
+		Status:         intent.Status,
+		ReceivedTotal:  intent.ReceivedTotal,
+		DepositAddress: intent.DepositAddress,
+		Receipts:       make([]model.USDTReceipt, 0, len(intent.Receipts)),
 	}
 	for i := range intent.Receipts {
 		receipt := &intent.Receipts[i]

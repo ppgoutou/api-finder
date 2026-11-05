@@ -66,6 +66,46 @@ test('shows that nothing needs attention when the list is empty', async () => {
   ).toBeInTheDocument()
 })
 
+test('shows the addresses and only a possible user for a transfer no order claims', async () => {
+  vi.mocked(api.get).mockResolvedValue({
+    data: {
+      success: true,
+      data: {
+        items: [
+          {
+            ...unmatched,
+            user_id: 9677,
+            from_address: 'TFromAddress',
+            to_address: 'TToAddress',
+          },
+        ],
+      },
+    },
+  })
+
+  renderList()
+
+  expect(await screen.findByText('TFromAddress')).toBeInTheDocument()
+  expect(screen.getByText('TToAddress')).toBeInTheDocument()
+  expect(screen.getByText(/Possibly user ID: 9677/)).toBeInTheDocument()
+})
+
+test('names the user outright when the wallet limit refused the credit', async () => {
+  vi.mocked(api.get).mockResolvedValue({
+    data: {
+      success: true,
+      data: {
+        items: [{ ...unmatched, user_id: 9677, status: 'credit_failed' }],
+      },
+    },
+  })
+
+  renderList()
+
+  expect(await screen.findByText(/^User ID: 9677/)).toBeInTheDocument()
+  expect(screen.queryByText(/Possibly user ID/)).not.toBeInTheDocument()
+})
+
 test('sends the note and refreshes the list when a transfer is marked handled', async () => {
   vi.mocked(api.get)
     .mockResolvedValueOnce({

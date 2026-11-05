@@ -35,6 +35,10 @@ export interface ApiResponse<T = unknown> {
 export type TopupInfoResponse = ApiResponse<TopupInfo>
 export type RedemptionResponse = ApiResponse<number>
 export type AmountResponse = ApiResponse<string>
+export type USDTAmountResponse = AmountResponse & {
+  /** The order paying now would open, while the gateway keeps it locked */
+  active_order?: { expires_at: number }
+}
 export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
   url?: string
 }

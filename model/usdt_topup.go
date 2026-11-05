@@ -38,6 +38,7 @@ type USDTOrder struct {
 	TradeNo        string `json:"trade_no" gorm:"type:varchar(64);uniqueIndex"`
 	UserId         int    `json:"user_id" gorm:"index"`
 	IntentId       string `json:"intent_id" gorm:"type:varchar(64);index"`
+	DepositAddress string `json:"deposit_address" gorm:"type:varchar(64);index"`
 	CheckoutUrl    string `json:"-" gorm:"type:text"`
 	ExpectedAmount string `json:"expected_amount" gorm:"type:varchar(40)"`
 	ReceivedTotal  string `json:"received_total" gorm:"type:varchar(40)"`
@@ -83,12 +84,13 @@ func (USDTReceipt) TableName() string {
 // USDTIntentSnapshot is a gateway answer the caller has already validated
 // against the configured environment and contract.
 type USDTIntentSnapshot struct {
-	IntentId      string
-	TradeNo       string
-	PayerRef      string
-	Status        string
-	ReceivedTotal string
-	Receipts      []USDTReceipt
+	IntentId       string
+	TradeNo        string
+	PayerRef       string
+	Status         string
+	ReceivedTotal  string
+	DepositAddress string
+	Receipts       []USDTReceipt
 }
 
 // USDTPayerRef is the stable payer identifier sent to the gateway.
@@ -108,11 +110,12 @@ func CreateUSDTOrder(topUp *TopUp, order *USDTOrder) error {
 }
 
 // AttachUSDTIntent records the payment intent the gateway created for an order.
-func AttachUSDTIntent(tradeNo string, intentId string, checkoutUrl string, expiresAt int64) error {
+func AttachUSDTIntent(tradeNo string, intentId string, depositAddress string, checkoutUrl string, expiresAt int64) error {
 	return DB.Model(&USDTOrder{}).Where("trade_no = ?", tradeNo).Updates(map[string]any{
-		"intent_id":    intentId,
-		"checkout_url": checkoutUrl,
-		"expires_at":   expiresAt,
+		"intent_id":       intentId,
+		"deposit_address": depositAddress,
+		"checkout_url":    checkoutUrl,
+		"expires_at":      expiresAt,
 	}).Error
 }
 
@@ -232,6 +235,7 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 		}
 
 		order.IntentId = snapshot.IntentId
+		order.DepositAddress = snapshot.DepositAddress
 		order.ReceivedTotal = snapshot.ReceivedTotal
 		if ended || time.Now().Unix() > order.ExpiresAt+usdtOrderSyncGraceSeconds {
 			order.SyncStatus = USDTOrderSyncClosed
@@ -317,9 +321,20 @@ func settleUSDTReceipt(tx *gorm.DB, topUp *TopUp, receipt *USDTReceipt, discount
 }
 
 // RecordUnmatchedUSDTReceipt stores a transfer no order claims, for an
-// administrator to handle. Delivering it again changes nothing.
+// administrator to handle. Delivering it again changes nothing. UserId names the
+// user whose order last held the address before the transfer, as a lead for the
+// administrator: it credits nobody, and the gateway may reassign addresses.
 func RecordUnmatchedUSDTReceipt(receipt *USDTReceipt) error {
 	receipt.Status = USDTReceiptStatusUnmatched
+	if sentAt, err := time.Parse(time.RFC3339, receipt.BlockTimestamp); err == nil && receipt.ToAddress != "" {
+		var order USDTOrder
+		err := DB.Where("deposit_address = ? AND created_at <= ?", receipt.ToAddress, sentAt.Unix()).
+			Order("id DESC").Limit(1).Find(&order).Error
+		if err != nil {
+			return err
+		}
+		receipt.UserId = order.UserId
+	}
 	return DB.Clauses(clause.OnConflict{DoNothing: true}).Create(receipt).Error
 }
 

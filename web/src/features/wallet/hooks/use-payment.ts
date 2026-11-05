@@ -94,15 +94,27 @@ export function usePayment() {
   const [amount, setAmount] = useState<number>(0)
   const [calculating, setCalculating] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [usdtActiveOrderExpiresAt, setUsdtActiveOrderExpiresAt] = useState<
+    number | undefined
+  >()
 
   // Calculate payment amount
   const calculatePaymentAmount = useCallback(
     async (topupAmount: number, paymentType: string) => {
       try {
         setCalculating(true)
+        setUsdtActiveOrderExpiresAt(undefined)
         const calculatedAmount = await requestPaymentAmount(
           topupAmount,
-          paymentType
+          paymentType,
+          {
+            ...defaultPaymentAmountCalculators,
+            usdt: async (request) => {
+              const response = await calculateUSDTAmount(request)
+              setUsdtActiveOrderExpiresAt(response.active_order?.expires_at)
+              return response
+            },
+          }
         )
         setAmount(calculatedAmount)
         return calculatedAmount
@@ -195,5 +207,6 @@ export function usePayment() {
     calculatePaymentAmount,
     processPayment,
     setAmount,
+    usdtActiveOrderExpiresAt,
   }
 }

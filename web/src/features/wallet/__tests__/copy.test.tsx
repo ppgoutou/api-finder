@@ -171,8 +171,20 @@ it('shows a Stripe order credit from its USD money rather than its yuan amount',
 })
 
 it.each([
-  { type: 'stripe', name: 'Stripe', amount: 10, shown: /\$10\.00/, stripeNote: true },
-  { type: 'alipay', name: 'Alipay', amount: 68, shown: /¥68\.00/, stripeNote: false },
+  {
+    type: 'stripe',
+    name: 'Stripe',
+    amount: 10,
+    shown: /\$10\.00/,
+    stripeNote: true,
+  },
+  {
+    type: 'alipay',
+    name: 'Alipay',
+    amount: 68,
+    shown: /¥68\.00/,
+    stripeNote: false,
+  },
 ])(
   'shows the $type payable amount with its charge currency',
   ({ type, name, amount, shown, stripeNote }) => {
@@ -199,3 +211,36 @@ it.each([
     }
   }
 )
+
+function renderUsdtDialog(activeOrderExpiresAt?: number) {
+  render(
+    <I18nextProvider i18n={i18n}>
+      <PaymentConfirmDialog
+        open
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        topupAmount={100}
+        paymentAmount={14.705883}
+        paymentMethod={{ type: 'usdt', name: 'USDT (TRC-20)' }}
+        calculating={false}
+        processing={false}
+        usdtActiveOrderExpiresAt={activeOrderExpiresAt}
+      />
+    </I18nextProvider>
+  )
+}
+
+it('warns before opening the old page when a USDT order has not expired', () => {
+  renderUsdtDialog(1793864647)
+
+  expect(screen.getByRole('alert')).toHaveTextContent(/未到期.*建议金额/)
+  expect(screen.getByRole('button', { name: '打开付款页' })).toBeVisible()
+  expect(screen.getByText(/14\.705883 USDT/)).toBeVisible()
+})
+
+it('keeps the usual USDT confirmation when no order is open', () => {
+  renderUsdtDialog()
+
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '确认付款' })).toBeVisible()
+})

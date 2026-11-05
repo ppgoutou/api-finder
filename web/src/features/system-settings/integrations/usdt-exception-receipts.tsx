@@ -104,14 +104,30 @@ export function UsdtExceptionReceipts() {
                   />
                   {receipt.user_id > 0 && (
                     <span className='text-muted-foreground text-xs'>
-                      {t('User ID')}: {receipt.user_id}
+                      {receipt.status === 'unmatched'
+                        ? t('Possibly user ID')
+                        : t('User ID')}
+                      : {receipt.user_id}
                     </span>
                   )}
                 </div>
-                <div className='text-muted-foreground flex items-center gap-1 text-xs'>
-                  <span className='truncate font-mono'>{receipt.tx_hash}</span>
-                  <CopyButton value={receipt.tx_hash} />
-                </div>
+                {[
+                  { label: t('From address'), value: receipt.from_address },
+                  { label: t('To address'), value: receipt.to_address },
+                  { label: t('Transaction hash'), value: receipt.tx_hash },
+                ].map(
+                  (row) =>
+                    row.value && (
+                      <div
+                        key={row.label}
+                        className='text-muted-foreground flex min-w-0 items-center gap-1 text-xs'
+                      >
+                        <span className='shrink-0'>{row.label}:</span>
+                        <span className='truncate font-mono'>{row.value}</span>
+                        <CopyButton value={row.value} />
+                      </div>
+                    )
+                )}
               </div>
               <Button
                 type='button'

@@ -25,6 +25,8 @@ export interface UsdtExceptionReceipt {
   log_index: number
   user_id: number
   amount: string
+  from_address?: string
+  to_address?: string
   status: 'unmatched' | 'credit_failed'
 }
 

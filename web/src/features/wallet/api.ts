@@ -29,6 +29,7 @@ import type {
   AmountResponse,
   PaymentResponse,
   StripePaymentResponse,
+  USDTAmountResponse,
   USDTPaymentResponse,
   AffiliateCodeResponse,
   AffiliateInviteesResponse,
@@ -142,7 +143,7 @@ export async function requestStripePayment(
  */
 export async function calculateUSDTAmount(
   request: AmountRequest
-): Promise<AmountResponse> {
+): Promise<USDTAmountResponse> {
   const res = await api.post('/api/user/usdt/amount', request, {
     skipBusinessError: true,
   } as Record<string, unknown>)

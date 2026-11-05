@@ -417,6 +417,43 @@ func TestUSDTUnmatchedTransferRecordedOnceAndResolvable(t *testing.T) {
 	assert.Error(t, model.ResolveUSDTReceipt(receipts[0].Id, "again"))
 }
 
+func TestUSDTUnmatchedTransferNamesTheUserWhoLastHeldTheAddress(t *testing.T) {
+	const userId = 9014
+	setupUSDTTest(t, userId, 0)
+	ctx := context.Background()
+	_, err := StartUSDTTopUp(ctx, userId, 100, "default", "")
+	require.NoError(t, err)
+
+	now := time.Now().UTC()
+	cases := []struct {
+		name    string
+		logIdx  int
+		to      string
+		sent    string
+		wantUid int
+	}{
+		{"sent to the order's address after it was made", 1, usdtTestDeposit, now.Add(time.Minute).Format(time.RFC3339), userId},
+		{"sent before any order held the address", 2, usdtTestDeposit, now.Add(-time.Hour).Format(time.RFC3339), 0},
+		{"sent to an address no order held", 3, "TOtherAddress", now.Add(time.Minute).Format(time.RFC3339), 0},
+		{"sent at an unreadable time", 4, usdtTestDeposit, "soon", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			hash := usdtTestHash(20)
+			require.NoError(t, handleUSDTEvent(ctx, &usdtGatewayEvent{Id: "evt", Type: usdtEventUnmatchedReceived, Data: map[string]any{
+				"receipt": map[string]any{"tx_hash": hash, "log_index": tc.logIdx, "amount": "1.000000", "to_address": tc.to, "block_timestamp": tc.sent},
+			}}))
+
+			var receipt model.USDTReceipt
+			require.NoError(t, model.DB.Where("tx_hash = ? AND log_index = ?", hash, tc.logIdx).First(&receipt).Error)
+			assert.Equal(t, tc.wantUid, receipt.UserId)
+			assert.Equal(t, model.USDTReceiptStatusUnmatched, receipt.Status)
+			assert.Zero(t, receipt.CreditedQuota, "naming a user must not credit them")
+		})
+	}
+	assert.Zero(t, usdtTestQuota(t, userId))
+}
+
 func TestUSDTReceiptFeedSavesCursorOnlyAfterEventsAreStored(t *testing.T) {
 	const userId, tradeNo = 9012, "usdt_feed"
 	gateway := setupUSDTTest(t, userId, 0)

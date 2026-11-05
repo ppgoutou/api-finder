@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -61,7 +62,15 @@ func RequestUSDTAmount(c *gin.Context) {
 		paymentError(c, common.NewMessage("Payment amount is too low"))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": quote.ExpectedAmount.StringFixed(6)})
+	response := gin.H{"message": "success", "data": quote.ExpectedAmount.StringFixed(6)}
+	// The gateway keeps one order per payer, so paying now opens this one.
+	active, err := model.GetActiveUSDTOrder(c.GetInt("id"), time.Now().Unix())
+	if err != nil {
+		logger.LogError(c.Request.Context(), common.LogText("USDT failed to look up active order user_id=%d error=%q", c.GetInt("id"), err.Error()))
+	} else if active != nil {
+		response["active_order"] = gin.H{"expires_at": active.ExpiresAt}
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // RequestUSDTPay opens a USDT checkout for the amount.

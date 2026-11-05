@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatLocalCurrencyAmount } from '@/lib/currency'
+import { formatTimestampToDate } from '@/lib/format'
 
 import { DEFAULT_DISCOUNT_RATE } from '../../constants'
 import {
@@ -53,6 +55,7 @@ interface PaymentConfirmDialogProps {
   processing: boolean
   discountRate?: number
   usdExchangeRate?: number
+  usdtActiveOrderExpiresAt?: number
 }
 
 export function PaymentConfirmDialog({
@@ -66,8 +69,12 @@ export function PaymentConfirmDialog({
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
   usdExchangeRate = 1,
+  usdtActiveOrderExpiresAt,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
+  const opensActiveUsdtOrder =
+    isUSDTPayment(paymentMethod?.type ?? '') &&
+    usdtActiveOrderExpiresAt !== undefined
   const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
   const originalAmount = hasDiscount ? paymentAmount / discountRate : 0
   const discountAmount = hasDiscount ? originalAmount - paymentAmount : 0
@@ -135,6 +142,17 @@ export function PaymentConfirmDialog({
             </p>
           )}
 
+          {opensActiveUsdtOrder && !calculating && (
+            <Alert>
+              <AlertDescription>
+                {t(
+                  'You have a USDT order that has not expired (until {{time}}), so its payment page will open. The suggested amount there is from that order: send the amount above. Your balance is credited by the amount received.',
+                  { time: formatTimestampToDate(usdtActiveOrderExpiresAt ?? 0) }
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {hasDiscount && !calculating && (
             <div className='bg-muted/50 rounded-lg p-3'>
               <div className='flex items-center justify-between text-sm'>
@@ -170,7 +188,9 @@ export function PaymentConfirmDialog({
           </AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={processing}>
             {processing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            {t('Confirm Payment')}
+            {opensActiveUsdtOrder
+              ? t('Open payment page')
+              : t('Confirm Payment')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

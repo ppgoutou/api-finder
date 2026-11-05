@@ -112,6 +112,7 @@ export function Wallet(props: WalletProps) {
     processing,
     calculatePaymentAmount,
     processPayment,
+    usdtActiveOrderExpiresAt,
   } = usePayment()
   const {
     affiliateCode,
@@ -405,6 +406,7 @@ export function Wallet(props: WalletProps) {
         processing={processing || waffoProcessing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={creditExchangeRate}
+        usdtActiveOrderExpiresAt={usdtActiveOrderExpiresAt}
       />
 
       <TransferDialog
