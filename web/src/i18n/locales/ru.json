@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "Используйте этот формат URL обратного вызова при регистрации пользовательского провайдера OAuth.",
     "Use this token for API authentication": "Используйте этот токен для аутентификации API",
     "Prompt words": "Промпт",
+    "Users see this converted at the USD exchange rate and rounded up.": "Пользователи видят сумму по курсу доллара, округлённую вверх.",
     "Video Models": "Видеомодели",
     "View prompt: {{title}}": "Открыть промпт: {{title}}",
     "View details: {{title}}": "Подробнее: {{title}}",

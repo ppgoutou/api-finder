@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -395,4 +396,42 @@ func TestStripeSwitchOffStopsNewPaymentsButKeepsWebhook(t *testing.T) {
 
 	setting.StripeEnabled = true
 	assert.True(t, isStripeTopUpEnabled())
+}
+
+func TestTopUpInfoShowsUSDTMinimumInDisplayUnit(t *testing.T) {
+	confirmPaymentComplianceForTest(t)
+	general := operation_setting.GetGeneralSetting()
+	originalDisplay, originalRate := general.QuotaDisplayType, operation_setting.USDExchangeRate
+	originalEnabled, originalGateway, originalClient := setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId
+	originalSecret, originalHook := setting.USDTApiSecret, setting.USDTWebhookSecret
+	originalEnv, originalContract, originalMin := setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp
+	t.Cleanup(func() {
+		general.QuotaDisplayType, operation_setting.USDExchangeRate = originalDisplay, originalRate
+		setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId = originalEnabled, originalGateway, originalClient
+		setting.USDTApiSecret, setting.USDTWebhookSecret = originalSecret, originalHook
+		setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp = originalEnv, originalContract, originalMin
+	})
+	general.QuotaDisplayType, operation_setting.USDExchangeRate = operation_setting.QuotaDisplayTypeCNY, 6.8
+	setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId = true, "https://gateway.test", "cli_test"
+	setting.USDTApiSecret, setting.USDTWebhookSecret = "api-secret", "hook-secret"
+	setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp = "nile", "TContract", 10
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/user/topup/info", nil)
+	GetTopUpInfo(ctx)
+
+	var info struct {
+		Data struct {
+			USDTMinTopUp int64               `json:"usdt_min_topup"`
+			PayMethods   []map[string]string `json:"pay_methods"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &info))
+	assert.EqualValues(t, 68, info.Data.USDTMinTopUp)
+	method, found := lo.Find(info.Data.PayMethods, func(item map[string]string) bool {
+		return item["type"] == model.PaymentMethodUSDT
+	})
+	require.True(t, found)
+	assert.Equal(t, "68", method["min_topup"])
 }

@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "カスタム OAuth プロバイダーを登録するときは、このコールバック URL 形式を使用します。",
     "Use this token for API authentication": "API認証にはこのトークンを使用してください",
     "Prompt words": "プロンプト",
+    "Users see this converted at the USD exchange rate and rounded up.": "ユーザーには米ドル為替レートで換算し、切り上げた金額が表示されます。",
     "Video Models": "動画モデル",
     "View prompt: {{title}}": "プロンプトを表示：{{title}}",
     "View details: {{title}}": "詳細を表示：{{title}}",

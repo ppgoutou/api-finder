@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "Dùng mẫu URL callback này khi đăng ký nhà cung cấp OAuth tùy chỉnh.",
     "Use this token for API authentication": "Sử dụng token này để xác thực API",
     "Prompt words": "Prompt",
+    "Users see this converted at the USD exchange rate and rounded up.": "Người dùng thấy số tiền quy đổi theo tỷ giá USD và làm tròn lên.",
     "Video Models": "Mô hình video",
     "View prompt: {{title}}": "Xem prompt: {{title}}",
     "View details: {{title}}": "Xem chi tiết: {{title}}",

@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "註冊自訂 OAuth 提供商時使用此回呼 URL 格式。",
     "Use this token for API authentication": "使用此令牌進行 API 身份驗證",
     "Prompt words": "提示詞",
+    "Users see this converted at the USD exchange rate and rounded up.": "使用者看到的金額按美元匯率換算，並無條件進位。",
     "Video Models": "影片模型",
     "View prompt: {{title}}": "查看提示詞：{{title}}",
     "View details: {{title}}": "查看詳情：{{title}}",

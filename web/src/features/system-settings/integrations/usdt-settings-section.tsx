@@ -211,7 +211,7 @@ export function UsdtSettingsSection(props: UsdtSettingsSectionProps) {
           </div>
 
           <div className='grid gap-1.5'>
-            <Label htmlFor='usdt-min-topup'>{t('Minimum Top-up')}</Label>
+            <Label htmlFor='usdt-min-topup'>{t('Minimum top-up (USD)')}</Label>
             <Input
               id='usdt-min-topup'
               type='number'
@@ -221,6 +221,11 @@ export function UsdtSettingsSection(props: UsdtSettingsSectionProps) {
                 props.onValueChange('USDTMinTopUp', Number(event.target.value))
               }
             />
+            <p className='text-muted-foreground text-xs'>
+              {t(
+                'Users see this converted at the USD exchange rate and rounded up.'
+              )}
+            </p>
           </div>
         </div>
       </div>

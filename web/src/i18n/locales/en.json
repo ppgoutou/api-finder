@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "Use this callback URL pattern when registering a custom OAuth provider.",
     "Use this token for API authentication": "Use this token for API authentication",
     "Prompt words": "Prompt",
+    "Users see this converted at the USD exchange rate and rounded up.": "Users see this converted at the USD exchange rate and rounded up.",
     "Video Models": "Video Models",
     "View prompt: {{title}}": "View prompt: {{title}}",
     "View details: {{title}}": "View details: {{title}}",
