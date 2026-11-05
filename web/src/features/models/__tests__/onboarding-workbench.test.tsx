@@ -362,24 +362,38 @@ describe('model onboarding workbench', () => {
     ).toBeDisabled()
   })
 
-  it('copies the upstream price over a repriced model with one click', async () => {
+  it('confirms the upstream price only after fetching it and listing both prices', async () => {
     signInAsRoot()
     const user = userEvent.setup()
     const { post } = mockApi()
-    post.mockResolvedValue({
-      data: { success: true, data: { ...upstreamReport, changes: [] } },
-    })
+    post.mockResolvedValue({ data: { success: true, data: upstreamReport } })
     renderSection()
 
-    expect(await screen.findByText('Group ratio changed')).toBeVisible()
     await user.click(
       await screen.findByRole('tab', { name: /Upstream repriced \(1\)/ })
     )
     await user.click(screen.getByRole('button', { name: /gpt-done/ }))
+    await screen.findByText('Upstream price of alpha changed')
     expect(
-      await screen.findByText('Upstream price of alpha changed')
-    ).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Use upstream price' }))
+      screen.queryByRole('button', { name: 'Confirm upstream price' })
+    ).toBeNull()
+    expect(screen.queryByText('Latest upstream price')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Fetch latest price' }))
+
+    expect(post).toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/check'
+    )
+    expect(await screen.findByText('Latest upstream price')).toBeVisible()
+    expect(screen.getByText('Current price')).toBeVisible()
+    expect(post).not.toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/apply',
+      expect.anything()
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Confirm upstream price' })
+    )
 
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith(
@@ -387,6 +401,47 @@ describe('model onboarding workbench', () => {
         { model_name: 'gpt-done' }
       )
     )
+  })
+
+  it('keeps confirmation locked when the supplier fetch fails', async () => {
+    signInAsRoot()
+    const user = userEvent.setup()
+    const { post } = mockApi()
+    post.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          ...upstreamReport,
+          channels: upstreamReport.channels.map((channel) => ({
+            ...channel,
+            status: 'error',
+            error: 'pricing request returned HTTP 500',
+          })),
+        },
+      },
+    })
+    renderSection()
+
+    await user.click(
+      await screen.findByRole('tab', { name: /Upstream repriced \(1\)/ })
+    )
+    await user.click(screen.getByRole('button', { name: /gpt-done/ }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Fetch latest price' })
+    )
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith(
+        '/api/models/onboarding/upstream_prices/check'
+      )
+    )
+    expect(
+      await screen.findByRole('button', { name: 'Fetch latest price' })
+    ).toBeEnabled()
+    expect(
+      screen.queryByRole('button', { name: 'Confirm upstream price' })
+    ).toBeNull()
+    expect(screen.queryByText('Latest upstream price')).toBeNull()
   })
 
   it('marks a supplier price change handled on every channel without copying it', async () => {
@@ -441,7 +496,7 @@ describe('model onboarding workbench', () => {
       await screen.findByText('Upstream price of alpha unchanged')
     ).toBeVisible()
     expect(
-      screen.queryByRole('button', { name: 'Use upstream price' })
+      screen.queryByRole('button', { name: 'Fetch latest price' })
     ).toBeNull()
     expect(
       screen.queryByRole('button', { name: 'Save model prices' })
