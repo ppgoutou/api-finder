@@ -40,6 +40,9 @@ func adaptPluginsToSupplierModels(ctx context.Context, snapshots map[string]upst
 	entriesChanged, recordsChanged := false, false
 	now := common.GetTimestamp()
 	for _, item := range overview.Items {
+		if item.Ignored {
+			continue
+		}
 		for _, channel := range slices.Concat(item.PendingChannels, item.Channels) {
 			if channel.PluginKey == "" {
 				continue

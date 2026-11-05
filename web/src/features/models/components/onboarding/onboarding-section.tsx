@@ -17,7 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, PenLine, RefreshCw, ScanSearch } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  History,
+  PenLine,
+  RefreshCw,
+  ScanSearch,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -46,6 +53,7 @@ import {
   getModelOnboarding,
   getUpstreamPrices,
   getVendors,
+  setOnboardingIgnored,
   setUpstreamPricingToken,
 } from '../../api'
 import { useOnboardingSync } from '../../hooks/use-onboarding-sync'
@@ -146,13 +154,13 @@ export function OnboardingSection() {
       pending: 0,
       removed: 0,
       priced: 0,
-      all: allRows.length,
+      ignored: 0,
+      all: 0,
     }
     for (const row of allRows) {
-      if (matchesOnboardingFilter(row.status, 'todo')) result.todo++
-      if (row.status.pending) result.pending++
-      if (row.status.removed) result.removed++
-      if (row.status.priceChanged) result.priced++
+      for (const key of Object.keys(result) as OnboardingFilter[]) {
+        if (matchesOnboardingFilter(row.status, key)) result[key]++
+      }
     }
     return result
   }, [allRows])
@@ -252,6 +260,28 @@ export function OnboardingSection() {
     },
   })
 
+  const changeIgnored = useMutation({
+    mutationFn: async (request: { names: string[]; ignored: boolean }) => {
+      requireServerSuccess(
+        await setOnboardingIgnored({
+          model_names: request.names,
+          ignored: request.ignored,
+        })
+      )
+      return request
+    },
+    onSettled: refresh,
+    onSuccess: (request) => {
+      setChecked(new Set())
+      const count = request.names.length
+      toast.success(
+        request.ignored
+          ? t('Ignored {{count}} models', { count })
+          : t('Restored {{count}} models', { count })
+      )
+    },
+  })
+
   const sync = useOnboardingSync(refresh)
 
   const select = (name: string) => {
@@ -276,6 +306,15 @@ export function OnboardingSection() {
   const checkedPending = allRows.some(
     (row) => checked.has(row.item.model_name) && row.status.pending
   )
+  const checkedByIgnored = (ignored: boolean) =>
+    allRows
+      .filter(
+        (row) =>
+          checked.has(row.item.model_name) && row.status.ignored === ignored
+      )
+      .map((row) => row.item.model_name)
+  const checkedToIgnore = checkedByIgnored(false)
+  const checkedToRestore = checkedByIgnored(true)
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-3 overflow-auto lg:overflow-hidden'>
@@ -294,6 +333,39 @@ export function OnboardingSection() {
             >
               {t('Add {{count}} selected to their channels', {
                 count: checked.size,
+              })}
+            </Button>
+          )}
+          {checkedToIgnore.length > 0 && (
+            <Button
+              size='sm'
+              variant='outline'
+              disabled={changeIgnored.isPending}
+              onClick={() =>
+                changeIgnored.mutate({ names: checkedToIgnore, ignored: true })
+              }
+            >
+              <EyeOff aria-hidden className='size-4' />
+              {t('Ignore {{count}} selected', {
+                count: checkedToIgnore.length,
+              })}
+            </Button>
+          )}
+          {checkedToRestore.length > 0 && (
+            <Button
+              size='sm'
+              variant='outline'
+              disabled={changeIgnored.isPending}
+              onClick={() =>
+                changeIgnored.mutate({
+                  names: checkedToRestore,
+                  ignored: false,
+                })
+              }
+            >
+              <Eye aria-hidden className='size-4' />
+              {t('Restore {{count}} selected', {
+                count: checkedToRestore.length,
               })}
             </Button>
           )}
@@ -365,6 +437,13 @@ export function OnboardingSection() {
             onSaveCategories={saveCategories}
             onChanged={refresh}
             onDirtyChange={setEditorDirty}
+            changingIgnored={changeIgnored.isPending}
+            onToggleIgnored={() =>
+              changeIgnored.mutate({
+                names: [current.item.model_name],
+                ignored: !current.status.ignored,
+              })
+            }
             upstreamPrice={
               upstreamPrices.data?.models?.[current.item.model_name]
             }

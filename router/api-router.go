@@ -421,6 +421,7 @@ func SetApiRouter(router *gin.Engine) {
 			modelsRoute.POST("/delete", controller.BatchDeleteModelMeta)
 			modelsRoute.GET("/missing", controller.GetMissingModels)
 			modelsRoute.GET("/onboarding", controller.GetModelOnboarding)
+			modelsRoute.POST("/onboarding/ignore", controller.SetModelOnboardingIgnored)
 			upstreamPricesRoute := modelsRoute.Group("/onboarding/upstream_prices")
 			upstreamPricesRoute.Use(middleware.RootAuth())
 			{

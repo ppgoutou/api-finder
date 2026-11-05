@@ -282,6 +282,8 @@ export type OnboardingModel = {
   metadata_rule?: string
   /** Prepared metadata of a model that has none yet. */
   draft?: OnboardingDraft
+  /** Set aside by the admin: stays out of the to-do list until restored. */
+  ignored?: boolean
 }
 
 export type OnboardingDraft = {

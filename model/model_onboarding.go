@@ -55,6 +55,8 @@ type OnboardingModel struct {
 	MetadataRule    string              `json:"metadata_rule,omitempty"`
 	// Draft is the prepared metadata of a model that has none yet.
 	Draft *OnboardingDraft `json:"draft,omitempty"`
+	// Ignored marks a model the admin set aside for now.
+	Ignored bool `json:"ignored,omitempty"`
 }
 
 type OnboardingOverview struct {
@@ -130,9 +132,11 @@ func GetOnboardingOverview() (*OnboardingOverview, error) {
 	slices.Sort(names)
 	resolved := resolveModelMetadata(metadata, names)
 	drafts := GetOnboardingDrafts()
+	ignored := GetOnboardingIgnoredModels()
 	overview := &OnboardingOverview{Items: make([]OnboardingModel, 0, len(names))}
 	for _, name := range names {
 		entry := items[name]
+		entry.Ignored = slices.Contains(ignored, name)
 		if record := resolved[name]; record != nil {
 			if record.NameRule == NameRuleExact {
 				entry.MetadataID = record.Id

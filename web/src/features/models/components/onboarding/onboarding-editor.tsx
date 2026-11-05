@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation } from '@tanstack/react-query'
-import { Check } from 'lucide-react'
+import { Check, Eye, EyeOff } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -64,6 +64,8 @@ export function OnboardingEditor(props: {
   onSaveCategories: (next: PricingCategory[]) => Promise<void>
   onChanged: () => Promise<void>
   onDirtyChange: (dirty: boolean) => void
+  changingIgnored: boolean
+  onToggleIgnored: () => void
   upstreamPrice: UpstreamModelPrice | undefined
   applyingUpstreamPrice: boolean
   onApplyUpstreamPrice: () => void
@@ -105,15 +107,30 @@ export function OnboardingEditor(props: {
 
   return (
     <div className='space-y-4 pb-4 lg:min-h-0 lg:overflow-auto'>
-      <div>
-        <h2 className='font-mono text-lg font-semibold break-all'>
-          {props.item.model_name}
-        </h2>
-        <p className='text-muted-foreground text-sm'>
-          {t(
-            'Each card saves on its own. Work top to bottom to put the model on sale.'
+      <div className='flex flex-wrap items-start justify-between gap-2'>
+        <div className='min-w-0'>
+          <h2 className='font-mono text-lg font-semibold break-all'>
+            {props.item.model_name}
+          </h2>
+          <p className='text-muted-foreground text-sm'>
+            {t(
+              'Each card saves on its own. Work top to bottom to put the model on sale.'
+            )}
+          </p>
+        </div>
+        <Button
+          size='sm'
+          variant='outline'
+          disabled={props.changingIgnored}
+          onClick={props.onToggleIgnored}
+        >
+          {props.item.ignored ? (
+            <Eye aria-hidden className='size-4' />
+          ) : (
+            <EyeOff aria-hidden className='size-4' />
           )}
-        </p>
+          {props.item.ignored ? t('Restore') : t('Ignore this model')}
+        </Button>
       </div>
       <OnboardingGoLiveCard
         item={props.item}

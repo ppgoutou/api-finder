@@ -10,6 +10,10 @@ import (
 // prepared for pending models, keyed by model name.
 const OnboardingDraftsOption = "OnboardingMetadataDrafts"
 
+// OnboardingIgnoredModelsOption lists the models the admin set aside. They stay
+// out of the to-do list and the automatic preparation until restored.
+const OnboardingIgnoredModelsOption = "OnboardingIgnoredModels"
+
 // OnboardingDraft is the description, icon, tags and vendor suggested for a
 // model that has no metadata yet. The admin reviews it before it is saved.
 type OnboardingDraft struct {
@@ -24,6 +28,17 @@ type OnboardingDraft struct {
 	// Error explains why the description was not polished.
 	Error       string `json:"error,omitempty"`
 	GeneratedAt int64  `json:"generated_at"`
+}
+
+func GetOnboardingIgnoredModels() []string {
+	common.OptionMapRWMutex.RLock()
+	raw := common.OptionMap[OnboardingIgnoredModelsOption]
+	common.OptionMapRWMutex.RUnlock()
+	ignored := []string{}
+	if strings.TrimSpace(raw) != "" {
+		_ = common.UnmarshalJsonStr(raw, &ignored)
+	}
+	return ignored
 }
 
 func GetOnboardingDrafts() map[string]OnboardingDraft {

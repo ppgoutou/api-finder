@@ -157,7 +157,8 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
 			{"model_name":"new-model","quota_type":0,"model_ratio":1,"billing_mode":"tiered_expr","billing_expr":"tier(\"base\", p * 2 + c * 8)"},
 			{"model_name":"priced-model","quota_type":1,"model_price":` + supplierPrice + `},
-			{"model_name":"unserved-model","quota_type":1,"model_price":0.9}
+			{"model_name":"unserved-model","quota_type":1,"model_price":0.9},
+			{"model_name":"pending-model","quota_type":1,"model_price":0.7}
 		]}`))
 	}))
 	t.Cleanup(upstream.Close)
@@ -165,6 +166,7 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 	require.NoError(t, model.DB.Create(&model.Channel{
 		Id: 1, Type: 1, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
 		Group: "default", Models: "new-model,priced-model", BaseURL: &baseURL,
+		OtherSettings: `{"upstream_model_update_last_detected_models":["pending-model"]}`,
 	}).Error)
 	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "  "}))
 	assert.False(t, upstreamPriceCheckHandler{}.Enabled(), "the scheduled check waits for a supplier token")
@@ -201,6 +203,10 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 	assert.Equal(t, model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": expr}, pricing("new-model"))
 	assert.Equal(t, model.PricingValues{"ModelPrice": 0.2}, pricing("priced-model"))
 	assert.NotContains(t, models, "unserved-model")
+	pendingPrice := models["pending-model"].(map[string]any)
+	assert.Equal(t, map[string]any{"ModelPrice": 0.7}, pendingPrice["pricing"], "a pending model shows its supplier price for review")
+	assert.Equal(t, false, pendingPrice["in_sync"])
+	assert.Empty(t, pricing("pending-model"), "a check never prices a model no channel serves")
 	assert.Equal(t, true, models["new-model"].(map[string]any)["in_sync"])
 	assert.Equal(t, true, models["priced-model"].(map[string]any)["in_sync"],
 		"a local price that differs from the supplier's text is not a supplier change")
@@ -222,6 +228,50 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 
 	assert.Equal(t, model.PricingValues{"ModelPrice": 0.5}, pricing("priced-model"))
 	assert.Equal(t, true, models["priced-model"].(map[string]any)["in_sync"])
+
+	models = call(ApplyOnboardingUpstreamPrice, `{"model_name":"pending-model"}`)
+
+	assert.Equal(t, model.PricingValues{"ModelPrice": 0.7}, pricing("pending-model"), "the admin can confirm a pending model's price")
+	assert.Equal(t, true, models["pending-model"].(map[string]any)["in_sync"])
+}
+
+func TestSetModelOnboardingIgnoredMovesModelsAside(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: 1, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
+		Group: "default", Models: "served-model",
+		OtherSettings: `{"upstream_model_update_last_detected_models":["pending-a","pending-b"]}`,
+	}).Error)
+	set := func(body string) int {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		context, _ := gin.CreateTestContext(recorder)
+		context.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		SetModelOnboardingIgnored(context)
+		return recorder.Code
+	}
+	ignored := func() []string {
+		t.Helper()
+		overview, err := model.GetOnboardingOverview()
+		require.NoError(t, err)
+		names := []string{}
+		for _, item := range overview.Items {
+			if item.Ignored {
+				names = append(names, item.ModelName)
+			}
+		}
+		return names
+	}
+
+	assert.Equal(t, http.StatusBadRequest, set(`{"ignored":true}`))
+
+	require.Equal(t, http.StatusOK, set(`{"model_names":["pending-a","pending-b"],"ignored":true}`))
+	require.Equal(t, http.StatusOK, set(`{"model_names":["pending-a"],"ignored":true}`))
+	assert.Equal(t, []string{"pending-a", "pending-b"}, ignored(), "ignoring twice keeps one entry")
+
+	require.Equal(t, http.StatusOK, set(`{"model_names":["pending-a"],"ignored":false}`))
+	assert.Equal(t, []string{"pending-b"}, ignored())
+	assert.Equal(t, []string{"pending-a"}, prepareOnboardingDrafts(context.Background()), "only the restored model gets a draft")
 }
 
 const adaptingPluginSource = `

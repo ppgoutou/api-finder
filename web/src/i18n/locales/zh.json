@@ -7914,6 +7914,15 @@
     "/1M tokens": "/百万 Token",
     "Enable Stripe": "启用 Stripe",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "关闭后，用户无法发起 Stripe 支付，钱包页也不再显示 Stripe。Webhook 继续运行，已付款的订单和退款仍会正常处理。",
-    "Stripe payment is disabled": "Stripe 支付已关闭"
+    "Stripe payment is disabled": "Stripe 支付已关闭",
+    "Ignored": "已忽略",
+    "Restore": "恢复",
+    "No ignored models": "没有已忽略的模型",
+    "Models you set aside wait here until you restore them.": "暂时不处理的模型会放在这里，恢复后回到待处理。",
+    "Ignore {{count}} selected": "忽略所选 {{count}} 个",
+    "Restore {{count}} selected": "恢复所选 {{count}} 个",
+    "Ignored {{count}} models": "已忽略 {{count}} 个模型",
+    "Restored {{count}} models": "已恢复 {{count}} 个模型",
+    "Ignore this model": "忽略此模型"
   }
 }

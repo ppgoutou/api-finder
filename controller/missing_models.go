@@ -2,6 +2,8 @@ package controller
 
 import (
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -37,4 +39,35 @@ func GetModelOnboarding(c *gin.Context) {
 		return
 	}
 	common.ApiSuccess(c, overview)
+}
+
+// SetModelOnboardingIgnored sets models aside or restores them. It only moves
+// them on the workbench: channels, prices and metadata stay as they are.
+func SetModelOnboardingIgnored(c *gin.Context) {
+	var request struct {
+		ModelNames []string `json:"model_names"`
+		Ignored    bool     `json:"ignored"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &request); err != nil || len(request.ModelNames) == 0 {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid request parameter format"))
+		return
+	}
+	ignored := model.GetOnboardingIgnoredModels()
+	for _, name := range request.ModelNames {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		ignored = slices.DeleteFunc(ignored, func(existing string) bool { return existing == name })
+		if request.Ignored {
+			ignored = append(ignored, name)
+		}
+	}
+	slices.Sort(ignored)
+	if err := writeOnboardingOption(model.OnboardingIgnoredModelsOption, ignored); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	recordManageAudit(c, "model.onboarding.ignore", map[string]any{"models": request.ModelNames, "ignored": request.Ignored})
+	common.ApiSuccess(c, nil)
 }

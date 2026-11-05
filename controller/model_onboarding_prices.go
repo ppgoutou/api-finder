@@ -16,6 +16,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 
@@ -77,6 +78,8 @@ type upstreamPriceChannel struct {
 	Status       string `json:"status,omitempty"`
 	Error        string `json:"error,omitempty"`
 	models       []string
+	// pendingModels are the supplier's models the channel does not serve yet.
+	pendingModels []string
 }
 
 // upstreamModelPrice is the supplier's latest price for one served model,
@@ -87,6 +90,9 @@ type upstreamModelPrice struct {
 	Pricing     model.PricingValues `json:"pricing,omitempty"`
 	Error       string              `json:"error,omitempty"`
 	InSync      bool                `json:"in_sync"`
+	// pending marks a model no channel serves yet. Its price is shown for
+	// review but never applied by a scheduled check.
+	pending bool
 }
 
 // Supplier rows that cannot become a local draft. They are frontend locale keys.
@@ -276,26 +282,33 @@ func chargedModelPricing(configured model.PricingValues) model.PricingValues {
 	return charged
 }
 
-// upstreamModelPrices maps each model a watched channel serves to its latest
-// supplier price, taken from the lowest-id channel that lists it.
+// upstreamModelPrices maps each model a watched channel serves or is offered
+// to its latest supplier price, taken from the lowest-id channel that lists it.
+// A channel serving the model wins over one that only has it pending.
 func upstreamModelPrices(rows []upstreamPriceChannel, snapshots map[string]upstreamPriceSnapshot) map[string]upstreamModelPrice {
 	prices := make(map[string]upstreamModelPrice)
-	for _, row := range rows {
-		latest := snapshots[strconv.Itoa(row.ID)].Latest
-		for _, name := range row.models {
-			name = strings.TrimSpace(name)
-			fields, ok := latest[name]
-			if _, seen := prices[name]; seen || !ok {
-				continue
+	for _, pending := range []bool{false, true} {
+		for _, row := range rows {
+			latest := snapshots[strconv.Itoa(row.ID)].Latest
+			names := row.models
+			if pending {
+				names = row.pendingModels
 			}
-			price := upstreamModelPrice{ChannelID: row.ID, ChannelName: row.Name}
-			pricing, err := upstreamModelPricing(fields)
-			if err != nil {
-				price.Error = err.Error()
-			} else {
-				price.Pricing = pricing
+			for _, name := range names {
+				name = strings.TrimSpace(name)
+				fields, ok := latest[name]
+				if _, seen := prices[name]; seen || !ok {
+					continue
+				}
+				price := upstreamModelPrice{ChannelID: row.ID, ChannelName: row.Name, pending: pending}
+				pricing, err := upstreamModelPricing(fields)
+				if err != nil {
+					price.Error = err.Error()
+				} else {
+					price.Pricing = pricing
+				}
+				prices[name] = price
 			}
-			prices[name] = price
 		}
 	}
 	return prices
@@ -370,7 +383,7 @@ func fetchUpstreamPricing(ctx context.Context, baseURL, token string) (map[strin
 
 func upstreamPriceChannels() ([]*model.Channel, error) {
 	var channels []*model.Channel
-	err := model.DB.Select("id", "name", "type", "base_url", "status", "models").
+	err := model.DB.Select("id", "name", "type", "base_url", "status", "models", "settings").
 		Where("status = ?", common.ChannelStatusEnabled).
 		Order("id").
 		Find(&channels).Error
@@ -389,14 +402,21 @@ func upstreamPriceChannelRows(channels []*model.Channel) []upstreamPriceChannel 
 	for _, channel := range channels {
 		key := strconv.Itoa(channel.Id)
 		snapshot := snapshots[key]
+		// Parsed here instead of GetOtherSettings, which rewrites malformed
+		// settings with Save and would clobber the unselected columns.
+		var settings dto.ChannelOtherSettings
+		if channel.OtherSettings != "" {
+			_ = common.UnmarshalJsonStr(channel.OtherSettings, &settings)
+		}
 		rows = append(rows, upstreamPriceChannel{
-			ID:           channel.Id,
-			Name:         channel.Name,
-			BaseURL:      channel.GetBaseURL(),
-			HasToken:     strings.TrimSpace(tokens[key]) != "",
-			BaselineTime: snapshot.BaselineTime,
-			LatestTime:   snapshot.LatestTime,
-			models:       channel.GetModels(),
+			ID:            channel.Id,
+			Name:          channel.Name,
+			BaseURL:       channel.GetBaseURL(),
+			HasToken:      strings.TrimSpace(tokens[key]) != "",
+			BaselineTime:  snapshot.BaselineTime,
+			LatestTime:    snapshot.LatestTime,
+			models:        channel.GetModels(),
+			pendingModels: settings.UpstreamModelUpdateLastDetectedModels,
 		})
 	}
 	return rows
@@ -605,8 +625,9 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 			return upstreamPriceCheckResult{}, err
 		}
 		for _, entry := range local.Entries {
-			pricing := prices[entry.ModelName].Pricing
-			if pricing == nil || len(chargedModelPricing(entry.Configured)) > 0 {
+			price := prices[entry.ModelName]
+			pricing := price.Pricing
+			if pricing == nil || price.pending || len(chargedModelPricing(entry.Configured)) > 0 {
 				continue
 			}
 			if err := applyUpstreamModelPrice(entry.ModelName, entry, pricing); err != nil {

@@ -7914,6 +7914,15 @@
     "/1M tokens": "/1 triệu token",
     "Enable Stripe": "Bật Stripe",
     "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Khi tắt, người dùng không thể bắt đầu thanh toán Stripe và ví sẽ ẩn Stripe. Webhook vẫn hoạt động nên các đơn đã thanh toán và khoản hoàn tiền vẫn được xử lý.",
-    "Stripe payment is disabled": "Thanh toán Stripe đã bị tắt"
+    "Stripe payment is disabled": "Thanh toán Stripe đã bị tắt",
+    "Ignored": "Đã bỏ qua",
+    "Restore": "Khôi phục",
+    "No ignored models": "Không có mô hình bị bỏ qua",
+    "Models you set aside wait here until you restore them.": "Các mô hình tạm gác lại sẽ ở đây cho đến khi bạn khôi phục.",
+    "Ignore {{count}} selected": "Bỏ qua {{count}} mục đã chọn",
+    "Restore {{count}} selected": "Khôi phục {{count}} mục đã chọn",
+    "Ignored {{count}} models": "Đã bỏ qua {{count}} mô hình",
+    "Restored {{count}} models": "Đã khôi phục {{count}} mô hình",
+    "Ignore this model": "Bỏ qua mô hình này"
   }
 }
