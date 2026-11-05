@@ -11,7 +11,7 @@ func isPaymentComplianceConfirmed() bool {
 	return operation_setting.IsPaymentComplianceConfirmed()
 }
 
-func isStripeTopUpEnabled() bool {
+func isStripeConfigured() bool {
 	if !isPaymentComplianceConfirmed() {
 		return false
 	}
@@ -20,12 +20,19 @@ func isStripeTopUpEnabled() bool {
 		strings.TrimSpace(setting.StripePriceId) != ""
 }
 
+func isStripeTopUpEnabled() bool {
+	return setting.StripeEnabled && isStripeConfigured()
+}
+
 func isStripeWebhookConfigured() bool {
 	return strings.TrimSpace(setting.StripeWebhookSecret) != ""
 }
 
+// isStripeWebhookEnabled ignores setting.StripeEnabled: switching new payments
+// off must not lose the credit of a session already paid, nor stop refunds and
+// disputes from taking quota back.
 func isStripeWebhookEnabled() bool {
-	return isStripeTopUpEnabled()
+	return isStripeConfigured()
 }
 
 func isCreemTopUpEnabled() bool {

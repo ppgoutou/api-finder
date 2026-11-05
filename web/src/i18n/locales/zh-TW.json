@@ -7934,6 +7934,9 @@
     "/video": "/條",
     "/image": "/張",
     "/request": "/次",
-    "/1M tokens": "/百萬 Token"
+    "/1M tokens": "/百萬 Token",
+    "Enable Stripe": "啟用 Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "關閉後，使用者無法發起 Stripe 付款，錢包頁也不再顯示 Stripe。Webhook 會繼續運作，已付款的訂單和退款仍會正常處理。",
+    "Stripe payment is disabled": "Stripe 付款已關閉"
   }
 }

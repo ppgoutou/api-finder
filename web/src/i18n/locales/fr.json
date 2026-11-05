@@ -7934,6 +7934,9 @@
     "/video": "/vidéo",
     "/image": "/image",
     "/request": "/requête",
-    "/1M tokens": "/1M tokens"
+    "/1M tokens": "/1M tokens",
+    "Enable Stripe": "Activer Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Une fois désactivé, les utilisateurs ne peuvent plus lancer de paiement Stripe et le portefeuille masque Stripe. Les webhooks restent actifs pour traiter les commandes payées et les remboursements.",
+    "Stripe payment is disabled": "Le paiement Stripe est désactivé"
   }
 }

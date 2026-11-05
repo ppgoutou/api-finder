@@ -45,6 +45,8 @@ interface RedemptionCardProps {
   onRedeem: () => void
   redeeming: boolean
   loading?: boolean
+  /** Set while the recharge card, which normally has this entry, is hidden. */
+  onOpenBilling?: () => void
 }
 
 export function RedemptionCard(props: RedemptionCardProps) {
@@ -97,17 +99,29 @@ export function RedemptionCard(props: RedemptionCardProps) {
       headerClassName={WALLET_CARD_HEADER_CLASS}
       inlineAction
       action={
-        <a
-          href={REDEMPTION_ORDERS_URL}
-          target='_blank'
-          rel='noopener noreferrer'
-          className={cn(
-            buttonVariants({ variant: 'ghost', size: 'sm' }),
-            WALLET_HEADER_ACTION_CLASS
+        <div className='flex items-center gap-3'>
+          {props.onOpenBilling && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={props.onOpenBilling}
+              className={WALLET_HEADER_ACTION_CLASS}
+            >
+              {t('Order History')}
+            </Button>
           )}
-        >
-          {t('Redemption Records')}
-        </a>
+          <a
+            href={REDEMPTION_ORDERS_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'sm' }),
+              WALLET_HEADER_ACTION_CLASS
+            )}
+          >
+            {t('Redemption Records')}
+          </a>
+        </div>
       }
       contentClassName='flex flex-1 flex-col gap-5 p-4 sm:p-6'
     >

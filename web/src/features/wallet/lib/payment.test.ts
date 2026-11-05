@@ -19,10 +19,12 @@ For commercial licensing, please contact support@quantumnous.com
 import { describe, expect, test } from 'vitest'
 
 import { PAYMENT_TYPES } from '../constants'
+import type { TopupInfo } from '../types'
 import { formatPaymentAmount } from './format'
 import {
   dispatchSelectedPayment,
   getPaymentCurrency,
+  hasOnlineTopup,
   isStripePayment,
   isWaffoPayment,
   isWaffoPancakePayment,
@@ -35,6 +37,30 @@ describe('payment type classification', () => {
     expect(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO_PANCAKE)).toBe(true)
     expect(isWaffoPancakePayment(PAYMENT_TYPES.WAFFO)).toBe(false)
     expect(isStripePayment(PAYMENT_TYPES.STRIPE)).toBe(true)
+  })
+})
+
+describe('online top-up availability', () => {
+  const noGateway = {
+    enable_online_topup: false,
+    enable_stripe_topup: false,
+    enable_creem_topup: false,
+    enable_waffo_topup: false,
+    enable_waffo_pancake_topup: false,
+  } as TopupInfo
+
+  test('reports none once the last gateway is switched off', () => {
+    expect(hasOnlineTopup(noGateway)).toBe(false)
+  })
+
+  test('reports one while Stripe is on', () => {
+    expect(hasOnlineTopup({ ...noGateway, enable_stripe_topup: true })).toBe(
+      true
+    )
+  })
+
+  test('reports one when USDT is the only gateway on', () => {
+    expect(hasOnlineTopup({ ...noGateway, enable_usdt_topup: true })).toBe(true)
   })
 })
 

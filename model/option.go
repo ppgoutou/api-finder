@@ -99,6 +99,7 @@ func InitOptionMap() {
 	common.OptionMap["USDExchangeRate"] = strconv.FormatFloat(operation_setting.USDExchangeRate, 'f', -1, 64)
 	common.OptionMap["MinTopUp"] = strconv.Itoa(operation_setting.MinTopUp)
 	common.OptionMap["StripeMinTopUp"] = strconv.Itoa(setting.StripeMinTopUp)
+	common.OptionMap["StripeEnabled"] = strconv.FormatBool(setting.StripeEnabled)
 	common.OptionMap["StripeApiSecret"] = setting.StripeApiSecret
 	common.OptionMap["XPixelToken"] = setting.XPixelToken
 	common.OptionMap["XPixelSignupEventId"] = setting.XPixelSignupEventId
@@ -532,6 +533,8 @@ func updateOptionMap(key string, value string) (err error) {
 		operation_setting.USDExchangeRate, _ = strconv.ParseFloat(value, 64)
 	case "MinTopUp":
 		operation_setting.MinTopUp, _ = strconv.Atoi(value)
+	case "StripeEnabled":
+		setting.StripeEnabled = value == "true"
 	case "StripeApiSecret":
 		setting.StripeApiSecret = value
 	case "XPixelToken":

@@ -7934,6 +7934,9 @@
     "/video": "/video",
     "/image": "/image",
     "/request": "/request",
-    "/1M tokens": "/1M tokens"
+    "/1M tokens": "/1M tokens",
+    "Enable Stripe": "Enable Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.",
+    "Stripe payment is disabled": "Stripe payment is disabled"
   }
 }
