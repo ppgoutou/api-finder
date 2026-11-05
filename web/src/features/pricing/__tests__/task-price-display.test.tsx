@@ -56,11 +56,14 @@ const referenceVideoSchema: BillingUsageSchema = {
       video: { en: 'With reference video' },
     },
   },
+  resolution: { enum: ['720p'] },
 }
 
+// The two forms take different parser paths: the first keeps the expression's
+// order, the second is read as a complete partition in schema order.
 it.each([
-  'u("video_input") == "video" ? tier("a", u("tokens") * 2) : tier("b", u("tokens") * 3)',
-  'u("video_input") == "none" ? tier("b", u("tokens") * 3) : tier("a", u("tokens") * 2)',
+  'u("video_input") == "video" ? tier("video", (u("tokens") * 35) / 1000000) : tier("none", (u("tokens") * 58) / 1000000)',
+  'u("video_input") == "none" ? tier("none", u("tokens") * 58 / 6.8 / 1000000) : tier("video", u("tokens") * 35 / 6.8 / 1000000)',
 ])(
   'lists conditions in schema order whichever option %s tests first',
   (expression) => {
