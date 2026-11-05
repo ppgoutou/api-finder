@@ -54,7 +54,10 @@ import {
   type DynamicPriceLabelKind,
   type DynamicPriceOptions,
 } from '../lib/dynamic-price'
-import { getTaskPricingDisplayTiers } from '../lib/task-matrix-display'
+import {
+  getTaskPricingDisplayTiers,
+  sortTaskTiersBySchema,
+} from '../lib/task-matrix-display'
 import {
   taskPriceLabel,
   taskUsageUnitLabel,
@@ -65,6 +68,11 @@ import type { BillingUsageSchema, BillingUsageUnit } from '../types'
 
 type DynamicPricingBreakdownProps = {
   billingExpr: string | null | undefined
+  /**
+   * List task tiers in the usage schema's order rather than the expression's,
+   * so prices shown side by side keep each condition on the same row.
+   */
+  sortTiersBySchema?: boolean
   /**
    * Label of the tier that fired for the current request. When provided,
    * the corresponding row is highlighted and tagged as "Matched". Used by
@@ -291,6 +299,7 @@ export function DynamicPricingBreakdown({
   usageSchema,
   taskPriceOptions,
   usageFacts,
+  sortTiersBySchema = false,
 }: DynamicPricingBreakdownProps) {
   const { t, i18n } = useTranslation()
   const expr = billingExpr || ''
@@ -303,9 +312,18 @@ export function DynamicPricingBreakdown({
 
   const { tiers, ruleGroups } = useMemo(() => {
     const split = splitBillingExprAndRequestRules(expr)
-    const parsedTiers = usageSchema
-      ? getTaskPricingDisplayTiers(split.billingExpr, usageSchema)
-      : parseTiersFromExpr(split.billingExpr)
+    let parsedTiers: BreakdownTier[]
+    if (!usageSchema) {
+      parsedTiers = parseTiersFromExpr(split.billingExpr)
+    } else {
+      const taskTiers = getTaskPricingDisplayTiers(
+        split.billingExpr,
+        usageSchema
+      )
+      parsedTiers = sortTiersBySchema
+        ? sortTaskTiersBySchema(taskTiers, usageSchema)
+        : taskTiers
+    }
     let parsedRules =
       requestRules != null
         ? requestRuleGroupsFromTrace(requestRules)
@@ -326,7 +344,7 @@ export function DynamicPricingBreakdown({
       tiers: parsedTiers,
       ruleGroups: parsedRules || [],
     }
-  }, [expr, usageSchema, requestRules])
+  }, [expr, usageSchema, sortTiersBySchema, requestRules])
 
   const hasTiers = tiers.length > 0
   const hasRules = ruleGroups.length > 0

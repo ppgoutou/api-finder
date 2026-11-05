@@ -205,6 +205,7 @@ function PriceSummary(props: {
       {isDynamicPricingModel(props.model) && (
         <DynamicPricingBreakdown
           compact
+          sortTiersBySchema
           billingExpr={props.model.billing_expr}
           usageSchema={props.usageSchema}
         />
