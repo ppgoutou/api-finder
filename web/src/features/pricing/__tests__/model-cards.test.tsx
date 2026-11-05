@@ -288,6 +288,38 @@ describe('model cards', () => {
     expect(onTry).toHaveBeenCalledWith('seedream-5.0', 'image')
   })
 
+  it('lists per-second prices by resolution, and offers the studio, when a reference video changes the price', () => {
+    render(
+      <ModelCard
+        model={pricingModel({
+          model_name: 'seedance-2.5-reference-switch',
+          enable_groups: ['default'],
+          billing_mode: 'tiered_expr',
+          billing_expr:
+            'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 1) : ' +
+            'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 2) : ' +
+            'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("seconds") * 3) : ' +
+            'tier("720p·video", u("seconds") * 4)',
+          billing_usage_schema: {
+            resolution: { enum: ['480p', '720p'] },
+            seconds: { type: 'number', unit: 'second' },
+            video_input: { enum: ['none', 'video'] },
+          },
+        })}
+        onClick={vi.fn()}
+        onTry={vi.fn()}
+      />
+    )
+
+    const prices = screen.getByLabelText('Video billing (per second)')
+    expect(within(prices).getByText('480p').nextSibling).toHaveTextContent('$1')
+    expect(within(prices).getByText('720p').nextSibling).toHaveTextContent('$3')
+    expect(
+      screen.getByText('Orders with reference videos are priced separately')
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Try' })).toBeVisible()
+  })
+
   it('offers no try button for a model the video studio cannot run', () => {
     render(
       <ModelCard model={pricingModel()} onClick={vi.fn()} onTry={vi.fn()} />

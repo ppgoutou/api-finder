@@ -340,6 +340,8 @@ export interface PriceRow {
   secondPrice: number
   /** USD per million tokens when the request carries a reference video. */
   referencePricePerMillion?: number
+  /** USD per output second when the request carries a reference video. */
+  referenceSecondPrice?: number
   tokensPerSecond?: number
   /** USD per video of any length, for models billed per video. */
   videoPrice?: number
@@ -349,7 +351,8 @@ export interface PriceRow {
  * Estimated charge in USD before the group discount. Requests with a
  * reference video are billed by tokens on output seconds plus reference
  * seconds, at least 2/3 of the output rounded up, which is how the server
- * settles them while the reference length is unknown.
+ * settles them while the reference length is unknown. Models with a per-second
+ * reference price bill those requests by output seconds alone.
  */
 export function estimateDraftCostUSD(
   row: PriceRow,
@@ -358,6 +361,9 @@ export function estimateDraftCostUSD(
   hasReferenceVideo: boolean
 ): number {
   if (row.videoPrice !== undefined) return row.videoPrice * count
+  if (hasReferenceVideo && row.referenceSecondPrice !== undefined) {
+    return row.referenceSecondPrice * seconds * count
+  }
   if (
     hasReferenceVideo &&
     row.referencePricePerMillion !== undefined &&

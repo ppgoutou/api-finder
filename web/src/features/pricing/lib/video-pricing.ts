@@ -76,6 +76,8 @@ export type VideoPricingRow = {
   secondPrice: number
   /** USD per million reference-order tokens, when reference orders are priced. */
   referencePricePerMillion?: number
+  /** USD per output second of an order with a reference video, when priced so. */
+  referenceSecondPrice?: number
   tokensPerSecond?: number
   /** USD per video of any length, for models billed per video. */
   videoPrice?: number
@@ -91,6 +93,7 @@ export type VideoPricing = {
 type VideoSchemaFields = {
   secondsField: string
   referenceField?: string
+  referenceSwitchField?: string
   optionField: string
 }
 
@@ -99,21 +102,33 @@ function getVideoSchemaFields(
 ): VideoSchemaFields | null {
   const numberFields = getTaskNumberFields(schema)
   const enumFields = getTaskEnumFields(schema)
-  if (enumFields.length !== 1) return null
   const seconds = numberFields.filter((entry) => entry[1].unit === 'second')
   const tokens = numberFields.filter((entry) => entry[1].unit === 'token')
   if (seconds.length !== 1 || tokens.length > 1) return null
   if (seconds.length + tokens.length !== numberFields.length) return null
+  // With a second enum, that one must switch reference pricing on or off.
+  const switches =
+    enumFields.length > 1
+      ? enumFields.filter(
+          (entry) =>
+            entry[1].enum?.length === 2 && entry[1].enum.includes('none')
+        )
+      : []
+  const optionFields = enumFields.filter((entry) => !switches.includes(entry))
+  if (optionFields.length !== 1 || switches.length > 1) return null
+  if (switches.length > 0 && tokens.length > 0) return null
   return {
     secondsField: seconds[0][0],
     referenceField: tokens[0]?.[0],
-    optionField: enumFields[0][0],
+    referenceSwitchField: switches[0]?.[0],
+    optionField: optionFields[0][0],
   }
 }
 
 /**
  * A video schema meters output seconds (optionally plus reference-order
- * tokens) and selects the price by exactly one enum, such as resolution.
+ * tokens) and selects the price by exactly one enum, such as resolution,
+ * optionally with a `none`/other enum that switches on reference pricing.
  */
 export function isVideoPricingSchema(
   schema: BillingUsageSchema | null | undefined
@@ -155,25 +170,40 @@ function videoPricingFromExpr(
   const pricedFields = [fields.secondsField, fields.referenceField]
   const options = schema[fields.optionField]?.enum ?? []
   const rowsByOption = new Map<string, VideoPricingRow>()
+  const referenceSecondPrices = new Map<string, number>()
   for (const tier of getTaskPricingDisplayTiers(split.billingExpr, schema)) {
-    // A model with a single option, such as a 720p-only line, has one
-    // unconditional tier that prices that option.
+    // A model with a single option, such as a 720p-only line, has tiers that
+    // never test that option.
     const option =
-      tier.conditions.length === 0 && options.length === 1
-        ? options[0]
-        : tier.conditions[0]?.value
+      tier.conditions.find(
+        (condition) => condition.field === fields.optionField
+      )?.value ?? (options.length === 1 ? options[0] : undefined)
+    const switchValue = tier.conditions.find(
+      (condition) => condition.field === fields.referenceSwitchField
+    )?.value
+    const isReferenceTier = switchValue !== undefined && switchValue !== 'none'
+    const seenPrices = isReferenceTier ? referenceSecondPrices : rowsByOption
     if (
       option === undefined ||
-      tier.conditions.length > 1 ||
-      (tier.conditions.length === 1 &&
-        tier.conditions[0].field !== fields.optionField) ||
+      tier.conditions.some(
+        (condition) =>
+          condition.field !== fields.optionField &&
+          condition.field !== fields.referenceSwitchField
+      ) ||
       tier.constant !== 0 ||
-      rowsByOption.has(option) ||
+      seenPrices.has(option) ||
       Object.keys(tier.unitPrices).some(
         (field) => !pricedFields.includes(field)
       )
     ) {
       return null
+    }
+    if (isReferenceTier) {
+      referenceSecondPrices.set(
+        option,
+        tier.unitPrices[fields.secondsField] ?? 0
+      )
+      continue
     }
     const referencePricePerMillion = fields.referenceField
       ? tier.unitPrices[fields.referenceField]
@@ -188,14 +218,29 @@ function videoPricingFromExpr(
 
   const rows = options.flatMap((option) => {
     const row = rowsByOption.get(option)
-    return row ? [row] : []
+    if (!row) return []
+    const referenceSecondPrice = referenceSecondPrices.get(option)
+    return [
+      referenceSecondPrice === undefined
+        ? row
+        : { ...row, referenceSecondPrice },
+    ]
   })
   if (rows.length === 0 || rows.length !== rowsByOption.size) return null
+  if (
+    referenceSecondPrices.size > 0 &&
+    (referenceSecondPrices.size !== rows.length ||
+      rows.some((row) => row.referenceSecondPrice === undefined))
+  ) {
+    return null
+  }
 
   return {
     optionField: fields.optionField,
     hasReferencePricing: rows.some(
-      (row) => row.referencePricePerMillion !== undefined
+      (row) =>
+        row.referencePricePerMillion !== undefined ||
+        row.referenceSecondPrice !== undefined
     ),
     durationRange: getModelDurationRange(model),
     rows,

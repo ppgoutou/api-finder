@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "Кодирование векторов в передаче",
     "with conflicts": "с конфликтами",
     "With linked models": "Со связанными моделями",
+    "With reference videos, only the output seconds are billed, at the reference price.": "При наличии референсного видео оплачиваются только секунды результата по референсной цене.",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "При наличии референсных видео весь заказ (выход + секунды референса) тарифицируется по цене с референсом. Референс короче 2/3 выхода считается как 2/3 с округлением вверх до целых секунд.",
     "with the API key from your token settings.": "на API-ключ из настроек токенов.",
     "With these settings, automatic disabling is off for all channels.": "При этих настройках автоотключение не действует ни для одного канала.",

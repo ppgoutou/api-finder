@@ -200,6 +200,100 @@ describe('video pricing', () => {
   })
 })
 
+describe('per-second video pricing with a reference video switch', () => {
+  const SWITCH_SCHEMA: BillingUsageSchema = {
+    seconds: { type: 'number', unit: 'second' },
+    video_input: { enum: ['none', 'video'] },
+    resolution: { enum: ['480p', '720p', '1080p'] },
+  }
+  const SWITCH_EXPR =
+    'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 0.5) : ' +
+    'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.65) : ' +
+    'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("seconds") * 0.8) : ' +
+    'u("resolution") == "720p" && u("video_input") == "video" ? tier("720p·video", u("seconds") * 1.05) : ' +
+    'u("resolution") == "1080p" && u("video_input") == "none" ? tier("1080p·none", u("seconds") * 1.45) : ' +
+    'tier("1080p·video", u("seconds") * 1.9)'
+
+  function switchModel(expression: string): PricingModel {
+    return videoModel(expression, { billing_usage_schema: SWITCH_SCHEMA })
+  }
+
+  test('lists the plain and reference price per second of each resolution', () => {
+    const pricing = getVideoPricing(switchModel(SWITCH_EXPR))
+
+    expect(pricing?.optionField).toBe('resolution')
+    expect(pricing?.hasReferencePricing).toBe(true)
+    expect(
+      pricing?.rows.map((row) => [
+        row.option,
+        row.secondPrice,
+        row.referenceSecondPrice,
+      ])
+    ).toEqual([
+      ['480p', 0.5, 0.65],
+      ['720p', 0.8, 1.05],
+      ['1080p', 1.45, 1.9],
+    ])
+    expect(pricing?.rows[0].referencePricePerMillion).toBeUndefined()
+  })
+
+  test('recognizes the switch only when its values are none and one other', () => {
+    expect(isVideoPricingSchema(SWITCH_SCHEMA)).toBe(true)
+    expect(
+      isVideoPricingSchema({
+        ...SWITCH_SCHEMA,
+        video_input: { enum: ['none', 'video', 'audio'] },
+      })
+    ).toBe(false)
+    expect(
+      isVideoPricingSchema({
+        ...SWITCH_SCHEMA,
+        reference_video_tokens: { type: 'number', unit: 'token' },
+      })
+    ).toBe(false)
+  })
+
+  test('reads a single-resolution model from its reference switch alone', () => {
+    const pricing = getVideoPricing(
+      videoModel(
+        'u("video_input") == "video" ? tier("video", u("seconds") * 1.05) : tier("none", u("seconds") * 0.8)',
+        {
+          billing_usage_schema: {
+            ...SWITCH_SCHEMA,
+            resolution: { enum: ['720p'] },
+          },
+        }
+      )
+    )
+
+    expect(pricing?.rows).toHaveLength(1)
+    expect(pricing?.rows[0]).toMatchObject({
+      option: '720p',
+      secondPrice: 0.8,
+      referenceSecondPrice: 1.05,
+    })
+  })
+
+  test('keeps the generic display when a resolution has no reference price', () => {
+    const expression =
+      'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 0.5) : ' +
+      'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.65) : ' +
+      'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("seconds") * 0.8) : ' +
+      'tier("1080p·none", u("seconds") * 1.45)'
+
+    expect(getVideoPricing(switchModel(expression))).toBeNull()
+  })
+
+  test('keeps the generic display when a resolution has only a reference price', () => {
+    const expression =
+      'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 0.5) : ' +
+      'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.65) : ' +
+      'tier("720p·video", u("seconds") * 1.05)'
+
+    expect(getVideoPricing(switchModel(expression))).toBeNull()
+  })
+})
+
 describe('per-video pricing', () => {
   const PER_VIDEO_SCHEMA: BillingUsageSchema = {
     resolution: { enum: ['720p'] },
