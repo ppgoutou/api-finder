@@ -67,6 +67,13 @@ import {
   renderLogContent,
 } from '../../lib/format'
 import {
+  getTopupAmount,
+  getTopupKind,
+  getTopupMethodLabel,
+  getTopupRemainingDetail,
+  type LogColumnMode,
+} from '../../lib/topup-log'
+import {
   isDisplayableLogType,
   isTimingLogType,
   getLogTypeConfig,
@@ -83,6 +90,23 @@ interface DetailSegment {
   text: string
   muted?: boolean
   danger?: boolean
+}
+
+// Filled only by consume, error and refund logs.
+const USAGE_COLUMN_IDS = new Set([
+  'channel',
+  'token_name',
+  'model_name',
+  'is_stream',
+  'prompt_tokens',
+  'quota',
+  'use_time',
+])
+
+function isUsageColumn(column: ColumnDef<UsageLog>): boolean {
+  const id =
+    'accessorKey' in column ? String(column.accessorKey) : (column.id ?? '')
+  return USAGE_COLUMN_IDS.has(id)
 }
 
 function formatRatioCompact(ratio: number | undefined): string {
@@ -116,8 +140,13 @@ function buildDetailSegments(
   t: (key: string, opts?: Record<string, unknown>) => string,
   isAdmin: boolean,
   language: string,
-  usageSchema?: BillingUsageSchema
+  usageSchema?: BillingUsageSchema,
+  columnMode: LogColumnMode = 'default'
 ): DetailSegment[] {
+  if (columnMode === 'topup') {
+    const remaining = getTopupRemainingDetail(other, t)
+    if (remaining) return [{ text: remaining }]
+  }
   const segments = buildTypeDetailSegments(log, other, t, language, usageSchema)
   const adminSegments: DetailSegment[] = []
   // Quota saturation is a rare, admin-only anomaly marker; surface it first
@@ -343,7 +372,8 @@ function buildTypeDetailSegments(
 export function useCommonLogsColumns(
   isAdmin: boolean,
   isRoot: boolean,
-  showBillingSource = false
+  showBillingSource = false,
+  columnMode: LogColumnMode = 'default'
 ): ColumnDef<UsageLog>[] {
   const { t } = useTranslation()
   const currency = useSystemConfigStore((state) => state.config.currency)
@@ -829,7 +859,8 @@ export function useCommonLogsColumns(
             t,
             isAdmin,
             i18n.language,
-            usageSchema
+            usageSchema,
+            columnMode
           )
           const primary = segments[0]
           const hasMore = segments.length > 1
@@ -870,7 +901,10 @@ export function useCommonLogsColumns(
             <>
               <button
                 type='button'
-                className='group flex max-w-[200px] items-center gap-1 text-left text-xs'
+                className={cn(
+                  'group flex items-center gap-1 text-left text-xs',
+                  columnMode === 'default' ? 'max-w-[200px]' : 'max-w-[480px]'
+                )}
                 onClick={() => setDialogOpen(true)}
                 title={t('Click to view full details')}
               >
@@ -886,13 +920,50 @@ export function useCommonLogsColumns(
             </>
           )
         },
-        size: 180,
-        maxSize: 200,
+        size: columnMode === 'default' ? 180 : 360,
+        maxSize: columnMode === 'default' ? 200 : 500,
       }
     )
 
-    return columns
+    if (columnMode === 'default') return columns
+
+    const visibleColumns = columns.filter((column) => !isUsageColumn(column))
+    if (columnMode === 'topup') {
+      const detailsIndex = visibleColumns.length - 1
+      visibleColumns.splice(
+        detailsIndex,
+        0,
+        {
+          id: 'topup_method',
+          header: t('Top-up Method'),
+          accessorFn: (row) => getTopupKind(parseLogOther(row.other)),
+          cell: ({ row }) => {
+            const kind = getTopupKind(parseLogOther(row.original.other))
+            return (
+              <span className='text-xs whitespace-nowrap'>
+                {kind ? getTopupMethodLabel(kind, t) : '—'}
+              </span>
+            )
+          },
+          enableSorting: false,
+          size: 150,
+        },
+        {
+          id: 'topup_amount',
+          header: t('Top-up amount'),
+          accessorFn: (row) => getTopupAmount(parseLogOther(row.other)),
+          cell: ({ row }) => (
+            <span className='font-mono text-xs font-medium tabular-nums'>
+              {getTopupAmount(parseLogOther(row.original.other)) ?? '—'}
+            </span>
+          ),
+          enableSorting: false,
+          size: 120,
+        }
+      )
+    }
+    return visibleColumns
     // Log formatters read currency settings from the store.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, isAdmin, isRoot, showBillingSource, currency])
+  }, [t, isAdmin, isRoot, showBillingSource, currency, columnMode])
 }

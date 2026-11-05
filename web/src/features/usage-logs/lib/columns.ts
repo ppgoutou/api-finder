@@ -25,6 +25,7 @@ import { useCommonLogsColumns } from '../components/columns/common-logs-columns'
 import { useDrawingLogsColumns } from '../components/columns/drawing-logs-columns'
 import { useTaskLogsColumns } from '../components/columns/task-logs-columns'
 import type { LogCategory } from '../types'
+import type { LogColumnMode } from './topup-log'
 
 /**
  * Get column definitions based on log category
@@ -34,10 +35,16 @@ export function useColumnsByCategory(
   logCategory: LogCategory,
   isAdmin: boolean,
   isRoot: boolean,
-  showBillingSource = false
+  showBillingSource = false,
+  commonColumnMode: LogColumnMode = 'default'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): ColumnDef<any>[] {
-  const commonColumns = useCommonLogsColumns(isAdmin, isRoot, showBillingSource)
+  const commonColumns = useCommonLogsColumns(
+    isAdmin,
+    isRoot,
+    showBillingSource,
+    commonColumnMode
+  )
   const drawingColumns = useDrawingLogsColumns(isAdmin)
   const taskColumns = useTaskLogsColumns(isAdmin, isRoot)
 
