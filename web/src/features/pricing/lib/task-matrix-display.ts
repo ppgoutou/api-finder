@@ -56,6 +56,35 @@ export function getTaskMatrixDisplayTiers(
   }))
 }
 
+/**
+ * Order tiers by the plugin schema's field and option order instead of the
+ * order the expression happens to test them in, so two prices of one model
+ * list the same conditions on the same rows. Unknown values sort last.
+ */
+export function sortTaskTiersBySchema(
+  tiers: ParsedTaskTier[],
+  schema: BillingUsageSchema
+): ParsedTaskTier[] {
+  const fields = Object.keys(schema).sort()
+  const rank = (tier: ParsedTaskTier, field: string): number => {
+    const value = tier.conditions.find(
+      (condition) => condition.field === field
+    )?.value
+    const definition = schema[field]
+    const options =
+      definition?.type === 'boolean' ? ['false', 'true'] : definition?.enum
+    const index = value === undefined ? -1 : (options?.indexOf(value) ?? -1)
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index
+  }
+  return [...tiers].sort((left, right) => {
+    for (const field of fields) {
+      const difference = rank(left, field) - rank(right, field)
+      if (difference !== 0) return difference
+    }
+    return 0
+  })
+}
+
 /** Display explicit conditions for a fallback only when its complement is unique.
  * Unlike the editor matrix, unrelated schema fields do not expand the price table.
  */
