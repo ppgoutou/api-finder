@@ -53,6 +53,22 @@ export function hasEffectivePricing(entry: ModelPricingEntry): boolean {
   })
 }
 
+/**
+ * Usage fields a price expression reads that the task plugin's schema lacks.
+ * Saving such a price is refused, so the plugin must be updated first. Models
+ * without a schema have nothing to check against.
+ */
+export function undeclaredUsageKeys(
+  expression: unknown,
+  schema: Record<string, unknown> | undefined
+): string[] {
+  if (typeof expression !== 'string' || !schema) return []
+  const keys = [...expression.matchAll(/\bu\(\s*"([^"]+)"\s*\)/g)].map(
+    (match) => match[1]
+  )
+  return [...new Set(keys)].filter((key) => !(key in schema))
+}
+
 export function onboardingStatus(
   item: OnboardingModel,
   priced: Set<string> | undefined,

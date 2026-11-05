@@ -32,7 +32,10 @@ import { DynamicPricingBreakdown } from '../components/dynamic-pricing-breakdown
 import { ModelCard } from '../components/model-card'
 import { ModelDetailsContent } from '../components/model-details'
 import { ModelPriceCell } from '../components/model-price-cell'
-import { getTaskPricingDisplayTiers } from '../lib/task-matrix-display'
+import {
+  getTaskPricingDisplayTiers,
+  sortTaskTiersBySchema,
+} from '../lib/task-matrix-display'
 import {
   hasSimpleTaskPricing,
   taskPriceLabel,
@@ -43,6 +46,71 @@ import {
 import type { PricingModel, BillingUsageSchema } from '../types'
 
 vi.mock('@visactor/react-vchart', () => ({ VChart: () => null }))
+
+const referenceVideoSchema: BillingUsageSchema = {
+  tokens: { type: 'number', unit: 'token' },
+  video_input: {
+    enum: ['none', 'video'],
+    enumLabels: {
+      none: { en: 'No reference video' },
+      video: { en: 'With reference video' },
+    },
+  },
+  resolution: { enum: ['720p'] },
+}
+
+// The two forms take different parser paths: the first keeps the expression's
+// order, the second is read as a complete partition in schema order.
+it.each([
+  'u("video_input") == "video" ? tier("video", (u("tokens") * 35) / 1000000) : tier("none", (u("tokens") * 58) / 1000000)',
+  'u("video_input") == "none" ? tier("none", u("tokens") * 58 / 6.8 / 1000000) : tier("video", u("tokens") * 35 / 6.8 / 1000000)',
+])(
+  'lists conditions in schema order whichever option %s tests first',
+  (expression) => {
+    render(
+      <DynamicPricingBreakdown
+        compact
+        sortTiersBySchema
+        billingExpr={expression}
+        usageSchema={referenceVideoSchema}
+      />
+    )
+    const labels = screen
+      .getAllByText(/reference video/)
+      .map((label) => label.textContent)
+    expect(labels.slice(0, 2)).toEqual([
+      expect.stringContaining('No reference video'),
+      expect.stringContaining('With reference video'),
+    ])
+  }
+)
+
+it('sorts tiers by each schema field in turn and leaves unknown values last', () => {
+  const schema: BillingUsageSchema = {
+    resolution: { enum: ['480p', '720p'] },
+    video_input: { enum: ['none', 'video'] },
+  }
+  const tier = (resolution: string, videoInput: string) => ({
+    label: `${resolution}-${videoInput}`,
+    conditions: [
+      { field: 'resolution', value: resolution },
+      { field: 'video_input', value: videoInput },
+    ],
+    constant: 0,
+    unitPrices: {},
+  })
+  const tiers = [
+    tier('720p', 'video'),
+    tier('8k', 'none'),
+    tier('480p', 'video'),
+    tier('720p', 'none'),
+    tier('480p', 'none'),
+  ]
+
+  expect(
+    sortTaskTiersBySchema(tiers, schema).map((sorted) => sorted.label)
+  ).toEqual(['480p-none', '480p-video', '720p-none', '720p-video', '8k-none'])
+})
 
 it('shows an explicit free request price alongside token prices with distinct units', () => {
   render(
