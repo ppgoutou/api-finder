@@ -34,6 +34,11 @@ import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
 import type { UsageLog } from '../data/schema'
 import { formatModelName, logTokenName, parseLogOther } from '../lib/format'
 import {
+  getTopupAmount,
+  getTopupKind,
+  getTopupMethodLabel,
+} from '../lib/topup-log'
+import {
   getLogTypeConfig,
   isDisplayableLogType,
   isTimingLogType,
@@ -67,6 +72,7 @@ export function CommonLogMobileCard<TData>(props: {
   const [selectedField, setSelectedField] = useState<FieldName | null>(null)
   const log = props.log
   const other = parseLogOther(log.other)
+  const topupKind = getTopupKind(other)
   const displayable = isDisplayableLogType(log.type)
   const timing = isTimingLogType(log.type)
   const model = formatModelName(log)
@@ -313,6 +319,24 @@ export function CommonLogMobileCard<TData>(props: {
             </span>
           )}
         </div>
+      )}
+      {props.cells.has('topup_method') && (
+        <dl className='grid min-w-0 grid-cols-2 gap-x-3 text-sm'>
+          <div className='min-w-0'>
+            <dt className='text-muted-foreground text-xs'>
+              {t('Top-up Method')}
+            </dt>
+            <dd>{topupKind ? getTopupMethodLabel(topupKind, t) : '—'}</dd>
+          </div>
+          <div className='min-w-0 text-right'>
+            <dt className='text-muted-foreground text-xs'>
+              {t('Top-up amount')}
+            </dt>
+            <dd className='font-medium tabular-nums'>
+              {getTopupAmount(other) ?? '—'}
+            </dd>
+          </div>
+        </dl>
       )}
       {contentCell && (
         <div className='relative min-w-0 border-t pt-2 [&_button]:min-h-8 [&_button]:w-full [&_button]:max-w-full [&_button]:pr-5 [&_button]:text-sm [&_button>span]:line-clamp-2 [&_button>span]:[overflow-wrap:anywhere] [&_button>span]:whitespace-normal'>

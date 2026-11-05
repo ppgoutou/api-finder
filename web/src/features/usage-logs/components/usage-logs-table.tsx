@@ -45,6 +45,7 @@ import {
 import { shouldShowBillingSource } from '../lib/billing-source'
 import { useColumnsByCategory } from '../lib/columns'
 import { parseLogOther } from '../lib/format'
+import { getLogColumnMode } from '../lib/topup-log'
 import { fetchLogsByCategory } from '../lib/utils'
 import type { LogCategory } from '../types'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
@@ -203,7 +204,10 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     logCategory,
     isAdmin,
     isRoot,
-    showBillingSource
+    showBillingSource,
+    getLogColumnMode(
+      columnFilters.find((filter) => filter.id === 'created_at')?.value
+    )
   )
   const isLoadingData = isLoading || (isFetching && !data)
 
