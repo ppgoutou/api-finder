@@ -7401,6 +7401,7 @@
     "Use this callback URL pattern when registering a custom OAuth provider.": "Utilisez ce modèle d'URL de rappel lors de l'enregistrement d'un fournisseur OAuth personnalisé.",
     "Use this token for API authentication": "Utilisez ce jeton pour l'authentification API",
     "Prompt words": "Prompt",
+    "Users see this converted at the USD exchange rate and rounded up.": "Les utilisateurs voient ce montant converti au taux du dollar et arrondi au supérieur.",
     "Video Models": "Modèles vidéo",
     "View prompt: {{title}}": "Voir le prompt : {{title}}",
     "View details: {{title}}": "Voir les détails : {{title}}",

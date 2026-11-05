@@ -94,13 +94,19 @@ func QuoteUSDTTopUp(amount int64, group string) USDTQuote {
 	}
 }
 
-// GetUSDTMinTopUp is the smallest wallet amount in the site's display unit.
+// GetUSDTMinTopUp converts the minimum, set in USD, to the smallest wallet amount
+// in the site's display unit. Wallet amounts are whole, so it rounds up.
 func GetUSDTMinTopUp() int64 {
-	minTopUp := int64(setting.USDTMinTopUp)
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		minTopUp *= int64(common.QuotaPerUnit)
+	minUSD := decimal.NewFromInt(int64(setting.USDTMinTopUp))
+	switch operation_setting.GetQuotaDisplayType() {
+	case operation_setting.QuotaDisplayTypeTokens:
+		return minUSD.Mul(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
+	case operation_setting.QuotaDisplayTypeCNY:
+		if operation_setting.USDExchangeRate > 0 {
+			return minUSD.Mul(decimal.NewFromFloat(operation_setting.USDExchangeRate)).Ceil().IntPart()
+		}
 	}
-	return minTopUp
+	return minUSD.IntPart()
 }
 
 // ValidateUSDTTopUpAmount applies the wallet's top-up bounds.

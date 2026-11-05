@@ -117,7 +117,7 @@ func GetTopUpInfo(c *gin.Context) {
 			"name":      "USDT (TRC-20)",
 			"type":      model.PaymentMethodUSDT,
 			"color":     "#26A17B",
-			"min_topup": strconv.Itoa(setting.USDTMinTopUp),
+			"min_topup": strconv.FormatInt(service.GetUSDTMinTopUp(), 10),
 		})
 	}
 
@@ -151,7 +151,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"pay_methods":             payMethods,
 		"min_topup":               operation_setting.MinTopUp,
 		"stripe_min_topup":        setting.StripeMinTopUp,
-		"usdt_min_topup":          setting.USDTMinTopUp,
+		"usdt_min_topup":          service.GetUSDTMinTopUp(),
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,

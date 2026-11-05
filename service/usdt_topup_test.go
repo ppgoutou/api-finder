@@ -230,6 +230,25 @@ func TestUSDTQuoteFollowsAdminExchangeRateAndDiscount(t *testing.T) {
 	assert.Equal(t, "0.9", discounted.Discount.String())
 }
 
+func TestUSDTMinTopUpIsSetInUSDAndShownInTheDisplayUnit(t *testing.T) {
+	setupUSDTTest(t, 9015, 0)
+	setting.USDTMinTopUp = 10
+
+	assert.EqualValues(t, 68, GetUSDTMinTopUp(), "yuan site at 6.8")
+	assert.Error(t, ValidateUSDTTopUpAmount(67))
+	assert.NoError(t, ValidateUSDTTopUpAmount(68))
+
+	operation_setting.USDExchangeRate = 7.05
+	assert.EqualValues(t, 71, GetUSDTMinTopUp(), "rounded up so the minimum is never below 10 USD")
+
+	general := operation_setting.GetGeneralSetting()
+	general.QuotaDisplayType = operation_setting.QuotaDisplayTypeUSD
+	assert.EqualValues(t, 10, GetUSDTMinTopUp())
+
+	general.QuotaDisplayType = operation_setting.QuotaDisplayTypeTokens
+	assert.EqualValues(t, int64(10*common.QuotaPerUnit), GetUSDTMinTopUp())
+}
+
 func TestUSDTSettlementCreditsActualAmountOncePerTransfer(t *testing.T) {
 	const userId, tradeNo = 9002, "usdt_settle"
 	gateway := setupUSDTTest(t, userId, 0)
