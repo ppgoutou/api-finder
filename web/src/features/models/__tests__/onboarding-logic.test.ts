@@ -23,6 +23,7 @@ import type { ModelPricingEntry } from '@/features/model-pricing/api'
 import {
   assignModelCategory,
   hasEffectivePricing,
+  undeclaredUsageKeys,
   joinDescriptions,
   matchesOnboardingFilter,
   officialMetadataValues,
@@ -96,6 +97,29 @@ describe('onboarding status', () => {
     expect(matchesOnboardingFilter(status, 'todo')).toBe(true)
     expect(matchesOnboardingFilter(status, 'removed')).toBe(true)
     expect(matchesOnboardingFilter(status, 'pending')).toBe(false)
+  })
+})
+
+describe('undeclaredUsageKeys', () => {
+  const expression =
+    'u("video_input") == "video" ? tier("a", u("tokens") * 2) : tier("b", u("tokens") * 3)'
+
+  it('lists each usage field the schema lacks once', () => {
+    expect(undeclaredUsageKeys(expression, { seconds: {} })).toEqual([
+      'video_input',
+      'tokens',
+    ])
+  })
+
+  it('finds nothing when the schema declares every field', () => {
+    expect(
+      undeclaredUsageKeys(expression, { tokens: {}, video_input: {} })
+    ).toEqual([])
+  })
+
+  it('skips models without a schema or an expression', () => {
+    expect(undeclaredUsageKeys(expression, undefined)).toEqual([])
+    expect(undeclaredUsageKeys(undefined, { tokens: {} })).toEqual([])
   })
 })
 
