@@ -7899,6 +7899,9 @@
     "/video": "/条",
     "/image": "/张",
     "/request": "/次",
-    "/1M tokens": "/百万 Token"
+    "/1M tokens": "/百万 Token",
+    "Enable Stripe": "启用 Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "关闭后，用户无法发起 Stripe 支付，钱包页也不再显示 Stripe。Webhook 继续运行，已付款的订单和退款仍会正常处理。",
+    "Stripe payment is disabled": "Stripe 支付已关闭"
   }
 }

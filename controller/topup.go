@@ -39,6 +39,12 @@ func GetTopUpInfo(c *gin.Context) {
 		})
 	}
 
+	if !isStripeTopUpEnabled() {
+		payMethods = lo.Filter(payMethods, func(method map[string]string, _ int) bool {
+			return method["type"] != model.PaymentMethodStripe
+		})
+	}
+
 	// 如果启用了 Stripe 支付，添加到支付方法列表
 	if isStripeTopUpEnabled() {
 		// 检查是否已经包含 Stripe

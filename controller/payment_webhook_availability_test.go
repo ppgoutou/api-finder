@@ -338,3 +338,61 @@ func TestTopUpInfoHidesEpayMethodsUntilEpayIsConfigured(t *testing.T) {
 	operation_setting.EpayKey = "epay_key"
 	assert.Equal(t, []string{"alipay", "wxpay", "stripe"}, payMethodTypes())
 }
+
+func TestStripeSwitchOffStopsNewPaymentsButKeepsWebhook(t *testing.T) {
+	confirmPaymentComplianceForTest(t)
+	gin.SetMode(gin.TestMode)
+	originalEnabled := setting.StripeEnabled
+	originalAPISecret := setting.StripeApiSecret
+	originalWebhookSecret := setting.StripeWebhookSecret
+	originalPriceID := setting.StripePriceId
+	originalPayMethods := operation_setting.PayMethods
+	t.Cleanup(func() {
+		setting.StripeEnabled = originalEnabled
+		setting.StripeApiSecret = originalAPISecret
+		setting.StripeWebhookSecret = originalWebhookSecret
+		setting.StripePriceId = originalPriceID
+		operation_setting.PayMethods = originalPayMethods
+	})
+	setting.StripeEnabled = false
+	setting.StripeApiSecret = "sk_test_123"
+	setting.StripeWebhookSecret = "whsec_test"
+	setting.StripePriceId = "price_123"
+	// A stripe entry saved in PayMethods must not bring the gateway back.
+	operation_setting.PayMethods = []map[string]string{{"type": model.PaymentMethodStripe}}
+
+	assert.True(t, isStripeWebhookEnabled(), "paid sessions and refunds still need the webhook")
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/user/topup/info", nil)
+	GetTopUpInfo(ctx)
+	var info struct {
+		Data struct {
+			EnableStripeTopup bool                `json:"enable_stripe_topup"`
+			PayMethods        []map[string]string `json:"pay_methods"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &info))
+	assert.False(t, info.Data.EnableStripeTopup)
+	assert.Empty(t, info.Data.PayMethods)
+
+	// Rejected before reading the body or the database: both are absent here.
+	handlers := map[string]gin.HandlerFunc{
+		"top-up amount":    RequestStripeAmount,
+		"top-up pay":       RequestStripePay,
+		"subscription pay": SubscriptionRequestStripePay,
+	}
+	for name, handler := range handlers {
+		t.Run(name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(recorder)
+			ctx.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{`))
+			handler(ctx)
+			assert.Contains(t, recorder.Body.String(), "Stripe payment is disabled")
+		})
+	}
+
+	setting.StripeEnabled = true
+	assert.True(t, isStripeTopUpEnabled())
+}

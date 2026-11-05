@@ -119,6 +119,22 @@ it('links redemption records to the shop order lookup in a new tab', () => {
   expect(records).toHaveAttribute('target', '_blank')
 })
 
+it('offers order history only when the recharge card is hidden', () => {
+  const onOpenBilling = vi.fn()
+  renderCard({ onOpenBilling })
+
+  fireEvent.click(screen.getByRole('button', { name: '订单历史' }))
+  expect(onOpenBilling).toHaveBeenCalledOnce()
+})
+
+it('leaves order history to the recharge card by default', () => {
+  renderCard()
+
+  expect(
+    screen.queryByRole('button', { name: '订单历史' })
+  ).not.toBeInTheDocument()
+})
+
 it('shows only a skeleton, without the title, while top-up info loads', () => {
   renderCard({ loading: true, topupLink: 'https://shop.example/store' })
 

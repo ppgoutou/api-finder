@@ -7899,6 +7899,9 @@
     "/video": "/видео",
     "/image": "/изобр.",
     "/request": "/запрос",
-    "/1M tokens": "/1 млн токенов"
+    "/1M tokens": "/1 млн токенов",
+    "Enable Stripe": "Включить Stripe",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "Когда выключено, пользователи не могут начать оплату через Stripe, а кошелёк скрывает Stripe. Вебхуки продолжают работать, поэтому оплаченные заказы и возвраты обрабатываются.",
+    "Stripe payment is disabled": "Оплата через Stripe отключена"
   }
 }

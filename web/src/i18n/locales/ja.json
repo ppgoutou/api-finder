@@ -7899,6 +7899,9 @@
     "/video": "/本",
     "/image": "/枚",
     "/request": "/回",
-    "/1M tokens": "/100万トークン"
+    "/1M tokens": "/100万トークン",
+    "Enable Stripe": "Stripe を有効にする",
+    "When off, users cannot start Stripe payments and the wallet hides Stripe. Webhooks keep running so paid orders and refunds still settle.": "オフにすると、ユーザーは Stripe 決済を開始できず、ウォレットにも Stripe が表示されません。Webhook は動作を続けるため、支払い済みの注文と返金は引き続き処理されます。",
+    "Stripe payment is disabled": "Stripe 決済は無効になっています"
   }
 }

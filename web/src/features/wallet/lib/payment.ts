@@ -161,6 +161,19 @@ export async function dispatchSelectedPayment(
 }
 
 /**
+ * Whether any gateway can take an online top-up right now
+ */
+export function hasOnlineTopup(topupInfo: TopupInfo): boolean {
+  return Boolean(
+    topupInfo.enable_online_topup ||
+    topupInfo.enable_stripe_topup ||
+    topupInfo.enable_creem_topup ||
+    topupInfo.enable_waffo_topup ||
+    topupInfo.enable_waffo_pancake_topup
+  )
+}
+
+/**
  * Get default payment type from topup info
  */
 export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
