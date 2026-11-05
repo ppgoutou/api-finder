@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "向量傳輸的編碼格式",
     "with conflicts": "有衝突",
     "With linked models": "有關聯模型",
+    "With reference videos, only the output seconds are billed, at the reference price.": "有參考影片時，僅按輸出秒數以參考影片單價計費。",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "有參考影片時，整單（輸出 + 參考秒數）按含參考單價計費。參考影片不足輸出時長 2/3 時按 2/3 計，向上取整到整秒。",
     "with the API key from your token settings.": "替換為令牌設定中的 API Key。",
     "With these settings, automatic disabling is off for all channels.": "依目前設定，所有渠道的自動停用均不生效。",

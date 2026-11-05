@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "Encodage filaire pour les vecteurs",
     "with conflicts": "avec des conflits",
     "With linked models": "Avec modèles associés",
+    "With reference videos, only the output seconds are billed, at the reference price.": "Avec des vidéos de référence, seules les secondes générées sont facturées, au tarif de référence.",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "Avec des vidéos de référence, toute la commande (sortie + secondes de référence) est facturée au prix de référence. Une référence plus courte que 2/3 de la sortie compte pour 2/3, arrondi à la seconde supérieure.",
     "with the API key from your token settings.": "par la clé API de votre page de jetons.",
     "With these settings, automatic disabling is off for all channels.": "Avec ces paramètres, la désactivation automatique est inactive pour tous les canaux.",

@@ -123,6 +123,24 @@ function videoModel(
 }
 
 describe('studioModelsFromPricing', () => {
+  it('offers a per-second model whose price also depends on a reference video', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance-2.5-reference-switch', ['480p', '720p'], {
+        billing_expr:
+          'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 1) : ' +
+          'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 2) : ' +
+          'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("seconds") * 3) : ' +
+          'tier("720p·video", u("seconds") * 4)',
+        billing_usage_schema: {
+          resolution: { enum: ['480p', '720p'] },
+          seconds: { type: 'number', unit: 'second' },
+          video_input: { enum: ['none', 'video'] },
+        },
+      }),
+    ])
+    expect(model?.resolutions).toEqual(['480p', '720p'])
+  })
+
   it('offers every per-second video model in pricing order with its resolutions', () => {
     const models = studioModelsFromPricing([
       videoModel('seedance-2.5', ['480p', '720p', '1080p'], {
@@ -467,6 +485,12 @@ describe('estimateDraftCostUSD', () => {
   it('charges a flat price per video whatever the length or references', () => {
     const perVideo = { secondPrice: 0, videoPrice: 1.28 }
     expect(estimateDraftCostUSD(perVideo, 30, 2, true)).toBeCloseTo(2.56)
+  })
+
+  it('charges reference orders of per-second reference models by output seconds alone', () => {
+    const perSecond = { secondPrice: 0.5, referenceSecondPrice: 0.65 }
+    expect(estimateDraftCostUSD(perSecond, 10, 2, true)).toBeCloseTo(13)
+    expect(estimateDraftCostUSD(perSecond, 10, 2, false)).toBeCloseTo(10)
   })
 
   it('charges reference orders by tokens with at least 2/3 of the output as reference seconds', () => {

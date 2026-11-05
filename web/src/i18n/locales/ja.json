@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "ベクトルの転送エンコーディング",
     "with conflicts": "競合あり",
     "With linked models": "関連モデルあり",
+    "With reference videos, only the output seconds are billed, at the reference price.": "参照動画がある場合、出力秒数のみが参照動画の単価で課金されます。",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "参照動画がある場合、注文全体（出力 + 参照秒数）を参照単価で課金します。参照動画が出力時間の 2/3 未満の場合は 2/3 として計算し、秒単位で切り上げます。",
     "with the API key from your token settings.": "をトークン設定の API キーに置き換えてください。",
     "With these settings, automatic disabling is off for all channels.": "現在の設定では、すべてのチャネルで自動無効化が無効です。",

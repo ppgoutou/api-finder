@@ -139,6 +139,35 @@ describe('video pricing tables', () => {
     )
   })
 
+  it('prices reference orders per output second when the model has a per-second reference price', () => {
+    renderTables(['default'], {
+      ...MODEL,
+      official_price_expr: undefined,
+      billing_expr:
+        'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p·none", u("seconds") * 1) : ' +
+        'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 2) : ' +
+        'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("seconds") * 3) : ' +
+        'tier("720p·video", u("seconds") * 4)',
+      billing_usage_schema: {
+        seconds: { type: 'number', unit: 'second' },
+        video_input: { enum: ['none', 'video'] },
+        resolution: { enum: ['480p', '720p'] },
+      },
+    })
+
+    expect(tableRows('Pricing by Group')).toEqual([
+      ['default', '480p', '$0.65', '$1.3/second', '4～15'],
+      ['default', '720p', '$1.95', '$2.6/second', '4～15'],
+    ])
+    expect(
+      screen.getByText(
+        'With reference videos, only the output seconds are billed, at the reference price.'
+      )
+    ).toBeVisible()
+    expect(screen.queryByText(/whole order/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^Example/)).not.toBeInTheDocument()
+  })
+
   it('shows only the official table when the model is in no available group', () => {
     renderTables([])
 

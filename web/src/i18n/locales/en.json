@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "Wire encoding for the embedding vectors",
     "with conflicts": "with conflicts",
     "With linked models": "With linked models",
+    "With reference videos, only the output seconds are billed, at the reference price.": "With reference videos, only the output seconds are billed, at the reference price.",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.",
     "with the API key from your token settings.": "with the API key from your token settings.",
     "With these settings, automatic disabling is off for all channels.": "With these settings, automatic disabling is off for all channels.",

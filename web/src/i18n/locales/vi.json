@@ -7739,6 +7739,7 @@
     "Wire encoding for the embedding vectors": "Định dạng truyền cho vector embedding",
     "with conflicts": "với các xung đột",
     "With linked models": "Có mô hình liên kết",
+    "With reference videos, only the output seconds are billed, at the reference price.": "Khi có video tham chiếu, chỉ tính phí số giây đầu ra theo đơn giá tham chiếu.",
     "With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.": "Khi có video tham chiếu, toàn bộ đơn (đầu ra + số giây tham chiếu) được tính theo đơn giá tham chiếu. Tham chiếu ngắn hơn 2/3 đầu ra được tính bằng 2/3, làm tròn lên giây.",
     "with the API key from your token settings.": "bằng API key từ trang Tokens của bạn.",
     "With these settings, automatic disabling is off for all channels.": "Với cài đặt này, tự động vô hiệu hóa không có hiệu lực với bất kỳ kênh nào.",

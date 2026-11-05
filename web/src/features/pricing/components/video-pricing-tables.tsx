@@ -102,10 +102,20 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
       list.push({
         id: 'reference',
         header: t('Reference video order price'),
-        cell: (row) =>
-          row.referencePricePerMillion === undefined ? (
-            '-'
-          ) : (
+        cell: (row) => {
+          if (row.referenceSecondPrice !== undefined) {
+            return (
+              <span className='font-mono tabular-nums'>
+                {formatTaskUsageUnitPrice(
+                  row.referenceSecondPrice,
+                  priceOptions(ratioOf(row))
+                )}
+                {t('/second')}
+              </span>
+            )
+          }
+          if (row.referencePricePerMillion === undefined) return '-'
+          return (
             <div className='flex flex-col'>
               <span className='font-mono tabular-nums'>
                 {t('{{price}} / 1M tokens', {
@@ -123,7 +133,8 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
                 </span>
               )}
             </div>
-          ),
+          )
+        },
       })
     }
     if (range) {
@@ -137,20 +148,31 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
     return list
   }
 
-  const referenceNotes = (
-    <div className='text-muted-foreground mt-2 space-y-1 text-xs'>
-      <p>
-        {t(
-          'Reference video tokens = seconds × width × height × 24 / 1024 (by output resolution)'
-        )}
-      </p>
-      <p>
-        {t(
-          'With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.'
-        )}
-      </p>
-    </div>
-  )
+  function referenceNotes(pricing: VideoPricing) {
+    if (pricing.rows.some((row) => row.referenceSecondPrice !== undefined)) {
+      return (
+        <p className='text-muted-foreground mt-2 text-xs'>
+          {t(
+            'With reference videos, only the output seconds are billed, at the reference price.'
+          )}
+        </p>
+      )
+    }
+    return (
+      <div className='text-muted-foreground mt-2 space-y-1 text-xs'>
+        <p>
+          {t(
+            'Reference video tokens = seconds × width × height × 24 / 1024 (by output resolution)'
+          )}
+        </p>
+        <p>
+          {t(
+            'With reference videos, the whole order (output + reference seconds) is billed at the reference price. References shorter than 2/3 of the output count as 2/3, rounded up to whole seconds.'
+          )}
+        </p>
+      </div>
+    )
+  }
 
   const groupRows: GroupRow[] = props.groups.flatMap((group) => {
     const ratio = getConfiguredGroupRatio(props.groupRatio, group)
@@ -177,7 +199,8 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
             getRowKey={(row) => row.option}
             columns={columns<VideoPricingRow>(props.officialPricing, () => 1)}
           />
-          {props.officialPricing.hasReferencePricing && referenceNotes}
+          {props.officialPricing.hasReferencePricing &&
+            referenceNotes(props.officialPricing)}
         </section>
       )}
       {groupRows.length > 0 && (
@@ -199,7 +222,7 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
               ...columns<GroupRow>(props.pricing, (row) => row.ratio),
             ]}
           />
-          {props.pricing.hasReferencePricing && referenceNotes}
+          {props.pricing.hasReferencePricing && referenceNotes(props.pricing)}
           {example &&
             props.groups.map((group) => {
               const options = priceOptions(
