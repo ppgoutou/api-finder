@@ -253,6 +253,20 @@ describe('per-second video pricing with a reference video switch', () => {
     ).toBe(false)
   })
 
+  test('does not read any other none/value enum as a reference switch', () => {
+    const { video_input: switchField, ...base } = SWITCH_SCHEMA
+    const schema = { ...base, audio_input: switchField }
+
+    expect(isVideoPricingSchema(schema)).toBe(false)
+    expect(
+      getVideoPricing(
+        videoModel(SWITCH_EXPR.replaceAll('video_input', 'audio_input'), {
+          billing_usage_schema: schema,
+        })
+      )
+    ).toBeNull()
+  })
+
   test('reads a single-resolution model from its reference switch alone', () => {
     const pricing = getVideoPricing(
       videoModel(
