@@ -8054,6 +8054,10 @@
     "Restore {{count}} selected": "Khôi phục {{count}} mục đã chọn",
     "Ignored {{count}} models": "Đã bỏ qua {{count}} mô hình",
     "Restored {{count}} models": "Đã khôi phục {{count}} mô hình",
-    "Ignore this model": "Bỏ qua mô hình này"
+    "Ignore this model": "Bỏ qua mô hình này",
+    "Pause Stripe": "Tạm dừng Stripe",
+    "Pause USDT top-up": "Tạm dừng nạp USDT",
+    "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "Ví vẫn hiển thị phương thức này, nhưng không thể nhấn nút và các thanh toán mới sẽ bị từ chối. Đơn đã thanh toán và hoàn tiền vẫn được xử lý bình thường.",
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "Áp dụng cho mọi phương thức thanh toán. Người dùng thấy số tiền được quy đổi theo tỷ giá USD và làm tròn lên."
   }
 }

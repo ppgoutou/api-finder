@@ -99,8 +99,8 @@ func InitOptionMap() {
 	common.OptionMap["Price"] = strconv.FormatFloat(operation_setting.Price, 'f', -1, 64)
 	common.OptionMap["USDExchangeRate"] = strconv.FormatFloat(operation_setting.USDExchangeRate, 'f', -1, 64)
 	common.OptionMap["MinTopUp"] = strconv.Itoa(operation_setting.MinTopUp)
-	common.OptionMap["StripeMinTopUp"] = strconv.Itoa(setting.StripeMinTopUp)
 	common.OptionMap["StripeEnabled"] = strconv.FormatBool(setting.StripeEnabled)
+	common.OptionMap["StripePaused"] = strconv.FormatBool(setting.StripePaused)
 	common.OptionMap["StripeApiSecret"] = setting.StripeApiSecret
 	common.OptionMap["XPixelToken"] = setting.XPixelToken
 	common.OptionMap["XPixelSignupEventId"] = setting.XPixelSignupEventId
@@ -110,13 +110,13 @@ func InitOptionMap() {
 	common.OptionMap["StripeUnitPrice"] = strconv.FormatFloat(setting.StripeUnitPrice, 'f', -1, 64)
 	common.OptionMap["StripePromotionCodesEnabled"] = strconv.FormatBool(setting.StripePromotionCodesEnabled)
 	common.OptionMap["USDTEnabled"] = strconv.FormatBool(setting.USDTEnabled)
+	common.OptionMap["USDTPaused"] = strconv.FormatBool(setting.USDTPaused)
 	common.OptionMap["USDTGatewayAddress"] = setting.USDTGatewayAddress
 	common.OptionMap["USDTClientId"] = setting.USDTClientId
 	common.OptionMap["USDTApiSecret"] = setting.USDTApiSecret
 	common.OptionMap["USDTWebhookSecret"] = setting.USDTWebhookSecret
 	common.OptionMap["USDTEnvironment"] = setting.USDTEnvironment
 	common.OptionMap["USDTContractAddress"] = setting.USDTContractAddress
-	common.OptionMap["USDTMinTopUp"] = strconv.Itoa(setting.USDTMinTopUp)
 	common.OptionMap["USDTReconcileCursor"] = setting.USDTReconcileCursor
 	common.OptionMap["CreemApiKey"] = setting.CreemApiKey
 	common.OptionMap["CreemProducts"] = setting.CreemProducts
@@ -136,13 +136,11 @@ func InitOptionMap() {
 	common.OptionMap["WaffoSubscriptionReturnUrl"] = setting.WaffoSubscriptionReturnUrl
 	common.OptionMap["WaffoCurrency"] = setting.WaffoCurrency
 	common.OptionMap["WaffoUnitPrice"] = strconv.FormatFloat(setting.WaffoUnitPrice, 'f', -1, 64)
-	common.OptionMap["WaffoMinTopUp"] = strconv.Itoa(setting.WaffoMinTopUp)
 	common.OptionMap["WaffoPayMethods"] = setting.WaffoPayMethods2JsonString()
 	common.OptionMap["WaffoPancakeMerchantID"] = setting.WaffoPancakeMerchantID
 	common.OptionMap["WaffoPancakePrivateKey"] = setting.WaffoPancakePrivateKey
 	common.OptionMap["WaffoPancakeReturnURL"] = setting.WaffoPancakeReturnURL
 	common.OptionMap["WaffoPancakeUnitPrice"] = strconv.FormatFloat(setting.WaffoPancakeUnitPrice, 'f', -1, 64)
-	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
@@ -536,6 +534,8 @@ func updateOptionMap(key string, value string) (err error) {
 		operation_setting.MinTopUp, _ = strconv.Atoi(value)
 	case "StripeEnabled":
 		setting.StripeEnabled = value == "true"
+	case "StripePaused":
+		setting.StripePaused = value == "true"
 	case "StripeApiSecret":
 		setting.StripeApiSecret = value
 	case "XPixelToken":
@@ -550,12 +550,12 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.StripePriceId = value
 	case "StripeUnitPrice":
 		setting.StripeUnitPrice, _ = strconv.ParseFloat(value, 64)
-	case "StripeMinTopUp":
-		setting.StripeMinTopUp, _ = strconv.Atoi(value)
 	case "StripePromotionCodesEnabled":
 		setting.StripePromotionCodesEnabled = value == "true"
 	case "USDTEnabled":
 		setting.USDTEnabled = value == "true"
+	case "USDTPaused":
+		setting.USDTPaused = value == "true"
 	case "USDTGatewayAddress":
 		setting.USDTGatewayAddress = value
 	case "USDTClientId":
@@ -568,8 +568,6 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.USDTEnvironment = value
 	case "USDTContractAddress":
 		setting.USDTContractAddress = value
-	case "USDTMinTopUp":
-		setting.USDTMinTopUp, _ = strconv.Atoi(value)
 	case "USDTReconcileCursor":
 		setting.USDTReconcileCursor = value
 	case "CreemApiKey":
@@ -608,8 +606,6 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoCurrency = value
 	case "WaffoUnitPrice":
 		setting.WaffoUnitPrice, _ = strconv.ParseFloat(value, 64)
-	case "WaffoMinTopUp":
-		setting.WaffoMinTopUp, _ = strconv.Atoi(value)
 	case "WaffoPancakeMerchantID":
 		setting.WaffoPancakeMerchantID = value
 	case "WaffoPancakePrivateKey":
@@ -622,8 +618,6 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeProductID = value
 	case "WaffoPancakeUnitPrice":
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
-	case "WaffoPancakeMinTopUp":
-		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

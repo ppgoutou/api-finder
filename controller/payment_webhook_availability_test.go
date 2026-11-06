@@ -398,23 +398,34 @@ func TestStripeSwitchOffStopsNewPaymentsButKeepsWebhook(t *testing.T) {
 	assert.True(t, isStripeTopUpEnabled())
 }
 
-func TestTopUpInfoShowsUSDTMinimumInDisplayUnit(t *testing.T) {
+func TestTopUpInfoSharesOneMinimumAndMarksPausedMethods(t *testing.T) {
 	confirmPaymentComplianceForTest(t)
 	general := operation_setting.GetGeneralSetting()
-	originalDisplay, originalRate := general.QuotaDisplayType, operation_setting.USDExchangeRate
+	originalDisplay, originalRate, originalMin := general.QuotaDisplayType, operation_setting.USDExchangeRate, operation_setting.MinTopUp
 	originalEnabled, originalGateway, originalClient := setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId
 	originalSecret, originalHook := setting.USDTApiSecret, setting.USDTWebhookSecret
-	originalEnv, originalContract, originalMin := setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp
+	originalEnv, originalContract, originalUSDTPaused := setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTPaused
+	originalStripeEnabled, originalStripePaused := setting.StripeEnabled, setting.StripePaused
+	originalStripeSecret, originalStripeHook, originalStripePrice := setting.StripeApiSecret, setting.StripeWebhookSecret, setting.StripePriceId
+	originalPayMethods := operation_setting.PayMethods
 	t.Cleanup(func() {
-		general.QuotaDisplayType, operation_setting.USDExchangeRate = originalDisplay, originalRate
+		general.QuotaDisplayType, operation_setting.USDExchangeRate, operation_setting.MinTopUp = originalDisplay, originalRate, originalMin
 		setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId = originalEnabled, originalGateway, originalClient
 		setting.USDTApiSecret, setting.USDTWebhookSecret = originalSecret, originalHook
-		setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp = originalEnv, originalContract, originalMin
+		setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTPaused = originalEnv, originalContract, originalUSDTPaused
+		setting.StripeEnabled, setting.StripePaused = originalStripeEnabled, originalStripePaused
+		setting.StripeApiSecret, setting.StripeWebhookSecret, setting.StripePriceId = originalStripeSecret, originalStripeHook, originalStripePrice
+		operation_setting.PayMethods = originalPayMethods
 	})
-	general.QuotaDisplayType, operation_setting.USDExchangeRate = operation_setting.QuotaDisplayTypeCNY, 6.8
+	general.QuotaDisplayType, operation_setting.USDExchangeRate, operation_setting.MinTopUp = operation_setting.QuotaDisplayTypeCNY, 6.8, 10
 	setting.USDTEnabled, setting.USDTGatewayAddress, setting.USDTClientId = true, "https://gateway.test", "cli_test"
 	setting.USDTApiSecret, setting.USDTWebhookSecret = "api-secret", "hook-secret"
-	setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTMinTopUp = "nile", "TContract", 10
+	setting.USDTEnvironment, setting.USDTContractAddress, setting.USDTPaused = "nile", "TContract", false
+	// A paused Stripe shows even without credentials, so it can appear before it opens.
+	setting.StripeEnabled, setting.StripePaused = true, true
+	setting.StripeApiSecret, setting.StripeWebhookSecret, setting.StripePriceId = "", "", ""
+	configuredStripe := map[string]string{"type": model.PaymentMethodStripe, "name": "Stripe"}
+	operation_setting.PayMethods = []map[string]string{configuredStripe}
 
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
@@ -423,15 +434,25 @@ func TestTopUpInfoShowsUSDTMinimumInDisplayUnit(t *testing.T) {
 
 	var info struct {
 		Data struct {
-			USDTMinTopUp int64               `json:"usdt_min_topup"`
-			PayMethods   []map[string]string `json:"pay_methods"`
+			MinTopUp          int64               `json:"min_topup"`
+			EnableStripeTopup bool                `json:"enable_stripe_topup"`
+			EnableUSDTTopup   bool                `json:"enable_usdt_topup"`
+			PayMethods        []map[string]string `json:"pay_methods"`
 		} `json:"data"`
 	}
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &info))
-	assert.EqualValues(t, 68, info.Data.USDTMinTopUp)
-	method, found := lo.Find(info.Data.PayMethods, func(item map[string]string) bool {
+	assert.EqualValues(t, 68, info.Data.MinTopUp)
+	assert.False(t, info.Data.EnableStripeTopup)
+	assert.True(t, info.Data.EnableUSDTTopup)
+	stripe, found := lo.Find(info.Data.PayMethods, func(item map[string]string) bool {
+		return item["type"] == model.PaymentMethodStripe
+	})
+	require.True(t, found)
+	assert.Equal(t, "true", stripe["paused"])
+	assert.NotContains(t, configuredStripe, "paused", "the shared configured method must stay unmarked")
+	usdt, found := lo.Find(info.Data.PayMethods, func(item map[string]string) bool {
 		return item["type"] == model.PaymentMethodUSDT
 	})
 	require.True(t, found)
-	assert.Equal(t, "68", method["min_topup"])
+	assert.NotContains(t, usdt, "paused")
 }

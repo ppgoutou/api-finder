@@ -8054,6 +8054,10 @@
     "Restore {{count}} selected": "Restaurer {{count}} sélectionnés",
     "Ignored {{count}} models": "{{count}} modèles ignorés",
     "Restored {{count}} models": "{{count}} modèles restaurés",
-    "Ignore this model": "Ignorer ce modèle"
+    "Ignore this model": "Ignorer ce modèle",
+    "Pause Stripe": "Suspendre Stripe",
+    "Pause USDT top-up": "Suspendre la recharge USDT",
+    "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "Le portefeuille affiche toujours ce moyen de paiement, mais son bouton est inactif et les nouveaux paiements sont refusés. Les commandes payées et les remboursements continuent d’être traités.",
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "S’applique à tous les moyens de paiement. Les utilisateurs voient ce montant converti au taux de change USD et arrondi à l’unité supérieure."
   }
 }

@@ -34,13 +34,13 @@ import { UsdtExceptionReceipts } from './usdt-exception-receipts'
 
 export interface UsdtSettingsValues {
   USDTEnabled: boolean
+  USDTPaused: boolean
   USDTGatewayAddress: string
   USDTClientId: string
   USDTApiSecret: string
   USDTWebhookSecret: string
   USDTEnvironment: string
   USDTContractAddress: string
-  USDTMinTopUp: number
 }
 
 const USDT_ENVIRONMENT_LABELS: Record<string, string> = {
@@ -98,6 +98,18 @@ export function UsdtSettingsSection(props: UsdtSettingsSectionProps) {
           label={t('Enable USDT top-up')}
           description={t(
             'Stays off for users until every field below is filled.'
+          )}
+          className='py-0'
+        />
+
+        <SettingsSwitchField
+          checked={values.USDTPaused}
+          onCheckedChange={(checked) =>
+            props.onValueChange('USDTPaused', checked)
+          }
+          label={t('Pause USDT top-up')}
+          description={t(
+            'The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.'
           )}
           className='py-0'
         />
@@ -207,24 +219,6 @@ export function UsdtSettingsSection(props: UsdtSettingsSectionProps) {
             />
             <p className='text-muted-foreground text-xs'>
               {t('Leave blank unless rotating the secret')}
-            </p>
-          </div>
-
-          <div className='grid gap-1.5'>
-            <Label htmlFor='usdt-min-topup'>{t('Minimum top-up (USD)')}</Label>
-            <Input
-              id='usdt-min-topup'
-              type='number'
-              min={1}
-              value={values.USDTMinTopUp}
-              onChange={(event) =>
-                props.onValueChange('USDTMinTopUp', Number(event.target.value))
-              }
-            />
-            <p className='text-muted-foreground text-xs'>
-              {t(
-                'Users see this converted at the USD exchange rate and rounded up.'
-              )}
             </p>
           </div>
         </div>

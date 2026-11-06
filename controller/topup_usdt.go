@@ -25,7 +25,7 @@ type USDTPayRequest struct {
 // rejectUSDTTopUp answers when the amount cannot be topped up by this user. It
 // reports the group so the caller can price the amount.
 func rejectUSDTTopUp(c *gin.Context, amount int64) (string, bool) {
-	if !service.IsUSDTTopUpEnabled() {
+	if !service.CanStartUSDTTopUp() {
 		paymentError(c, common.NewMessage("Unsupported payment channel"))
 		return "", true
 	}

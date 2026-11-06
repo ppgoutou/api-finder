@@ -173,6 +173,7 @@ export async function dispatchSelectedPayment(
  */
 export function hasOnlineTopup(topupInfo: TopupInfo): boolean {
   return Boolean(
+    topupInfo.pay_methods?.length ||
     topupInfo.enable_online_topup ||
     topupInfo.enable_stripe_topup ||
     topupInfo.enable_usdt_topup ||
@@ -218,31 +219,7 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
  * Get minimum topup amount from topup info
  */
 export function getMinTopupAmount(topupInfo: TopupInfo | null): number {
-  if (!topupInfo) {
-    return DEFAULT_MIN_TOPUP
-  }
-
-  if (topupInfo.enable_online_topup) {
-    return topupInfo.min_topup
-  }
-
-  if (topupInfo.enable_stripe_topup) {
-    return topupInfo.stripe_min_topup
-  }
-
-  if (topupInfo.enable_waffo_topup) {
-    return topupInfo.waffo_min_topup || DEFAULT_MIN_TOPUP
-  }
-
-  if (topupInfo.enable_waffo_pancake_topup) {
-    return topupInfo.waffo_pancake_min_topup || DEFAULT_MIN_TOPUP
-  }
-
-  if (topupInfo.enable_usdt_topup) {
-    return topupInfo.usdt_min_topup || DEFAULT_MIN_TOPUP
-  }
-
-  return DEFAULT_MIN_TOPUP
+  return topupInfo?.min_topup || DEFAULT_MIN_TOPUP
 }
 
 /**

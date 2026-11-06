@@ -45,7 +45,6 @@ export interface WaffoSettingsValues {
   WaffoMerchantId: string
   WaffoCurrency: string
   WaffoUnitPrice: number
-  WaffoMinTopUp: number
   WaffoNotifyUrl: string
   WaffoReturnUrl: string
   WaffoPayMethods: string
@@ -274,20 +273,6 @@ export function WaffoSettingsSection({
                 onValueChange(
                   'WaffoUnitPrice',
                   event.target.value === '' ? 0 : event.target.valueAsNumber
-                )
-              }
-            />
-          </div>
-          <div className='grid gap-1.5'>
-            <Label>{t('Minimum top-up quantity')}</Label>
-            <Input
-              type='number'
-              min={1}
-              value={values.WaffoMinTopUp}
-              onChange={(event) =>
-                onValueChange(
-                  'WaffoMinTopUp',
-                  event.target.value === '' ? 1 : event.target.valueAsNumber
                 )
               }
             />

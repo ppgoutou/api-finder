@@ -7,6 +7,8 @@ package operation_setting
 
 import (
 	"github.com/QuantumNous/new-api/common"
+
+	"github.com/shopspring/decimal"
 )
 
 var PayAddress = ""
@@ -14,7 +16,10 @@ var CustomCallbackAddress = ""
 var EpayId = ""
 var EpayKey = ""
 var Price = 7.3
+
+// MinTopUp is the smallest top-up in USD, shared by every payment method.
 var MinTopUp = 1
+
 var USDExchangeRate = 7.3
 
 var PayMethods = []map[string]string{
@@ -39,6 +44,21 @@ var PayMethods = []map[string]string{
 func UpdatePayMethodsByJsonString(jsonString string) error {
 	PayMethods = make([]map[string]string, 0)
 	return common.Unmarshal([]byte(jsonString), &PayMethods)
+}
+
+// GetMinTopUpAmount converts MinTopUp to the smallest wallet amount in the site's
+// display unit. Wallet amounts are whole, so it rounds up.
+func GetMinTopUpAmount() int64 {
+	minUSD := decimal.NewFromInt(int64(MinTopUp))
+	switch GetQuotaDisplayType() {
+	case QuotaDisplayTypeTokens:
+		return minUSD.Mul(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
+	case QuotaDisplayTypeCNY:
+		if USDExchangeRate > 0 {
+			return minUSD.Mul(decimal.NewFromFloat(USDExchangeRate)).Ceil().IntPart()
+		}
+	}
+	return minUSD.IntPart()
 }
 
 func PayMethods2JsonString() string {

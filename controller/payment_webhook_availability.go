@@ -21,7 +21,13 @@ func isStripeConfigured() bool {
 }
 
 func isStripeTopUpEnabled() bool {
-	return setting.StripeEnabled && isStripeConfigured()
+	return setting.StripeEnabled && !setting.StripePaused && isStripeConfigured()
+}
+
+// isStripeTopUpPaused reports whether the wallet shows Stripe without taking
+// payments. It needs no credentials, so Stripe can be shown before it opens.
+func isStripeTopUpPaused() bool {
+	return isPaymentComplianceConfirmed() && setting.StripeEnabled && setting.StripePaused
 }
 
 func isStripeWebhookConfigured() bool {

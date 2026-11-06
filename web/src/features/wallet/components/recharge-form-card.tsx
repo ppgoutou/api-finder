@@ -72,7 +72,6 @@ interface RechargeFormCardProps {
   onCreemProductSelect?: (product: CreemProduct) => void
   enableWaffoTopup?: boolean
   waffoPayMethods?: WaffoPayMethod[]
-  waffoMinTopup?: number
   onWaffoMethodSelect?: (method: WaffoPayMethod, index: number) => void
   enableWaffoPancakeTopup?: boolean
 }
@@ -95,7 +94,6 @@ export function RechargeFormCard({
   onCreemProductSelect,
   enableWaffoTopup,
   waffoPayMethods,
-  waffoMinTopup,
   onWaffoMethodSelect,
   enableWaffoPancakeTopup,
 }: RechargeFormCardProps) {
@@ -117,15 +115,18 @@ export function RechargeFormCard({
     onTopupAmountChange(Number.parseInt(digits, 10) || 0)
   }
 
+  const hasStandardPaymentMethods =
+    Array.isArray(topupInfo?.pay_methods) && topupInfo.pay_methods.length > 0
+  // A paused method alone still shows the amounts and its disabled button.
   const hasConfigurableTopup =
+    hasStandardPaymentMethods ||
     topupInfo?.enable_online_topup ||
     topupInfo?.enable_stripe_topup ||
     topupInfo?.enable_usdt_topup ||
     enableWaffoTopup ||
     enableWaffoPancakeTopup
   const hasAnyTopup = hasConfigurableTopup || enableCreemTopup
-  const hasStandardPaymentMethods =
-    Array.isArray(topupInfo?.pay_methods) && topupInfo.pay_methods.length > 0
+  const primaryMethod = topupInfo?.pay_methods?.find((item) => !item.paused)
   const hasWaffoPaymentMethods =
     Array.isArray(waffoPayMethods) && waffoPayMethods.length > 0
   const minTopup = getMinTopupAmount(topupInfo)
@@ -302,28 +303,28 @@ export function RechargeFormCard({
                       (topupInfo?.pay_methods?.length ?? 0) > 1 && 'grid-cols-2'
                     )}
                   >
-                    {topupInfo?.pay_methods?.map((method, index) => {
-                      const isPrimary = index === 0
+                    {topupInfo?.pay_methods?.map((method) => {
+                      const isPrimary = method === primaryMethod
+                      const belowMethodMin = minTopup > topupAmount
+                      const disabled = method.paused || belowMethodMin
                       const payLabel =
-                        topupAmount > 0
+                        topupAmount > 0 && !method.paused
                           ? t('Pay {{amount}} with {{method}}', {
                               amount: formatCredit(topupAmount),
                               method: method.name,
                             })
                           : method.name
-                      const minTopup = Math.max(
-                        method.min_topup || 0,
-                        getMinTopupAmount(topupInfo)
-                      )
-                      const disabled = minTopup > topupAmount
-                      const disabledReason = disabled
-                        ? t('Minimum topup amount: {{amount}}', {
-                            amount: minTopup,
-                          })
-                        : undefined
-                      const disabledLabel = disabled
-                        ? `${t('Minimum:')} ${minTopup}`
-                        : undefined
+                      let disabledReason: string | undefined
+                      let disabledLabel: string | undefined
+                      if (method.paused) {
+                        disabledReason = t('Temporarily unavailable')
+                        disabledLabel = disabledReason
+                      } else if (belowMethodMin) {
+                        disabledReason = t('Minimum topup amount: {{amount}}', {
+                          amount: minTopup,
+                        })
+                        disabledLabel = `${t('Minimum:')} ${minTopup}`
+                      }
 
                       const button = (
                         <Button
@@ -404,15 +405,14 @@ export function RechargeFormCard({
                       {waffoPayMethods?.map((method, index) => {
                         const loadingKey = `waffo-${index}`
                         const methodKey = `${method.payMethodType ?? 'unknown'}-${method.payMethodName ?? method.name}`
-                        const waffoMin = waffoMinTopup || 0
-                        const belowMin = waffoMin > topupAmount
+                        const belowMin = minTopup > topupAmount
                         const disabledReason = belowMin
                           ? t('Minimum topup amount: {{amount}}', {
-                              amount: waffoMin,
+                              amount: minTopup,
                             })
                           : undefined
                         const disabledLabel = belowMin
-                          ? `${t('Minimum:')} ${waffoMin}`
+                          ? `${t('Minimum:')} ${minTopup}`
                           : undefined
 
                         let methodIcon = getPaymentIcon('waffo')

@@ -24,7 +24,7 @@ func SubscriptionRequestStripePay(c *gin.Context) {
 	if !requirePaymentCompliance(c) {
 		return
 	}
-	if !setting.StripeEnabled {
+	if !setting.StripeEnabled || setting.StripePaused {
 		common.ApiErrorT(c, "Stripe payment is disabled")
 		return
 	}
