@@ -17,12 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ErrorState } from '@/components/error-state'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatPercent } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
@@ -42,6 +40,7 @@ import {
   type OpsCustomRange,
   type OpsRangeKey,
 } from '../../lib/ops'
+import { OpsAlertBar } from './ops-alert-bar'
 import { OpsFilterBar } from './ops-filter-bar'
 import {
   OpsFailReasonPanel,
@@ -332,25 +331,7 @@ export function OpsDashboard() {
         />
       )}
 
-      {alerts.length > 0 && (
-        <Alert className='border-warning/40 bg-warning/10'>
-          <AlertTriangle className='text-warning' aria-hidden='true' />
-          <AlertDescription className='flex flex-wrap gap-x-5 gap-y-1'>
-            {alerts.map((alert) => (
-              <a
-                key={alert.key}
-                href={alert.href}
-                className='text-foreground hover:underline'
-              >
-                <span className='text-warning font-mono font-bold'>
-                  {count(alert.n)}
-                </span>{' '}
-                {alert.label}
-              </a>
-            ))}
-          </AlertDescription>
-        </Alert>
-      )}
+      <OpsAlertBar alerts={alerts} />
 
       <OpsSection
         id='ops-wallet'
