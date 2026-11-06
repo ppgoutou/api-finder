@@ -107,6 +107,12 @@ const LazyUserCharts = lazy(() =>
   }))
 )
 
+const LazyOpsDashboard = lazy(() =>
+  import('./components/ops/ops-dashboard').then((m) => ({
+    default: m.OpsDashboard,
+  }))
+)
+
 const LazyFlowCharts = lazy(() =>
   import('./components/flow/flow-charts').then((m) => ({
     default: m.FlowCharts,
@@ -189,6 +195,9 @@ const SECTION_META: Record<DashboardSectionId, { titleKey: string }> = {
   users: {
     titleKey: 'User Analytics',
   },
+  operations: {
+    titleKey: 'Business Dashboard',
+  },
 }
 
 export function Dashboard() {
@@ -248,7 +257,9 @@ export function Dashboard() {
   const visibleSections = useMemo(
     () =>
       DASHBOARD_SECTION_IDS.filter(
-        (section) => section !== 'overview' && (section !== 'users' || isAdmin)
+        (section) =>
+          section !== 'overview' &&
+          (isAdmin || (section !== 'users' && section !== 'operations'))
       ),
     [isAdmin]
   )
@@ -398,6 +409,13 @@ export function Dashboard() {
                   filters={userChartsFilters}
                   onFiltersChange={setUserChartsFilters}
                 />
+              </Suspense>
+            </FadeIn>
+          )}
+          {activeSection === 'operations' && isAdmin && (
+            <FadeIn>
+              <Suspense fallback={<ModelChartsFallback />}>
+                <LazyOpsDashboard />
               </Suspense>
             </FadeIn>
           )}

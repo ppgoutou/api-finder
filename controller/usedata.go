@@ -10,6 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	opsDashboardMaxRangeSeconds    int64 = 366 * 24 * 60 * 60
+	opsDashboardMaxTZOffsetMinutes       = 14 * 60
+)
+
 func parseFlowQuotaTimeRange(c *gin.Context) (int64, int64, bool) {
 	startTimestamp, err := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
 	if err != nil || startTimestamp <= 0 {
@@ -26,6 +31,40 @@ func parseFlowQuotaTimeRange(c *gin.Context) (int64, int64, bool) {
 		return 0, 0, false
 	}
 	return startTimestamp, endTimestamp, true
+}
+
+// GetOpsDashboard serves the administrator's business overview.
+func GetOpsDashboard(c *gin.Context) {
+	startTimestamp, endTimestamp, ok := parseFlowQuotaTimeRange(c)
+	if !ok {
+		return
+	}
+	if endTimestamp-startTimestamp > opsDashboardMaxRangeSeconds {
+		common.ApiErrorT(c, "The time range cannot exceed 366 days")
+		return
+	}
+	tzOffsetMinutes := 0
+	if raw := c.Query("tz_offset_minutes"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < -opsDashboardMaxTZOffsetMinutes || parsed > opsDashboardMaxTZOffsetMinutes {
+			common.ApiErrorT(c, "Invalid parameters")
+			return
+		}
+		tzOffsetMinutes = parsed
+	}
+	dashboard, err := model.GetOpsDashboard(model.OpsDashboardQuery{
+		Start:           startTimestamp,
+		End:             endTimestamp,
+		Now:             common.GetTimestamp(),
+		Channel:         c.DefaultQuery("channel", model.OpsChannelAll),
+		ExcludeInternal: c.Query("exclude_internal") != "false",
+		TZOffsetMinutes: tzOffsetMinutes,
+	})
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, dashboard)
 }
 
 func GetAllQuotaDates(c *gin.Context) {

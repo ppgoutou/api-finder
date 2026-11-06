@@ -20,6 +20,7 @@ import { api } from '@/lib/api'
 
 import type {
   FlowQuotaDataItem,
+  OpsDashboardData,
   QuotaDataItem,
   UptimeGroupResult,
 } from './types'
@@ -81,6 +82,22 @@ export async function getFlowQuotaDates(
     data?: FlowQuotaDataItem[]
     message?: string
   }>(endpoint, { params })
+  return res.data
+}
+
+// Business dashboard figures for administrators
+export async function getOpsDashboard(params: {
+  start_timestamp: number
+  end_timestamp: number
+  channel: string
+  exclude_internal: boolean
+  tz_offset_minutes: number
+}) {
+  const res = await api.get<{
+    success: boolean
+    data: OpsDashboardData
+    message?: string
+  }>('/api/data/ops', { params })
   return res.data
 }
 
