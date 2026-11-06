@@ -42,6 +42,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
 import { ROLE } from '@/lib/roles'
+import { useAuthStore } from '@/stores/auth-store'
 
 /**
  * Root navigation groups for the application sidebar.
@@ -51,6 +52,8 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const userRole = useAuthStore((state) => state.auth.user?.role)
+  const isAdmin = Boolean(userRole && userRole >= ROLE.ADMIN)
 
   return {
     navGroups: [
@@ -86,7 +89,12 @@ export function useSidebarData(): SidebarData {
           },
           {
             title: t('Dashboard'),
-            url: '/dashboard/models',
+            // The business dashboard is administrators' landing tab; the
+            // other tabs still belong to this entry.
+            url: isAdmin ? '/dashboard/operations' : '/dashboard/models',
+            activeUrls: isAdmin
+              ? ['/dashboard/models', '/dashboard/flow', '/dashboard/users']
+              : undefined,
             icon: LayoutDashboard,
           },
           {
