@@ -8071,6 +8071,13 @@
     "Pause Stripe": "Suspendre Stripe",
     "Pause USDT top-up": "Suspendre la recharge USDT",
     "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "Le portefeuille affiche toujours ce moyen de paiement, mais son bouton est inactif et les nouveaux paiements sont refusés. Les commandes payées et les remboursements continuent d’être traités.",
-    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "S’applique à tous les moyens de paiement. Les utilisateurs voient ce montant converti au taux de change USD et arrondi à l’unité supérieure."
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "S’applique à tous les moyens de paiement. Les utilisateurs voient ce montant converti au taux de change USD et arrondi à l’unité supérieure.",
+    "Billing Records": "Historique de facturation",
+    "Bonus Credit": "Crédit bonus",
+    "Total Consumption": "Consommation totale",
+    "No Billing Records": "Aucun historique de facturation",
+    "Top-ups, charges, refunds and bonus credits will appear here.": "Les recharges, débits, remboursements et crédits bonus apparaîtront ici.",
+    "Balance changes: top-ups, charges, refunds and bonuses.": "Mouvements du solde : recharges, débits, remboursements et bonus.",
+    "Billing Note": "Note"
   }
 }

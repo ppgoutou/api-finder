@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { getLogStats, getUserLogStats } from '../api'
 import { DEFAULT_LOG_STATS } from '../constants'
 import { buildApiParams } from '../lib/utils'
+import type { LogCategory } from '../types'
 import { useLogsViewScope, useUsageLogsContext } from './usage-logs-provider'
 
 const route = getRouteApi('/_authenticated/usage-logs/$section')
@@ -48,14 +49,17 @@ function StatBadge(props: {
   )
 }
 
-export function CommonLogsStats() {
+export function CommonLogsStats(props: {
+  logCategory: Extract<LogCategory, 'common' | 'billing'>
+}) {
   const { t } = useTranslation()
+  const isBilling = props.logCategory === 'billing'
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['usage-logs-stats', isAdmin, searchParams],
+    queryKey: ['usage-logs-stats', props.logCategory, isAdmin, searchParams],
     queryFn: async () => {
       const params = buildApiParams({
         page: 1,
@@ -63,6 +67,7 @@ export function CommonLogsStats() {
         searchParams,
         columnFilters: [],
         isAdmin,
+        logCategory: props.logCategory,
       })
 
       const result = isAdmin
@@ -80,8 +85,12 @@ export function CommonLogsStats() {
     return (
       <div className='flex items-center gap-2'>
         <Skeleton className='h-7 w-[150px] rounded-md' />
-        <Skeleton className='h-7 w-[100px] rounded-md' />
-        <Skeleton className='h-7 w-[120px] rounded-md' />
+        {!isBilling && (
+          <>
+            <Skeleton className='h-7 w-[100px] rounded-md' />
+            <Skeleton className='h-7 w-[120px] rounded-md' />
+          </>
+        )}
       </div>
     )
   }
@@ -89,20 +98,24 @@ export function CommonLogsStats() {
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <StatBadge
-        label={t('Usage')}
+        label={isBilling ? t('Total Consumption') : t('Usage')}
         value={sensitiveVisible ? formatLogQuota(stats?.quota || 0) : '••••'}
         accent='bg-sky-500/70'
       />
-      <StatBadge
-        label={t('RPM')}
-        value={stats?.rpm || 0}
-        accent='bg-rose-500/65'
-      />
-      <StatBadge
-        label={t('TPM')}
-        value={stats?.tpm || 0}
-        accent='bg-slate-400/70'
-      />
+      {!isBilling && (
+        <>
+          <StatBadge
+            label={t('RPM')}
+            value={stats?.rpm || 0}
+            accent='bg-rose-500/65'
+          />
+          <StatBadge
+            label={t('TPM')}
+            value={stats?.tpm || 0}
+            accent='bg-slate-400/70'
+          />
+        </>
+      )}
     </div>
   )
 }

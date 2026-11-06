@@ -101,7 +101,7 @@ function formatSignedQuota(quota: number): string {
  * The gateway stores credited quota as text in the display currency of that
  * moment, such as `¥68.000000`, so it is only tidied and never converted.
  */
-function formatRecordedQuota(value: unknown): string | null {
+export function formatRecordedQuota(value: unknown): string | null {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? formatLogQuota(value) : null
   }

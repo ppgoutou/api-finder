@@ -42,7 +42,7 @@ export function CommonLogsHeaderActions() {
 
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      <CommonLogsStats />
+      <CommonLogsStats logCategory='common' />
       <Tooltip>
         <TooltipTrigger
           render={

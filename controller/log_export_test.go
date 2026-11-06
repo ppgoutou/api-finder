@@ -128,6 +128,18 @@ func TestLogExportDatabaseMatrix(t *testing.T) {
 			listed := callLogHandler(t, GetUserLogs, 1, common.RoleCommonUser, query)[0]
 			require.Equal(t, true, listed["success"])
 			assert.EqualValues(t, 2, listed["data"].(map[string]any)["total"])
+
+			// A list of types narrows the list and the export the same way; a
+			// single type still works beside it.
+			consumeOnly := query + fmt.Sprintf("&types=%d,%d", model.LogTypeConsume, model.LogTypeTopup)
+			narrowed := callLogHandler(t, GetUserLogs, 1, common.RoleCommonUser, consumeOnly)[0]
+			assert.EqualValues(t, 1, narrowed["data"].(map[string]any)["total"])
+			assert.Equal(t, []any{"a-1"}, exportedRequestIds(callLogHandler(t, ExportUserLogs, 1, common.RoleCommonUser, consumeOnly)))
+			both := query + fmt.Sprintf("&types=%d,%d", model.LogTypeConsume, model.LogTypeError)
+			widened := callLogHandler(t, GetUserLogs, 1, common.RoleCommonUser, both)[0]
+			assert.EqualValues(t, 2, widened["data"].(map[string]any)["total"])
+			single := callLogHandler(t, GetUserLogs, 1, common.RoleCommonUser, query+fmt.Sprintf("&type=%d", model.LogTypeError))[0]
+			assert.EqualValues(t, 1, single["data"].(map[string]any)["total"])
 			listed = callLogHandler(t, GetAllLogs, 3, common.RoleAdminUser, query+"&username=alice")[0]
 			require.Equal(t, true, listed["success"])
 			assert.EqualValues(t, 2, listed["data"].(map[string]any)["total"])

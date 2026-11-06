@@ -31,6 +31,8 @@ import { handleServerError } from '@/lib/handle-server-error'
 import { exportLogs } from '../../api'
 import {
   downloadCsv,
+  getBillingCsvHeader,
+  getBillingCsvRow,
   getLogCsvHeader,
   getLogCsvRow,
   toCsvLine,
@@ -51,6 +53,7 @@ const DEFAULT_MAX_RANGE_DAYS = 365
 export function ExportLogsDialog() {
   const { t } = useTranslation()
   const searchParams = route.useSearch()
+  const isBilling = route.useParams().section === 'billing'
   const { canManageScope, isAdminView } = useLogsViewScope()
   const { status } = useStatus()
   const [open, setOpen] = useState(false)
@@ -98,7 +101,9 @@ export function ExportLogsDialog() {
     if (!range.start || !range.end) return
     const controller = new AbortController()
     abortRef.current = controller
-    const lines = [toCsvLine(getLogCsvHeader(isAdminView, t))]
+    const getHeader = isBilling ? getBillingCsvHeader : getLogCsvHeader
+    const getRow = isBilling ? getBillingCsvRow : getLogCsvRow
+    const lines = [toCsvLine(getHeader(isAdminView, t))]
     setExportedCount(0)
     try {
       const count = await exportLogs(
@@ -108,6 +113,7 @@ export function ExportLogsDialog() {
             pageSize: 1,
             searchParams,
             isAdmin: isAdminView,
+            logCategory: isBilling ? 'billing' : 'common',
           }),
           p: undefined,
           page_size: undefined,
@@ -118,13 +124,13 @@ export function ExportLogsDialog() {
         {
           signal: controller.signal,
           onLog: (log) => {
-            lines.push(toCsvLine(getLogCsvRow(log, isAdminView, t)))
+            lines.push(toCsvLine(getRow(log, isAdminView, t)))
             if (lines.length % 500 === 0) setExportedCount(lines.length - 1)
           },
         }
       )
       downloadCsv(
-        `usage-logs-${dayjs(range.start).format('YYYYMMDD')}-${dayjs(range.end).format('YYYYMMDD')}.csv`,
+        `${isBilling ? 'billing-records' : 'usage-logs'}-${dayjs(range.start).format('YYYYMMDD')}-${dayjs(range.end).format('YYYYMMDD')}.csv`,
         lines
       )
       toast.success(t('Exported {{count}} logs', { count }))

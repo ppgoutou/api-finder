@@ -8071,6 +8071,13 @@
     "Pause Stripe": "暂停使用 Stripe",
     "Pause USDT top-up": "暂停使用 USDT 充值",
     "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "钱包仍显示该支付方式，但按钮不可点击，新付款会被拒绝。已付款订单和退款照常结算。",
-    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "对所有支付方式生效。用户看到的金额按美元汇率换算并向上取整。"
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "对所有支付方式生效。用户看到的金额按美元汇率换算并向上取整。",
+    "Billing Records": "消费记录",
+    "Bonus Credit": "赠送",
+    "Total Consumption": "消耗合计",
+    "No Billing Records": "暂无消费记录",
+    "Top-ups, charges, refunds and bonus credits will appear here.": "充值、消耗、退款和赠送记录会显示在这里。",
+    "Balance changes: top-ups, charges, refunds and bonuses.": "余额变动：充值、消耗、退款和赠送。",
+    "Billing Note": "说明"
   }
 }

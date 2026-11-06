@@ -30,6 +30,7 @@ import {
   MessageSquare,
   PlugZap,
   Radio,
+  Receipt,
   ServerCog,
   Settings,
   ShieldCheck,
@@ -129,6 +130,11 @@ export function useSidebarData(): SidebarData {
             title: t('Wallet'),
             url: '/wallet',
             icon: Wallet,
+          },
+          {
+            title: t('Billing Records'),
+            url: '/usage-logs/billing',
+            icon: Receipt,
           },
           {
             title: t('Profile'),

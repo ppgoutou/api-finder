@@ -8071,6 +8071,13 @@
     "Pause Stripe": "Приостановить Stripe",
     "Pause USDT top-up": "Приостановить пополнение USDT",
     "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "Кошелёк по-прежнему показывает этот способ оплаты, но кнопка неактивна, а новые платежи отклоняются. Оплаченные заказы и возвраты обрабатываются как обычно.",
-    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "Действует для всех способов оплаты. Пользователи видят сумму, пересчитанную по курсу USD и округлённую вверх."
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "Действует для всех способов оплаты. Пользователи видят сумму, пересчитанную по курсу USD и округлённую вверх.",
+    "Billing Records": "История платежей",
+    "Bonus Credit": "Бонус",
+    "Total Consumption": "Всего израсходовано",
+    "No Billing Records": "Записей пока нет",
+    "Top-ups, charges, refunds and bonus credits will appear here.": "Здесь появятся пополнения, списания, возвраты и бонусы.",
+    "Balance changes: top-ups, charges, refunds and bonuses.": "Изменения баланса: пополнения, списания, возвраты и бонусы.",
+    "Billing Note": "Описание"
   }
 }

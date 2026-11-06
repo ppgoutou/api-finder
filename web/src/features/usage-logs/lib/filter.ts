@@ -60,6 +60,13 @@ export function buildSearchParams(
         }),
       }
     }
+    case 'billing': {
+      const billingFilters = filters as CommonLogFilters
+      return {
+        ...baseParams,
+        ...(billingFilters.username && { username: billingFilters.username }),
+      }
+    }
     case 'drawing': {
       const drawingFilters = filters as DrawingLogFilters
       return {

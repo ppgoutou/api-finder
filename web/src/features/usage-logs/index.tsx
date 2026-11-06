@@ -47,6 +47,9 @@ const SECTION_META: Record<UsageLogsSectionId, { titleKey: string }> = {
   common: {
     titleKey: 'Common Logs',
   },
+  billing: {
+    titleKey: 'Billing Records',
+  },
   drawing: {
     titleKey: 'Drawing Logs',
   },
@@ -117,10 +120,12 @@ function UsageLogsContent() {
     [setViewScope]
   )
 
-  const pageMeta =
-    activeCategory === 'common' ? SECTION_META.common : SECTION_META.task
-  const showTaskSwitcher =
-    activeCategory !== 'common' && visibleSections.length > 1
+  const isTaskSection =
+    activeCategory !== 'common' && activeCategory !== 'billing'
+  const pageMeta = isTaskSection
+    ? SECTION_META.task
+    : SECTION_META[activeCategory]
+  const showTaskSwitcher = isTaskSection && visibleSections.length > 1
 
   return (
     <>

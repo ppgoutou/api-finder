@@ -118,6 +118,41 @@ export const LOG_TYPE_FILTERS = [
   ),
 ] as const
 
+/**
+ * What each page lists. A person's own usage logs leave out money movements
+ * and the retired manage and login types; billing records hold what changes
+ * the balance.
+ */
+export const USAGE_LOG_TYPES: readonly number[] = [
+  LOG_TYPE_ENUM.CONSUME,
+  LOG_TYPE_ENUM.ERROR,
+  LOG_TYPE_ENUM.REFUND,
+]
+
+export const BILLING_LOG_TYPES: readonly number[] = [
+  LOG_TYPE_ENUM.TOPUP,
+  LOG_TYPE_ENUM.CONSUME,
+  LOG_TYPE_ENUM.REFUND,
+  LOG_TYPE_ENUM.SYSTEM,
+]
+
+/** System logs on the billing page are sign-up, check-in and invitation credits. */
+export const BONUS_LOG_TYPE_LABEL = 'Bonus Credit'
+
+export const USAGE_LOG_TYPE_FILTERS = LOG_TYPE_FILTERS.filter(
+  (type) =>
+    type.value === LOG_TYPE_ALL_VALUE ||
+    USAGE_LOG_TYPES.includes(Number(type.value))
+)
+
+export const BILLING_LOG_TYPE_FILTERS = [
+  { label: 'All Types', value: LOG_TYPE_ALL_VALUE },
+  { label: 'Top-up', value: String(LOG_TYPE_ENUM.TOPUP) },
+  { label: 'Consume', value: String(LOG_TYPE_ENUM.CONSUME) },
+  { label: 'Refund', value: String(LOG_TYPE_ENUM.REFUND) },
+  { label: BONUS_LOG_TYPE_LABEL, value: String(LOG_TYPE_ENUM.SYSTEM) },
+]
+
 // ============================================================================
 // Drawing Logs (MjProxy) Constants
 // ============================================================================
@@ -340,6 +375,7 @@ export const TASK_PLATFORM_MAPPINGS: Record<string, StatusMapping> = {
  */
 export const LOG_CATEGORY_LABELS: Record<LogCategory, string> = {
   common: 'Common',
+  billing: 'Billing Records',
   drawing: 'Drawing',
   task: 'Task',
 }

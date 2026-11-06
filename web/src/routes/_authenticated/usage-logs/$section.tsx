@@ -27,10 +27,13 @@ import {
 
 const logTypeValues = ['0', '1', '2', '3', '4', '5', '6', '7'] as const
 const logTypeSearchSchema = z
-  .preprocess((value) => {
-    if (value == null || value === '') return undefined
-    return Array.isArray(value) ? value : [value]
-  }, z.array(z.enum(logTypeValues)).optional())
+  .preprocess(
+    (value) => {
+      if (value == null || value === '') return undefined
+      return Array.isArray(value) ? value : [value]
+    },
+    z.array(z.enum(logTypeValues)).optional()
+  )
   .catch([])
 
 const usageLogsSearchSchema = z.object({
@@ -57,11 +60,15 @@ export const Route = createFileRoute('/_authenticated/usage-logs/$section')({
         params: { section: USAGE_LOGS_DEFAULT_SECTION },
       })
     }
-    // type 仅 common 使用，非 common 时清掉 URL 里的 type
+    // type 仅 common、billing 使用，其他分区清掉 URL 里的 type
     const hasTypeSearch = Array.isArray(search?.type)
       ? search.type.length > 0
       : search?.type != null && search.type !== ''
-    if (params.section !== 'common' && hasTypeSearch) {
+    if (
+      params.section !== 'common' &&
+      params.section !== 'billing' &&
+      hasTypeSearch
+    ) {
       throw redirect({
         to: '/usage-logs/$section',
         params: { section: params.section },
