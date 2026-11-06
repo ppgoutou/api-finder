@@ -23,6 +23,7 @@ import {
   buildOpsTrendSpec,
   channelTracksRefunds,
   isLowSuccessRate,
+  opsCustomRangeIssue,
   percentChange,
   percentOf,
   reconcileWallet,
@@ -65,7 +66,7 @@ describe('resolveOpsRange', () => {
       start: seconds(2026, 9, 31),
       end: seconds(2026, 10, 6, 14, 30, 15),
     })
-    expect(resolveOpsRange('month', now).start).toBe(seconds(2026, 10, 1))
+    expect(resolveOpsRange('month', now)?.start).toBe(seconds(2026, 10, 1))
   })
 
   test('yesterday covers the whole previous local day', () => {
@@ -75,10 +76,24 @@ describe('resolveOpsRange', () => {
     })
   })
 
-  test('custom range without both dates falls back to seven days', () => {
-    expect(
-      resolveOpsRange('custom', now, { start: new Date(2026, 0, 1) })
-    ).toEqual(resolveOpsRange('7d', now))
+  test('custom range without both dates is not queried', () => {
+    const custom = { start: new Date(2026, 0, 1) }
+    expect(opsCustomRangeIssue(custom)).toBe('incomplete')
+    expect(resolveOpsRange('custom', now, custom)).toBeNull()
+  })
+
+  test('custom range ending before it starts is not queried', () => {
+    const custom = { start: new Date(2026, 0, 2), end: new Date(2026, 0, 1) }
+    expect(opsCustomRangeIssue(custom)).toBe('inverted')
+    expect(resolveOpsRange('custom', now, custom)).toBeNull()
+  })
+
+  test('custom range within one day is usable', () => {
+    const custom = {
+      start: new Date(2026, 0, 1, 18),
+      end: new Date(2026, 0, 1, 9),
+    }
+    expect(opsCustomRangeIssue(custom)).toBeNull()
   })
 
   test('custom range spans whole local days', () => {

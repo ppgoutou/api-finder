@@ -20,6 +20,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatPercent } from '@/lib/format'
@@ -32,6 +33,7 @@ import {
   isLowSuccessRate,
   OPS_CHANNEL_ALL,
   opsChannelLabel,
+  opsCustomRangeIssue,
   percentChange,
   percentOf,
   reconcileWallet,
@@ -80,22 +82,37 @@ export function OpsDashboard() {
   const [custom, setCustom] = useState<OpsCustomRange>({})
   const [channel, setChannel] = useState(OPS_CHANNEL_ALL)
   const [excludeInternal, setExcludeInternal] = useState(true)
-  const [refreshedAt, setRefreshedAt] = useState(() => new Date())
+  const customIssue = rangeKey === 'custom' ? opsCustomRangeIssue(custom) : null
 
-  const range = useMemo(
-    () => resolveOpsRange(rangeKey, refreshedAt, custom),
-    [rangeKey, refreshedAt, custom]
-  )
-  const params = {
-    start_timestamp: range.start,
-    end_timestamp: range.end,
-    channel,
-    exclude_internal: excludeInternal,
-    tz_offset_minutes: -refreshedAt.getTimezoneOffset(),
-  }
   const query = useQuery({
-    queryKey: ['dashboard', 'ops', params],
-    queryFn: async () => requireServerSuccess(await getOpsDashboard(params)),
+    queryKey: [
+      'dashboard',
+      'ops',
+      {
+        rangeKey,
+        customStart: custom.start?.getTime(),
+        customEnd: custom.end?.getTime(),
+        channel,
+        excludeInternal,
+      },
+    ],
+    // The clock is read per request, so every fetch reaches up to the present
+    // however long the page has been open.
+    queryFn: async () => {
+      const now = new Date()
+      const range = resolveOpsRange(rangeKey, now, custom)
+      if (!range) throw new Error('Invalid time range')
+      return requireServerSuccess(
+        await getOpsDashboard({
+          start_timestamp: range.start,
+          end_timestamp: range.end,
+          channel,
+          exclude_internal: excludeInternal,
+          tz_offset_minutes: -now.getTimezoneOffset(),
+        })
+      )
+    },
+    enabled: customIssue == null,
     select: (res) => res.data,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -307,21 +324,41 @@ export function OpsDashboard() {
     },
   ].filter((alert) => alert.n > 0)
 
+  const filterBar = (
+    <OpsFilterBar
+      range={rangeKey}
+      onRangeChange={setRangeKey}
+      custom={custom}
+      onCustomChange={setCustom}
+      channel={channel}
+      channels={channelOptions}
+      onChannelChange={setChannel}
+      excludeInternal={excludeInternal}
+      onExcludeInternalChange={setExcludeInternal}
+      onRefresh={() => void query.refetch()}
+      refreshing={query.isFetching || customIssue != null}
+    />
+  )
+
+  if (customIssue != null) {
+    return (
+      <div className='space-y-5'>
+        {filterBar}
+        <EmptyState
+          bordered
+          title={
+            customIssue === 'inverted'
+              ? t('The end date cannot be before the start date')
+              : t('Select a start and end date to see the figures')
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <div className='space-y-5'>
-      <OpsFilterBar
-        range={rangeKey}
-        onRangeChange={setRangeKey}
-        custom={custom}
-        onCustomChange={setCustom}
-        channel={channel}
-        channels={channelOptions}
-        onChannelChange={setChannel}
-        excludeInternal={excludeInternal}
-        onExcludeInternalChange={setExcludeInternal}
-        onRefresh={() => setRefreshedAt(new Date())}
-        refreshing={query.isFetching}
-      />
+      {filterBar}
 
       {query.isError && (
         <ErrorState

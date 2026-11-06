@@ -32,10 +32,10 @@ func opsTestQuery(channel string) OpsDashboardQuery {
 func seedOpsDashboard(t *testing.T) {
 	t.Helper()
 	require.NoError(t, DB.AutoMigrate(&User{}, &TopUp{}, &QuotaData{}, &PerfMetric{}, &Task{}, &Channel{},
-		&Redemption{}, &AffRebate{}, &Checkin{}, &USDTReceipt{}))
+		&Redemption{}, &AffRebate{}, &Checkin{}, &USDTReceipt{}, &Log{}))
 	wipe := func() {
 		for _, table := range []string{"users", "top_ups", "quota_data", "perf_metrics", "tasks", "channels",
-			"redemptions", "aff_rebates", "checkins", "usdt_receipts"} {
+			"redemptions", "aff_rebates", "checkins", "usdt_receipts", "logs"} {
 			require.NoError(t, DB.Exec("DELETE FROM "+table).Error)
 		}
 	}
@@ -112,6 +112,16 @@ func seedOpsDashboard(t *testing.T) {
 	require.NoError(t, DB.Create(&rebates).Error)
 	require.NoError(t, DB.Create(&Checkin{UserId: 3, CheckinDate: "1970-01-21", QuotaAwarded: 20, CreatedAt: opsTestStart + 3}).Error)
 
+	refundLogs := []Log{
+		{UserId: 2, Type: LogTypeRefund, ModelName: "model-a", ChannelId: 1, Quota: 30, CreatedAt: opsTestStart + 3700},
+		{UserId: 3, Type: LogTypeRefund, ModelName: "model-b", ChannelId: 2, Quota: 10, CreatedAt: opsTestStart + opsTestDay + 3700},
+		{UserId: 2, Type: LogTypeRefund, ModelName: "model-a", ChannelId: 1, Quota: 2, CreatedAt: opsTestStart - 100},
+		{UserId: 1, Type: LogTypeRefund, ModelName: "model-a", ChannelId: 1, Quota: 500, CreatedAt: opsTestStart + 1},
+		// Only refunds reduce usage; a consume log is already in quota_data.
+		{UserId: 2, Type: LogTypeConsume, ModelName: "model-a", ChannelId: 1, Quota: 5, CreatedAt: opsTestStart + 3800},
+	}
+	require.NoError(t, DB.Create(&refundLogs).Error)
+
 	receipts := []USDTReceipt{
 		{Network: "tron", TxHash: "unmatched", Status: USDTReceiptStatusUnmatched},
 		{Network: "tron", TxHash: "credited", Status: USDTReceiptStatusCredited},
@@ -137,7 +147,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		Payers:           2,
 		NewPayers:        2,
 		ActiveUsers:      2,
-		UsedQuota:        140,
+		UsedQuota:        100,
 		OtherCreditQuota: 1320,
 	}, got.Current)
 	assert.Equal(t, OpsPeriodStats{
@@ -147,7 +157,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		NewPayers:        1,
 		NewUsers:         3,
 		ActiveUsers:      1,
-		UsedQuota:        7,
+		UsedQuota:        5,
 		OtherCreditQuota: 500,
 	}, got.Previous)
 
@@ -159,7 +169,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		NegativeUsers:     1,
 		NegativeQuota:     -50,
 		OtherCredit:       OpsOtherCredit{RedemptionQuota: 1500, RebateQuota: 300, CheckinQuota: 20},
-		RecentUsedQuota:   147,
+		RecentUsedQuota:   105,
 		RecentUsedSeconds: opsRunwayWindowSeconds,
 	}, got.Wallet)
 	assert.Equal(t, OpsUsers{Registered: 4, TotalPayers: 3, RepeatPayer: 1, Dormant: 1}, got.Users)
@@ -173,14 +183,14 @@ func assertOpsDashboardFigures(t *testing.T) {
 	}, got.Channels)
 
 	assert.Equal(t, []OpsTrendDay{
-		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, UsedQuota: 100},
-		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 40},
+		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, UsedQuota: 70},
+		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 30},
 		{Date: "1970-01-23", Topups: map[string]int64{PaymentProviderEpay: 3 * opsTestUnit}},
 	}, got.Trend)
 
 	assert.Equal(t, []OpsModelUsage{
-		{ModelName: "model-a", Count: 2, Quota: 100},
-		{ModelName: "model-b", Count: 1, Quota: 40},
+		{ModelName: "model-a", Count: 2, Quota: 70},
+		{ModelName: "model-b", Count: 1, Quota: 30},
 	}, got.Models)
 	assert.Equal(t, []OpsModelPerf{
 		{ModelName: "model-a", Requests: 10, Successes: 9, AvgLatencyMs: 100, AvgTtftMs: 100},
@@ -193,13 +203,13 @@ func assertOpsDashboardFigures(t *testing.T) {
 	}, got.Tasks)
 
 	assert.Equal(t, []OpsUpstream{
-		{ChannelId: 1, Name: "low", Quota: 100, Count: 2, Balance: 10, BalanceUpdatedTime: 1, TaskSuccess: 1, TaskFailure: 2},
-		{ChannelId: 2, Name: "healthy", Quota: 40, Count: 1, Balance: 500, BalanceUpdatedTime: 1},
+		{ChannelId: 1, Name: "low", Quota: 70, Count: 2, Balance: 10, BalanceUpdatedTime: 1, TaskSuccess: 1, TaskFailure: 2},
+		{ChannelId: 2, Name: "healthy", Quota: 30, Count: 1, Balance: 500, BalanceUpdatedTime: 1},
 		{ChannelId: 4, Name: "unfetched"},
 	}, got.Upstream)
 	assert.Equal(t, []OpsTopUser{
-		{UserId: 2, Username: "ops_new", Quota: 100, Balance: 200, LastUsedAt: opsTestStart + 3600},
-		{UserId: 3, Username: "ops_paid", Quota: 40, Balance: 0, LastUsedAt: opsTestStart + opsTestDay + 3600},
+		{UserId: 2, Username: "ops_new", Quota: 70, Balance: 200, LastUsedAt: opsTestStart + 3600},
+		{UserId: 3, Username: "ops_paid", Quota: 30, Balance: 0, LastUsedAt: opsTestStart + opsTestDay + 3600},
 	}, got.TopUsers)
 
 	stripe, err := GetOpsDashboard(opsTestQuery(PaymentProviderStripe))
@@ -211,7 +221,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, 17*opsTestUnit, stripe.Wallet.TopupQuota)
 	assert.Equal(t, 25*opsTestUnit, stripe.Wallet.AllChannelsQuota, "reconciliation always spans every channel")
 	assert.Equal(t, OpsPending{Pending: 1}, stripe.Pending)
-	assert.Equal(t, int64(140), stripe.Current.UsedQuota, "usage has no order channel")
+	assert.Equal(t, int64(100), stripe.Current.UsedQuota, "usage has no order channel")
 	assert.Len(t, stripe.Channels, 3, "the channel table is not filtered")
 	assert.Equal(t, map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, stripe.Trend[0].Topups)
 	assert.Empty(t, stripe.Trend[1].Topups)
@@ -221,7 +231,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	everyone, err := GetOpsDashboard(withInternal)
 	require.NoError(t, err)
 	assert.Equal(t, 27*opsTestUnit, everyone.Current.TopupQuota)
-	assert.Equal(t, int64(1139), everyone.Current.UsedQuota)
+	assert.Equal(t, int64(599), everyone.Current.UsedQuota)
 	assert.Equal(t, int64(5), everyone.Users.Registered)
 	assert.Equal(t, int64(950), everyone.Wallet.UsedQuota)
 }
@@ -243,7 +253,22 @@ func TestGetOpsDashboardTrendUsesAdministratorTimeZone(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got.Trend, 1)
 	assert.Equal(t, "1970-01-21", got.Trend[0].Date)
-	assert.Equal(t, int64(107), got.Trend[0].UsedQuota, "the hour before UTC midnight belongs to the same local day")
+	assert.Equal(t, int64(75), got.Trend[0].UsedQuota, "the hour before UTC midnight belongs to the same local day")
+}
+
+func TestGetOpsDashboardRefundsOfEarlierUsageStayAtZero(t *testing.T) {
+	seedOpsDashboard(t)
+	require.NoError(t, DB.Create(&Log{UserId: 3, Type: LogTypeRefund, ModelName: "model-b", ChannelId: 2, Quota: 1000, CreatedAt: opsTestStart + opsTestDay + 3800}).Error)
+
+	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(0), got.Current.UsedQuota)
+	assert.Equal(t, int64(0), got.Trend[1].UsedQuota)
+	assert.Equal(t, OpsModelUsage{ModelName: "model-b", Count: 1, Quota: 0}, got.Models[1])
+	assert.Equal(t, int64(0), got.Upstream[1].Quota)
+	require.Len(t, got.TopUsers, 1, "a user whose usage was fully refunded is not a top user")
+	assert.Equal(t, 2, got.TopUsers[0].UserId)
 }
 
 func TestOpsCreditedQuotaMirrorsProviderSettlement(t *testing.T) {

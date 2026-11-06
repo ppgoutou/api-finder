@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { DateTimePicker } from '@/components/datetime-picker'
+import { DatePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -78,16 +78,16 @@ export function OpsFilterBar(props: {
       </div>
       {props.range === 'custom' && (
         <div className='flex flex-wrap items-center gap-2'>
-          <DateTimePicker
-            value={props.custom.start}
-            onChange={(start) =>
+          <DatePicker
+            selected={props.custom.start}
+            onSelect={(start) =>
               props.onCustomChange({ ...props.custom, start })
             }
             placeholder={t('Start date')}
           />
-          <DateTimePicker
-            value={props.custom.end}
-            onChange={(end) => props.onCustomChange({ ...props.custom, end })}
+          <DatePicker
+            selected={props.custom.end}
+            onSelect={(end) => props.onCustomChange({ ...props.custom, end })}
             placeholder={t('End date')}
           />
         </div>
