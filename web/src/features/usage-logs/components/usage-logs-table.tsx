@@ -46,8 +46,9 @@ import { shouldShowBillingSource } from '../lib/billing-source'
 import { useColumnsByCategory } from '../lib/columns'
 import { parseLogOther } from '../lib/format'
 import { getLogColumnMode } from '../lib/topup-log'
-import { fetchLogsByCategory } from '../lib/utils'
+import { fetchLogsByCategory, getLogTypeScope } from '../lib/utils'
 import type { LogCategory } from '../types'
+import { BillingRecordsFilterBar } from './billing-records-filter-bar'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
 import { TaskLogsFilterBar } from './task-logs-filter-bar'
 import { UsageLogsMobileList } from './usage-logs-mobile-card'
@@ -88,7 +89,8 @@ interface UsageLogsTableProps {
 export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   const { t } = useTranslation()
   const getColumnClassName = useCallback(
-    () => (logCategory === 'common' ? 'py-2' : 'py-3.5'),
+    () =>
+      logCategory === 'common' || logCategory === 'billing' ? 'py-2' : 'py-3.5',
     [logCategory]
   )
   const {
@@ -200,14 +202,22 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   })
 
   const logs = data?.items || []
+  const typeScope = getLogTypeScope(logCategory, isAdmin)
+  const selectedTypes = columnFilters.find(
+    (filter) => filter.id === 'created_at'
+  )?.value
+  // A type this page does not list is searched as "all types", so its columns
+  // must not apply either.
+  const selectedTypeInScope =
+    !typeScope ||
+    (Array.isArray(selectedTypes) &&
+      selectedTypes.every((type) => typeScope.includes(Number(type))))
   const columns = useColumnsByCategory(
     logCategory,
     isAdmin,
     isRoot,
     showBillingSource,
-    getLogColumnMode(
-      columnFilters.find((filter) => filter.id === 'created_at')?.value
-    )
+    getLogColumnMode(selectedTypeInScope ? selectedTypes : [])
   )
   const isLoadingData = isLoading || (isFetching && !data)
 
@@ -230,18 +240,31 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   })
 
   const isCommon = logCategory === 'common'
+  const isBilling = logCategory === 'billing'
+  let toolbar = <TaskLogsFilterBar table={table} logCategory='task' />
+  if (isCommon) {
+    toolbar = <CommonLogsFilterBar table={table} />
+  } else if (isBilling) {
+    toolbar = <BillingRecordsFilterBar table={table} />
+  } else if (logCategory === 'drawing') {
+    toolbar = <TaskLogsFilterBar table={table} logCategory='drawing' />
+  }
 
   return (
     <DataTablePage
       table={table}
-      compactPagination={isMobile && isCommon}
+      compactPagination={isMobile && (isCommon || isBilling)}
       columns={columns as ColumnDef<Record<string, unknown>>[]}
       isLoading={isLoadingData}
       isFetching={isFetching}
-      emptyTitle={t('No Logs Found')}
-      emptyDescription={t(
-        'No usage logs available. Logs will appear here once API calls are made.'
-      )}
+      emptyTitle={isBilling ? t('No Billing Records') : t('No Logs Found')}
+      emptyDescription={
+        isBilling
+          ? t('Top-ups, charges, refunds and bonus credits will appear here.')
+          : t(
+              'No usage logs available. Logs will appear here once API calls are made.'
+            )
+      }
       skeletonKeyPrefix='usage-log-skeleton'
       applyHeaderSize
       tableClassName={cn(
@@ -252,15 +275,17 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
           table={table}
           isLoading={isLoadingData}
           logCategory={logCategory}
+          emptyTitle={isBilling ? t('No Billing Records') : undefined}
+          emptyDescription={
+            isBilling
+              ? t(
+                  'Top-ups, charges, refunds and bonus credits will appear here.'
+                )
+              : undefined
+          }
         />
       }
-      toolbar={
-        isCommon ? (
-          <CommonLogsFilterBar table={table} />
-        ) : (
-          <TaskLogsFilterBar table={table} logCategory={logCategory} />
-        )
-      }
+      toolbar={toolbar}
       renderRow={(row) => {
         const logType = (row.original as Record<string, unknown>).type as
           | number

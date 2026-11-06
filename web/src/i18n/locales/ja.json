@@ -8060,6 +8060,13 @@
     "Pause Stripe": "Stripe を一時停止",
     "Pause USDT top-up": "USDT チャージを一時停止",
     "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "ウォレットにはこの支払い方法が表示されたままですが、ボタンは押せず、新規の支払いは拒否されます。支払い済みの注文と返金は通常どおり処理されます。",
-    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "すべての支払い方法に適用されます。ユーザーには USD 為替レートで換算し切り上げた金額が表示されます。"
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "すべての支払い方法に適用されます。ユーザーには USD 為替レートで換算し切り上げた金額が表示されます。",
+    "Billing Records": "利用明細",
+    "Bonus Credit": "ボーナス",
+    "Total Consumption": "消費合計",
+    "No Billing Records": "利用明細はありません",
+    "Top-ups, charges, refunds and bonus credits will appear here.": "チャージ、消費、返金、ボーナスの履歴がここに表示されます。",
+    "Balance changes: top-ups, charges, refunds and bonuses.": "残高の変動：チャージ、消費、返金、ボーナス。",
+    "Billing Note": "説明"
   }
 }

@@ -28,9 +28,11 @@ import {
   getUserTaskLogs,
 } from '../api'
 import {
+  BILLING_LOG_TYPES,
   LOG_TYPES,
   DISPLAYABLE_LOG_TYPES,
   TIMING_LOG_TYPES,
+  USAGE_LOG_TYPES,
 } from '../constants'
 import type {
   GetLogsParams,
@@ -38,6 +40,7 @@ import type {
   FetchLogsConfig,
   GetMidjourneyLogsParams,
   GetTaskLogsParams,
+  LogCategory,
 } from '../types'
 
 export { buildQueryParams } from './query-params'
@@ -65,6 +68,19 @@ export function isTimingLogType(type: number): boolean {
  */
 export function getLogTypeConfig(type: number) {
   return LOG_TYPES.find((t) => t.value === type) || LOG_TYPES[0]
+}
+
+/**
+ * The log types a page may list, or null when it lists every type:
+ * administrators viewing all users keep the full log for investigations.
+ */
+export function getLogTypeScope(
+  logCategory: LogCategory,
+  isAdmin: boolean
+): readonly number[] | null {
+  if (logCategory === 'billing') return BILLING_LOG_TYPES
+  if (logCategory === 'common' && !isAdmin) return USAGE_LOG_TYPES
+  return null
 }
 
 /**
@@ -161,8 +177,16 @@ export function buildApiParams(config: {
   searchParams: Record<string, unknown>
   columnFilters?: Array<{ id: string; value: unknown }>
   isAdmin: boolean
+  logCategory?: LogCategory
 }): GetLogsParams {
-  const { page, pageSize, searchParams, columnFilters = [], isAdmin } = config
+  const {
+    page,
+    pageSize,
+    searchParams,
+    columnFilters = [],
+    isAdmin,
+    logCategory = 'common',
+  } = config
 
   // Helper to process type parameter (single value from array)
   const processType = (value: unknown): number | undefined => {
@@ -180,11 +204,24 @@ export function buildApiParams(config: {
     return undefined
   }
 
+  const selectedType = processType(searchParams.type)
+  const typeScope = getLogTypeScope(logCategory, isAdmin)
+  // "All types" and a type outside this page both mean the page's whole scope.
+  const useScope =
+    typeScope !== null &&
+    (selectedType === undefined || !typeScope.includes(selectedType))
+  let typeParams: Pick<GetLogsParams, 'type' | 'types'> = {}
+  if (useScope) {
+    typeParams = { types: typeScope.join(',') }
+  } else if (searchParams.type) {
+    typeParams = { type: selectedType }
+  }
+
   // Build base params from search params
   const params: GetLogsParams = {
     p: page,
     page_size: pageSize,
-    ...(searchParams.type ? { type: processType(searchParams.type) } : {}),
+    ...typeParams,
     ...(searchParams.model ? { model_name: String(searchParams.model) } : {}),
     ...(searchParams.token ? { token_name: String(searchParams.token) } : {}),
     ...(searchParams.group ? { group: String(searchParams.group) } : {}),
@@ -247,13 +284,14 @@ export async function fetchLogsByCategory(
   const { logCategory, isAdmin, page, pageSize, searchParams, columnFilters } =
     config
 
-  if (logCategory === 'common') {
+  if (logCategory === 'common' || logCategory === 'billing') {
     const params = buildApiParams({
       page,
       pageSize,
       searchParams,
       columnFilters,
       isAdmin,
+      logCategory,
     })
     return isAdmin ? await getAllLogs(params) : await getUserLogs(params)
   }

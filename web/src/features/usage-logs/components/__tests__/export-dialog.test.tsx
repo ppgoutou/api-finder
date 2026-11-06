@@ -68,6 +68,7 @@ function renderExport(options: {
   role: number
   status?: Record<string, unknown>
   search: Record<string, string | number>
+  section?: string
 }) {
   useAuthStore.setState((state) => ({
     auth: {
@@ -100,7 +101,7 @@ function renderExport(options: {
   const router = createRouter({
     routeTree: root.addChildren([auth.addChildren([logs])]),
     history: createMemoryHistory({
-      initialEntries: [`/usage-logs/common?${query}`],
+      initialEntries: [`/usage-logs/${options.section ?? 'common'}?${query}`],
     }),
   })
   render(
@@ -219,6 +220,39 @@ it('downloads the streamed logs of the current filters as CSV', async () => {
   expect(rows[2]).toContain('"req-1"')
   expect(success).toHaveBeenCalledWith('Exported 2 logs')
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+})
+
+it('exports billing records with their own columns and types', async () => {
+  const fetchSpy = mockExportResponse([
+    {
+      id: 1,
+      created_at: 1760000000,
+      type: 2,
+      content: '',
+      model_name: 'gpt-4o',
+      quota: 0,
+      other: '',
+      request_id: 'req-2',
+    },
+    { success: true, message: '', data: { count: 1 } },
+  ])
+  const user = userEvent.setup()
+  renderExport({ role: ROLE.USER, search: recentRange(), section: 'billing' })
+
+  await user.click(await screen.findByRole('button', { name: 'Export' }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Export' })
+  )
+
+  await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1))
+  const [url] = fetchSpy.mock.calls[0]
+  const params = new URL(String(url), 'http://localhost').searchParams
+  expect(params.get('types')).toBe('1,2,6,4')
+  const file = createObjectURL.mock.calls[0][0]
+  const rows = (await file.text()).trimEnd().split('\r\n')
+  expect(rows[0]).toContain('"Time","Type","Amount","Billing Note"')
+  expect(rows[1]).toContain('"gpt-4o"')
+  expect(rows[1]).not.toContain('req-2')
 })
 
 it('reports a server refusal and keeps the dialog open without a download', async () => {

@@ -44,7 +44,11 @@ import { useMediaQuery } from '@/hooks'
 import { getUserGroups } from '@/lib/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
-import { LOG_TYPE_ALL_VALUE, LOG_TYPE_FILTERS } from '../constants'
+import {
+  LOG_TYPE_ALL_VALUE,
+  LOG_TYPE_FILTERS,
+  USAGE_LOG_TYPE_FILTERS,
+} from '../constants'
 import { buildSearchParams } from '../lib/filter'
 import { getDefaultTimeRange } from '../lib/utils'
 import type { CommonLogFilters } from '../types'
@@ -194,7 +198,13 @@ export function CommonLogsFilterBar<TData>(
   const activeDraft =
     draft.sourceKey === searchState.sourceKey ? draft : searchState
   const filters = activeDraft.filters
-  const logType = activeDraft.logType
+  // A person's own view offers fewer types than an administrator's all-users view.
+  const availableLogTypes = isAdmin ? LOG_TYPE_FILTERS : USAGE_LOG_TYPE_FILTERS
+  const logType = availableLogTypes.some(
+    (type) => type.value === activeDraft.logType
+  )
+    ? activeDraft.logType
+    : LOG_TYPE_ALL_VALUE
 
   const handleChange = useCallback(
     (field: keyof CommonLogFilters, value: Date | string | undefined) => {
@@ -285,19 +295,19 @@ export function CommonLogsFilterBar<TData>(
     : '[-webkit-text-security:disc]'
   const logTypeItems = useMemo(
     () =>
-      LOG_TYPE_FILTERS.map((type) => ({
+      availableLogTypes.map((type) => ({
         value: type.value,
         label: t(type.label),
         deprecated: type.deprecated,
       })),
-    [t]
+    [availableLogTypes, t]
   )
   const selectedLogType = logTypeItems.find((type) => type.value === logType)
   const deprecatedTypeDescription = t(
     'Only used to find historical logs. New records are available in Audit Logs.'
   )
 
-  const statsBar = <CommonLogsStats />
+  const statsBar = <CommonLogsStats logCategory='common' />
   const sensitiveToggle = (
     <Tooltip>
       <TooltipTrigger
@@ -407,7 +417,7 @@ export function CommonLogsFilterBar<TData>(
           className='max-w-[calc(100vw-2rem)] min-w-52'
         >
           <SelectGroup>
-            {LOG_TYPE_FILTERS.map((type) => (
+            {availableLogTypes.map((type) => (
               <SelectItem
                 key={type.value}
                 value={type.value}

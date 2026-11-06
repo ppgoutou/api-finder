@@ -36,6 +36,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
+import { ROLE } from '@/lib/roles'
+import { useAuthStore } from '@/stores/auth-store'
 
 import { CommonLogsFilterBar } from '../common-logs-filter-bar'
 import { UsageLogsProvider } from '../usage-logs-provider'
@@ -53,11 +55,23 @@ function FilterFixture() {
   )
 }
 
-async function renderFilter() {
+function statsOrGroups(url: string) {
+  if (url === '/api/user/self/groups') return {}
+  if (url.startsWith('/api/group')) return []
+  return { quota: 0, rpm: 0, tpm: 0 }
+}
+
+async function renderFilter(role: number = ROLE.ADMIN) {
+  useAuthStore.setState((state) => ({
+    auth: {
+      ...state.auth,
+      user: { id: 7, username: 'alice', role },
+    },
+  }))
   vi.spyOn(api, 'get').mockImplementation(async (url) => ({
     data: {
       success: true,
-      data: url === '/api/user/self/groups' ? {} : { quota: 0, rpm: 0, tpm: 0 },
+      data: statsOrGroups(String(url)),
     },
   }))
   const root = createRootRoute()
@@ -87,6 +101,15 @@ async function renderFilter() {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  useAuthStore.getState().auth.reset()
+})
+
+it('offers a regular user only consume, error and refund types', async () => {
+  await renderFilter(ROLE.USER)
+  await userEvent.click(screen.getByRole('combobox', { name: 'Type' }))
+  expect(
+    screen.getAllByRole('option').map((option) => option.textContent)
+  ).toEqual(['All Types', 'Consume', 'Error', 'Refund'])
 })
 
 it('marks only retired log types as deprecated while keeping historical filters selectable', async () => {

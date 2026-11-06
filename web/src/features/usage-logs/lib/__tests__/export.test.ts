@@ -135,6 +135,12 @@ describe('usage log CSV export', () => {
     expect(row.at(-1)).toBe('充值 $5')
   })
 
+  test('signed currency amounts stay plain while lookalike text is guarded', () => {
+    expect(toCsvLine(['+¥68', '-$1,000.5', '+¥68=1'])).toBe(
+      `"+¥68","-$1,000.5","'+¥68=1"\r\n`
+    )
+  })
+
   test('cells are quoted and text that starts a formula stays text', () => {
     expect(
       toCsvLine(['=HYPERLINK("x")', '-12.5', '+cmd', 'a"b', 'two\nlines'])

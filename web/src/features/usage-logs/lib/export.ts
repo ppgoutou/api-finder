@@ -19,6 +19,11 @@ For commercial licensing, please contact support@quantumnous.com
 import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
 
 import type { UsageLog } from '../data/schema'
+import {
+  getBillingAmount,
+  getBillingDescription,
+  getBillingTypeLabel,
+} from './billing-record'
 import { logTokenName, parseLogOther, renderLogContent } from './format'
 import {
   getLogTypeConfig,
@@ -94,14 +99,44 @@ export function getLogCsvRow(
   ]
 }
 
+/** Column titles of the exported billing records, matching their table. */
+export function getBillingCsvHeader(isAdmin: boolean, t: Translate): string[] {
+  return [
+    t('Time'),
+    t('Type'),
+    ...(isAdmin ? [t('User')] : []),
+    t('Amount'),
+    t('Billing Note'),
+  ]
+}
+
+/** One log as the cells under getBillingCsvHeader. */
+export function getBillingCsvRow(
+  log: UsageLog,
+  isAdmin: boolean,
+  t: Translate
+): string[] {
+  const other = parseLogOther(log.other ?? '')
+  return [
+    formatTimestampToDate(log.created_at),
+    t(getBillingTypeLabel(log.type)),
+    ...(isAdmin ? [log.username ?? ''] : []),
+    getBillingAmount(log, other) ?? '',
+    getBillingDescription(log, other, t),
+  ]
+}
+
 /**
  * A CSV line with every cell quoted. Text a spreadsheet would run as a
  * formula gets a leading apostrophe, since logs carry user-entered names.
+ * Signed amounts such as `+¥68` are not formulas and stay as they are.
  */
 export function toCsvLine(cells: string[]): string {
   const quoted = cells.map((cell) => {
     const text =
-      /^[=+\-@\t\r]/.test(cell) && !/^-?\d+(\.\d+)?$/.test(cell)
+      /^[=+\-@\t\r]/.test(cell) &&
+      !/^-?\d+(\.\d+)?$/.test(cell) &&
+      !/^[+-]\p{Sc}[\d,]+(\.\d+)?$/u.test(cell)
         ? `'${cell}`
         : cell
     return `"${text.replaceAll('"', '""')}"`

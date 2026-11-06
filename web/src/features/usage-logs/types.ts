@@ -30,7 +30,7 @@ import type { UsageLog } from './data/schema'
 /**
  * Log category for different log types
  */
-export type LogCategory = 'common' | 'drawing' | 'task'
+export type LogCategory = 'common' | 'billing' | 'drawing' | 'task'
 
 // ============================================================================
 // Filter Types
@@ -425,6 +425,8 @@ export interface TaskArtifactsResponse {
 // ============================================================================
 
 export interface GetLogsParams {
+  /** Comma-separated log types; takes precedence over `type`. */
+  types?: string
   p?: number
   page_size?: number
   type?: number
@@ -451,6 +453,7 @@ export interface GetLogsResponse {
 }
 
 export interface GetLogStatsParams {
+  types?: string
   type?: number
   username?: string
   token_name?: string

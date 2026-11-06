@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
@@ -21,6 +22,7 @@ func logFilterFromQuery(c *gin.Context, admin bool) model.LogFilter {
 	endTimestamp, _ := strconv.ParseInt(c.Query("end_timestamp"), 10, 64)
 	filter := model.LogFilter{
 		Type:              logType,
+		Types:             logTypesFromQuery(c.Query("types")),
 		StartTimestamp:    startTimestamp,
 		EndTimestamp:      endTimestamp,
 		ModelName:         c.Query("model_name"),
@@ -34,6 +36,19 @@ func logFilterFromQuery(c *gin.Context, admin bool) model.LogFilter {
 		filter.Channel, _ = strconv.Atoi(c.Query("channel"))
 	}
 	return filter
+}
+
+// logTypesFromQuery reads a comma-separated list of log types, skipping entries
+// that are not a specific type.
+func logTypesFromQuery(value string) []int {
+	var logTypes []int
+	for item := range strings.SplitSeq(value, ",") {
+		logType, err := strconv.Atoi(strings.TrimSpace(item))
+		if err == nil && logType != model.LogTypeUnknown {
+			logTypes = append(logTypes, logType)
+		}
+	}
+	return logTypes
 }
 
 // limitLogTimeRange returns the start of a log or dashboard search kept within

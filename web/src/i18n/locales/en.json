@@ -8060,6 +8060,13 @@
     "Pause Stripe": "Pause Stripe",
     "Pause USDT top-up": "Pause USDT top-up",
     "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.",
-    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up."
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.",
+    "Billing Records": "Billing Records",
+    "Bonus Credit": "Bonus Credit",
+    "Total Consumption": "Total Consumption",
+    "No Billing Records": "No Billing Records",
+    "Top-ups, charges, refunds and bonus credits will appear here.": "Top-ups, charges, refunds and bonus credits will appear here.",
+    "Balance changes: top-ups, charges, refunds and bonuses.": "Balance changes: top-ups, charges, refunds and bonuses.",
+    "Billing Note": "Note"
   }
 }

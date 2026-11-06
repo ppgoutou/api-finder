@@ -34,6 +34,7 @@ import { LOG_TYPE_ENUM } from '../constants'
 import type { UsageLog } from '../data/schema'
 import { TASK_MOBILE_SUMMARY_FIELDS } from '../lib/task-mobile-layout'
 import type { LogCategory } from '../types'
+import { BillingRecordMobileCard } from './billing-record-mobile-card'
 import { CommonLogMobileCard } from './common-log-mobile-card'
 
 const logTypeRowTint: Record<number, string> = {
@@ -244,6 +245,7 @@ export function UsageLogsMobileList<TData>({
   logCategory,
 }: UsageLogsMobileListProps<TData>) {
   const { t } = useTranslation()
+  const separateCards = logCategory === 'common' || logCategory === 'billing'
 
   const resolvedEmptyTitle = emptyTitle ?? t('No Logs Found')
   const resolvedEmptyDescription =
@@ -251,7 +253,7 @@ export function UsageLogsMobileList<TData>({
     t('No usage logs available. Logs will appear here once API calls are made.')
 
   if (isLoading) {
-    return <UsageLogsMobileSkeleton separate={logCategory === 'common'} />
+    return <UsageLogsMobileSkeleton separate={separateCards} />
   }
 
   const rows = table.getRowModel().rows
@@ -275,7 +277,7 @@ export function UsageLogsMobileList<TData>({
   return (
     <div
       className={cn(
-        logCategory === 'common'
+        separateCards
           ? 'min-w-0 space-y-3'
           : 'border-border/50 bg-card overflow-hidden rounded-lg border'
       )}
@@ -288,13 +290,16 @@ export function UsageLogsMobileList<TData>({
         const logType = (row.original as Record<string, unknown>).type as
           | number
           | undefined
-        const tintClass = logType != null ? (logTypeRowTint[logType] ?? '') : ''
+        const tintClass =
+          logCategory !== 'billing' && logType != null
+            ? (logTypeRowTint[logType] ?? '')
+            : ''
 
         return (
           <div
             key={row.id}
             className={cn(
-              logCategory === 'common'
+              separateCards
                 ? 'border-border/60 bg-card min-w-0 rounded-xl border p-3.5'
                 : 'border-border/40 border-b border-l-2 border-l-transparent p-3 transition-colors last:border-b-0',
               tintClass
@@ -305,6 +310,9 @@ export function UsageLogsMobileList<TData>({
                 log={row.original as UsageLog}
                 cells={cells}
               />
+            )}
+            {logCategory === 'billing' && (
+              <BillingRecordMobileCard log={row.original as UsageLog} />
             )}
             {logCategory === 'task' && <TaskLogsCard cells={cells} />}
             {logCategory === 'drawing' && <DrawingLogsCard cells={cells} />}
