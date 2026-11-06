@@ -48,6 +48,13 @@ export const DOC_SAMPLES = {
     '  -o video.mp4',
   ].join('\n'),
 
+  multiConnectionDownload: [
+    'aria2c -x 8 -s 8 \\',
+    '  --header="Authorization: Bearer $API_KEY" \\',
+    '  -o video.mp4 \\',
+    '  "{{BASE_URL}}/v1/videos/$TASK_ID/content"',
+  ].join('\n'),
+
   createFull: JSON.stringify(
     {
       model: 'seedance-2.0',

@@ -210,7 +210,14 @@ export const ZH_DOCS: DocContent = {
 
 - 接口可能直接返回视频文件，也可能重定向到临时存储地址。用 cURL 时请加上 \`-L\` 跟随跳转；
 - 不要把 API 密钥转发给临时存储地址（cURL、Python requests、Node.js fetch 跨域跳转时默认不会转发）；
-- 临时地址会过期，请下载后自行保存视频文件。`,
+- 临时地址会过期，请下载后自行保存视频文件。
+
+下载较慢时可以用多连接分段下载：接口支持 \`Range\` 请求头，可以把文件分成几段同时下载，再拼回完整文件。建议不超过 8 条连接；如果慢在整条线路上，开多条连接也可能提速不明显。`,
+        },
+        {
+          type: 'code',
+          label: '多连接下载（需安装 aria2）',
+          code: DOC_SAMPLES.multiConnectionDownload,
         },
       ],
     },

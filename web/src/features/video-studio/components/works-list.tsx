@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, Download, Film, PencilLine, Trash2 } from 'lucide-react'
+import { AlertCircle, Film, PencilLine, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -44,6 +44,7 @@ import { draftFromVideoRequest } from '../lib/draft'
 import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { recallTaskPrompt } from '../lib/prompt-history'
 import type { StudioDraft } from '../types'
+import { WorkDownloadButton } from './work-download-button'
 
 const WORKS_PAGE_SIZE = 12
 const POLL_INTERVAL_MS = 5000
@@ -84,15 +85,7 @@ function WorkVideo(props: { task: TaskLog }) {
         preload='metadata'
         className='size-full bg-black object-contain'
       />
-      <Button
-        variant='secondary'
-        size='icon'
-        className='absolute top-2 right-2 size-8 rounded-full opacity-90'
-        render={<a href={url} download={`${props.task.task_id}.mp4`} />}
-        aria-label={t('Download video')}
-      >
-        <Download className='size-4' aria-hidden />
-      </Button>
+      <WorkDownloadButton url={url} filename={`${props.task.task_id}.mp4`} />
     </>
   )
 }

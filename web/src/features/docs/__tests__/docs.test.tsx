@@ -65,6 +65,27 @@ describe('Docs', () => {
     expect(document.body.textContent).not.toContain('{{BASE_URL}}')
   })
 
+  it.each([
+    ['en', EN_DOCS],
+    ['zhCN', ZH_DOCS],
+  ])(
+    'shows the multi-connection download command for %s in the download section',
+    async (language, docs) => {
+      await i18next.changeLanguage(language)
+      render(<Docs />)
+
+      const downloadTitle = docs.sections.find(
+        (section) => section.id === 'download'
+      )?.title
+      const download = screen.getByRole('region', { name: downloadTitle })
+      expect(download.textContent).toContain('Range')
+      expect(download.textContent).toContain('aria2c -x 8 -s 8')
+      expect(download.textContent).toContain(
+        '"https://api.example.com/v1/videos/$TASK_ID/content"'
+      )
+    }
+  )
+
   it.each(['zhCN', 'zhTW'])(
     'shows the Chinese docs for %s',
     async (language) => {
