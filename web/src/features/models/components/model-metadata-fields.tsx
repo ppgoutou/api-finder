@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Plus } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -52,6 +53,8 @@ export function ModelMetadataFields(props: {
   /** Existing tags offered as one-click additions. */
   tagSuggestions?: string[]
   descriptionRows?: number
+  /** Shown beside the description label. */
+  descriptionAction?: ReactNode
   /** False leaves out the vendor and tag fields; their stored values stay. */
   showVendorAndTags?: boolean
 }) {
@@ -71,7 +74,10 @@ export function ModelMetadataFields(props: {
         name='description'
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('Description')}</FormLabel>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
+              <FormLabel>{t('Description')}</FormLabel>
+              {props.descriptionAction}
+            </div>
             <FormControl>
               <LanguageBlocksTextarea
                 placeholder={t('Describe this model...')}

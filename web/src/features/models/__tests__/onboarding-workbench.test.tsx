@@ -390,6 +390,69 @@ describe('model onboarding workbench', () => {
     expect(screen.getByText(/Pick a category/)).toBeVisible()
   })
 
+  it('overwrites the description with the supplier text when fetched', async () => {
+    const user = userEvent.setup()
+    const [draftModel, ...others] = overview.items
+    const { post } = mockApi(upstreamReport, {
+      ...overview,
+      items: [
+        {
+          ...draftModel,
+          draft: { description: '<!-- lang:zh -->\n草稿说明', generated_at: 1 },
+        },
+        ...others,
+      ],
+    })
+    post.mockResolvedValue({
+      data: {
+        success: true,
+        data: { description: '上游参数说明', channel_name: 'alpha' },
+      },
+    })
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: /gpt-new/ }))
+    await user.click(
+      screen.getByRole('button', { name: 'Fetch supplier description' })
+    )
+
+    expect(post).toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/description',
+      { model_name: 'gpt-new' }
+    )
+    await waitFor(() =>
+      expect(screen.getByLabelText('Description')).toHaveValue('上游参数说明')
+    )
+    expect(screen.getByRole('button', { name: 'Save metadata' })).toBeEnabled()
+  })
+
+  it('keeps the description when the supplier has none', async () => {
+    const user = userEvent.setup()
+    const [draftModel, ...others] = overview.items
+    const { post } = mockApi(upstreamReport, {
+      ...overview,
+      items: [
+        {
+          ...draftModel,
+          draft: { description: '<!-- lang:zh -->\n草稿说明', generated_at: 1 },
+        },
+        ...others,
+      ],
+    })
+    post.mockResolvedValue({
+      data: { success: true, data: { description: '' } },
+    })
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: /gpt-new/ }))
+    await user.click(
+      screen.getByRole('button', { name: 'Fetch supplier description' })
+    )
+
+    await waitFor(() => expect(post).toHaveBeenCalled())
+    expect(screen.getByLabelText('Description')).toHaveValue('草稿说明')
+  })
+
   it('shows a configured, priced model as on sale', async () => {
     signInAsRoot()
     const user = userEvent.setup()

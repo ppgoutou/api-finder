@@ -78,6 +78,14 @@ export function LanguageBlocksTextarea({
     content: string
   } | null>(null)
 
+  // Replaced from outside: fall back to the tab that fits the new content, or
+  // the picked tab could show an empty box while the text sits elsewhere.
+  const [seenContent, setSeenContent] = React.useState(content)
+  if (content !== seenContent) {
+    setSeenContent(content)
+    if (content !== draft?.content) setPicked(null)
+  }
+
   const legacy = parsed.blocks.length === 0 && content.trim() !== ''
   const active = picked ?? (legacy ? SHARED_TAB : LANGUAGE_BLOCK_LOCALES[0])
 

@@ -294,6 +294,7 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"POST /api/models/onboarding/upstream_prices/check":          accessTokenScopeRule("model:write"),
 	"POST /api/models/onboarding/upstream_prices/sync":           accessTokenScopeRule("model:write"),
 	"POST /api/models/onboarding/upstream_prices/draft":          accessTokenScopeRule("model:write"),
+	"POST /api/models/onboarding/upstream_prices/description":    accessTokenScopeRule("model:read"),
 	"GET /api/models/onboarding/upstream_prices/description_llm": accessTokenScopeRule("model:read"),
 	"PUT /api/models/onboarding/upstream_prices/description_llm": accessTokenSessionRule,
 	// Sends the stored key to a caller-chosen URL, so only a signed-in session may call it.

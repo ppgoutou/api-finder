@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -176,6 +177,69 @@ func DraftOnboardingModel(c *gin.Context) {
 		return
 	}
 	common.ApiSuccess(c, draft)
+}
+
+// FetchOnboardingSupplierDescription reads one model's description live from
+// the suppliers, trying the channels that list the model first. An empty
+// description means no supplier has one. The text is returned as written, so
+// mentions_price tells the admin when it would reveal a price once saved.
+func FetchOnboardingSupplierDescription(c *gin.Context) {
+	var request struct {
+		ModelName string `json:"model_name"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &request); err != nil || strings.TrimSpace(request.ModelName) == "" {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid request parameter format"))
+		return
+	}
+	name := strings.TrimSpace(request.ModelName)
+	channels, err := upstreamPriceChannels()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	rows := slices.DeleteFunc(upstreamPriceChannelRows(channels), func(row upstreamPriceChannel) bool {
+		return !row.HasToken
+	})
+	if len(rows) == 0 {
+		common.ApiErrorT(c, "Add a supplier token first")
+		return
+	}
+	lists := func(row upstreamPriceChannel) bool {
+		return slices.Contains(row.models, name) || slices.Contains(row.pendingModels, name)
+	}
+	slices.SortStableFunc(rows, func(left, right upstreamPriceChannel) int {
+		switch {
+		case lists(left) && !lists(right):
+			return -1
+		case lists(right) && !lists(left):
+			return 1
+		}
+		return 0
+	})
+	tokens := readOnboardingOption[map[string]string](onboardingPricingTokenOption)
+	var firstErr error
+	for _, row := range rows {
+		_, _, descriptions, err := fetchUpstreamPricing(c.Request.Context(), row.BaseURL, strings.TrimSpace(tokens[strconv.Itoa(row.ID)]))
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		if description := descriptions[name]; description != "" {
+			common.ApiSuccess(c, gin.H{
+				"description":    description,
+				"channel_name":   row.Name,
+				"mentions_price": draftPricePattern.MatchString(description),
+			})
+			return
+		}
+	}
+	if firstErr != nil {
+		common.ApiError(c, firstErr)
+		return
+	}
+	common.ApiSuccess(c, gin.H{"description": ""})
 }
 
 // prepareOnboardingDrafts drafts metadata for pending models that have none

@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, Sparkles } from 'lucide-react'
+import { CloudDownload, RefreshCw, Sparkles } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -38,6 +38,7 @@ import {
 import {
   createModel,
   draftOnboardingModel,
+  fetchSupplierDescription,
   getModel,
   previewUpstreamDiff,
   updateModel,
@@ -190,6 +191,35 @@ export function OnboardingMetadataCard(props: {
     },
   })
 
+  const supplierDescription = useMutation({
+    mutationFn: async () =>
+      requireServerSuccess(
+        await fetchSupplierDescription(props.item.model_name)
+      ).data,
+    onSuccess: (found) => {
+      if (!found?.description) {
+        toast.info(t('The supplier has no description for this model'))
+        return
+      }
+      form.setValue('description', found.description, { shouldDirty: true })
+      toast.success(
+        t(
+          'Description replaced with the one from {{channel}}. Review and save.',
+          {
+            channel: found.channel_name,
+          }
+        )
+      )
+      if (found.mentions_price) {
+        toast.warning(
+          t(
+            'The supplier description mentions a price. Remove it before saving.'
+          )
+        )
+      }
+    },
+  })
+
   const save = useMutation({
     mutationFn: async (values: ModelFormValues) => {
       const payload = transformFormDataToModelPayload(values)
@@ -252,6 +282,20 @@ export function OnboardingMetadataCard(props: {
           iconKey={props.item.model_name}
           tagSuggestions={props.tags}
           descriptionRows={5}
+          descriptionAction={
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              disabled={supplierDescription.isPending}
+              onClick={() => supplierDescription.mutate()}
+            >
+              <CloudDownload aria-hidden className='size-3' />
+              {supplierDescription.isPending
+                ? t('Loading...')
+                : t('Fetch supplier description')}
+            </Button>
+          }
         />
         <div className='flex justify-end'>
           <Button type='submit' disabled={save.isPending || !dirty}>
