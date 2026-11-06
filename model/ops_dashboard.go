@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cmp"
 	"slices"
 	"strconv"
 	"time"
@@ -291,6 +292,39 @@ func opsQuotaData(scope opsScope, start int64, end int64) *gorm.DB {
 	return scope.excludeUsers(query, "user_id")
 }
 
+// opsRefundLog is one refund of task quota. quota_data only ever grows, so a
+// failed task stays in it after its quota was returned; the refund log is what
+// turns those figures into net usage. A refund counts in the period it happened.
+type opsRefundLog struct {
+	UserId    int
+	ModelName string
+	ChannelId int
+	CreatedAt int64
+	Quota     int64
+}
+
+func opsRefundLogs(scope opsScope, start int64, end int64) ([]opsRefundLog, error) {
+	var refunds []opsRefundLog
+	query := LOG_DB.Table("logs").
+		Select("user_id, model_name, channel_id, created_at, quota").
+		Where("type = ? AND created_at >= ? AND created_at <= ?", LogTypeRefund, start, end)
+	err := scope.excludeUsers(query, "user_id").Scan(&refunds).Error
+	return refunds, err
+}
+
+func opsRefundTotal(refunds []opsRefundLog) int64 {
+	var total int64
+	for _, refund := range refunds {
+		total += refund.Quota
+	}
+	return total
+}
+
+// opsNetUsage stays at zero when a period holds refunds of usage from before it.
+func opsNetUsage(gross int64, refunded int64) int64 {
+	return max(gross-refunded, 0)
+}
+
 func opsOtherCredit(scope opsScope, start int64, end int64) (OpsOtherCredit, error) {
 	var credit OpsOtherCredit
 	redemptions := scope.excludeUsers(
@@ -358,6 +392,11 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 	if err != nil {
 		return stats, err
 	}
+	refunds, err := opsRefundLogs(scope, start, end)
+	if err != nil {
+		return stats, err
+	}
+	stats.UsedQuota = opsNetUsage(stats.UsedQuota, opsRefundTotal(refunds))
 
 	credit, err := opsOtherCredit(scope, start, end)
 	if err != nil {
@@ -417,8 +456,18 @@ func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsD
 		return err
 	}
 	result.Wallet.RecentUsedSeconds = opsRunwayWindowSeconds
-	return opsQuotaData(scope, query.Now-opsRunwayWindowSeconds, query.Now).
+	recentStart := query.Now - opsRunwayWindowSeconds
+	err = opsQuotaData(scope, recentStart, query.Now).
 		Select("coalesce(sum(quota), 0)").Scan(&result.Wallet.RecentUsedQuota).Error
+	if err != nil {
+		return err
+	}
+	refunds, err := opsRefundLogs(scope, recentStart, query.Now)
+	if err != nil {
+		return err
+	}
+	result.Wallet.RecentUsedQuota = opsNetUsage(result.Wallet.RecentUsedQuota, opsRefundTotal(refunds))
+	return nil
 }
 
 // opsLoadChannels fills the per-channel table and the channel-scoped totals.
@@ -512,7 +561,7 @@ func opsDayKey(timestamp int64, offsetSeconds int64) string {
 
 // opsLoadTrend buckets per calendar day of the administrator's time zone. The
 // days are always all present, so the chart has no gaps.
-func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
 	offset := int64(query.TZOffsetMinutes) * 60
 	byDate := make(map[string]*OpsTrendDay)
 	const daySeconds = int64(24 * 60 * 60)
@@ -565,18 +614,36 @@ func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard)
 			day.UsedQuota += bucket.Quota
 		}
 	}
+	for _, refund := range refunds {
+		if day, ok := byDate[opsDayKey(refund.CreatedAt, offset)]; ok {
+			day.UsedQuota -= refund.Quota
+		}
+	}
+	for i := range result.Trend {
+		result.Trend[i].UsedQuota = opsNetUsage(result.Trend[i].UsedQuota, 0)
+	}
 	return nil
 }
 
-func opsLoadModels(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+func opsLoadModels(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
 	err := opsQuotaData(scope, query.Start, query.End).
 		Select("model_name, coalesce(sum(count), 0) as count, coalesce(sum(quota), 0) as quota").
 		Group("model_name").
-		Order("quota DESC").
 		Scan(&result.Models).Error
 	if err != nil {
 		return err
 	}
+	refundedByModel := make(map[string]int64)
+	for _, refund := range refunds {
+		refundedByModel[refund.ModelName] += refund.Quota
+	}
+	for i := range result.Models {
+		model := &result.Models[i]
+		model.Quota = opsNetUsage(model.Quota, refundedByModel[model.ModelName])
+	}
+	slices.SortStableFunc(result.Models, func(a, b OpsModelUsage) int {
+		return cmp.Or(cmp.Compare(b.Quota, a.Quota), cmp.Compare(a.ModelName, b.ModelName))
+	})
 
 	var perf []struct {
 		ModelName    string
@@ -661,7 +728,7 @@ func opsLoadTasks(scope opsScope, query OpsDashboardQuery, result *OpsDashboard)
 	return nil
 }
 
-func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
 	var usage []struct {
 		ChannelId int
 		Quota     int64
@@ -718,9 +785,13 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 		byId[channelId] = row
 		return row
 	}
+	refundedByChannel := make(map[int]int64)
+	for _, refund := range refunds {
+		refundedByChannel[refund.ChannelId] += refund.Quota
+	}
 	for _, row := range usage {
 		target := upstream(row.ChannelId)
-		target.Quota = row.Quota
+		target.Quota = opsNetUsage(row.Quota, refundedByChannel[row.ChannelId])
 		target.Count = row.Count
 	}
 
@@ -759,22 +830,35 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 	return nil
 }
 
-func opsLoadTopUsers(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
-	var rows []struct {
-		UserId     int
-		Quota      int64
-		LastUsedAt int64
-	}
+type opsTopUserRow struct {
+	UserId     int
+	Quota      int64
+	LastUsedAt int64
+}
+
+func opsLoadTopUsers(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
+	var rows []opsTopUserRow
 	err := opsQuotaData(scope, query.Start, query.End).
 		Select("user_id, coalesce(sum(quota), 0) as quota, max(created_at) as last_used_at").
 		Where("user_id > 0").
 		Group("user_id").
-		Order("quota DESC").
-		Limit(opsTopUserLimit).
 		Scan(&rows).Error
 	if err != nil {
 		return err
 	}
+	// Refunds can reorder users, so the ranking happens on net usage.
+	refundedByUser := make(map[int]int64)
+	for _, refund := range refunds {
+		refundedByUser[refund.UserId] += refund.Quota
+	}
+	for i := range rows {
+		rows[i].Quota = opsNetUsage(rows[i].Quota, refundedByUser[rows[i].UserId])
+	}
+	rows = slices.DeleteFunc(rows, func(row opsTopUserRow) bool { return row.Quota == 0 })
+	slices.SortFunc(rows, func(a, b opsTopUserRow) int {
+		return cmp.Or(cmp.Compare(b.Quota, a.Quota), cmp.Compare(a.UserId, b.UserId))
+	})
+	rows = rows[:min(len(rows), opsTopUserLimit)]
 	result.TopUsers = make([]OpsTopUser, 0, len(rows))
 	if len(rows) == 0 {
 		return nil
@@ -844,19 +928,23 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 	if err = opsLoadChannels(scope, query, result, periodOrders); err != nil {
 		return nil, err
 	}
-	if err = opsLoadTrend(scope, query, result); err != nil {
+	refunds, err := opsRefundLogs(scope, query.Start, query.End)
+	if err != nil {
 		return nil, err
 	}
-	if err = opsLoadModels(scope, query, result); err != nil {
+	if err = opsLoadTrend(scope, query, result, refunds); err != nil {
+		return nil, err
+	}
+	if err = opsLoadModels(scope, query, result, refunds); err != nil {
 		return nil, err
 	}
 	if err = opsLoadTasks(scope, query, result); err != nil {
 		return nil, err
 	}
-	if err = opsLoadUpstream(scope, query, result); err != nil {
+	if err = opsLoadUpstream(scope, query, result, refunds); err != nil {
 		return nil, err
 	}
-	if err = opsLoadTopUsers(scope, query, result); err != nil {
+	if err = opsLoadTopUsers(scope, query, result, refunds); err != nil {
 		return nil, err
 	}
 

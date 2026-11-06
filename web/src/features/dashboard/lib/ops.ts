@@ -47,11 +47,19 @@ export interface OpsCustomRange {
   end?: Date
 }
 
+/** Why a custom range cannot be queried yet, or null when it can. */
+export function opsCustomRangeIssue(custom: OpsCustomRange) {
+  if (!custom.start || !custom.end) return 'incomplete'
+  if (dayjs(custom.end).isBefore(custom.start, 'day')) return 'inverted'
+  return null
+}
+
+/** The period to query, or null for a custom range that is not usable yet. */
 export function resolveOpsRange(
   key: OpsRangeKey,
   now: Date,
   custom: OpsCustomRange = {}
-): { start: number; end: number } {
+): { start: number; end: number } | null {
   const current = dayjs(now)
   const today = current.startOf('day')
   const untilNow = (from: dayjs.Dayjs) => ({
@@ -72,13 +80,11 @@ export function resolveOpsRange(
     case 'month':
       return untilNow(current.startOf('month'))
     case 'custom':
-      if (custom.start && custom.end) {
-        return {
-          start: dayjs(custom.start).startOf('day').unix(),
-          end: dayjs(custom.end).endOf('day').unix(),
-        }
+      if (opsCustomRangeIssue(custom)) return null
+      return {
+        start: dayjs(custom.start).startOf('day').unix(),
+        end: dayjs(custom.end).endOf('day').unix(),
       }
-      return untilNow(today.subtract(6, 'day'))
     case '7d':
     default:
       return untilNow(today.subtract(6, 'day'))
