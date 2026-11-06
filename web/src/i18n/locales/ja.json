@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "上流の説明を取得",
     "Description replaced with the one from {{channel}}. Review and save.": "{{channel}} の説明で上書きしました。確認して保存してください。",
     "The supplier has no description for this model": "上流にはこのモデルの説明がありません",
-    "The supplier description mentions a price. Remove it before saving.": "上流の説明に価格が含まれています。保存前に削除してください。",
+    "Prices were removed from the supplier text. Check what is left.": "上流の説明から価格を削除しました。残りの内容を確認してください。",
     "Add a supplier token first": "先にサプライヤートークンを設定してください",
     "Filled in from your invitation link": "招待リンクから自動入力されました",
     "Film and storyboards": "映像制作・絵コンテ",

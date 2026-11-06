@@ -375,7 +375,7 @@ export async function fetchSupplierDescription(modelName: string): Promise<{
   data?: {
     description: string
     channel_name?: string
-    mentions_price?: boolean
+    prices_removed?: boolean
   }
 }> {
   const res = await api.post(

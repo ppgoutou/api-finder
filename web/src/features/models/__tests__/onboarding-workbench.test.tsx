@@ -406,7 +406,11 @@ describe('model onboarding workbench', () => {
     post.mockResolvedValue({
       data: {
         success: true,
-        data: { description: '上游参数说明', channel_name: 'alpha' },
+        data: {
+          description: '上游参数说明',
+          channel_name: 'alpha',
+          prices_removed: true,
+        },
       },
     })
     renderSection()

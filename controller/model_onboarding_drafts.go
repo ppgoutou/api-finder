@@ -38,6 +38,13 @@ var onboardingDraftLocales = []string{"zh", "zh-TW", "en", "ja", "fr", "ru", "vi
 // is dropped.
 var draftPricePattern = regexp.MustCompile(`(?i)[¥￥$€]|\d\s*(元|美元|美金|usd|cny|rmb|cents?)`)
 
+var (
+	descriptionParenPattern    = regexp.MustCompile(`\s*[（(][^（）()]*[）)]`)
+	descriptionClauseSeparator = regexp.MustCompile(`[。！？；;，、]\s*|[,.!?](?:\s+|$)`)
+)
+
+const descriptionWeakSeparators = "，、,"
+
 // onboardingDescriptionLLM is an OpenAI-compatible chat endpoint that writes
 // draft descriptions. The key is never returned.
 type onboardingDescriptionLLM struct {
@@ -181,8 +188,9 @@ func DraftOnboardingModel(c *gin.Context) {
 
 // FetchOnboardingSupplierDescription reads one model's description live from
 // the suppliers, trying the channels that list the model first. An empty
-// description means no supplier has one. The text is returned as written, so
-// mentions_price tells the admin when it would reveal a price once saved.
+// description means no supplier has one. Supplier texts state their prices,
+// which are this site's costs, so those clauses are removed and prices_removed
+// tells the admin to check what is left.
 func FetchOnboardingSupplierDescription(c *gin.Context) {
 	var request struct {
 		ModelName string `json:"model_name"`
@@ -226,11 +234,12 @@ func FetchOnboardingSupplierDescription(c *gin.Context) {
 			}
 			continue
 		}
-		if description := descriptions[name]; description != "" {
+		description := stripDescriptionPrices(descriptions[name])
+		if description != "" {
 			common.ApiSuccess(c, gin.H{
 				"description":    description,
 				"channel_name":   row.Name,
-				"mentions_price": draftPricePattern.MatchString(description),
+				"prices_removed": draftPricePattern.MatchString(descriptions[name]),
 			})
 			return
 		}
@@ -240,6 +249,54 @@ func FetchOnboardingSupplierDescription(c *gin.Context) {
 		return
 	}
 	common.ApiSuccess(c, gin.H{"description": ""})
+}
+
+// stripDescriptionPrices removes every clause that names an amount of money
+// and keeps the rest of the sentence, so rules such as free allowances survive.
+// A bracket naming a price goes on its own, leaving the clause it annotates.
+func stripDescriptionPrices(description string) string {
+	lines := make([]string, 0)
+	for line := range strings.SplitSeq(description, "\n") {
+		if !draftPricePattern.MatchString(line) {
+			lines = append(lines, line)
+			continue
+		}
+		line = descriptionParenPattern.ReplaceAllStringFunc(line, func(bracket string) string {
+			if draftPricePattern.MatchString(bracket) {
+				return ""
+			}
+			return bracket
+		})
+		var kept strings.Builder
+		pendingSeparator := ""
+		position := 0
+		bounds := append(descriptionClauseSeparator.FindAllStringIndex(line, -1), []int{len(line), len(line)})
+		for _, bound := range bounds {
+			clause, separator := line[position:bound[0]], line[bound[0]:bound[1]]
+			position = bound[1]
+			if draftPricePattern.MatchString(clause) {
+				// The dropped clause's separator replaces a weak one before it,
+				// so "A, price; B" becomes "A; B", but "A. price, B" stays "A. B".
+				weakBefore := strings.ContainsAny(pendingSeparator, descriptionWeakSeparators)
+				strongAfter := separator != "" && !strings.ContainsAny(separator, descriptionWeakSeparators)
+				if kept.Len() > 0 && (weakBefore || strongAfter) {
+					pendingSeparator = separator
+				}
+				continue
+			}
+			if clause == "" && separator == "" {
+				continue
+			}
+			kept.WriteString(pendingSeparator)
+			kept.WriteString(clause)
+			pendingSeparator = separator
+		}
+		kept.WriteString(pendingSeparator)
+		if text := strings.TrimSpace(kept.String()); text != "" {
+			lines = append(lines, text)
+		}
+	}
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // prepareOnboardingDrafts drafts metadata for pending models that have none

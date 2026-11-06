@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "Récupérer la description du fournisseur",
     "Description replaced with the one from {{channel}}. Review and save.": "Description remplacée par celle de {{channel}}. Vérifiez puis enregistrez.",
     "The supplier has no description for this model": "Le fournisseur n'a pas de description pour ce modèle",
-    "The supplier description mentions a price. Remove it before saving.": "La description du fournisseur mentionne un prix. Supprimez-le avant d’enregistrer.",
+    "Prices were removed from the supplier text. Check what is left.": "Les prix ont été retirés du texte du fournisseur. Vérifiez le reste.",
     "Add a supplier token first": "Ajoutez d'abord un jeton fournisseur",
     "Filled in from your invitation link": "Rempli depuis votre lien d'invitation",
     "Film and storyboards": "Films et storyboards",
