@@ -367,6 +367,25 @@ export async function draftOnboardingModel(modelName: string): Promise<{
 }
 
 /**
+ * Read one model's description live from its supplier
+ */
+export async function fetchSupplierDescription(modelName: string): Promise<{
+  success: boolean
+  message?: string
+  data?: {
+    description: string
+    channel_name?: string
+    mentions_price?: boolean
+  }
+}> {
+  const res = await api.post(
+    '/api/models/onboarding/upstream_prices/description',
+    { model_name: modelName }
+  )
+  return res.data
+}
+
+/**
  * The chat endpoint that polishes draft descriptions; the key is never returned
  */
 export async function getDescriptionLLM(): Promise<{

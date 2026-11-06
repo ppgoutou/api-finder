@@ -52,6 +52,27 @@ describe('LanguageBlocksTextarea', () => {
     )
   })
 
+  it('shows replaced text when the value changes from outside a picked tab', () => {
+    const { rerender } = render(
+      <LanguageBlocksTextarea
+        aria-label='Description'
+        value={MULTILINGUAL}
+        onChange={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'English' }))
+
+    rerender(
+      <LanguageBlocksTextarea
+        aria-label='Description'
+        value='Supplier text'
+        onChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Description')).toHaveValue('Supplier text')
+  })
+
   it('edits only the selected language and keeps the others', () => {
     const onSave = vi.fn()
     render(<Harness initial={MULTILINGUAL} onSave={onSave} />)

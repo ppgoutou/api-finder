@@ -466,3 +466,52 @@ func TestListDescriptionLLMModelsFallsBackToStoredKey(t *testing.T) {
 	assert.Equal(t, []any{"claude-x", "gpt-4o-mini"}, response["data"])
 	assert.Equal(t, false, list(`{"base_url":"` + llmServer.URL + `","api_key":"wrong"}`)["success"])
 }
+
+func TestFetchSupplierDescriptionPrefersListingChannelAndFlagsPrices(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	gin.SetMode(gin.TestMode)
+
+	supplier := func(description string) *httptest.Server {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/api/pricing", r.URL.Path)
+			assert.Equal(t, "Bearer supplier-token", r.Header.Get("Authorization"))
+			encoded, _ := common.Marshal(map[string]any{"success": true, "data": []any{
+				map[string]any{"model_name": "E-video", "description": description},
+			}})
+			_, _ = w.Write(encoded)
+		}))
+		t.Cleanup(server.Close)
+		return server
+	}
+	other := supplier("from the other channel")
+	listing := supplier("  720p, 4-30 s  ")
+	otherURL, listingURL := other.URL, listing.URL
+	require.NoError(t, model.DB.Create(&model.Channel{Id: 1, Name: "other", Key: "k", Status: common.ChannelStatusEnabled, BaseURL: &otherURL, Models: "E-else"}).Error)
+	require.NoError(t, model.DB.Create(&model.Channel{Id: 2, Name: "listing", Key: "k", Status: common.ChannelStatusEnabled, BaseURL: &listingURL, Models: "E-video"}).Error)
+
+	fetch := func(name string) map[string]any {
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		ctx.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"model_name":"`+name+`"}`))
+		FetchOnboardingSupplierDescription(ctx)
+		var response map[string]any
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		return response
+	}
+
+	assert.Equal(t, false, fetch("E-video")["success"], "no token configured")
+
+	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token", "2": "supplier-token"}))
+	found := fetch("E-video")["data"].(map[string]any)
+	assert.Equal(t, "720p, 4-30 s", found["description"])
+	assert.Equal(t, "listing", found["channel_name"])
+	assert.Equal(t, false, found["mentions_price"])
+
+	assert.Equal(t, "", fetch("E-unknown")["data"].(map[string]any)["description"])
+
+	priced := supplier("1元/秒")
+	pricedURL := priced.URL
+	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", 2).Update("base_url", pricedURL).Error)
+	assert.Equal(t, true, fetch("E-video")["data"].(map[string]any)["mentions_price"])
+}
