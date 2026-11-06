@@ -506,12 +506,51 @@ func TestFetchSupplierDescriptionPrefersListingChannelAndFlagsPrices(t *testing.
 	found := fetch("E-video")["data"].(map[string]any)
 	assert.Equal(t, "720p, 4-30 s", found["description"])
 	assert.Equal(t, "listing", found["channel_name"])
-	assert.Equal(t, false, found["mentions_price"])
+	assert.Equal(t, false, found["prices_removed"])
 
 	assert.Equal(t, "", fetch("E-unknown")["data"].(map[string]any)["description"])
 
-	priced := supplier("1元/秒")
+	priced := supplier("720p，每秒 1元；前 5 张免费。")
 	pricedURL := priced.URL
 	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", 2).Update("base_url", pricedURL).Error)
-	assert.Equal(t, true, fetch("E-video")["data"].(map[string]any)["mentions_price"])
+	found = fetch("E-video")["data"].(map[string]any)
+	assert.Equal(t, "720p；前 5 张免费。", found["description"])
+	assert.Equal(t, true, found["prices_removed"])
+
+	onlyPrice := supplier("每秒 1元。")
+	onlyPriceURL := onlyPrice.URL
+	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id IN ?", []int{1, 2}).Update("base_url", onlyPriceURL).Error)
+	assert.Equal(t, "", fetch("E-video")["data"].(map[string]any)["description"])
+}
+
+func TestStripDescriptionPrices(t *testing.T) {
+	cases := []struct{ name, input, expected string }{
+		{"no price stays untouched", "720p, 4-15 s. Ratio 16:9 / 9:16 (adaptive).", "720p, 4-15 s. Ratio 16:9 / 9:16 (adaptive)."},
+		{
+			"supplier text keeps its rules",
+			"按时长和分辨率计费，每秒 720p $1 (¥7)、2K $2 (¥14)；参考视频另计，每秒 720p $1 (¥7)、2K $2 (¥14)，未返回秒数时按 15 秒计；输入图片前 5 张免费，超出每张 $3 (¥21)；参考音频免费。",
+			"按时长和分辨率计费；参考视频另计，未返回秒数时按 15 秒计；输入图片前 5 张免费；参考音频免费。",
+		},
+		{
+			"english text keeps its rules",
+			"Billed by duration, per second: 720p $1.50 (¥7), 2K $2 (¥14); reference videos are charged on top, per second: 720p $1, and count as 15 seconds; audio is free.",
+			"Billed by duration; reference videos are charged on top, and count as 15 seconds; audio is free.",
+		},
+		{"bracket price leaves its clause", "按秒计费（每秒 ¥1），支持 720p。", "按秒计费，支持 720p。"},
+		{"bracket without price stays", "按秒计费 (adaptive)，每秒 ¥1。", "按秒计费 (adaptive)。"},
+		{"whole sentence goes", "支持 720p。每秒 ¥1。支持 2K。", "支持 720p。支持 2K。"},
+		{"leading clause goes", "每秒 ¥1，支持 720p。", "支持 720p。"},
+		{"clause after a sentence end", "支持 720p。每秒 ¥1，支持 2K。", "支持 720p。支持 2K。"},
+		{"trailing clause keeps the sentence end", "支持 720p，每秒 ¥1。", "支持 720p。"},
+		{"thousands and decimals do not split", "Costs $1,000.50 each, 720p.", "720p."},
+		{"amount in words", "每秒 1 元，720p", "720p"},
+		{"language blocks keep their markers", "<!-- lang:zh -->\n720p，每秒 ¥1。\n<!-- lang:en -->\n720p, $1 per second.", "<!-- lang:zh -->\n720p。\n<!-- lang:en -->\n720p."},
+		{"a line of only prices goes", "720p\n$1 per second.\n2K", "720p\n2K"},
+		{"nothing left", "每秒 ¥1。", ""},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, stripDescriptionPrices(testCase.input))
+		})
+	}
 }

@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "获取上游说明",
     "Description replaced with the one from {{channel}}. Review and save.": "已用 {{channel}} 的上游说明覆盖，请检查后保存。",
     "The supplier has no description for this model": "上游没有这个模型的说明",
-    "The supplier description mentions a price. Remove it before saving.": "上游说明里提到了价格，保存前请删除。",
+    "Prices were removed from the supplier text. Check what is left.": "已去掉上游说明里的价格，请检查剩余内容。",
     "Add a supplier token first": "请先设置供应商令牌",
     "Filled in from your invitation link": "已通过邀请链接自动填入",
     "Film and storyboards": "影视与分镜",

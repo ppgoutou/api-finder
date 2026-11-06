@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "Lấy mô tả từ nhà cung cấp",
     "Description replaced with the one from {{channel}}. Review and save.": "Đã thay mô tả bằng mô tả từ {{channel}}. Hãy kiểm tra rồi lưu.",
     "The supplier has no description for this model": "Nhà cung cấp không có mô tả cho mô hình này",
-    "The supplier description mentions a price. Remove it before saving.": "Mô tả của nhà cung cấp có nhắc đến giá. Hãy xóa trước khi lưu.",
+    "Prices were removed from the supplier text. Check what is left.": "Đã xóa giá khỏi mô tả của nhà cung cấp. Hãy kiểm tra phần còn lại.",
     "Add a supplier token first": "Hãy thêm token nhà cung cấp trước",
     "Filled in from your invitation link": "Đã điền từ liên kết mời của bạn",
     "Film and storyboards": "Phim và bảng phân cảnh",

@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "Получить описание поставщика",
     "Description replaced with the one from {{channel}}. Review and save.": "Описание заменено описанием из {{channel}}. Проверьте и сохраните.",
     "The supplier has no description for this model": "У поставщика нет описания этой модели",
-    "The supplier description mentions a price. Remove it before saving.": "В описании поставщика указана цена. Удалите её перед сохранением.",
+    "Prices were removed from the supplier text. Check what is left.": "Цены удалены из текста поставщика. Проверьте остальное.",
     "Add a supplier token first": "Сначала добавьте токен поставщика",
     "Filled in from your invitation link": "Заполнено по ссылке-приглашению",
     "Film and storyboards": "Кино и раскадровки",

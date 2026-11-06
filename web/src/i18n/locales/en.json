@@ -3016,7 +3016,7 @@
     "Fetch supplier description": "Fetch supplier description",
     "Description replaced with the one from {{channel}}. Review and save.": "Description replaced with the one from {{channel}}. Review and save.",
     "The supplier has no description for this model": "The supplier has no description for this model",
-    "The supplier description mentions a price. Remove it before saving.": "The supplier description mentions a price. Remove it before saving.",
+    "Prices were removed from the supplier text. Check what is left.": "Prices were removed from the supplier text. Check what is left.",
     "Add a supplier token first": "Add a supplier token first",
     "Filled in from your invitation link": "Filled in from your invitation link",
     "Film and storyboards": "Film and storyboards",

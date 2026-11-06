@@ -210,11 +210,9 @@ export function OnboardingMetadataCard(props: {
           }
         )
       )
-      if (found.mentions_price) {
-        toast.warning(
-          t(
-            'The supplier description mentions a price. Remove it before saving.'
-          )
+      if (found.prices_removed) {
+        toast.info(
+          t('Prices were removed from the supplier text. Check what is left.')
         )
       }
     },
