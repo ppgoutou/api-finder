@@ -355,6 +355,7 @@ func migrateDB() error {
 		&Midjourney{},
 		&TopUp{},
 		&AffRebate{},
+		&TestCredit{},
 		&USDTOrder{},
 		&USDTReceipt{},
 		&QuotaData{},

@@ -53,6 +53,7 @@ type OpsPeriodStats struct {
 	ActiveUsers      int64 `json:"active_users"`
 	UsedQuota        int64 `json:"used_quota"`
 	OtherCreditQuota int64 `json:"other_credit_quota"`
+	TestCreditQuota  int64 `json:"test_credit_quota"`
 }
 
 // OpsOtherCredit breaks down wallet credits that did not come from an order.
@@ -76,6 +77,17 @@ type OpsWallet struct {
 	OtherCredit       OpsOtherCredit `json:"other_credit"`
 	RecentUsedQuota   int64          `json:"recent_used_quota"`
 	RecentUsedSeconds int64          `json:"recent_used_seconds"`
+	TestCredit        OpsTestCredit  `json:"test_credit"`
+}
+
+// OpsTestCredit reports promotional money. Wallets do not separate it from paid
+// balance, so UsedQuota assumes each user spends test credit first: it is the
+// smaller of what the user was granted and what the user has used since the
+// first grant.
+type OpsTestCredit struct {
+	GrantedQuota int64 `json:"granted_quota"`
+	UsedQuota    int64 `json:"used_quota"`
+	Users        int64 `json:"users"`
 }
 
 type OpsUsers struct {
@@ -403,7 +415,52 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 		return stats, err
 	}
 	stats.OtherCreditQuota = credit.total()
+
+	err = scope.excludeUsers(DB.Model(&TestCredit{}), "user_id").
+		Where("created_at >= ? AND created_at <= ?", start, end).
+		Select("coalesce(sum(quota), 0)").Scan(&stats.TestCreditQuota).Error
+	if err != nil {
+		return stats, err
+	}
 	return stats, nil
+}
+
+func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
+	var grants []struct {
+		UserId      int
+		Quota       int64
+		UsedAtFirst int64
+	}
+	err := scope.excludeUsers(DB.Model(&TestCredit{}), "user_id").
+		Select("user_id, coalesce(sum(quota), 0) as quota, min(used_quota_at_grant) as used_at_first").
+		Group("user_id").
+		Scan(&grants).Error
+	if err != nil || len(grants) == 0 {
+		return err
+	}
+	ids := make([]int, 0, len(grants))
+	for _, grant := range grants {
+		ids = append(ids, grant.UserId)
+	}
+	var users []struct {
+		Id        int
+		UsedQuota int64
+	}
+	err = DB.Model(&User{}).Unscoped().Select("id, used_quota").Where("id IN ?", ids).Scan(&users).Error
+	if err != nil {
+		return err
+	}
+	usedByUser := make(map[int]int64, len(users))
+	for _, user := range users {
+		usedByUser[user.Id] = user.UsedQuota
+	}
+	credit := &result.Wallet.TestCredit
+	credit.Users = int64(len(grants))
+	for _, grant := range grants {
+		credit.GrantedQuota += grant.Quota
+		credit.UsedQuota += min(grant.Quota, max(usedByUser[grant.UserId]-grant.UsedAtFirst, 0))
+	}
+	return nil
 }
 
 func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, payers []opsPayerRow) error {
@@ -453,6 +510,9 @@ func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsD
 	}
 
 	if result.Wallet.OtherCredit, err = opsOtherCredit(scope, 0, 0); err != nil {
+		return err
+	}
+	if err = opsLoadTestCredit(scope, result); err != nil {
 		return err
 	}
 	result.Wallet.RecentUsedSeconds = opsRunwayWindowSeconds

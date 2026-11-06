@@ -63,11 +63,18 @@ export function OpsStatGrid(props: {
   stats: OpsStat[]
   loading: boolean
   footer?: ReactNode
+  /** Four columns on wide screens instead of six, for an even two rows of eight. */
+  fourColumns?: boolean
 }) {
   return (
     <div className='bg-card overflow-hidden rounded-lg border'>
       {/* Negative margins hide the outer cell borders whatever the wrap. */}
-      <div className='-mr-px -mb-px grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6'>
+      <div
+        className={cn(
+          '-mr-px -mb-px grid grid-cols-2',
+          props.fourColumns ? 'sm:grid-cols-4' : 'sm:grid-cols-3 xl:grid-cols-6'
+        )}
+      >
         {props.stats.map((stat) => (
           <div
             key={stat.key}

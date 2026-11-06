@@ -136,7 +136,7 @@ export type ManageUserAction =
   | 'delete'
   | 'add_quota'
 
-export type QuotaAdjustMode = 'add' | 'subtract' | 'override'
+export type QuotaAdjustMode = 'add' | 'subtract' | 'override' | 'test_credit'
 
 export interface ManageUserQuotaPayload {
   id: number
