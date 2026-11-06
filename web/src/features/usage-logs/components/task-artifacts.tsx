@@ -61,6 +61,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useSegmentedDownload } from '@/hooks/use-segmented-download'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
@@ -210,6 +211,11 @@ function TaskArtifactCard(props: { artifact: TaskArtifact }) {
   const { t } = useTranslation()
   const [mediaFailed, setMediaFailed] = useState(false)
   const [mediaRevision, setMediaRevision] = useState(0)
+  const download = useSegmentedDownload(
+    props.artifact.content_url,
+    props.artifact.key
+  )
+  const downloading = download.percent !== null
   const icon = artifactIcon(props.artifact.type)
   const isVisualArtifact =
     props.artifact.type === 'image' || props.artifact.type === 'video'
@@ -283,13 +289,20 @@ function TaskArtifactCard(props: { artifact: TaskArtifact }) {
               rel='noopener noreferrer'
             />
           }
+          onClick={download.onClick}
+          aria-label={downloading ? t('Downloading') : undefined}
+          aria-busy={downloading}
         >
-          <HugeiconsIcon
-            icon={Download01Icon}
-            strokeWidth={2}
-            data-icon='inline-start'
-          />
-          {t('Download')}
+          {downloading ? (
+            <Spinner data-icon='inline-start' />
+          ) : (
+            <HugeiconsIcon
+              icon={Download01Icon}
+              strokeWidth={2}
+              data-icon='inline-start'
+            />
+          )}
+          {downloading ? `${download.percent}%` : t('Download')}
         </Button>
       </CardFooter>
     </Card>

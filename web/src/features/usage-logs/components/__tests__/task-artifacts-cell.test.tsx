@@ -17,11 +17,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { describe, expect, test } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
+import { getTaskArtifacts } from '../../api'
 import type { TaskLog } from '../../types'
 import { TaskArtifactsCell } from '../task-artifacts'
+
+vi.mock('../../api', () => ({ getTaskArtifacts: vi.fn() }))
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
 
 function taskLog(overrides: Partial<TaskLog> = {}): TaskLog {
   return {
@@ -82,5 +91,46 @@ describe('task artifacts cell', () => {
     expect(
       screen.queryByRole('button', { name: /Artifacts/ })
     ).not.toBeInTheDocument()
+  })
+
+  test('given a video artifact, Download saves the file in parts with its extension', async () => {
+    vi.mocked(getTaskArtifacts).mockResolvedValue({
+      artifacts: [
+        {
+          key: 'video',
+          type: 'video',
+          mime_type: 'video/mp4',
+          content_url:
+            'https://site.example/v1/tasks/task-public/artifacts/video/content?access=token',
+        },
+      ],
+    } as never)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(new Uint8Array(16), {
+            status: 206,
+            headers: {
+              'Content-Range': 'bytes 0-15/16',
+              'Content-Type': 'video/mp4',
+            },
+          })
+      )
+    )
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:joined')
+    const saved: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
+      saved.push(this.download)
+    })
+    const user = userEvent.setup()
+    renderCell(taskLog())
+
+    await user.click(screen.getByRole('button', { name: /Artifacts/ }))
+    await user.click(await screen.findByRole('button', { name: 'Download' }))
+
+    await waitFor(() => expect(saved).toEqual(['video.mp4']))
   })
 })
