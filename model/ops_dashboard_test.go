@@ -32,10 +32,10 @@ func opsTestQuery(channel string) OpsDashboardQuery {
 func seedOpsDashboard(t *testing.T) {
 	t.Helper()
 	require.NoError(t, DB.AutoMigrate(&User{}, &TopUp{}, &QuotaData{}, &PerfMetric{}, &Task{}, &Channel{},
-		&Redemption{}, &AffRebate{}, &Checkin{}, &USDTReceipt{}, &Log{}))
+		&Redemption{}, &AffRebate{}, &Checkin{}, &USDTReceipt{}, &Log{}, &TestCredit{}))
 	wipe := func() {
 		for _, table := range []string{"users", "top_ups", "quota_data", "perf_metrics", "tasks", "channels",
-			"redemptions", "aff_rebates", "checkins", "usdt_receipts", "logs"} {
+			"redemptions", "aff_rebates", "checkins", "usdt_receipts", "logs", "test_credits"} {
 			require.NoError(t, DB.Exec("DELETE FROM "+table).Error)
 		}
 	}
@@ -112,6 +112,20 @@ func seedOpsDashboard(t *testing.T) {
 	require.NoError(t, DB.Create(&rebates).Error)
 	require.NoError(t, DB.Create(&Checkin{UserId: 3, CheckinDate: "1970-01-21", QuotaAwarded: 20, CreatedAt: opsTestStart + 3}).Error)
 
+	testCredits := []TestCredit{
+		// Used more than granted: the whole grant counts as spent.
+		{UserId: 2, Quota: 100, CreatedAt: opsTestStart + 10},
+		// Granted twice and barely used: only what was used counts.
+		{UserId: 5, Quota: 40, CreatedAt: opsTestStart - 10},
+		{UserId: 5, Quota: 60, CreatedAt: opsTestStart + 20},
+		{UserId: 1, Quota: 1000, CreatedAt: opsTestStart + 30},
+		// All usage came before the grant: none of the credit is spent yet.
+		{UserId: 3, Quota: 50, UsedQuotaAtGrant: 100, CreatedAt: opsTestStart + 40},
+		// Part of the usage came after the grant.
+		{UserId: 4, Quota: 30, UsedQuotaAtGrant: 40, CreatedAt: opsTestStart + 50},
+	}
+	require.NoError(t, DB.Create(&testCredits).Error)
+
 	refundLogs := []Log{
 		{UserId: 2, Type: LogTypeRefund, ModelName: "model-a", ChannelId: 1, Quota: 30, CreatedAt: opsTestStart + 3700},
 		{UserId: 3, Type: LogTypeRefund, ModelName: "model-b", ChannelId: 2, Quota: 10, CreatedAt: opsTestStart + opsTestDay + 3700},
@@ -149,6 +163,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		ActiveUsers:      2,
 		UsedQuota:        100,
 		OtherCreditQuota: 1320,
+		TestCreditQuota:  240,
 	}, got.Current)
 	assert.Equal(t, OpsPeriodStats{
 		TopupQuota:       7 * opsTestUnit,
@@ -159,6 +174,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		ActiveUsers:      1,
 		UsedQuota:        5,
 		OtherCreditQuota: 500,
+		TestCreditQuota:  40,
 	}, got.Previous)
 
 	assert.Equal(t, OpsWallet{
@@ -171,6 +187,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		OtherCredit:       OpsOtherCredit{RedemptionQuota: 1500, RebateQuota: 300, CheckinQuota: 20},
 		RecentUsedQuota:   105,
 		RecentUsedSeconds: opsRunwayWindowSeconds,
+		TestCredit:        OpsTestCredit{GrantedQuota: 280, UsedQuota: 110, Users: 4},
 	}, got.Wallet)
 	assert.Equal(t, OpsUsers{Registered: 4, TotalPayers: 3, RepeatPayer: 1, Dormant: 1}, got.Users)
 	assert.Equal(t, OpsPending{Pending: 1, Overdue: 1}, got.Pending)
@@ -219,6 +236,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, int64(1), stripe.Current.NewPayers)
 	assert.Equal(t, 7*opsTestUnit, stripe.Previous.TopupQuota, "a legacy row counts for its payment method")
 	assert.Equal(t, 17*opsTestUnit, stripe.Wallet.TopupQuota)
+	assert.Equal(t, int64(240), stripe.Current.TestCreditQuota, "test credit has no order channel")
 	assert.Equal(t, 25*opsTestUnit, stripe.Wallet.AllChannelsQuota, "reconciliation always spans every channel")
 	assert.Equal(t, OpsPending{Pending: 1}, stripe.Pending)
 	assert.Equal(t, int64(100), stripe.Current.UsedQuota, "usage has no order channel")
@@ -234,6 +252,8 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, int64(599), everyone.Current.UsedQuota)
 	assert.Equal(t, int64(5), everyone.Users.Registered)
 	assert.Equal(t, int64(950), everyone.Wallet.UsedQuota)
+	assert.Equal(t, OpsTestCredit{GrantedQuota: 1280, UsedQuota: 610, Users: 5}, everyone.Wallet.TestCredit)
+	assert.Equal(t, 27*opsTestUnit, everyone.Current.TopupQuota, "test credit never counts as a top-up")
 }
 
 func TestGetOpsDashboardFiguresFollowChannelAndInternalScope(t *testing.T) {

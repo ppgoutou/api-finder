@@ -120,10 +120,17 @@ export function reconcileWallet(wallet: OpsWallet) {
   const credit = wallet.other_credit
   const otherCredit =
     credit.redemption_quota + credit.rebate_quota + credit.checkin_quota
-  const inflow = wallet.all_channels_quota + otherCredit
+  const nonOrderCredit = otherCredit + wallet.test_credit.granted_quota
+  const inflow = wallet.all_channels_quota + nonOrderCredit
   const outflow =
     wallet.used_quota + wallet.balance_quota + wallet.negative_quota
-  return { otherCredit, inflow, outflow, difference: inflow - outflow }
+  return {
+    otherCredit,
+    nonOrderCredit,
+    inflow,
+    outflow,
+    difference: inflow - outflow,
+  }
 }
 
 /** Days the current balances last at the recent daily usage. */

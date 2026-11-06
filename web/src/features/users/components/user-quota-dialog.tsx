@@ -32,6 +32,18 @@ import { cn } from '@/lib/utils'
 import { adjustUserQuota } from '../api'
 import type { QuotaAdjustMode } from '../types'
 
+// Matches model.TestCreditCNY; the server applies the amount.
+const TEST_CREDIT_CNY = 10
+
+const MODES: QuotaAdjustMode[] = ['add', 'subtract', 'override', 'test_credit']
+
+const MODE_LABELS: Record<QuotaAdjustMode, string> = {
+  add: 'Add',
+  subtract: 'Subtract',
+  override: 'Override',
+  test_credit: 'Test credit',
+}
+
 interface UserQuotaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -61,6 +73,8 @@ export function UserQuotaDialog(props: UserQuotaDialogProps) {
         return `${t('Current quota')}: ${formatQuota(current)}  +${formatQuota(val)} = ${formatQuota(current + val)}`
       case 'subtract':
         return `${t('Current quota')}: ${formatQuota(current)}  -${formatQuota(val)} = ${formatQuota(current - val)}`
+      case 'test_credit':
+        return `${t('Current quota')}: ${formatQuota(current)}  +¥${TEST_CREDIT_CNY}`
       case 'override': {
         const overrideQuota = parseQuotaFromDollars(amountValue)
         return `${t('Current quota')}: ${formatQuota(current)} → ${formatQuota(overrideQuota)}`
@@ -71,8 +85,10 @@ export function UserQuotaDialog(props: UserQuotaDialogProps) {
   }
 
   const handleConfirm = async () => {
-    if (!amount && mode !== 'override') return
-    if (quotaValue <= 0 && mode !== 'override') return
+    if (mode !== 'test_credit') {
+      if (!amount && mode !== 'override') return
+      if (quotaValue <= 0 && mode !== 'override') return
+    }
 
     setLoading(true)
     try {
@@ -134,8 +150,8 @@ export function UserQuotaDialog(props: UserQuotaDialogProps) {
 
         <div className='space-y-2'>
           <Label>{t('Mode')}</Label>
-          <div className='flex gap-1'>
-            {(['add', 'subtract', 'override'] as const).map((m) => (
+          <div className='flex flex-wrap gap-1'>
+            {MODES.map((m) => (
               <Button
                 key={m}
                 type='button'
@@ -150,30 +166,37 @@ export function UserQuotaDialog(props: UserQuotaDialogProps) {
                   setAmount('')
                 }}
               >
-                {m === 'add' && t('Add')}
-                {!(m === 'add') && m === 'subtract' && t('Subtract')}
-                {!(m === 'add') && !(m === 'subtract') && t('Override')}
+                {t(MODE_LABELS[m])}
               </Button>
             ))}
           </div>
         </div>
 
-        <div className='space-y-2'>
-          <Label>
-            {t('Amount')} ({currencyLabel})
-          </Label>
-          <Input
-            type='number'
-            step={tokensOnly ? 1 : 0.000001}
-            min={mode === 'override' ? undefined : 0}
-            placeholder={placeholder}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleConfirm()
-            }}
-          />
-        </div>
+        {mode === 'test_credit' ? (
+          <p className='text-muted-foreground text-sm'>
+            {t(
+              'Adds a fixed ¥{{amount}} of promotional money. It is not a top-up: the business dashboard counts it as cost with no revenue.',
+              { amount: TEST_CREDIT_CNY }
+            )}
+          </p>
+        ) : (
+          <div className='space-y-2'>
+            <Label>
+              {t('Amount')} ({currencyLabel})
+            </Label>
+            <Input
+              type='number'
+              step={tokensOnly ? 1 : 0.000001}
+              min={mode === 'override' ? undefined : 0}
+              placeholder={placeholder}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleConfirm()
+              }}
+            />
+          </div>
+        )}
       </div>
     </Dialog>
   )

@@ -19,6 +19,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/service/authz"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redis/v8"
 
@@ -312,6 +313,55 @@ func TestManageUserQuotaRecordsTopupAndAudit(t *testing.T) {
 			assert.Equal(t, "quota-test-request", audits[0].RequestId)
 		})
 	}
+}
+
+func TestManageUserQuotaTestCreditGrantsFixedAmountAndRecord(t *testing.T) {
+	db := setupManageUserTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.TestCredit{}))
+	originalRate := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 8
+	t.Cleanup(func() { operation_setting.USDExchangeRate = originalRate })
+	user := model.User{Username: "promo-owner", Role: common.RoleCommonUser, Quota: 1000, UsedQuota: 77, AffCode: "promo-owner-aff"}
+	require.NoError(t, db.Create(&user).Error)
+	operator := createQuotaTestOperator(t, db, common.RoleRootUser)
+	wantQuota := int(10.0 / 8.0 * common.QuotaPerUnit)
+
+	// A client-supplied value must not change the grant.
+	recorder := performManageUserRequest(t, fmt.Sprintf(`{"id":%d,"action":"add_quota","mode":"test_credit","value":99999999}`, user.Id))
+	require.Contains(t, recorder.Body.String(), `"success":true`)
+
+	require.NoError(t, db.First(&user, user.Id).Error)
+	assert.Equal(t, 1000+wantQuota, user.Quota)
+	var credits []model.TestCredit
+	require.NoError(t, db.Find(&credits).Error)
+	require.Len(t, credits, 1)
+	assert.Equal(t, user.Id, credits[0].UserId)
+	assert.Equal(t, wantQuota, credits[0].Quota)
+	assert.Equal(t, operator.Id, credits[0].OperatorId)
+	assert.Equal(t, 77, credits[0].UsedQuotaAtGrant)
+	var audit model.AuditLog
+	require.NoError(t, model.LOG_DB.First(&audit).Error)
+	assert.Equal(t, fmt.Sprintf("Granted test credit of %d", wantQuota), audit.Content)
+}
+
+func TestManageUserQuotaTestCreditKeepsWalletWhenRecordFails(t *testing.T) {
+	db := setupManageUserTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.TestCredit{}))
+	user := model.User{Username: "promo-owner", Role: common.RoleCommonUser, Quota: 1000, AffCode: "promo-owner-aff"}
+	require.NoError(t, db.Create(&user).Error)
+	createQuotaTestOperator(t, db, common.RoleRootUser)
+	require.NoError(t, db.Callback().Create().Before("gorm:create").Register("test:fail_test_credit", func(tx *gorm.DB) {
+		if tx.Statement.Table == "test_credits" {
+			tx.AddError(errors.New("record unavailable"))
+		}
+	}))
+	t.Cleanup(func() { _ = db.Callback().Create().Remove("test:fail_test_credit") })
+
+	recorder := performManageUserRequest(t, fmt.Sprintf(`{"id":%d,"action":"add_quota","mode":"test_credit"}`, user.Id))
+
+	require.Contains(t, recorder.Body.String(), `"success":false`)
+	require.NoError(t, db.First(&user, user.Id).Error)
+	assert.Equal(t, 1000, user.Quota, "a grant without its record must not reach the wallet")
 }
 
 func TestManageUserQuotaFailuresDoNotRecordTopup(t *testing.T) {

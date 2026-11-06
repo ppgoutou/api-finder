@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// modeTestCredit grants the fixed promotional amount; any requested value is
+// ignored, so the amount cannot differ between grants.
+const modeTestCredit = "test_credit"
+
 func manageUserQuota(c *gin.Context, req ManageRequest) {
 	action := "generic"
 	params := model.AuditFields{
@@ -24,6 +28,8 @@ func manageUserQuota(c *gin.Context, req ManageRequest) {
 		action = "user.quota_subtract"
 	case "override":
 		action = "user.quota_override"
+	case modeTestCredit:
+		action = "user.quota_test_credit"
 	default:
 		params["action"] = "add_quota"
 		params["method"] = c.Request.Method
@@ -43,7 +49,13 @@ func manageUserQuota(c *gin.Context, req ManageRequest) {
 		markAuditLogged(c)
 	}()
 
-	adjustment, err := model.AdjustUserQuota(req.Id, c.GetInt("role"), req.Mode, req.Value)
+	var adjustment *model.UserQuotaAdjustment
+	var err error
+	if req.Mode == modeTestCredit {
+		adjustment, err = model.GrantTestCredit(req.Id, c.GetInt("role"), c.GetInt("id"))
+	} else {
+		adjustment, err = model.AdjustUserQuota(req.Id, c.GetInt("role"), req.Mode, req.Value)
+	}
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrInvalidUserQuotaAdjustment):
@@ -72,7 +84,11 @@ func manageUserQuota(c *gin.Context, req ManageRequest) {
 	params["target_username"] = adjustment.Username
 	params["from"] = adjustment.Before
 	params["to"] = adjustment.After
-	if req.Mode != "override" {
+	switch req.Mode {
+	case "override":
+	case modeTestCredit:
+		params["quota"] = adjustment.After - adjustment.Before
+	default:
 		params["quota"] = req.Value
 	}
 	success = true

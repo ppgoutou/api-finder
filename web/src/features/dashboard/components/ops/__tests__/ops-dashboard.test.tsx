@@ -41,6 +41,7 @@ const emptyPeriod: OpsPeriodStats = {
   active_users: 0,
   used_quota: 0,
   other_credit_quota: 0,
+  test_credit_quota: 0,
 }
 
 const emptyDashboard: OpsDashboardData = {
@@ -56,6 +57,7 @@ const emptyDashboard: OpsDashboardData = {
     other_credit: { redemption_quota: 0, rebate_quota: 0, checkin_quota: 0 },
     recent_used_quota: 0,
     recent_used_seconds: 604800,
+    test_credit: { granted_quota: 0, used_quota: 0, users: 0 },
   },
   users: { registered: 0, total_payers: 0, repeat_payers: 0, dormant: 0 },
   pending: { pending: 0, overdue: 0 },

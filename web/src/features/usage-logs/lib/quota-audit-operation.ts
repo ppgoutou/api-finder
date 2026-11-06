@@ -33,6 +33,10 @@ const QUOTA_OPERATIONS: Record<string, { label: string; named: string }> = {
     label: 'Override user quota',
     named: 'Override quota for user “{{name}}”',
   },
+  'user.quota_test_credit': {
+    label: 'Grant test credit',
+    named: 'Grant test credit to user “{{name}}”',
+  },
 }
 
 function quotaText(value: unknown, t: Translate): string {

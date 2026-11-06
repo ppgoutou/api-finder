@@ -290,6 +290,7 @@ export interface OpsPeriodStats {
   active_users: number
   used_quota: number
   other_credit_quota: number
+  test_credit_quota: number
 }
 
 export interface OpsWallet {
@@ -306,6 +307,11 @@ export interface OpsWallet {
   }
   recent_used_quota: number
   recent_used_seconds: number
+  test_credit: {
+    granted_quota: number
+    used_quota: number
+    users: number
+  }
 }
 
 export interface OpsChannelStats {

@@ -43,6 +43,7 @@ const wallet: OpsWallet = {
   other_credit: { redemption_quota: 50, rebate_quota: 20, checkin_quota: 10 },
   recent_used_quota: 70,
   recent_used_seconds: 7 * 86400,
+  test_credit: { granted_quota: 40, used_quota: 10, users: 2 },
 }
 
 function perf(name: string, requests: number, successes: number): OpsModelPerf {
@@ -128,9 +129,10 @@ describe('wallet figures', () => {
   test('reconciliation spans every channel and counts what users owe', () => {
     expect(reconcileWallet(wallet)).toEqual({
       otherCredit: 80,
-      inflow: 1080,
+      nonOrderCredit: 120,
+      inflow: 1120,
       outflow: 1030,
-      difference: 50,
+      difference: 90,
     })
   })
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -22,7 +23,53 @@ type UserQuotaAdjustment struct {
 	After    int
 }
 
+// TestCreditCNY is the fixed yuan amount of one test credit grant.
+const TestCreditCNY = 10
+
+// TestCredit records one promotional grant. It carries cost but no revenue, so
+// the business dashboard reports it apart from top-ups.
+type TestCredit struct {
+	Id         int `json:"id"`
+	UserId     int `json:"user_id" gorm:"index"`
+	Quota      int `json:"quota"`
+	OperatorId int `json:"operator_id"`
+	// UsedQuotaAtGrant is the user's lifetime usage when the credit was granted,
+	// so usage from before the grant is not mistaken for spending it.
+	UsedQuotaAtGrant int   `json:"used_quota_at_grant"`
+	CreatedAt        int64 `json:"created_at" gorm:"bigint;autoCreateTime;index"`
+}
+
+// testCreditQuota converts the fixed yuan amount at the administrator's rate,
+// the same rate wallet top-ups in yuan are credited at.
+func testCreditQuota() (int, error) {
+	rate := operation_setting.USDExchangeRate
+	if rate <= 0 {
+		return 0, ErrInvalidUserQuotaAdjustment
+	}
+	return common.WalletQuotaFromDecimalStrict(
+		decimal.NewFromInt(TestCreditCNY).
+			Div(decimal.NewFromFloat(rate)).
+			Mul(decimal.NewFromFloat(common.QuotaPerUnit)),
+	)
+}
+
+// GrantTestCredit adds the fixed test credit and its record in one transaction,
+// so the dashboard never misses a grant that reached a wallet.
+func GrantTestCredit(userID, operatorRole, operatorID int) (*UserQuotaAdjustment, error) {
+	quota, err := testCreditQuota()
+	if err != nil {
+		return nil, err
+	}
+	return adjustUserQuota(userID, operatorRole, "add", quota, func(tx *gorm.DB, user *User) error {
+		return tx.Create(&TestCredit{UserId: userID, Quota: quota, OperatorId: operatorID, UsedQuotaAtGrant: user.UsedQuota}).Error
+	})
+}
+
 func AdjustUserQuota(userID, operatorRole int, mode string, value int) (*UserQuotaAdjustment, error) {
+	return adjustUserQuota(userID, operatorRole, mode, value, nil)
+}
+
+func adjustUserQuota(userID, operatorRole int, mode string, value int, onAdjusted func(tx *gorm.DB, user *User) error) (*UserQuotaAdjustment, error) {
 	if userID <= 0 || (mode != "add" && mode != "subtract" && mode != "override") {
 		return nil, ErrInvalidUserQuotaAdjustment
 	}
@@ -68,6 +115,9 @@ func AdjustUserQuota(userID, operatorRole int, mode string, value int) (*UserQuo
 			}
 		}
 		adjustment = UserQuotaAdjustment{UserID: user.Id, Username: user.Username, Before: user.Quota, After: after}
+		if onAdjusted != nil {
+			return onAdjusted(tx, &user)
+		}
 		return nil
 	})
 	if err != nil {

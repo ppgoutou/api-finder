@@ -135,6 +135,7 @@ export function OpsDashboard() {
   const money = (value: number | undefined) => formatOpsMoney(value ?? 0)
   const number = (value: number | undefined) => count(value ?? 0)
 
+  const testCredit = data?.wallet.test_credit
   const walletStats: OpsStat[] = [
     {
       key: 'topup',
@@ -149,7 +150,7 @@ export function OpsDashboard() {
       key: 'used',
       label: t('Amount used'),
       value: money(data?.wallet.used_quota),
-      hint: t('Lifetime usage'),
+      hint: t('Lifetime usage, including test credit'),
       note: t('This period {{amount}}', { amount: money(current?.used_quota) }),
     },
     {
@@ -165,6 +166,31 @@ export function OpsDashboard() {
       hint: t('Redemption codes, rebates, check-ins'),
       note: t('This period {{amount}}', {
         amount: money(current?.other_credit_quota),
+      }),
+    },
+    {
+      key: 'test-granted',
+      label: t('Test credit granted'),
+      value: money(testCredit?.granted_quota),
+      hint: t('{{count}} users, promotional cost with no revenue', {
+        count: testCredit?.users ?? 0,
+      }),
+      note: t('This period {{amount}}', {
+        amount: money(current?.test_credit_quota),
+      }),
+    },
+    {
+      key: 'test-used',
+      label: t('Test credit used'),
+      value: money(testCredit?.used_quota),
+      hint: t('Estimated, assuming test credit is spent first'),
+      note: t('Paid usage {{amount}}', {
+        amount: money(
+          Math.max(
+            (data?.wallet.used_quota ?? 0) - (testCredit?.used_quota ?? 0),
+            0
+          )
+        ),
       }),
     },
     {
@@ -380,6 +406,7 @@ export function OpsDashboard() {
         <OpsStatGrid
           stats={walletStats}
           loading={loading}
+          fourColumns
           footer={
             recon && (
               <div className='bg-muted/50 flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t px-3 py-2.5 text-sm sm:px-5'>
@@ -391,7 +418,7 @@ export function OpsDashboard() {
                     topups: formatOpsMoney(
                       data?.wallet.all_channels_quota ?? 0
                     ),
-                    other: formatOpsMoney(recon.otherCredit),
+                    other: formatOpsMoney(recon.nonOrderCredit),
                     total: formatOpsMoney(recon.inflow),
                   })}
                 </span>
