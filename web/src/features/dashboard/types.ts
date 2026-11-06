@@ -272,3 +272,121 @@ export interface FAQItem {
   question: string
   answer: string
 }
+
+// ============================================================================
+// Business dashboard (/api/data/ops)
+// ============================================================================
+
+export interface OpsPeriodStats {
+  topup_quota: number
+  topup_orders: number
+  refund_quota: number
+  refund_orders: number
+  disputed_orders: number
+  closed_orders: number
+  new_users: number
+  payers: number
+  new_payers: number
+  active_users: number
+  used_quota: number
+  other_credit_quota: number
+}
+
+export interface OpsWallet {
+  topup_quota: number
+  all_channels_quota: number
+  used_quota: number
+  balance_quota: number
+  negative_users: number
+  negative_quota: number
+  other_credit: {
+    redemption_quota: number
+    rebate_quota: number
+    checkin_quota: number
+  }
+  recent_used_quota: number
+  recent_used_seconds: number
+}
+
+export interface OpsChannelStats {
+  channel: string
+  total_quota: number
+  topup_quota: number
+  topup_orders: number
+  pending: number
+  overdue: number
+  closed_orders: number
+  refund_orders: number
+  disputed_orders: number
+}
+
+export interface OpsTrendDay {
+  date: string
+  topups: Record<string, number>
+  used_quota: number
+}
+
+export interface OpsModelUsage {
+  model_name: string
+  count: number
+  quota: number
+}
+
+export interface OpsModelPerf {
+  model_name: string
+  requests: number
+  successes: number
+  avg_latency_ms: number
+  avg_ttft_ms: number
+}
+
+export interface OpsUpstream {
+  channel_id: number
+  name: string
+  quota: number
+  count: number
+  balance: number
+  balance_updated_time: number
+  task_success: number
+  task_failure: number
+}
+
+export interface OpsTopUser {
+  user_id: number
+  username: string
+  quota: number
+  balance: number
+  last_used_at: number
+}
+
+export interface OpsDashboardData {
+  current: OpsPeriodStats
+  previous: OpsPeriodStats
+  wallet: OpsWallet
+  users: {
+    registered: number
+    total_payers: number
+    repeat_payers: number
+    dormant: number
+  }
+  pending: { pending: number; overdue: number }
+  channels: OpsChannelStats[]
+  trend: OpsTrendDay[]
+  models: OpsModelUsage[]
+  model_perf: OpsModelPerf[]
+  tasks: {
+    success: number
+    failure: number
+    in_progress: number
+    queued: number
+    fail_reasons: { reason: string; count: number }[]
+  }
+  upstream: OpsUpstream[]
+  top_users: OpsTopUser[]
+  alerts: {
+    overdue_orders: number
+    usdt_exceptions: number
+    disputed_orders: number
+    low_balance_channels: number
+  }
+}
