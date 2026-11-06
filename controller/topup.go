@@ -39,14 +39,15 @@ func GetTopUpInfo(c *gin.Context) {
 		})
 	}
 
-	if !isStripeTopUpEnabled() {
+	showStripe := isStripeTopUpEnabled() || isStripeTopUpPaused()
+	if !showStripe {
 		payMethods = lo.Filter(payMethods, func(method map[string]string, _ int) bool {
 			return method["type"] != model.PaymentMethodStripe
 		})
 	}
 
 	// 如果启用了 Stripe 支付，添加到支付方法列表
-	if isStripeTopUpEnabled() {
+	if showStripe {
 		// 检查是否已经包含 Stripe
 		hasStripe := false
 		for _, method := range payMethods {
@@ -58,10 +59,9 @@ func GetTopUpInfo(c *gin.Context) {
 
 		if !hasStripe {
 			stripeMethod := map[string]string{
-				"name":      "Stripe",
-				"type":      "stripe",
-				"color":     "#635BFF",
-				"min_topup": strconv.Itoa(setting.StripeMinTopUp),
+				"name":  "Stripe",
+				"type":  "stripe",
+				"color": "#635BFF",
 			}
 			payMethods = append(payMethods, stripeMethod)
 		}
@@ -80,10 +80,9 @@ func GetTopUpInfo(c *gin.Context) {
 
 		if !hasWaffoPancake {
 			payMethods = append(payMethods, map[string]string{
-				"name":      "Waffo Pancake",
-				"type":      model.PaymentMethodWaffoPancake,
-				"color":     "#F97316",
-				"min_topup": strconv.Itoa(setting.WaffoPancakeMinTopUp),
+				"name":  "Waffo Pancake",
+				"type":  model.PaymentMethodWaffoPancake,
+				"color": "#F97316",
 			})
 		}
 	}
@@ -101,23 +100,21 @@ func GetTopUpInfo(c *gin.Context) {
 
 		if !hasWaffo {
 			waffoMethod := map[string]string{
-				"name":      "Waffo (Global Payment)",
-				"type":      model.PaymentMethodWaffo,
-				"color":     "#3B82F6",
-				"min_topup": strconv.Itoa(setting.WaffoMinTopUp),
+				"name":  "Waffo (Global Payment)",
+				"type":  model.PaymentMethodWaffo,
+				"color": "#3B82F6",
 			}
 			payMethods = append(payMethods, waffoMethod)
 		}
 	}
 
 	// USDT converts amounts itself, so it stays available in yuan mode too.
-	enableUSDT := service.IsUSDTTopUpEnabled()
-	if enableUSDT {
+	enableUSDT := service.CanStartUSDTTopUp()
+	if enableUSDT || service.IsUSDTTopUpPaused() {
 		payMethods = append(payMethods, map[string]string{
-			"name":      "USDT (TRC-20)",
-			"type":      model.PaymentMethodUSDT,
-			"color":     "#26A17B",
-			"min_topup": strconv.FormatInt(service.GetUSDTMinTopUp(), 10),
+			"name":  "USDT (TRC-20)",
+			"type":  model.PaymentMethodUSDT,
+			"color": "#26A17B",
 		})
 	}
 
@@ -130,6 +127,18 @@ func GetTopUpInfo(c *gin.Context) {
 			return method["type"] == model.PaymentMethodStripe || method["type"] == model.PaymentMethodUSDT
 		})
 	}
+
+	// The configured methods are shared, so a paused one is marked on a copy.
+	payMethods = lo.Map(payMethods, func(method map[string]string, _ int) map[string]string {
+		paused := (method["type"] == model.PaymentMethodStripe && isStripeTopUpPaused()) ||
+			(method["type"] == model.PaymentMethodUSDT && service.IsUSDTTopUpPaused())
+		if !paused {
+			return method
+		}
+		marked := maps.Clone(method)
+		marked["paused"] = "true"
+		return marked
+	})
 
 	data := gin.H{
 		"enable_online_topup":              enableEpay,
@@ -147,16 +156,12 @@ func GetTopUpInfo(c *gin.Context) {
 			}
 			return nil
 		}(),
-		"creem_products":          setting.CreemProducts,
-		"pay_methods":             payMethods,
-		"min_topup":               operation_setting.MinTopUp,
-		"stripe_min_topup":        setting.StripeMinTopUp,
-		"usdt_min_topup":          service.GetUSDTMinTopUp(),
-		"waffo_min_topup":         setting.WaffoMinTopUp,
-		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
-		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
-		"topup_link":              common.TopUpLink,
+		"creem_products": setting.CreemProducts,
+		"pay_methods":    payMethods,
+		"min_topup":      operation_setting.GetMinTopUpAmount(),
+		"amount_options": operation_setting.GetPaymentSetting().AmountOptions,
+		"discount":       operation_setting.GetPaymentSetting().AmountDiscount,
+		"topup_link":     common.TopUpLink,
 	}
 	common.ApiSuccess(c, data)
 }
@@ -229,20 +234,6 @@ func getPayMoney(amount int64, group string) float64 {
 	payMoney := dAmount.Mul(dPrice).Mul(dTopupGroupRatio).Mul(dDiscount)
 
 	return payMoney.InexactFloat64()
-}
-
-func getMinTopup() int64 {
-	minTopup := operation_setting.MinTopUp
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		dMinTopup := decimal.NewFromInt(int64(minTopup))
-		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-		quota, err := common.WalletQuotaFromDecimalStrict(dMinTopup.Mul(dQuotaPerUnit))
-		if err != nil {
-			return common.MaxWalletQuota
-		}
-		minTopup = quota
-	}
-	return int64(minTopup)
 }
 
 func getTopUpQuota(amount int64) (int, error) {
@@ -343,8 +334,8 @@ func RequestEpay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Invalid parameters"))
 		return
 	}
-	if req.Amount < getMinTopup() {
-		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": getMinTopup()}))
+	if req.Amount < operation_setting.GetMinTopUpAmount() {
+		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": operation_setting.GetMinTopUpAmount()}))
 		return
 	}
 	id := c.GetInt("id")
@@ -563,8 +554,8 @@ func RequestAmount(c *gin.Context) {
 		return
 	}
 
-	if req.Amount < getMinTopup() {
-		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": getMinTopup()}))
+	if req.Amount < operation_setting.GetMinTopUpAmount() {
+		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": operation_setting.GetMinTopUpAmount()}))
 		return
 	}
 	id := c.GetInt("id")

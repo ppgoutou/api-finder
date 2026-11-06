@@ -331,7 +331,6 @@ export function Wallet(props: WalletProps) {
                       onCreemProductSelect={handleCreemProductSelect}
                       enableWaffoTopup={topupInfo?.enable_waffo_topup}
                       waffoPayMethods={topupInfo?.waffo_pay_methods}
-                      waffoMinTopup={topupInfo?.waffo_min_topup}
                       onWaffoMethodSelect={handleWaffoMethodSelect}
                       enableWaffoPancakeTopup={
                         topupInfo?.enable_waffo_pancake_topup

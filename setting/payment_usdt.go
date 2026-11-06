@@ -7,14 +7,16 @@ import "strings"
 // USDTEnvironment and USDTContractAddress are checked against every answer:
 // a testnet transfer must never buy real quota.
 var (
-	USDTEnabled         = false
+	USDTEnabled = false
+	// USDTPaused keeps USDT visible in the wallet but refuses new orders. Open
+	// orders still settle.
+	USDTPaused          = false
 	USDTGatewayAddress  = ""
 	USDTClientId        = ""
 	USDTApiSecret       = ""
 	USDTWebhookSecret   = ""
 	USDTEnvironment     = ""
 	USDTContractAddress = ""
-	USDTMinTopUp        = 1
 	// USDTReconcileCursor is the gateway's position in the receipt feed.
 	USDTReconcileCursor = ""
 )

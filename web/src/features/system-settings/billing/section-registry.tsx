@@ -146,11 +146,11 @@ const BILLING_SECTIONS = [
           AmountOptions: settings['payment_setting.amount_options'],
           AmountDiscount: settings['payment_setting.amount_discount'],
           StripeEnabled: settings.StripeEnabled ?? true,
+          StripePaused: settings.StripePaused ?? false,
           StripeApiSecret: settings.StripeApiSecret,
           StripeWebhookSecret: settings.StripeWebhookSecret,
           StripePriceId: settings.StripePriceId,
           StripeUnitPrice: settings.StripeUnitPrice,
-          StripeMinTopUp: settings.StripeMinTopUp,
           StripePromotionCodesEnabled: settings.StripePromotionCodesEnabled,
           CreemApiKey: settings.CreemApiKey,
           CreemWebhookSecret: settings.CreemWebhookSecret,
@@ -169,7 +169,6 @@ const BILLING_SECTIONS = [
           WaffoMerchantId: settings.WaffoMerchantId ?? '',
           WaffoCurrency: settings.WaffoCurrency ?? 'USD',
           WaffoUnitPrice: settings.WaffoUnitPrice ?? 1,
-          WaffoMinTopUp: settings.WaffoMinTopUp ?? 1,
           WaffoNotifyUrl: settings.WaffoNotifyUrl ?? '',
           WaffoReturnUrl: settings.WaffoReturnUrl ?? '',
           WaffoPayMethods: settings.WaffoPayMethods ?? '[]',
@@ -181,13 +180,13 @@ const BILLING_SECTIONS = [
         }}
         usdtDefaultValues={{
           USDTEnabled: settings.USDTEnabled ?? false,
+          USDTPaused: settings.USDTPaused ?? false,
           USDTGatewayAddress: settings.USDTGatewayAddress ?? '',
           USDTClientId: settings.USDTClientId ?? '',
           USDTApiSecret: settings.USDTApiSecret ?? '',
           USDTWebhookSecret: settings.USDTWebhookSecret ?? '',
           USDTEnvironment: settings.USDTEnvironment ?? '',
           USDTContractAddress: settings.USDTContractAddress ?? '',
-          USDTMinTopUp: settings.USDTMinTopUp ?? 1,
         }}
         waffoPancakeProvisionedStoreID={settings.WaffoPancakeStoreID ?? ''}
         waffoPancakeProvisionedProductID={settings.WaffoPancakeProductID ?? ''}

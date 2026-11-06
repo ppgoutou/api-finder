@@ -44,8 +44,8 @@ type StripeAdaptor struct {
 }
 
 func (*StripeAdaptor) RequestAmount(c *gin.Context, req *StripePayRequest) {
-	if req.Amount < getStripeMinTopup() {
-		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": getStripeMinTopup()}))
+	if req.Amount < operation_setting.GetMinTopUpAmount() {
+		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": operation_setting.GetMinTopUpAmount()}))
 		return
 	}
 	if req.Amount > 10000 {
@@ -74,8 +74,8 @@ func (*StripeAdaptor) RequestPay(c *gin.Context, req *StripePayRequest) {
 		paymentError(c, common.NewMessage("Unsupported payment channel"))
 		return
 	}
-	if req.Amount < getStripeMinTopup() {
-		common.ApiErrorStatus(c, http.StatusOK, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": getStripeMinTopup()}), gin.H{"data": 10})
+	if req.Amount < operation_setting.GetMinTopUpAmount() {
+		common.ApiErrorStatus(c, http.StatusOK, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": operation_setting.GetMinTopUpAmount()}), gin.H{"data": 10})
 		return
 	}
 	if req.Amount > 10000 {
@@ -575,12 +575,4 @@ func getStripePayMoney(amount float64, group string) float64 {
 	}
 	payMoney := amount * setting.StripeUnitPrice * topupGroupRatio * discount
 	return payMoney
-}
-
-func getStripeMinTopup() int64 {
-	minTopup := setting.StripeMinTopUp
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		minTopup = minTopup * int(common.QuotaPerUnit)
-	}
-	return int64(minTopup)
 }

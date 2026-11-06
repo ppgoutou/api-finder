@@ -84,7 +84,6 @@ it('labels recharge presets and the custom amount as USD credit without a payabl
           enable_stripe_topup: false,
           pay_methods: [],
           min_topup: 1,
-          stripe_min_topup: 1,
           amount_options: [100, 20],
           discount: {},
         }}
@@ -118,7 +117,6 @@ it('labels the custom amount in yuan without USD credit notes when amounts are e
           enable_stripe_topup: true,
           pay_methods: [],
           min_topup: 10,
-          stripe_min_topup: 10,
           amount_options: [10],
           discount: {},
         }}

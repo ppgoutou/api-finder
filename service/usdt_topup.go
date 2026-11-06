@@ -63,6 +63,19 @@ func IsUSDTTopUpEnabled() bool {
 	return operation_setting.IsPaymentComplianceConfirmed() && setting.IsUSDTConfigured()
 }
 
+// CanStartUSDTTopUp reports whether new USDT orders are accepted. A pause stops
+// them only: IsUSDTTopUpEnabled keeps the webhook and sync running so that open
+// orders still settle.
+func CanStartUSDTTopUp() bool {
+	return IsUSDTTopUpEnabled() && !setting.USDTPaused
+}
+
+// IsUSDTTopUpPaused reports whether the wallet shows USDT without taking orders.
+// It needs no credentials, so USDT can be shown before it opens.
+func IsUSDTTopUpPaused() bool {
+	return operation_setting.IsPaymentComplianceConfirmed() && setting.USDTEnabled && setting.USDTPaused
+}
+
 // QuoteUSDTTopUp prices a wallet amount in USDT. One USDT counts as one USD, so
 // the administrator's USD exchange rate alone turns a yuan amount into USDT.
 // The group ratio raises price and credit alike, leaving the discount as the
@@ -94,25 +107,10 @@ func QuoteUSDTTopUp(amount int64, group string) USDTQuote {
 	}
 }
 
-// GetUSDTMinTopUp converts the minimum, set in USD, to the smallest wallet amount
-// in the site's display unit. Wallet amounts are whole, so it rounds up.
-func GetUSDTMinTopUp() int64 {
-	minUSD := decimal.NewFromInt(int64(setting.USDTMinTopUp))
-	switch operation_setting.GetQuotaDisplayType() {
-	case operation_setting.QuotaDisplayTypeTokens:
-		return minUSD.Mul(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
-	case operation_setting.QuotaDisplayTypeCNY:
-		if operation_setting.USDExchangeRate > 0 {
-			return minUSD.Mul(decimal.NewFromFloat(operation_setting.USDExchangeRate)).Ceil().IntPart()
-		}
-	}
-	return minUSD.IntPart()
-}
-
 // ValidateUSDTTopUpAmount applies the wallet's top-up bounds.
 func ValidateUSDTTopUpAmount(amount int64) error {
-	if amount < GetUSDTMinTopUp() {
-		return common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": GetUSDTMinTopUp()})
+	if amount < operation_setting.GetMinTopUpAmount() {
+		return common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": operation_setting.GetMinTopUpAmount()})
 	}
 	if amount > usdtMaxTopUpAmount {
 		return common.NewMessage("Top-up amount cannot exceed {{max}}", map[string]any{"max": usdtMaxTopUpAmount})

@@ -8054,6 +8054,10 @@
     "Restore {{count}} selected": "恢复所选 {{count}} 个",
     "Ignored {{count}} models": "已忽略 {{count}} 个模型",
     "Restored {{count}} models": "已恢复 {{count}} 个模型",
-    "Ignore this model": "忽略此模型"
+    "Ignore this model": "忽略此模型",
+    "Pause Stripe": "暂停使用 Stripe",
+    "Pause USDT top-up": "暂停使用 USDT 充值",
+    "The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.": "钱包仍显示该支付方式，但按钮不可点击，新付款会被拒绝。已付款订单和退款照常结算。",
+    "Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.": "对所有支付方式生效。用户看到的金额按美元汇率换算并向上取整。"
   }
 }

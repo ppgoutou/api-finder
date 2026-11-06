@@ -327,20 +327,20 @@ export type BillingSettings = {
   'payment_setting.compliance_confirmed_by': number
   'payment_setting.compliance_confirmed_ip': string
   StripeEnabled: boolean
+  StripePaused: boolean
   StripeApiSecret: string
   StripeWebhookSecret: string
   StripePriceId: string
   StripeUnitPrice: number
-  StripeMinTopUp: number
   StripePromotionCodesEnabled: boolean
   USDTEnabled: boolean
+  USDTPaused: boolean
   USDTGatewayAddress: string
   USDTClientId: string
   USDTApiSecret: string
   USDTWebhookSecret: string
   USDTEnvironment: string
   USDTContractAddress: string
-  USDTMinTopUp: number
   CreemApiKey: string
   CreemWebhookSecret: string
   CreemTestMode: boolean
@@ -356,7 +356,6 @@ export type BillingSettings = {
   WaffoMerchantId: string
   WaffoCurrency: string
   WaffoUnitPrice: number
-  WaffoMinTopUp: number
   WaffoNotifyUrl: string
   WaffoReturnUrl: string
   WaffoPayMethods: string

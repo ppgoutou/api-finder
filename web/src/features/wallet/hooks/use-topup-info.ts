@@ -55,31 +55,19 @@ function parseJsonArray(data: unknown): unknown[] {
   return []
 }
 
-function parsePaymentMethods(
-  data: unknown,
-  stripeMinTopup: number
-): PaymentMethod[] {
+function parsePaymentMethods(data: unknown): PaymentMethod[] {
   return parseJsonArray(data)
     .filter(
       (item): item is Record<string, unknown> =>
         !!item && typeof item === 'object'
     )
-    .map((item) => {
-      const rawMinTopup = Number(item.min_topup)
-      const normalizedMinTopup = Number.isFinite(rawMinTopup) ? rawMinTopup : 0
-      const type = typeof item.type === 'string' ? item.type : ''
-
-      return {
-        name: typeof item.name === 'string' ? item.name : '',
-        type,
-        color: typeof item.color === 'string' ? item.color : undefined,
-        icon: typeof item.icon === 'string' ? item.icon : undefined,
-        min_topup:
-          type === 'stripe' && normalizedMinTopup <= 0
-            ? stripeMinTopup
-            : normalizedMinTopup,
-      }
-    })
+    .map((item) => ({
+      name: typeof item.name === 'string' ? item.name : '',
+      type: typeof item.type === 'string' ? item.type : '',
+      color: typeof item.color === 'string' ? item.color : undefined,
+      icon: typeof item.icon === 'string' ? item.icon : undefined,
+      paused: item.paused === 'true',
+    }))
     .filter((item) => item.name && item.type && item.type !== 'waffo')
 }
 
@@ -183,10 +171,7 @@ export function useTopupInfo() {
 
       const processedData: TopupInfo = {
         ...response.data,
-        pay_methods: parsePaymentMethods(
-          response.data.pay_methods,
-          response.data.stripe_min_topup
-        ),
+        pay_methods: parsePaymentMethods(response.data.pay_methods),
         amount_options: parseAmountOptions(response.data.amount_options),
         discount: parseDiscountMap(response.data.discount),
         creem_products: parseCreemProducts(response.data.creem_products),

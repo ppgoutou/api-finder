@@ -109,7 +109,7 @@ const paymentSchema = z.object({
   EpayId: z.string(),
   EpayKey: z.string(),
   Price: z.coerce.number().min(0),
-  MinTopUp: z.coerce.number().min(0),
+  MinTopUp: z.coerce.number().int().min(1),
   CustomCallbackAddress: z
     .string()
     .refine(
@@ -148,11 +148,11 @@ const paymentSchema = z.object({
     }
   }),
   StripeEnabled: z.boolean(),
+  StripePaused: z.boolean(),
   StripeApiSecret: z.string(),
   StripeWebhookSecret: z.string(),
   StripePriceId: z.string(),
   StripeUnitPrice: z.coerce.number().min(0),
-  StripeMinTopUp: z.coerce.number().min(0),
   StripePromotionCodesEnabled: z.boolean(),
   CreemApiKey: z.string(),
   CreemWebhookSecret: z.string(),
@@ -177,20 +177,19 @@ const paymentSchema = z.object({
   WaffoMerchantId: z.string(),
   WaffoCurrency: z.string(),
   WaffoUnitPrice: z.coerce.number().min(0),
-  WaffoMinTopUp: z.coerce.number().min(1),
   WaffoNotifyUrl: z.string(),
   WaffoReturnUrl: z.string(),
   WaffoPancakeMerchantID: z.string(),
   WaffoPancakePrivateKey: z.string(),
   WaffoPancakeReturnURL: z.string(),
   USDTEnabled: z.boolean(),
+  USDTPaused: z.boolean(),
   USDTGatewayAddress: z.string(),
   USDTClientId: z.string(),
   USDTApiSecret: z.string(),
   USDTWebhookSecret: z.string(),
   USDTEnvironment: z.string(),
   USDTContractAddress: z.string(),
-  USDTMinTopUp: z.coerce.number().min(1),
 })
 
 type PaymentFormValues = z.infer<typeof paymentSchema>
@@ -466,11 +465,11 @@ export function PaymentSettingsSection({
       AmountOptions: values.AmountOptions.trim(),
       AmountDiscount: values.AmountDiscount.trim(),
       StripeEnabled: values.StripeEnabled,
+      StripePaused: values.StripePaused,
       StripeApiSecret: values.StripeApiSecret.trim(),
       StripeWebhookSecret: values.StripeWebhookSecret.trim(),
       StripePriceId: values.StripePriceId.trim(),
       StripeUnitPrice: values.StripeUnitPrice,
-      StripeMinTopUp: values.StripeMinTopUp,
       StripePromotionCodesEnabled: values.StripePromotionCodesEnabled,
       CreemApiKey: values.CreemApiKey.trim(),
       CreemWebhookSecret: values.CreemWebhookSecret.trim(),
@@ -481,7 +480,6 @@ export function PaymentSettingsSection({
       WaffoMerchantId: values.WaffoMerchantId.trim(),
       WaffoCurrency: values.WaffoCurrency.trim() || 'USD',
       WaffoUnitPrice: values.WaffoUnitPrice,
-      WaffoMinTopUp: values.WaffoMinTopUp,
       WaffoNotifyUrl: values.WaffoNotifyUrl.trim(),
       WaffoReturnUrl: values.WaffoReturnUrl.trim(),
       WaffoPublicCert: values.WaffoPublicCert.trim(),
@@ -511,11 +509,11 @@ export function PaymentSettingsSection({
       AmountOptions: initialRef.current.AmountOptions.trim(),
       AmountDiscount: initialRef.current.AmountDiscount.trim(),
       StripeEnabled: initialRef.current.StripeEnabled,
+      StripePaused: initialRef.current.StripePaused,
       StripeApiSecret: initialRef.current.StripeApiSecret.trim(),
       StripeWebhookSecret: initialRef.current.StripeWebhookSecret.trim(),
       StripePriceId: initialRef.current.StripePriceId.trim(),
       StripeUnitPrice: initialRef.current.StripeUnitPrice,
-      StripeMinTopUp: initialRef.current.StripeMinTopUp,
       StripePromotionCodesEnabled:
         initialRef.current.StripePromotionCodesEnabled,
       CreemApiKey: initialRef.current.CreemApiKey.trim(),
@@ -527,7 +525,6 @@ export function PaymentSettingsSection({
       WaffoMerchantId: initialRef.current.WaffoMerchantId.trim(),
       WaffoCurrency: initialRef.current.WaffoCurrency.trim() || 'USD',
       WaffoUnitPrice: initialRef.current.WaffoUnitPrice,
-      WaffoMinTopUp: initialRef.current.WaffoMinTopUp,
       WaffoNotifyUrl: initialRef.current.WaffoNotifyUrl.trim(),
       WaffoReturnUrl: initialRef.current.WaffoReturnUrl.trim(),
       WaffoPublicCert: initialRef.current.WaffoPublicCert.trim(),
@@ -606,6 +603,10 @@ export function PaymentSettingsSection({
       updates.push({ key: 'StripeEnabled', value: sanitized.StripeEnabled })
     }
 
+    if (sanitized.StripePaused !== initial.StripePaused) {
+      updates.push({ key: 'StripePaused', value: sanitized.StripePaused })
+    }
+
     if (
       sanitized.StripeApiSecret &&
       sanitized.StripeApiSecret !== initial.StripeApiSecret
@@ -629,10 +630,6 @@ export function PaymentSettingsSection({
 
     if (sanitized.StripeUnitPrice !== initial.StripeUnitPrice) {
       updates.push({ key: 'StripeUnitPrice', value: sanitized.StripeUnitPrice })
-    }
-
-    if (sanitized.StripeMinTopUp !== initial.StripeMinTopUp) {
-      updates.push({ key: 'StripeMinTopUp', value: sanitized.StripeMinTopUp })
     }
 
     if (
@@ -691,10 +688,6 @@ export function PaymentSettingsSection({
 
     if (sanitized.WaffoUnitPrice !== initial.WaffoUnitPrice) {
       updates.push({ key: 'WaffoUnitPrice', value: sanitized.WaffoUnitPrice })
-    }
-
-    if (sanitized.WaffoMinTopUp !== initial.WaffoMinTopUp) {
-      updates.push({ key: 'WaffoMinTopUp', value: sanitized.WaffoMinTopUp })
     }
 
     if (sanitized.WaffoNotifyUrl !== initial.WaffoNotifyUrl) {
@@ -777,8 +770,8 @@ export function PaymentSettingsSection({
     if (values.USDTEnabled !== initialRef.current.USDTEnabled) {
       updates.push({ key: 'USDTEnabled', value: values.USDTEnabled })
     }
-    if (values.USDTMinTopUp !== initialRef.current.USDTMinTopUp) {
-      updates.push({ key: 'USDTMinTopUp', value: values.USDTMinTopUp })
+    if (values.USDTPaused !== initialRef.current.USDTPaused) {
+      updates.push({ key: 'USDTPaused', value: values.USDTPaused })
     }
     // Saved secrets never reach the browser, so a blank field keeps them.
     if (values.USDTApiSecret.trim()) {
@@ -878,20 +871,19 @@ export function PaymentSettingsSection({
     WaffoMerchantId: currentFormValues.WaffoMerchantId,
     WaffoCurrency: currentFormValues.WaffoCurrency,
     WaffoUnitPrice: currentFormValues.WaffoUnitPrice,
-    WaffoMinTopUp: currentFormValues.WaffoMinTopUp,
     WaffoNotifyUrl: currentFormValues.WaffoNotifyUrl,
     WaffoReturnUrl: currentFormValues.WaffoReturnUrl,
     WaffoPayMethods: JSON.stringify(waffoPayMethods),
   }
   const usdtValues: UsdtSettingsValues = {
     USDTEnabled: currentFormValues.USDTEnabled,
+    USDTPaused: currentFormValues.USDTPaused,
     USDTGatewayAddress: currentFormValues.USDTGatewayAddress,
     USDTClientId: currentFormValues.USDTClientId,
     USDTApiSecret: currentFormValues.USDTApiSecret,
     USDTWebhookSecret: currentFormValues.USDTWebhookSecret,
     USDTEnvironment: currentFormValues.USDTEnvironment,
     USDTContractAddress: currentFormValues.USDTContractAddress,
-    USDTMinTopUp: currentFormValues.USDTMinTopUp,
   }
 
   const waffoPancakeValues: WaffoPancakeSettingsValues = {
@@ -1039,13 +1031,15 @@ export function PaymentSettingsSection({
                         <FormControl>
                           <Input
                             type='number'
-                            step='0.01'
-                            min={0}
+                            step={1}
+                            min={1}
                             {...safeNumberFieldProps(field)}
                           />
                         </FormControl>
                         <FormDescription>
-                          {t('Smallest USD amount users can recharge (Epay)')}
+                          {t(
+                            'Applies to every payment method. Users see this converted at the USD exchange rate and rounded up.'
+                          )}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1390,6 +1384,29 @@ export function PaymentSettingsSection({
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name='StripePaused'
+                  render={({ field }) => (
+                    <SettingsSwitchItem>
+                      <SettingsSwitchContent>
+                        <FormLabel>{t('Pause Stripe')}</FormLabel>
+                        <FormDescription>
+                          {t(
+                            'The wallet keeps showing this method, but its button cannot be clicked and new payments are refused. Paid orders and refunds keep settling.'
+                          )}
+                        </FormDescription>
+                      </SettingsSwitchContent>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </SettingsSwitchItem>
+                  )}
+                />
+
                 <div className='rounded-md bg-blue-50 p-4 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100'>
                   <p className='mb-2 font-medium'>
                     {t('Webhook Configuration:')}
@@ -1521,28 +1538,6 @@ export function PaymentSettingsSection({
                         </FormControl>
                         <FormDescription>
                           {t('e.g., 8 means 8 local currency per USD')}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='StripeMinTopUp'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('Minimum top-up (USD)')}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            step='0.01'
-                            min={0}
-                            {...safeNumberFieldProps(field)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {t('Minimum recharge amount in USD')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

@@ -24,6 +24,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import zh from '@/i18n/locales/zh.json'
 
 import { RechargeFormCard } from '../components/recharge-form-card'
+import type { PaymentMethod } from '../types'
 
 const i18n = createInstance()
 
@@ -46,7 +47,6 @@ function renderCard(topupAmount: number, onTopupAmountChange = vi.fn()) {
           enable_stripe_topup: true,
           pay_methods: [],
           min_topup: 10,
-          stripe_min_topup: 10,
           amount_options: [],
           discount: {},
         }}
@@ -105,7 +105,6 @@ it('shows at most five presets and keeps the custom tile empty while a preset is
           enable_stripe_topup: true,
           pay_methods: [],
           min_topup: 10,
-          stripe_min_topup: 10,
           amount_options: [10, 20, 50, 100, 200, 500],
           discount: {},
         }}
@@ -136,7 +135,6 @@ it('marks only the selected preset tile as pressed', () => {
           enable_stripe_topup: true,
           pay_methods: [],
           min_topup: 10,
-          stripe_min_topup: 10,
           amount_options: [50, 100],
           discount: {},
         }}
@@ -157,16 +155,19 @@ it('marks only the selected preset tile as pressed', () => {
   expect(hundred).toHaveAttribute('aria-pressed', 'true')
 })
 
-function renderPayMethods(topupAmount: number, onSelect = vi.fn()) {
+function renderPayMethods(
+  topupAmount: number,
+  onSelect = vi.fn(),
+  payMethods: PaymentMethod[] = [{ name: 'Stripe', type: 'stripe' }]
+) {
   render(
     <I18nextProvider i18n={i18n}>
       <RechargeFormCard
         topupInfo={{
           enable_online_topup: false,
           enable_stripe_topup: true,
-          pay_methods: [{ name: 'Stripe', type: 'stripe' }],
+          pay_methods: payMethods,
           min_topup: 10,
-          stripe_min_topup: 10,
           amount_options: [],
           discount: {},
         }}
@@ -198,4 +199,44 @@ it('disables the pay button below the minimum and states the minimum', () => {
 
   const pay = screen.getByRole('button', { name: /最低充值金额：10/ })
   expect(pay).toBeDisabled()
+})
+
+it('shows a paused method as a disabled button and blocks payment', () => {
+  const onSelect = renderPayMethods(100, vi.fn(), [
+    { name: 'Stripe', type: 'stripe', paused: true },
+    { name: 'USDT', type: 'usdt' },
+  ])
+
+  const paused = screen.getByRole('button', { name: /^Stripe\. 暂不可用/ })
+  expect(paused).toBeDisabled()
+  fireEvent.click(paused)
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+it('keeps the amounts usable when every method is paused', () => {
+  render(
+    <I18nextProvider i18n={i18n}>
+      <RechargeFormCard
+        topupInfo={{
+          enable_online_topup: false,
+          enable_stripe_topup: false,
+          pay_methods: [{ name: 'Stripe', type: 'stripe', paused: true }],
+          min_topup: 10,
+          amount_options: [],
+          discount: {},
+        }}
+        presetAmounts={[]}
+        selectedPreset={null}
+        topupAmount={100}
+        amountUnit='CNY'
+        paymentLoading={null}
+        onSelectPreset={vi.fn()}
+        onTopupAmountChange={vi.fn()}
+        onPaymentMethodSelect={vi.fn()}
+      />
+    </I18nextProvider>
+  )
+
+  expect(screen.getByRole('spinbutton')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Stripe/ })).toBeDisabled()
 })

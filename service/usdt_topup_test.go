@@ -144,7 +144,10 @@ func setupUSDTTest(t *testing.T, userId int, quota int) *usdtFakeGateway {
 	setting.USDTWebhookSecret = "hook-secret"
 	setting.USDTEnvironment = "nile"
 	setting.USDTContractAddress = usdtTestContract
-	setting.USDTMinTopUp = 10
+	previousMinTopUp := operation_setting.MinTopUp
+	t.Cleanup(func() { operation_setting.MinTopUp = previousMinTopUp })
+	operation_setting.MinTopUp = 10
+	setting.USDTPaused = false
 	setting.USDTReconcileCursor = ""
 	t.Cleanup(func() {
 		general.QuotaDisplayType = previousDisplay
@@ -230,23 +233,39 @@ func TestUSDTQuoteFollowsAdminExchangeRateAndDiscount(t *testing.T) {
 	assert.Equal(t, "0.9", discounted.Discount.String())
 }
 
-func TestUSDTMinTopUpIsSetInUSDAndShownInTheDisplayUnit(t *testing.T) {
+func TestMinTopUpIsSetInUSDAndShownInTheDisplayUnit(t *testing.T) {
 	setupUSDTTest(t, 9015, 0)
-	setting.USDTMinTopUp = 10
 
-	assert.EqualValues(t, 68, GetUSDTMinTopUp(), "yuan site at 6.8")
+	assert.EqualValues(t, 68, operation_setting.GetMinTopUpAmount(), "yuan site at 6.8")
 	assert.Error(t, ValidateUSDTTopUpAmount(67))
 	assert.NoError(t, ValidateUSDTTopUpAmount(68))
 
 	operation_setting.USDExchangeRate = 7.05
-	assert.EqualValues(t, 71, GetUSDTMinTopUp(), "rounded up so the minimum is never below 10 USD")
+	assert.EqualValues(t, 71, operation_setting.GetMinTopUpAmount(), "rounded up so the minimum is never below 10 USD")
 
 	general := operation_setting.GetGeneralSetting()
 	general.QuotaDisplayType = operation_setting.QuotaDisplayTypeUSD
-	assert.EqualValues(t, 10, GetUSDTMinTopUp())
+	assert.EqualValues(t, 10, operation_setting.GetMinTopUpAmount())
 
 	general.QuotaDisplayType = operation_setting.QuotaDisplayTypeTokens
-	assert.EqualValues(t, int64(10*common.QuotaPerUnit), GetUSDTMinTopUp())
+	assert.EqualValues(t, int64(10*common.QuotaPerUnit), operation_setting.GetMinTopUpAmount())
+}
+
+func TestPausedUSDTRefusesNewOrdersButKeepsSettling(t *testing.T) {
+	setupUSDTTest(t, 9016, 0)
+	paymentSetting := operation_setting.GetPaymentSetting()
+	originalConfirmed, originalTerms := paymentSetting.ComplianceConfirmed, paymentSetting.ComplianceTermsVersion
+	t.Cleanup(func() {
+		paymentSetting.ComplianceConfirmed, paymentSetting.ComplianceTermsVersion = originalConfirmed, originalTerms
+		setting.USDTPaused = false
+	})
+	paymentSetting.ComplianceConfirmed = true
+	paymentSetting.ComplianceTermsVersion = operation_setting.CurrentComplianceTermsVersion
+	setting.USDTPaused = true
+
+	assert.False(t, CanStartUSDTTopUp())
+	assert.True(t, IsUSDTTopUpPaused())
+	assert.True(t, IsUSDTTopUpEnabled(), "webhook and sync must keep settling open orders")
 }
 
 func TestUSDTSettlementCreditsActualAmountOncePerTransfer(t *testing.T) {
