@@ -222,7 +222,14 @@ A task can also come back as \`failed\` right when it is created (for example, w
 
 - The endpoint may return the file directly or redirect to temporary storage. With cURL, add \`-L\` to follow the redirect;
 - Do not forward your API key to the storage host (cURL, Python requests and Node.js fetch drop it on cross-host redirects by default);
-- The temporary link expires, so download and keep your own copy of the video.`,
+- The temporary link expires, so download and keep your own copy of the video.
+
+If a download is slow, try a multi-connection download: the endpoint supports the \`Range\` header, so you can fetch several parts at once and join them into the full file. Use no more than 8 connections. If the whole network path is slow, more connections may not help much.`,
+        },
+        {
+          type: 'code',
+          label: 'Multi-connection download (requires aria2)',
+          code: DOC_SAMPLES.multiConnectionDownload,
         },
       ],
     },
