@@ -7,6 +7,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1194,5 +1195,61 @@ func TestFrontendSimulationContract(t *testing.T) {
 				assert.Equal(t, tc.Matched[i], rule.Matched)
 			}
 		})
+	}
+}
+
+func TestScalePricesRewritesOnlyPrices(t *testing.T) {
+	factor := decimal.RequireFromString("2.5")
+	for _, tc := range []struct {
+		name, expression, want string
+	}{
+		{"token prices", `tier("base", p * 2 + c * 8 + cr * 0.2)`, `tier("base", p * 5 + c * 20 + cr * 0.5)`},
+		{"version prefix stays", `v1:tier("base", p * 2)`, `v1:tier("base", p * 5)`},
+		{"conditions and thresholds stay", `len <= 200000 ? tier("short", p * 2) : tier("long", p * 4)`, `len <= 200000 ? tier("short", p * 5) : tier("long", p * 10)`},
+		{"request multiplier stays", `tier("base", p * 2) * (header("x-fast") == "1" ? 6 : 1)`, `tier("base", p * 5) * (header("x-fast") == "1" ? 6 : 1)`},
+		{"multiplier before the tier stays", `3 * tier("base", p * 2)`, `3 * tier("base", p * 5)`},
+		{"fixed price and image count", `(c * 256 / image_count <= 2360000 ? tier("≤236万像素", fixed(0.04)) : tier(">236万像素", fixed(0.08))) * image_count`, `(c * 256 / image_count <= 2360000 ? tier("≤236万像素", fixed(0.1)) : tier(">236万像素", fixed(0.2))) * image_count`},
+		{"divisors stay", `tier("base", u("tokens") * 34 / 7 / 1000000)`, `tier("base", u("tokens") * 85 / 7 / 1000000)`},
+		{"coefficient before usage", `tier("base", 0.4 * u("seconds"))`, `tier("base", 1 * u("seconds"))`},
+		{"constant term", `tier("base", 0.1 + u("seconds") * 0.4)`, `tier("base", 0.25 + u("seconds") * 1)`},
+		{"free allowance stays", `tier("base", u("seconds") * 0.4 + max(u("input_images") - 3, 0) * 0.2)`, `tier("base", u("seconds") * 1 + max(u("input_images") - 3, 0) * 0.5)`},
+		{"free stays free", `tier("free", fixed(0))`, `tier("free", fixed(0))`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := billingexpr.ScalePrices(tc.expression, factor)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestScalePricesMultipliesTheCharge(t *testing.T) {
+	const expression = `(len <= 1000 ? tier("short", p * 2 + c * 8) : tier("long", p * 4 + c * 16)) * (param("fast") == true ? 2 : 1)`
+	scaled, err := billingexpr.ScalePrices(expression, decimal.RequireFromString("1.5"))
+	require.NoError(t, err)
+	request := billingexpr.RequestInput{Body: []byte(`{"fast":true}`)}
+	for _, params := range []billingexpr.TokenParams{
+		{P: 500, C: 100, Len: 500},
+		{P: 2000, C: 100, Len: 2000},
+	} {
+		original, originalTrace, err := billingexpr.RunExprWithRequest(expression, params, request)
+		require.NoError(t, err)
+		published, publishedTrace, err := billingexpr.RunExprWithRequest(scaled, params, request)
+		require.NoError(t, err)
+		assert.InDelta(t, original*1.5, published, 1e-6)
+		assert.Equal(t, originalTrace.MatchedTier, publishedTrace.MatchedTier)
+	}
+}
+
+func TestScalePricesRejectsExpressionsItCannotLocatePricesIn(t *testing.T) {
+	for _, expression := range []string{
+		`tier("base", u("seconds"))`,
+		`tier("base", p * 2 + c)`,
+		`tier("base", ceil(u("seconds") * 0.4))`,
+		`tier("base", max(u("input_images") - 3, 0))`,
+		`invalid expression(`,
+	} {
+		_, err := billingexpr.ScalePrices(expression, decimal.NewFromInt(2))
+		assert.Error(t, err, expression)
 	}
 }

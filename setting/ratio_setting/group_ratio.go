@@ -7,6 +7,8 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/setting/config"
 	"github.com/QuantumNous/new-api/types"
+
+	"github.com/shopspring/decimal"
 )
 
 var defaultGroupRatio = map[string]float64{
@@ -83,6 +85,33 @@ func GetGroupRatio(name string) float64 {
 		return 1
 	}
 	return ratio
+}
+
+// PublicPriceFactor is the factor moved from group ratios into published model
+// prices, so viewers without pricing access see the same selling prices but no
+// price from before the group ratio. It is the default group's ratio, or the
+// smallest positive ratio when that group is missing or free.
+func PublicPriceFactor() float64 {
+	if ratio, ok := groupRatioMap.Get("default"); ok && ratio > 0 {
+		return ratio
+	}
+	factor := 0.0
+	for _, ratio := range groupRatioMap.ReadAll() {
+		if ratio > 0 && (factor == 0 || ratio < factor) {
+			factor = ratio
+		}
+	}
+	if factor == 0 {
+		return 1
+	}
+	return factor
+}
+
+// PublicGroupRatio converts a group ratio to the one published next to prices
+// already multiplied by PublicPriceFactor.
+func PublicGroupRatio(ratio float64) float64 {
+	published := decimal.NewFromFloat(ratio).Div(decimal.NewFromFloat(PublicPriceFactor()))
+	return published.Round(6).InexactFloat64()
 }
 
 func GetGroupGroupRatio(userGroup, usingGroup string) (float64, bool) {

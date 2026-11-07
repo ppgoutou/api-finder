@@ -119,6 +119,7 @@ func formatUserLog(log *Log) {
 	log.UpstreamRequestId = ""
 	log.Other = formatLogOtherJSON(log.Other, logOtherVisibilityUser)
 	applyUserErrorView(log)
+	hideSupplierCostContent(log)
 }
 
 func formatUserLogs(logs []*Log, startIdx int) {

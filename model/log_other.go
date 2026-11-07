@@ -57,6 +57,61 @@ var supplierCostLogOtherKeys = []string{
 	"po",
 }
 
+// supplierCostContentMarkers identify log content that states base prices or
+// the group ratio, in the English text and the Chinese text of older logs.
+var supplierCostContentMarkers = []string{
+	"model ratio", "model price", "model fixed price", "group ratio",
+	"模型倍率", "模型价格", "模型固定价格", "分组倍率",
+}
+
+// hideSupplierCostContent removes the content parts that state base prices or
+// the group ratio from a log's owner view. It runs when logs are read, so logs
+// written earlier are covered too. Other parts stay, such as tool notes.
+func hideSupplierCostContent(log *Log) {
+	if !statesSupplierCost(log.Content) {
+		return
+	}
+
+	var values map[string]json.RawMessage
+	if err := common.UnmarshalJsonStr(log.Other, &values); err != nil {
+		log.Content = ""
+		return
+	}
+	var parts []*common.Message
+	if err := common.Unmarshal(values[logOtherContentPartsKey], &parts); err != nil || len(parts) == 0 {
+		// Older logs keep only the joined text, which cannot be split safely.
+		log.Content = ""
+		return
+	}
+	kept := slices.DeleteFunc(parts, func(part *common.Message) bool {
+		return statesSupplierCost(part.Error())
+	})
+	texts := make([]string, 0, len(kept))
+	for _, part := range kept {
+		texts = append(texts, part.Error())
+	}
+	log.Content = strings.Join(texts, ", ")
+	encoded, err := common.Marshal(kept)
+	if err != nil {
+		delete(values, logOtherContentPartsKey)
+	} else {
+		values[logOtherContentPartsKey] = encoded
+	}
+	formatted, err := common.Marshal(values)
+	if err != nil {
+		log.Other = "{}"
+		return
+	}
+	log.Other = string(formatted)
+}
+
+func statesSupplierCost(content string) bool {
+	content = strings.ToLower(content)
+	return slices.ContainsFunc(supplierCostContentMarkers, func(marker string) bool {
+		return strings.Contains(content, marker)
+	})
+}
+
 type logOtherVisibility int
 
 const (

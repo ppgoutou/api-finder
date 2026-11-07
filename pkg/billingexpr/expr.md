@@ -489,6 +489,14 @@ Backend: `InjectTieredBillingInfo()` adds `billing_mode`, `expr_b64` (base64 exp
 
 Frontend: Detects `billing_mode === "tiered_expr"`, decodes `expr_b64`, parses tiers via shared `parseTiersFromExpr()`, and renders request multipliers from `request_rules` when present. Without log traces, it falls back to parsing the stored expression.
 
+### 6. Public Price View
+
+`/api/pricing` and `/api/user/self/groups` give non-administrators no price from before the group ratio.
+`billingexpr.ScalePrices` multiplies the price literals by a public factor (the `default` group's ratio), and the
+published group ratios are divided by it, so `price × group ratio` is unchanged. Only the numbers inside `tier()` that
+carry money change; a term with no coefficient has no literal to rewrite, so that model's expression is withheld from
+these viewers. Billing never reads this view. Write every priced term with a coefficient, e.g. `u("seconds") * 1`.
+
 ---
 
 ## Key Design Decisions
@@ -543,6 +551,7 @@ This enables future evolution without breaking existing expressions.
 | Layer | Files |
 |-------|-------|
 | Expression engine | `pkg/billingexpr/compile.go`, `run.go`, `settle.go`, `round.go`, `types.go` |
+| Public price view | `pkg/billingexpr/scale.go`, `model/pricing_public.go` |
 | Storage | `setting/billing_setting/tiered_billing.go` |
 | Pre-consume | `relay/helper/price.go`, `relay/helper/billing_expr_request.go` |
 | Settlement | `service/tiered_settle.go`, `service/quota.go` |
