@@ -342,6 +342,7 @@ export type TaskTier = {
   conditions: { field: string; value: string }[]
   constant: number
   unitPrices: Record<string, number>
+  freeUnits?: Record<string, number>
 }
 
 /** `unreachable` marks a branch that can never match a request, so callers skip

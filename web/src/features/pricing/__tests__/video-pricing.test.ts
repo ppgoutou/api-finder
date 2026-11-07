@@ -425,3 +425,92 @@ describe('per-video pricing', () => {
     expect(getTokenVideoPricing(videoModel(SEEDANCE_25_EXPR))).toBeNull()
   })
 })
+
+describe('video models pricing reference media on top', () => {
+  const MEDIA_SCHEMA: BillingUsageSchema = {
+    seconds: { type: 'number', unit: 'second' },
+    resolution: { enum: ['480P', '768P'] },
+    input_images: { type: 'number', unit: 'count' },
+    input_video_seconds: { type: 'number', unit: 'second' },
+  }
+  const MEDIA_EXPR =
+    'u("resolution") == "768P" ? tier("768P", (u("seconds") * 10 + u("input_video_seconds") * 20 + max(u("input_images") - 2, 0) * 40) / 5) : ' +
+    'tier("480P", (u("seconds") * 5 + u("input_video_seconds") * 15 + max(u("input_images") - 2, 0) * 40) / 5)'
+
+  test('reads each price and the free images when an allowance is priced', () => {
+    const pricing = getVideoPricing(
+      videoModel(MEDIA_EXPR, {
+        billing_usage_schema: MEDIA_SCHEMA,
+        model_limits: { minDuration: 5, maxDuration: 15 },
+      })
+    )
+
+    expect(pricing?.rows).toMatchObject([
+      {
+        option: '480P',
+        secondPrice: 1,
+        inputVideoSecondPrice: 3,
+        inputImagePrice: 8,
+        freeInputImages: 2,
+      },
+      {
+        option: '768P',
+        secondPrice: 2,
+        inputVideoSecondPrice: 4,
+        inputImagePrice: 8,
+        freeInputImages: 2,
+      },
+    ])
+    expect(pricing?.hasReferencePricing).toBe(false)
+    expect(pricing?.durationRange).toEqual([5, 15])
+  })
+
+  test('reads an image price without an allowance as none free', () => {
+    const pricing = getVideoPricing(
+      videoModel(
+        'tier("768P", u("seconds") * 2 + u("input_images") * 3 + u("input_video_seconds") * 0)',
+        {
+          billing_usage_schema: {
+            ...MEDIA_SCHEMA,
+            resolution: { enum: ['768P'] },
+          },
+        }
+      )
+    )
+
+    expect(pricing?.rows[0]).toMatchObject({
+      secondPrice: 2,
+      inputImagePrice: 3,
+      freeInputImages: 0,
+    })
+    expect(pricing?.rows[0].inputVideoSecondPrice).toBeUndefined()
+  })
+
+  test.each([
+    ['a floor other than zero', 'max(u("input_images") - 2, 1)'],
+    ['an allowance on another field', 'max(u("unknown") - 2, 0)'],
+    ['a max of two usages', 'max(u("input_images"), u("seconds"))'],
+  ])('gives no video pricing for %s', (_name, term) => {
+    const expression = `tier("768P", u("seconds") * 2 + ${term} * 3)`
+    expect(
+      getVideoPricing(
+        videoModel(expression, {
+          billing_usage_schema: {
+            ...MEDIA_SCHEMA,
+            resolution: { enum: ['768P'] },
+          },
+        })
+      )
+    ).toBeNull()
+  })
+
+  test('still rejects a second unknown per-second field', () => {
+    expect(
+      isVideoPricingSchema({
+        seconds: { type: 'number', unit: 'second' },
+        other_seconds: { type: 'number', unit: 'second' },
+        resolution: { enum: ['768P'] },
+      })
+    ).toBe(false)
+  })
+})

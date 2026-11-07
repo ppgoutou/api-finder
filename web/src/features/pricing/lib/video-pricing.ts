@@ -81,6 +81,12 @@ export type VideoPricingRow = {
   tokensPerSecond?: number
   /** USD per video of any length, for models billed per video. */
   videoPrice?: number
+  /** USD per reference video second, charged on top of the output seconds. */
+  inputVideoSecondPrice?: number
+  /** USD per input image beyond the free ones, charged on top. */
+  inputImagePrice?: number
+  /** Input images charged nothing. */
+  freeInputImages?: number
 }
 
 export type VideoPricing = {
@@ -89,6 +95,13 @@ export type VideoPricing = {
   durationRange?: readonly [number, number]
   rows: VideoPricingRow[]
 }
+
+/** Reference media a video model prices on top of its output seconds. */
+const INPUT_VIDEO_SECONDS_FIELD = 'input_video_seconds'
+const INPUT_IMAGES_FIELD = 'input_images'
+
+/** Seconds reserved for reference videos while their real length is unknown. */
+export const RESERVED_REFERENCE_VIDEO_SECONDS = 15
 
 /** Usage enum whose non-`none` value marks an order with a reference video. */
 const REFERENCE_SWITCH_FIELD = 'video_input'
@@ -103,7 +116,10 @@ type VideoSchemaFields = {
 function getVideoSchemaFields(
   schema: BillingUsageSchema | null | undefined
 ): VideoSchemaFields | null {
-  const numberFields = getTaskNumberFields(schema)
+  const numberFields = getTaskNumberFields(schema).filter(
+    (entry) =>
+      entry[0] !== INPUT_VIDEO_SECONDS_FIELD && entry[0] !== INPUT_IMAGES_FIELD
+  )
   const enumFields = getTaskEnumFields(schema)
   const seconds = numberFields.filter((entry) => entry[1].unit === 'second')
   const tokens = numberFields.filter((entry) => entry[1].unit === 'token')
@@ -173,7 +189,12 @@ function videoPricingFromExpr(
   const split = splitBillingExprAndRequestRules(expression)
   if (split.requestRuleExpr?.trim()) return null
 
-  const pricedFields = [fields.secondsField, fields.referenceField]
+  const pricedFields = [
+    fields.secondsField,
+    fields.referenceField,
+    INPUT_VIDEO_SECONDS_FIELD,
+    INPUT_IMAGES_FIELD,
+  ]
   const options = schema[fields.optionField]?.enum ?? []
   const rowsByOption = new Map<string, VideoPricingRow>()
   const referenceSecondPrices = new Map<string, number>()
@@ -219,6 +240,15 @@ function videoPricingFromExpr(
       secondPrice: tier.unitPrices[fields.secondsField] ?? 0,
       referencePricePerMillion,
       tokensPerSecond: videoTokensPerSecond(model, fields.optionField, option),
+      ...(tier.unitPrices[INPUT_VIDEO_SECONDS_FIELD]
+        ? { inputVideoSecondPrice: tier.unitPrices[INPUT_VIDEO_SECONDS_FIELD] }
+        : {}),
+      ...(tier.unitPrices[INPUT_IMAGES_FIELD]
+        ? {
+            inputImagePrice: tier.unitPrices[INPUT_IMAGES_FIELD],
+            freeInputImages: tier.freeUnits?.[INPUT_IMAGES_FIELD] ?? 0,
+          }
+        : {}),
     })
   }
 

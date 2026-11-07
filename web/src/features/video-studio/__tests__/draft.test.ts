@@ -482,6 +482,31 @@ describe('estimateDraftCostUSD', () => {
     expect(estimateDraftCostUSD(row, 5, 2, false)).toBeCloseTo(1)
   })
 
+  describe('when reference media are priced on top', () => {
+    const media = {
+      secondPrice: 1,
+      inputVideoSecondPrice: 2,
+      inputImagePrice: 3,
+      freeInputImages: 5,
+    }
+
+    it('charges only the output seconds without media', () => {
+      expect(estimateDraftCostUSD(media, 10, 1, false)).toBeCloseTo(10)
+    })
+
+    it('adds the reserved reference seconds for a reference video', () => {
+      expect(estimateDraftCostUSD(media, 10, 1, true)).toBeCloseTo(40)
+    })
+
+    it('charges no images up to the free ones', () => {
+      expect(estimateDraftCostUSD(media, 10, 1, false, 5)).toBeCloseTo(10)
+    })
+
+    it('charges images beyond the free ones, for each video', () => {
+      expect(estimateDraftCostUSD(media, 10, 2, true, 9)).toBeCloseTo(104)
+    })
+  })
+
   it('charges a flat price per video whatever the length or references', () => {
     const perVideo = { secondPrice: 0, videoPrice: 1.28 }
     expect(estimateDraftCostUSD(perVideo, 30, 2, true)).toBeCloseTo(2.56)

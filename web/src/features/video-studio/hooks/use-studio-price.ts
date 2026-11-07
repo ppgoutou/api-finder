@@ -64,11 +64,16 @@ export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
   const hasReferenceVideo =
     draft.mode === 'reference' &&
     draft.references.some((asset) => asset.kind === 'video')
+  const inputImages =
+    draft.mode === 'reference'
+      ? draft.references.filter((asset) => asset.kind === 'image').length
+      : [draft.firstFrame, draft.lastFrame].filter(Boolean).length
   const costUSD = estimateDraftCostUSD(
     row,
     draft.seconds,
     draft.count,
-    hasReferenceVideo
+    hasReferenceVideo,
+    inputImages
   )
   const groupRatio = getDisplayGroupRatio(model)
   return {
