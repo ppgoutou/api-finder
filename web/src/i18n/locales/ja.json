@@ -3023,6 +3023,7 @@
     "Filter": "フィルター",
     "Filter by API key...": "APIキーでフィルター...",
     "Filter by category": "カテゴリで絞り込む",
+    "Filter by model": "モデルで絞り込む",
     "Filter by channel ID": "チャネルIDでフィルター",
     "Filter by group": "グループでフィルター",
     "Filter by MjProxy task ID": "MjProxyタスクIDでフィルター",

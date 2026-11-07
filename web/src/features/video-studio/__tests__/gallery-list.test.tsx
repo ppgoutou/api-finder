@@ -241,4 +241,124 @@ describe('GalleryList', () => {
       'true'
     )
   })
+
+  it('requests only the cover in the grid and loads the video when the tile is clicked', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Rain car',
+            spec: 'Wan 3.0 · 16:9 · 720p · 5s',
+            poster: 'https://cdn.example/car.jpg',
+            video: 'https://cdn.example/car.mp4',
+          },
+        ],
+      })
+    )
+    const user = userEvent.setup()
+    renderGallery()
+
+    const tile = await screen.findByRole('button', {
+      name: 'View details: Rain car',
+    })
+    expect(document.querySelector('video')).toBeNull()
+
+    await user.click(tile)
+
+    await screen.findByRole('dialog')
+    expect(document.querySelector('video')).toHaveAttribute(
+      'src',
+      'https://cdn.example/car.mp4'
+    )
+  })
+
+  it('shows a placeholder and no video when a work has no cover', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'No cover yet',
+            spec: 'Wan 3.0 · 16:9 · 720p · 5s',
+            video: 'https://cdn.example/plain.mp4',
+          },
+        ],
+      })
+    )
+    renderGallery()
+
+    expect(
+      await screen.findByRole('button', { name: 'View details: No cover yet' })
+    ).toBeVisible()
+    expect(document.querySelector('video')).toBeNull()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('shows a portrait cover whole and a landscape cover filling the frame', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Tall',
+            spec: 'Wan 3.0 · 9:16 · 720p · 5s',
+            poster: 'https://cdn.example/tall.jpg',
+          },
+          {
+            title: 'Wide',
+            spec: 'Wan 3.0 · 16:9 · 720p · 5s',
+            poster: 'https://cdn.example/wide.jpg',
+          },
+        ],
+      })
+    )
+    renderGallery()
+
+    expect(await screen.findByRole('img', { name: 'Tall' })).toHaveClass(
+      'object-contain'
+    )
+    expect(screen.getByRole('img', { name: 'Wide' })).toHaveClass(
+      'object-cover'
+    )
+  })
+
+  it('sorts works into a section per model and narrows to one model when its filter is pressed', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          { title: 'Car', spec: 'Seedance 2.5 · 16:9', poster: '/a.jpg' },
+          { title: 'Fish', spec: 'Wan 3.0 · 16:9', poster: '/b.jpg' },
+          { title: 'Walk', spec: 'Seedance 2.5 · 9:16', poster: '/c.jpg' },
+          { title: 'Loose', prompt: 'no spec', poster: '/d.jpg' },
+        ],
+      })
+    )
+    const user = userEvent.setup()
+    renderGallery()
+
+    expect(
+      await screen.findByRole('heading', { name: /^Seedance 2\.5/ })
+    ).toBeVisible()
+    expect(screen.getByRole('heading', { name: /^Wan 3\.0/ })).toBeVisible()
+    expect(screen.getByRole('heading', { name: /^Other models/ })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: /^Wan 3\.0/ }))
+
+    expect(screen.getByText('Fish')).toBeVisible()
+    expect(screen.queryByText('Car')).not.toBeInTheDocument()
+    expect(screen.queryByText('Loose')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  })
+
+  it('leaves out the model filter when every work uses one model', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [{ title: 'Car', spec: 'Wan 3.0 · 16:9', poster: '/a.jpg' }],
+      })
+    )
+    renderGallery()
+
+    expect(await screen.findByText('Car')).toBeVisible()
+    expect(
+      screen.queryByRole('group', { name: 'Filter by model' })
+    ).not.toBeInTheDocument()
+  })
 })

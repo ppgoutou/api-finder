@@ -25,7 +25,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '@/lib/api'
 
 import { SettingsPageProvider } from '../../../components/settings-page-context'
+import { captureVideoCover } from '../capture-cover'
 import { StudioGallerySection } from '../section'
+
+// Decoding video frames needs a real browser.
+vi.mock('../capture-cover', () => ({ captureVideoCover: vi.fn() }))
 
 const STORED = JSON.stringify({
   items: [{ title: 'Ocean drone', prompt: 'waves at sunrise' }],
@@ -55,6 +59,7 @@ function renderSection() {
 }
 
 beforeEach(() => {
+  vi.mocked(captureVideoCover).mockReset()
   vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } })
   vi.spyOn(api, 'delete').mockResolvedValue({ data: { success: true } })
   vi.spyOn(api, 'get').mockResolvedValue({ data: { success: true, data: [] } })
@@ -122,5 +127,56 @@ describe('studio gallery settings', () => {
         value: '',
       })
     )
+  })
+
+  it('fills the empty cover from the video when a video is uploaded', async () => {
+    const coverFile = new File(['cover'], 'cover.webp', { type: 'image/webp' })
+    vi.mocked(captureVideoCover).mockResolvedValue(coverFile)
+    const post = vi
+      .spyOn(api, 'post')
+      .mockResolvedValueOnce({
+        data: { success: true, data: { url: '/home-media/video.mp4' } },
+      })
+      .mockResolvedValueOnce({
+        data: { success: true, data: { url: '/home-media/cover.webp' } },
+      })
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: 'Add clip' }))
+    const clip = screen.getByRole('region', { name: 'Clip 1' })
+    await user.upload(
+      await within(clip).findByLabelText('Choose file for Video'),
+      new File(['video'], 'clip.mp4', { type: 'video/mp4' })
+    )
+
+    await waitFor(() =>
+      expect(
+        within(clip).getByLabelText('Cover image (optional) URL')
+      ).toHaveValue('/home-media/cover.webp')
+    )
+    expect(post).toHaveBeenCalledTimes(2)
+  })
+
+  it('leaves the cover empty when no frame can be captured', async () => {
+    vi.mocked(captureVideoCover).mockResolvedValue(null)
+    const post = vi.spyOn(api, 'post').mockResolvedValue({
+      data: { success: true, data: { url: '/home-media/video.mp4' } },
+    })
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: 'Add clip' }))
+    const clip = screen.getByRole('region', { name: 'Clip 1' })
+    await user.upload(
+      await within(clip).findByLabelText('Choose file for Video'),
+      new File(['video'], 'clip.mp4', { type: 'video/mp4' })
+    )
+
+    await waitFor(() => expect(captureVideoCover).toHaveBeenCalled())
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(
+      within(clip).getByLabelText('Cover image (optional) URL')
+    ).toHaveValue('')
   })
 })

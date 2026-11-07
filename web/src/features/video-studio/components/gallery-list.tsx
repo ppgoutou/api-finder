@@ -30,21 +30,18 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { useMediaQuery } from '@/hooks/use-media-query'
 import { useStatus } from '@/hooks/use-status'
 import { cn } from '@/lib/utils'
 
 import { useStudioGallery } from '../hooks/use-studio-gallery'
 import { useStudioModels } from '../hooks/use-studio-models'
 import { draftFromGalleryItem, parseGallerySpec } from '../lib/gallery-draft'
-import {
-  DEFAULT_GALLERY_RATIO,
-  masonryColumns,
-  specAspectRatio,
-} from '../lib/gallery-masonry'
+import { groupByModel, specAspectRatio } from '../lib/gallery-layout'
 import type { StudioDraft } from '../types'
 
-const ALL_CATEGORIES = 'all'
+const ALL_FILTER = 'all'
+/** Filter value of the works whose spec names no model. */
+const OTHER_MODELS_FILTER = 'other-models'
 
 type GalleryCard = {
   key: string
@@ -62,55 +59,50 @@ function galleryCover(card: GalleryCard): string {
 }
 
 /**
- * Cover of a work in a box of its own width / height, so portrait and
- * landscape works keep their shape. Reports the media's real ratio once
- * known; a click opens the work's details.
+ * Cover of a work in a 16:9 box, the same for every work so rows line up.
+ * Only the cover image is requested here; the video itself loads when the
+ * tile is clicked and the details dialog opens. Portrait works sit whole on a
+ * blurred copy of their cover instead of being cropped to a strip.
  */
-function GalleryTile(props: {
-  card: GalleryCard
-  ratio: number
-  onRatio: (ratio: number) => void
-  onOpen: () => void
-}) {
+function GalleryTile(props: { card: GalleryCard; onOpen: () => void }) {
   const { t } = useTranslation()
   const card = props.card
   const cover = galleryCover(card)
   const label = card.title || t('Video preview')
+  const [ratio, setRatio] = useState(specAspectRatio(card.spec))
+  const portrait = ratio !== undefined && ratio < 1
 
-  let media
+  let media = null
   if (cover) {
     media = (
-      <img
-        src={cover}
-        alt={label}
-        loading='lazy'
-        className='size-full object-cover'
-        onLoad={(event) => {
-          const image = event.currentTarget
-          if (image.naturalWidth && image.naturalHeight) {
-            props.onRatio(image.naturalWidth / image.naturalHeight)
-          }
-        }}
-      />
+      <>
+        {portrait && (
+          <img
+            src={cover}
+            alt=''
+            aria-hidden
+            className='absolute inset-0 size-full scale-110 object-cover blur-xl'
+          />
+        )}
+        <img
+          src={cover}
+          alt={label}
+          loading='lazy'
+          decoding='async'
+          className={cn(
+            'relative size-full',
+            portrait ? 'object-contain' : 'object-cover'
+          )}
+          onLoad={(event) => {
+            const image = event.currentTarget
+            if (image.naturalWidth && image.naturalHeight) {
+              setRatio(image.naturalWidth / image.naturalHeight)
+            }
+          }}
+        />
+      </>
     )
-  } else if (card.video) {
-    media = (
-      <video
-        // Seeking past 0 makes browsers paint the first frame as a cover.
-        src={`${card.video}#t=0.1`}
-        muted
-        playsInline
-        preload='metadata'
-        className='size-full bg-black object-cover'
-        onLoadedMetadata={(event) => {
-          const video = event.currentTarget
-          if (video.videoWidth && video.videoHeight) {
-            props.onRatio(video.videoWidth / video.videoHeight)
-          }
-        }}
-      />
-    )
-  } else {
+  } else if (!card.video) {
     media = (
       <span className='text-muted-foreground flex size-full flex-col items-center justify-center gap-1 text-xs'>
         <Film className='size-5' aria-hidden />
@@ -122,16 +114,15 @@ function GalleryTile(props: {
   return (
     <button
       type='button'
-      className='bg-muted/40 group relative block w-full overflow-hidden'
-      style={{ aspectRatio: props.ratio }}
+      className='bg-muted group relative block aspect-video w-full overflow-hidden'
       onClick={props.onOpen}
       aria-label={t('View details: {{title}}', { title: label })}
     >
       {media}
       {card.video && (
         <span className='pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/25'>
-          <span className='bg-background/90 text-foreground flex size-10 items-center justify-center rounded-full shadow'>
-            <Play className='size-4 fill-current' aria-hidden />
+          <span className='bg-background/90 text-foreground flex size-12 items-center justify-center rounded-full shadow transition-transform group-hover:scale-110'>
+            <Play className='size-5 fill-current' aria-hidden />
           </span>
         </span>
       )}
@@ -139,25 +130,15 @@ function GalleryTile(props: {
   )
 }
 
-function GalleryWorkCard(props: {
-  card: GalleryCard
-  ratio: number
-  onRatio: (ratio: number) => void
-  onOpen: () => void
-}) {
+function GalleryWorkCard(props: { card: GalleryCard; onOpen: () => void }) {
   const { t } = useTranslation()
   const card = props.card
   const model = parseGallerySpec(card.spec).model
 
   return (
     <article className='flex flex-col gap-2'>
-      <div className='border-border/60 relative overflow-hidden rounded-sm border'>
-        <GalleryTile
-          card={card}
-          ratio={props.ratio}
-          onRatio={props.onRatio}
-          onOpen={props.onOpen}
-        />
+      <div className='border-border/60 relative overflow-hidden rounded-lg border'>
+        <GalleryTile card={card} onOpen={props.onOpen} />
         {model && (
           <span className='pointer-events-none absolute top-1.5 right-1.5 max-w-[calc(100%-0.75rem)] truncate rounded bg-black/60 px-1.5 py-0.5 text-[11px] leading-4 text-white'>
             {model}
@@ -167,7 +148,7 @@ function GalleryWorkCard(props: {
       <div className='flex items-start gap-1 px-0.5'>
         <p
           className={cn(
-            'line-clamp-2 min-w-0 flex-1 text-sm leading-5 font-medium',
+            'line-clamp-2 min-h-10 min-w-0 flex-1 text-sm leading-5 font-medium',
             !card.title && 'text-muted-foreground'
           )}
           title={card.title || undefined}
@@ -305,11 +286,30 @@ function GalleryDetailsDialog(props: {
   )
 }
 
+/** Equal cards on a grid: 1 column on phones, up to 4 on the widest screens. */
+function GalleryGrid(props: {
+  cards: readonly GalleryCard[]
+  onOpen: (card: GalleryCard) => void
+}) {
+  return (
+    <div className='grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+      {props.cards.map((card) => (
+        <GalleryWorkCard
+          key={card.key}
+          card={card}
+          onOpen={() => props.onOpen(card)}
+        />
+      ))}
+    </div>
+  )
+}
+
 /**
- * Curated studio gallery works from the admin StudioGallery option.
- * Category filters sit under the gallery tab. Works fill 2–6 columns in
- * reading order, each tile keeping its own width / height; a card shows the
- * model on the clip and a title of up to two lines, and the clip, prompt and parameters open in a dialog.
+ * Curated studio gallery works from the admin StudioGallery option, sorted by
+ * model: filters above the works pick one model, and with no model picked each
+ * has a section of its own. Admin categories add a second filter row when any
+ * work has one. A card shows the cover, the model and a title of up to two
+ * lines; the clip, prompt and parameters open in a dialog.
  */
 export function GalleryList(props: {
   onReuse: (draft: Partial<StudioDraft>) => void
@@ -322,18 +322,9 @@ export function GalleryList(props: {
       (status?.server_address as string | undefined) || window.location.origin,
     models,
   }
-  const [category, setCategory] = useState(ALL_CATEGORIES)
-  const [ratios, setRatios] = useState<Record<string, number>>({})
+  const [category, setCategory] = useState(ALL_FILTER)
+  const [model, setModel] = useState(ALL_FILTER)
   const [openCard, setOpenCard] = useState<GalleryCard | null>(null)
-  const huge = useMediaQuery('(min-width: 1536px)')
-  const large = useMediaQuery('(min-width: 1280px)')
-  const wide = useMediaQuery('(min-width: 1024px)')
-  const medium = useMediaQuery('(min-width: 768px)')
-  let columnCount = 2
-  if (huge) columnCount = 6
-  else if (large) columnCount = 5
-  else if (wide) columnCount = 4
-  else if (medium) columnCount = 3
   const cards: GalleryCard[] = useStudioGallery()
     .items.filter((item) => item.video || item.prompt || item.poster)
     .map((item, index) => ({
@@ -350,20 +341,23 @@ export function GalleryList(props: {
   const categories = [
     ...new Set(cards.map((card) => card.category).filter(Boolean)),
   ]
-  const activeCategory = categories.includes(category)
-    ? category
-    : ALL_CATEGORIES
-  const filters = [
-    { value: ALL_CATEGORIES, label: t('All') },
-    ...categories.map((value) => ({ value, label: value })),
-  ]
-  const visibleCards = cards.filter(
-    (card) =>
-      activeCategory === ALL_CATEGORIES || card.category === activeCategory
+  const activeCategory = categories.includes(category) ? category : ALL_FILTER
+  const categoryCards = cards.filter(
+    (card) => activeCategory === ALL_FILTER || card.category === activeCategory
   )
-  const ratioOf = (card: GalleryCard) =>
-    ratios[card.key] ?? specAspectRatio(card.spec) ?? DEFAULT_GALLERY_RATIO
-  const columns = masonryColumns(visibleCards.map(ratioOf), columnCount)
+  const groups = groupByModel(cards).map((group) => ({
+    value: group.model || OTHER_MODELS_FILTER,
+    label: group.model || t('Other models'),
+    cards: group.works.filter((card) => categoryCards.includes(card)),
+  }))
+  const activeModel = groups.some((group) => group.value === model)
+    ? model
+    : ALL_FILTER
+  const visibleGroups = groups.filter(
+    (group) =>
+      group.cards.length > 0 &&
+      (activeModel === ALL_FILTER || group.value === activeModel)
+  )
 
   if (cards.length === 0) {
     return (
@@ -384,29 +378,67 @@ export function GalleryList(props: {
   }
 
   return (
-    <div className='flex flex-col gap-4'>
-      <ToggleGroup
-        value={[activeCategory]}
-        onValueChange={(value) => {
-          const next = value.find((item) => item !== activeCategory)
-          if (next) setCategory(next)
-        }}
-        aria-label={t('Filter by category')}
-        variant='outline'
-        spacing={2}
-        className='flex-wrap'
-      >
-        {filters.map((filter) => (
-          <ToggleGroupItem
-            key={filter.value}
-            value={filter.value}
-            className='rounded-full px-4'
-          >
-            {filter.label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-      {visibleCards.length === 0 ? (
+    <div className='flex flex-col gap-6'>
+      {(groups.length > 1 || categories.length > 0) && (
+        <div className='flex flex-col gap-2'>
+          {groups.length > 1 && (
+            <ToggleGroup
+              value={[activeModel]}
+              onValueChange={(value) => {
+                const next = value.find((item) => item !== activeModel)
+                if (next) setModel(next)
+              }}
+              aria-label={t('Filter by model')}
+              variant='outline'
+              spacing={2}
+              className='flex-wrap'
+            >
+              <ToggleGroupItem value={ALL_FILTER} className='rounded-full px-4'>
+                {t('All')}
+                <span className='text-muted-foreground'>
+                  {categoryCards.length}
+                </span>
+              </ToggleGroupItem>
+              {groups.map((group) => (
+                <ToggleGroupItem
+                  key={group.value}
+                  value={group.value}
+                  className='rounded-full px-4'
+                >
+                  {group.label}
+                  <span className='text-muted-foreground'>
+                    {group.cards.length}
+                  </span>
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          )}
+          {categories.length > 0 && (
+            <ToggleGroup
+              value={[activeCategory]}
+              onValueChange={(value) => {
+                const next = value.find((item) => item !== activeCategory)
+                if (next) setCategory(next)
+              }}
+              aria-label={t('Filter by category')}
+              variant='outline'
+              spacing={2}
+              className='flex-wrap'
+            >
+              {[ALL_FILTER, ...categories].map((value) => (
+                <ToggleGroupItem
+                  key={value}
+                  value={value}
+                  className='rounded-full px-4'
+                >
+                  {value === ALL_FILTER ? t('All') : value}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          )}
+        </div>
+      )}
+      {visibleGroups.length === 0 && (
         <Empty className='border'>
           <EmptyHeader>
             <EmptyMedia variant='icon'>
@@ -415,38 +447,20 @@ export function GalleryList(props: {
             <EmptyTitle>{t('No gallery works yet')}</EmptyTitle>
           </EmptyHeader>
         </Empty>
-      ) : (
-        <div className='grid grid-cols-2 items-start gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
-          {/* Empty columns only trail a gallery shorter than one row. */}
-          {columns
-            .filter((column) => column.length > 0)
-            .map((column) => (
-              <div
-                key={column.map((index) => visibleCards[index].key).join('|')}
-                className='flex min-w-0 flex-col gap-3'
-              >
-                {column.map((index) => {
-                  const card = visibleCards[index]
-                  return (
-                    <GalleryWorkCard
-                      key={card.key}
-                      card={card}
-                      ratio={ratioOf(card)}
-                      onRatio={(ratio) =>
-                        setRatios((current) =>
-                          Math.abs((current[card.key] ?? 0) - ratio) < 0.01
-                            ? current
-                            : { ...current, [card.key]: ratio }
-                        )
-                      }
-                      onOpen={() => setOpenCard(card)}
-                    />
-                  )
-                })}
-              </div>
-            ))}
-        </div>
       )}
+      {visibleGroups.map((group) => (
+        <section key={group.value} className='flex flex-col gap-3'>
+          {groups.length > 1 && activeModel === ALL_FILTER && (
+            <h3 className='flex items-baseline gap-2 text-base font-semibold'>
+              {group.label}
+              <span className='text-muted-foreground text-sm font-normal'>
+                {group.cards.length}
+              </span>
+            </h3>
+          )}
+          <GalleryGrid cards={group.cards} onOpen={setOpenCard} />
+        </section>
+      ))}
       <GalleryDetailsDialog
         card={openCard}
         onOpenChange={(open) => {

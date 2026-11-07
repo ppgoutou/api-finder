@@ -3023,6 +3023,7 @@
     "Filter": "Lọc",
     "Filter by API key...": "Lọc theo khóa API...",
     "Filter by category": "Lọc theo danh mục",
+    "Filter by model": "Lọc theo mô hình",
     "Filter by channel ID": "Lọc theo ID kênh",
     "Filter by group": "Lọc theo nhóm",
     "Filter by MjProxy task ID": "Lọc theo ID nhiệm vụ MjProxy",
