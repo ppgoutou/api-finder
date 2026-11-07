@@ -1041,3 +1041,30 @@ func TestUpdateBatchTasksPollClassification(t *testing.T) {
 		})
 	}
 }
+
+// A task that can no longer be polled must not keep the customer's money.
+func TestFailTasksAndRefundReturnsThePreConsumedQuotaOnce(t *testing.T) {
+	truncate(t)
+
+	const userID, tokenID, channelID = 44, 44, 144
+	const initialQuota, preConsumedQuota, tokenRemain = 10_000, 5_000, 8_000
+	seedUser(t, userID, initialQuota)
+	seedToken(t, tokenID, userID, "sk-fail-and-refund", tokenRemain)
+
+	task := makeTask(userID, channelID, preConsumedQuota, tokenID, BillingSourceWallet, 0)
+	task.TaskID = "task_channel_gone"
+	require.NoError(t, model.DB.Create(task).Error)
+
+	stale := *task
+	failTasksAndRefund(context.Background(), []*model.Task{task}, channelInfoFailReason)
+	// A second worker holding the same unfinished status loses the CAS.
+	failTasksAndRefund(context.Background(), []*model.Task{&stale}, channelInfoFailReason)
+
+	var persisted model.Task
+	require.NoError(t, model.DB.First(&persisted, task.ID).Error)
+	assert.EqualValues(t, model.TaskStatusFailure, persisted.Status)
+	assert.Equal(t, channelInfoFailReason, persisted.FailReason)
+	assert.Zero(t, persisted.Quota)
+	assert.Equal(t, initialQuota+preConsumedQuota, getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain+preConsumedQuota, getTokenRemainQuota(t, tokenID))
+}

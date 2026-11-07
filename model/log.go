@@ -118,6 +118,7 @@ func formatUserLog(log *Log) {
 	log.ChannelName = ""
 	log.UpstreamRequestId = ""
 	log.Other = formatLogOtherJSON(log.Other, logOtherVisibilityUser)
+	applyUserErrorView(log)
 }
 
 func formatUserLogs(logs []*Log, startIdx int) {
@@ -132,6 +133,7 @@ func formatUserLogs(logs []*Log, startIdx int) {
 func FormatAdminLogs(logs []*Log) {
 	for i := range logs {
 		logs[i].Other = formatLogOtherJSON(logs[i].Other, logOtherVisibilityAdmin)
+		attachUserErrorPreview(logs[i])
 	}
 }
 
@@ -140,6 +142,7 @@ func FormatAdminLogs(logs []*Log) {
 func FormatRootLogs(logs []*Log) {
 	for i := range logs {
 		logs[i].Other = formatLogOtherJSON(logs[i].Other, logOtherVisibilityRoot)
+		attachUserErrorPreview(logs[i])
 	}
 }
 
@@ -641,6 +644,7 @@ func StreamAllLogs(ctx context.Context, filter LogFilter, role int, fn func(*Log
 			log.ChannelName = name
 		}
 		log.Other = formatLogOtherJSON(log.Other, visibility)
+		attachUserErrorPreview(log)
 		return fn(log)
 	})
 }

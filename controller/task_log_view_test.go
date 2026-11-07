@@ -6,6 +6,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/usererror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -129,8 +130,13 @@ func TestTaskLogDTOKeepsFailureReasonAndDoesNotMarkPluginTaskLegacy(t *testing.T
 		FailReason: "provider rejected the request",
 	}
 	failedView := tasksToDto([]*model.Task{failed}, false, common.RoleCommonUser)[0]
-	assert.Equal(t, "provider rejected the request", failedView.FailReason)
+	assert.Equal(t, usererror.ClassifyFailReason("provider rejected the request").Key(), failedView.FailReason)
+	assert.Empty(t, failedView.UserFailReason)
 	assert.False(t, failedView.LegacyVideoAvailable)
+
+	adminView := tasksToDto([]*model.Task{failed}, false, common.RoleAdminUser)[0]
+	assert.Equal(t, "provider rejected the request", adminView.FailReason)
+	assert.Equal(t, failedView.FailReason, adminView.UserFailReason)
 
 	pluginTask := &model.Task{
 		TaskID:     "task_plugin_video",

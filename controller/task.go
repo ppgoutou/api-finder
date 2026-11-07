@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/usererror"
 	"github.com/QuantumNous/new-api/relay"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
@@ -54,6 +55,7 @@ func GetTask(c *gin.Context) {
 	if task.Status == model.TaskStatusSuccess && taskFailReasonIsLegacyResultURL(task.FailReason) {
 		failReason = ""
 	}
+	failReason = service.UserFacingFailReason(c, failReason)
 	c.JSON(http.StatusOK, gin.H{
 		"task_id":     task.TaskID,
 		"platform":    task.Platform,
@@ -464,6 +466,14 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 			if taskFailReasonIsLegacyResultURL(task.FailReason) {
 				item.FailReason = ""
 			}
+		}
+		// The raw reason names the supplier and quotes its responses, so only
+		// administrators read it; they also see what the owner is shown.
+		userFailReason := usererror.ClassifyFailReason(item.FailReason).Key()
+		if viewerRole >= common.RoleAdminUser {
+			item.UserFailReason = userFailReason
+		} else {
+			item.FailReason = userFailReason
 		}
 		if viewerRole < common.RoleAdminUser {
 			// Plugin keys and channel-type platforms name the supplier, and

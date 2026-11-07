@@ -67,6 +67,8 @@ var GetTaskAdaptorFunc func(platform constant.TaskPlatform) TaskPollingAdaptor
 // sweepTimedOutTasks 在主轮询之前独立清理超时任务。
 // 每次最多处理 100 条，剩余的下个周期继续处理。
 // 使用 per-task CAS (UpdateWithStatus) 防止覆盖被正常轮询已推进的任务。
+const channelInfoFailReason = "Failed to get the channel information. Please contact the administrator"
+
 func sweepTimedOutTasks(ctx context.Context) {
 	if constant.TaskTimeoutMinutes <= 0 {
 		return
@@ -165,28 +167,20 @@ func RunTaskPollingOnce(ctx context.Context, report func(processed, total int)) 
 		summary.PlatformsScanned++
 		taskChannelM := make(map[int][]string)
 		taskM := make(map[string]*model.Task)
-		nullTaskIds := make([]int64, 0)
+		nullTasks := make([]*model.Task, 0)
 		for _, task := range tasks {
 			upstreamID := task.GetUpstreamTaskID()
 			if upstreamID == "" {
 				// 统计失败的未完成任务
-				nullTaskIds = append(nullTaskIds, task.ID)
+				nullTasks = append(nullTasks, task)
 				continue
 			}
 			taskM[upstreamID] = task
 			taskChannelM[task.ChannelId] = append(taskChannelM[task.ChannelId], upstreamID)
 		}
-		if len(nullTaskIds) > 0 {
-			summary.NullTasksFailed += len(nullTaskIds)
-			err := model.TaskBulkUpdateByID(nullTaskIds, map[string]any{
-				"status":   "FAILURE",
-				"progress": "100%",
-			})
-			if err != nil {
-				logger.LogError(ctx, common.LogText("Fix null task_id task error: %v", err))
-			} else {
-				logger.LogInfo(ctx, common.LogText("Fix null task_id task success: %v", nullTaskIds))
-			}
+		if len(nullTasks) > 0 {
+			summary.NullTasksFailed += len(nullTasks)
+			failTasksAndRefund(ctx, nullTasks, "The task has no upstream task ID")
 		}
 		if len(taskChannelM) == 0 {
 			continue
@@ -246,22 +240,8 @@ func updateBatchTasks(ctx context.Context, adaptor BatchTaskPollingAdaptor, chan
 	ch, err := model.CacheGetChannel(channelId)
 	if err != nil {
 		common.SysLog(common.LogText("CacheGetChannel: %v", err))
-		// Collect DB primary key IDs for bulk update (taskIds are upstream IDs, not task_id column values)
-		var failedIDs []int64
-		for _, upstreamID := range taskIds {
-			if t, ok := taskM[upstreamID]; ok {
-				failedIDs = append(failedIDs, t.ID)
-			}
-		}
-		err = model.TaskBulkUpdateByID(failedIDs, map[string]any{
-			"fail_reason": "Failed to get the channel information. Please contact the administrator",
-			"status":      "FAILURE",
-			"progress":    "100%",
-		})
-		if err != nil {
-			common.SysLog(common.LogText("UpdateSunoTask error: %v", err))
-		}
-		return err
+		failTasksAndRefund(ctx, tasksForUpstreamIDs(taskIds, taskM), channelInfoFailReason)
+		return nil
 	}
 	proxy := ch.GetSetting().Proxy
 	baseURL := ch.GetBaseURL()
@@ -426,21 +406,7 @@ func updateVideoTasks(ctx context.Context, platform constant.TaskPlatform, chann
 	}
 	cacheGetChannel, err := model.CacheGetChannel(channelId)
 	if err != nil {
-		// Collect DB primary key IDs for bulk update (taskIds are upstream IDs, not task_id column values)
-		var failedIDs []int64
-		for _, upstreamID := range taskIds {
-			if t, ok := taskM[upstreamID]; ok {
-				failedIDs = append(failedIDs, t.ID)
-			}
-		}
-		errUpdate := model.TaskBulkUpdateByID(failedIDs, map[string]any{
-			"fail_reason": "Failed to get the channel information. Please contact the administrator",
-			"status":      "FAILURE",
-			"progress":    "100%",
-		})
-		if errUpdate != nil {
-			common.SysLog(common.LogText("UpdateVideoTask error: %v", errUpdate))
-		}
+		failTasksAndRefund(ctx, tasksForUpstreamIDs(taskIds, taskM), channelInfoFailReason)
 		return fmt.Errorf("CacheGetChannel failed: %w", err)
 	}
 	adaptor := GetTaskAdaptorFunc(platform)
@@ -798,6 +764,42 @@ func recordPollFailureForTasks(ctx context.Context, adaptor TaskPollingAdaptor, 
 		}
 	}
 	return firstErr
+}
+
+func tasksForUpstreamIDs(upstreamIDs []string, taskM map[string]*model.Task) []*model.Task {
+	tasks := make([]*model.Task, 0, len(upstreamIDs))
+	for _, upstreamID := range upstreamIDs {
+		if task, ok := taskM[upstreamID]; ok {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
+}
+
+// failTasksAndRefund ends tasks that cannot be polled because no adaptor can be
+// resolved for them. The status CAS decides the single winner that refunds.
+func failTasksAndRefund(ctx context.Context, tasks []*model.Task, reason string) {
+	now := time.Now().Unix()
+	for _, task := range tasks {
+		oldStatus := task.Status
+		task.Status = model.TaskStatusFailure
+		task.Progress = taskcommon.ProgressComplete
+		task.FinishTime = now
+		task.FailReason = reason
+		// Tasks from the old system are explicitly not refunded, as in sweepTimedOutTasks.
+		isLegacy := task.SubmitTime > 0 && task.SubmitTime < model.TaskRefundLegacyCutoff
+		if isLegacy {
+			task.Quota = 0
+		}
+		won, err := task.UpdateWithStatus(oldStatus)
+		if err != nil {
+			logger.LogError(ctx, common.LogText("failed to end task %s: %v", task.TaskID, err))
+			continue
+		}
+		if won && !isLegacy && task.Quota != 0 {
+			RefundTaskQuota(ctx, task, reason)
+		}
+	}
 }
 
 func failTaskFromPoll(ctx context.Context, adaptor TaskPollingAdaptor, task *model.Task, fromStatus model.TaskStatus, reason string) error {

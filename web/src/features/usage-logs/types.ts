@@ -159,6 +159,11 @@ export interface LogOtherData {
     key: string
     params?: Record<string, string | number | boolean>
   }[]
+  // Admin views only: what the owner of an error log sees instead of `content`.
+  user_content_parts?: {
+    key: string
+    params?: Record<string, string | number | boolean>
+  }[]
   // Language-independent operation descriptor (audit/login logs).
   // Frontend renders localized content from action + params via i18n templates.
   op?: {
@@ -345,6 +350,8 @@ export interface TaskLog {
   // retrieval is not offered for it.
   result_discarded?: boolean
   fail_reason?: string
+  // Admin views only: what the task's owner sees instead of `fail_reason`.
+  user_fail_reason?: string
   status: string // NOT_START, SUBMITTED, IN_PROGRESS, SUCCESS, FAILURE, QUEUED, UNKNOWN
   admin_info?: {
     request_id?: string

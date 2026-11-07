@@ -192,9 +192,9 @@ func TestDistributeHidesTaskPluginDetailsButLogsDiagnostics(t *testing.T) {
 
 	const group = "private-plugin-error-test-group"
 	for _, locale := range []struct{ language, message string }{
-		{"en", "No available channel for model task-model under group " + group + ": the model is claimed by a task plugin, which has no enabled channel serving it (distributor)"},
-		{"zh-CN", "分组 " + group + " 下模型 task-model 无可用渠道：该模型由任务插件认领，但当前没有启用的渠道可服务此模型（distributor）"},
-		{"zh-TW", "分組 " + group + " 下模型 task-model 無可用管道：該模型由任務插件認領，但目前沒有啟用的管道可服務此模型（distributor）"},
+		{"en", "Model task-model is temporarily unavailable. Please try again later or use another model. You were not charged."},
+		{"zh-CN", "模型 task-model 暂时不可用，请稍后重试或换一个模型。本次未扣费。"},
+		{"zh-TW", "模型 task-model 暫時無法使用，請稍後重試或更換模型。本次未扣費。"},
 	} {
 		for _, providerCount := range []int{1, 2} {
 			t.Run(fmt.Sprintf("%s/%d_providers", locale.language, providerCount), func(t *testing.T) {
@@ -358,8 +358,8 @@ func TestDistributeRefusesUnavailableModelBeforeRelay(t *testing.T) {
 	model.InvalidatePricingCache()
 
 	for _, tc := range []struct{ model, message string }{
-		{"model-out-of-stock", "模型 model-out-of-stock 暂不可用，请换一个模型"},
-		{"model-out-of-stock-reason", "模型 model-out-of-stock-reason 暂不可用：上游缺货。请换一个模型"},
+		{"model-out-of-stock", "模型 model-out-of-stock 暂时不可用，请稍后重试或换一个模型。"},
+		{"model-out-of-stock-reason", "模型 model-out-of-stock-reason 暂时不可用：上游缺货。请稍后重试或换一个模型。"},
 	} {
 		t.Run(tc.model, func(t *testing.T) {
 			router := gin.New()

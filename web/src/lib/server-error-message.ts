@@ -210,7 +210,7 @@ export function getServerErrorMessage(
       continue
     }
     const detail = isRecord(source.error)
-      ? messageText(source.error.message)
+      ? getServerMessage(source.error)
       : messageText(source.error)
     const message =
       getServerMessage(source) || detail || messageText(source.title)
