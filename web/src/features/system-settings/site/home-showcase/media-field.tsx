@@ -45,6 +45,8 @@ type MediaFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label: string
   kind: 'video' | 'image'
+  /** Called with the chosen file once its upload has been stored. */
+  onUploaded?: (file: File) => void
 }
 
 /**
@@ -83,6 +85,7 @@ export function MediaField<T extends FieldValues>(props: MediaFieldProps<T>) {
             const response = await uploadHomeMedia(file, setProgress)
             if (response.success && response.data?.url) {
               field.onChange(response.data.url)
+              props.onUploaded?.(file)
             } else {
               handleServerError(response, t('Upload failed'))
             }

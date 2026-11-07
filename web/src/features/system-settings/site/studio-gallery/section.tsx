@@ -42,7 +42,7 @@ import {
   STUDIO_GALLERY_OPTION_KEY,
 } from '@/features/video-studio/lib/studio-gallery'
 
-import { deleteHomeMedia } from '../../api'
+import { deleteHomeMedia, uploadHomeMedia } from '../../api'
 import { SettingsForm } from '../../components/settings-form-layout'
 import { SettingsPageFormActions } from '../../components/settings-page-context'
 import { SettingsSection } from '../../components/settings-section'
@@ -50,6 +50,7 @@ import { useUpdateOption } from '../../hooks/use-update-option'
 import { CollapsibleMediaClip } from '../components/collapsible-media-clip'
 import { ShowcaseTextField } from '../home-showcase/item-fields'
 import { MediaField } from '../home-showcase/media-field'
+import { captureVideoCover } from './capture-cover'
 import { studioGalleryFormSchema, type StudioGalleryFormValues } from './schema'
 import { GallerySpecField } from './spec-field'
 
@@ -98,6 +99,19 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
     openNewestClip.current = false
     setOpenClips((current) => ({ ...current, [newest.id]: true }))
   }, [clips.fields])
+
+  // The gallery shows covers and only loads a video on click, so a work needs
+  // a cover. A failure just leaves the optional field for the admin to fill.
+  const fillMissingCover = async (index: number, video: File) => {
+    const posterField = `items.${index}.poster` as const
+    if (form.getValues(posterField)) return
+    const cover = await captureVideoCover(video)
+    if (!cover || form.getValues(posterField)) return
+    const response = await uploadHomeMedia(cover).catch(() => null)
+    if (response?.success && response.data?.url) {
+      form.setValue(posterField, response.data.url, { shouldDirty: true })
+    }
+  }
 
   const onSubmit = async (values: StudioGalleryFormValues) => {
     const value = serializeStudioGallery(values)
@@ -230,6 +244,7 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                     name={`items.${index}.video`}
                     label={t('Video')}
                     kind='video'
+                    onUploaded={(file) => void fillMissingCover(index, file)}
                   />
                   <MediaField
                     control={form.control}
