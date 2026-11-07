@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -190,7 +191,8 @@ func DraftOnboardingModel(c *gin.Context) {
 // the suppliers, trying the channels that list the model first. An empty
 // description means no supplier has one. Supplier texts state their prices,
 // which are this site's costs, so those clauses are removed and prices_removed
-// tells the admin to check what is left.
+// tells the admin to check what is left. Chinese and English lines are then
+// separated into the language versions the editor shows.
 func FetchOnboardingSupplierDescription(c *gin.Context) {
 	var request struct {
 		ModelName string `json:"model_name"`
@@ -234,7 +236,7 @@ func FetchOnboardingSupplierDescription(c *gin.Context) {
 			}
 			continue
 		}
-		description := stripDescriptionPrices(descriptions[name])
+		description := splitDescriptionLanguages(stripDescriptionPrices(descriptions[name]))
 		if description != "" {
 			common.ApiSuccess(c, gin.H{
 				"description":    description,
@@ -297,6 +299,33 @@ func stripDescriptionPrices(description string) string {
 		}
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+// splitDescriptionLanguages turns a text with Chinese lines and English lines
+// into zh and en language blocks. A line holding any Chinese character counts
+// as Chinese, because the English lines of supplier texts have none while the
+// Chinese ones carry English parameter names. A text in one language, or one
+// that already has language blocks, stays as it is and shows in every language.
+func splitDescriptionLanguages(description string) string {
+	if strings.Contains(description, "<!-- lang:") {
+		return description
+	}
+	chinese := make([]string, 0)
+	english := make([]string, 0)
+	for line := range strings.SplitSeq(description, "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if strings.ContainsFunc(line, func(character rune) bool { return unicode.Is(unicode.Han, character) }) {
+			chinese = append(chinese, line)
+		} else {
+			english = append(english, line)
+		}
+	}
+	if len(chinese) == 0 || len(english) == 0 {
+		return description
+	}
+	return "<!-- lang:zh -->\n" + strings.Join(chinese, "\n") + "\n\n<!-- lang:en -->\n" + strings.Join(english, "\n")
 }
 
 // prepareOnboardingDrafts drafts metadata for pending models that have none

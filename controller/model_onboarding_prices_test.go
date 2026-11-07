@@ -517,10 +517,33 @@ func TestFetchSupplierDescriptionPrefersListingChannelAndFlagsPrices(t *testing.
 	assert.Equal(t, "720p；前 5 张免费。", found["description"])
 	assert.Equal(t, true, found["prices_removed"])
 
+	mixed := supplier("支持 720p，每秒 1元。\nSupports 720p, $1 per second.")
+	mixedURL := mixed.URL
+	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", 2).Update("base_url", mixedURL).Error)
+	assert.Equal(t, "<!-- lang:zh -->\n支持 720p。\n\n<!-- lang:en -->\nSupports 720p.", fetch("E-video")["data"].(map[string]any)["description"])
+
 	onlyPrice := supplier("每秒 1元。")
 	onlyPriceURL := onlyPrice.URL
 	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id IN ?", []int{1, 2}).Update("base_url", onlyPriceURL).Error)
 	assert.Equal(t, "", fetch("E-video")["data"].(map[string]any)["description"])
+}
+
+func TestSplitDescriptionLanguages(t *testing.T) {
+	cases := []struct{ name, input, expected string }{
+		{"chinese then english", "支持 first_image_url。\nAccepts first_image_url.", "<!-- lang:zh -->\n支持 first_image_url。\n\n<!-- lang:en -->\nAccepts first_image_url."},
+		{"english then chinese", "Accepts 720p.\n支持 720p。", "<!-- lang:zh -->\n支持 720p。\n\n<!-- lang:en -->\nAccepts 720p."},
+		{"several lines and blanks", "支持 720p。\n\n支持 2K。\nAccepts 720p.\n\nAccepts 2K.", "<!-- lang:zh -->\n支持 720p。\n支持 2K。\n\n<!-- lang:en -->\nAccepts 720p.\nAccepts 2K."},
+		{"only chinese stays shared", "支持 720p。\n支持 2K。", "支持 720p。\n支持 2K。"},
+		{"only english stays shared", "Accepts 720p.\nAccepts 2K.", "Accepts 720p.\nAccepts 2K."},
+		{"mixed within one line stays shared", "支持 720p。Accepts 720p.", "支持 720p。Accepts 720p."},
+		{"existing blocks stay", "<!-- lang:zh -->\n支持 720p。\n<!-- lang:en -->\nAccepts 720p.", "<!-- lang:zh -->\n支持 720p。\n<!-- lang:en -->\nAccepts 720p."},
+		{"empty", "", ""},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, splitDescriptionLanguages(testCase.input))
+		})
+	}
 }
 
 func TestStripDescriptionPrices(t *testing.T) {
