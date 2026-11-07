@@ -36,6 +36,7 @@ import { getConfiguredGroupRatio } from '../lib/model-helpers'
 import { taskEnumLabel } from '../lib/task-price-display'
 import {
   getReferenceOrderExample,
+  RESERVED_REFERENCE_VIDEO_SECONDS,
   VIDEO_PRICE_FRACTION_DIGITS,
   type VideoPricing,
   type VideoPricingRow,
@@ -137,6 +138,44 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
         },
       })
     }
+    if (pricing.rows.some((row) => row.inputVideoSecondPrice !== undefined)) {
+      list.push({
+        id: 'input-video',
+        header: t('Reference video price per second'),
+        cellClassName: 'font-mono tabular-nums',
+        cell: (row) =>
+          row.inputVideoSecondPrice === undefined
+            ? '-'
+            : formatTaskUsageUnitPrice(
+                row.inputVideoSecondPrice,
+                priceOptions(ratioOf(row))
+              ),
+      })
+    }
+    if (pricing.rows.some((row) => row.inputImagePrice !== undefined)) {
+      list.push({
+        id: 'input-image',
+        header: t('Input image price'),
+        cell: (row) => {
+          if (row.inputImagePrice === undefined) return '-'
+          return (
+            <div className='flex flex-col'>
+              <span className='font-mono tabular-nums'>
+                {formatTaskUsageUnitPrice(
+                  row.inputImagePrice,
+                  priceOptions(ratioOf(row))
+                )}
+              </span>
+              {Boolean(row.freeInputImages) && (
+                <span className='text-muted-foreground text-xs'>
+                  {t('First {{count}} free', { count: row.freeInputImages })}
+                </span>
+              )}
+            </div>
+          )
+        },
+      })
+    }
     if (range) {
       list.push({
         id: 'duration',
@@ -223,6 +262,16 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
             ]}
           />
           {props.pricing.hasReferencePricing && referenceNotes(props.pricing)}
+          {props.pricing.rows.some(
+            (row) => row.inputVideoSecondPrice !== undefined
+          ) && (
+            <p className='text-muted-foreground mt-2 text-xs'>
+              {t(
+                'Reference videos are charged on top of the output seconds, at {{seconds}} seconds unless the real length is reported.',
+                { seconds: RESERVED_REFERENCE_VIDEO_SECONDS }
+              )}
+            </p>
+          )}
           {example &&
             props.groups.map((group) => {
               const options = priceOptions(

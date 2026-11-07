@@ -23,6 +23,7 @@ import i18next from 'i18next'
 import { afterEach, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth-store'
 import {
   DEFAULT_CURRENCY_CONFIG,
   useSystemConfigStore,
@@ -220,7 +221,10 @@ it('shows nested task conditions and prices in detail and group tables without a
   expect(screen.queryByText('Matched')).not.toBeInTheDocument()
 })
 
-it('explains missing task metadata while retaining the original expression', () => {
+it('shows an admin the original expression when task metadata is missing', () => {
+  useAuthStore
+    .getState()
+    .auth.setUser({ id: 1, username: 'administrator', role: 100 })
   const expression = 'tier("base", u("seconds") * 0.09)'
   render(<DynamicPricingBreakdown billingExpr={expression} />)
   expect(
@@ -229,6 +233,18 @@ it('explains missing task metadata while retaining the original expression', () 
     )
   ).toBeVisible()
   expect(screen.getByText(expression)).toBeVisible()
+  useAuthStore.getState().auth.setUser(null)
+})
+
+it('hides the original expression from a visitor when task metadata is missing', () => {
+  const expression = 'tier("base", u("seconds") * 0.09)'
+  render(<DynamicPricingBreakdown billingExpr={expression} />)
+  expect(
+    screen.getByText(
+      'Task usage metadata is unavailable. Pricing details cannot be displayed.'
+    )
+  ).toBeVisible()
+  expect(screen.queryByText(expression)).not.toBeInTheDocument()
 })
 
 it('falls back for omitted count labels and preserves canonical units for other quantities', () => {

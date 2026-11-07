@@ -176,3 +176,39 @@ describe('video pricing tables', () => {
     expect(screen.queryByText(/^Example/)).not.toBeInTheDocument()
   })
 })
+
+describe('VideoPricingTables with reference media priced on top', () => {
+  const MEDIA_MODEL: PricingModel = {
+    ...MODEL,
+    official_price_expr: undefined,
+    billing_expr:
+      'u("resolution") == "768P" ? tier("768P", (u("seconds") * 1 + u("input_video_seconds") * 3 + max(u("input_images") - 5, 0) * 2)) : ' +
+      'tier("480P", (u("seconds") * 1 + u("input_video_seconds") * 3 + max(u("input_images") - 5, 0) * 2))',
+    billing_usage_schema: {
+      seconds: { type: 'number', unit: 'second' },
+      resolution: { enum: ['480P', '768P'] },
+      input_images: { type: 'number', unit: 'count' },
+      input_video_seconds: { type: 'number', unit: 'second' },
+    },
+  }
+
+  it('shows the reference video and image prices, after the group ratio, when priced', () => {
+    renderTables(['default'], MEDIA_MODEL)
+
+    expect(
+      screen.getByRole('columnheader', {
+        name: 'Reference video price per second',
+      })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('columnheader', { name: 'Input image price' })
+    ).toBeVisible()
+    const firstRow = screen.getAllByRole('row')[1]
+    expect(firstRow).toHaveTextContent('1.95')
+    expect(firstRow).toHaveTextContent('$1.3')
+    expect(firstRow).toHaveTextContent('First 5 free')
+    expect(
+      screen.getByText(/Reference videos are charged on top/)
+    ).toBeVisible()
+  })
+})

@@ -278,6 +278,8 @@ export type ParsedTaskTier = {
   conditions: TaskTierCondition[]
   constant: number
   unitPrices: Record<string, number>
+  /** Units of a field charged nothing before its unit price applies. */
+  freeUnits?: Record<string, number>
 }
 
 // ---------------------------------------------------------------------------

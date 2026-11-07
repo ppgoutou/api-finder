@@ -23,7 +23,9 @@ import { useTranslation } from 'react-i18next'
 import { StaticDataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { getCurrencyDisplay } from '@/lib/currency'
+import { ROLE } from '@/lib/roles'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import {
@@ -303,6 +305,10 @@ export function DynamicPricingBreakdown({
 }: DynamicPricingBreakdownProps) {
   const { t, i18n } = useTranslation()
   const expr = billingExpr || ''
+  // The expression holds the price before the group ratio.
+  const canSeeRawExpression = useAuthStore(
+    (state) => (state.auth.user?.role ?? ROLE.GUEST) >= ROLE.ADMIN
+  )
   // Prices follow the site currency and the interface language; re-render
   // when the currency config changes.
   useSystemConfigStore((s) => s.config.currency)
@@ -369,12 +375,16 @@ export function DynamicPricingBreakdown({
             </div>
           </div>
         )}
-        <div className='text-muted-foreground mb-1 text-[10px] font-medium tracking-wider uppercase'>
-          {t('Raw expression')}
-        </div>
-        <code className='text-muted-foreground block text-xs break-all'>
-          {expr}
-        </code>
+        {canSeeRawExpression && (
+          <>
+            <div className='text-muted-foreground mb-1 text-[10px] font-medium tracking-wider uppercase'>
+              {t('Raw expression')}
+            </div>
+            <code className='text-muted-foreground block text-xs break-all'>
+              {expr}
+            </code>
+          </>
+        )}
       </section>
     )
   }

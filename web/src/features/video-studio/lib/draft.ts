@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import {
+  RESERVED_REFERENCE_VIDEO_SECONDS,
   getPerVideoPricing,
   getTokenVideoPricing,
   getVideoPricing,
@@ -345,6 +346,11 @@ export interface PriceRow {
   tokensPerSecond?: number
   /** USD per video of any length, for models billed per video. */
   videoPrice?: number
+  /** USD per reference video second, charged on top of the output seconds. */
+  inputVideoSecondPrice?: number
+  /** USD per input image beyond the free ones, charged on top. */
+  inputImagePrice?: number
+  freeInputImages?: number
 }
 
 /**
@@ -352,13 +358,16 @@ export interface PriceRow {
  * reference video are billed by tokens on output seconds plus reference
  * seconds, at least 2/3 of the output rounded up, which is how the server
  * settles them while the reference length is unknown. Models with a per-second
- * reference price bill those requests by output seconds alone.
+ * reference price bill those requests by output seconds alone. Models pricing
+ * reference media on top add the reference length the server reserves and the
+ * input images beyond the free ones.
  */
 export function estimateDraftCostUSD(
   row: PriceRow,
   seconds: number,
   count: number,
-  hasReferenceVideo: boolean
+  hasReferenceVideo: boolean,
+  inputImages = 0
 ): number {
   if (row.videoPrice !== undefined) return row.videoPrice * count
   if (hasReferenceVideo && row.referenceSecondPrice !== undefined) {
@@ -373,5 +382,11 @@ export function estimateDraftCostUSD(
     const tokens = billedSeconds * row.tokensPerSecond
     return ((tokens * row.referencePricePerMillion) / 1_000_000) * count
   }
-  return row.secondPrice * seconds * count
+  const referenceCost = hasReferenceVideo
+    ? (row.inputVideoSecondPrice ?? 0) * RESERVED_REFERENCE_VIDEO_SECONDS
+    : 0
+  const imageCost =
+    (row.inputImagePrice ?? 0) *
+    Math.max(inputImages - (row.freeInputImages ?? 0), 0)
+  return (row.secondPrice * seconds + referenceCost + imageCost) * count
 }

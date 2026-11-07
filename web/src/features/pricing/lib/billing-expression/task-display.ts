@@ -26,6 +26,8 @@ type PriceBranch = {
   constant: number
   // Actual USD per unit; token display scaling happens only at the boundary.
   prices: Record<string, number>
+  // Units of a field charged nothing before its price starts to apply.
+  freeUnits?: Record<string, number>
   times: Map<string, boolean>
 }
 type TaskDisplayContext = {
@@ -108,6 +110,38 @@ function taskDisplayCondition(
   return null
 }
 
+/** max(u("field") - N, 0): the first N units are free, the rest are priced. */
+function taskFreeAllowance(
+  node: ExpressionNode,
+  schema: BillingUsageSchema
+): PriceBranch | null {
+  if (node.kind !== 'call' || node.name !== 'max') return null
+  const [quantity, floor] = node.args
+  if (
+    floor?.kind !== 'literal' ||
+    floor.value !== 0 ||
+    quantity?.kind !== 'binary' ||
+    quantity.operator !== '-' ||
+    quantity.left.kind !== 'call' ||
+    quantity.left.name !== 'u' ||
+    quantity.left.args[0].kind !== 'literal' ||
+    typeof quantity.left.args[0].value !== 'string' ||
+    quantity.right.kind !== 'literal' ||
+    typeof quantity.right.value !== 'number' ||
+    quantity.right.value < 0
+  ) {
+    return null
+  }
+  const field = quantity.left.args[0].value
+  if (schema[field]?.type !== 'number' || !schema[field].unit) return null
+  return {
+    constant: 0,
+    prices: { [field]: 1 },
+    freeUnits: { [field]: quantity.right.value },
+    times: new Map(),
+  }
+}
+
 /** Symbolic linear prices, never sample-and-fit or partial coefficient extraction. */
 function taskPriceBranches(
   node: ExpressionNode,
@@ -174,6 +208,8 @@ function taskPriceBranches(
     }
     return branches.length <= MAX_DISPLAY_ROWS ? branches : null
   }
+  const allowance = taskFreeAllowance(node, context.schema)
+  if (allowance) return [allowance]
   if (node.kind !== 'binary' || !['+', '*', '/'].includes(node.operator)) {
     return null
   }
@@ -192,6 +228,13 @@ function taskPriceBranches(
         )
       ) {
         continue
+      }
+      if (
+        Object.keys(a.freeUnits ?? {}).some((field) =>
+          Object.hasOwn(b.freeUnits ?? {}, field)
+        )
+      ) {
+        return null
       }
       const aQuantity = Object.keys(a.prices).length > 0
       const bQuantity = Object.keys(b.prices).length > 0
@@ -234,6 +277,9 @@ function taskPriceBranches(
         label: a.label ?? b.label,
         constant,
         prices,
+        ...(a.freeUnits || b.freeUnits
+          ? { freeUnits: { ...a.freeUnits, ...b.freeUnits } }
+          : {}),
         times: new Map([...a.times, ...b.times]),
       })
     }
@@ -323,6 +369,7 @@ export function readConditionalTaskPricing(
         ...(conditionText ? { conditionText } : {}),
         constant: branch.constant,
         unitPrices,
+        ...(branch.freeUnits ? { freeUnits: branch.freeUnits } : {}),
       })
     }
   }

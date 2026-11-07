@@ -198,6 +198,13 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             {t('Orders with reference videos are priced separately')}
           </span>
         )}
+        {videoPricing.rows.some(
+          (row) => row.inputVideoSecondPrice !== undefined
+        ) && (
+          <span className='text-muted-foreground col-span-full text-xs'>
+            {t('Reference videos and extra input images cost more')}
+          </span>
+        )}
       </>
     )
   } else if (dynamicSummary) {
