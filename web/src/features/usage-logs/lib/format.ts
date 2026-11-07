@@ -583,6 +583,19 @@ export function renderLogContent(
 }
 
 /**
+ * Render what the owner of an error log sees, from `other.user_content_parts`,
+ * which only administrators receive next to the raw `content`.
+ */
+export function renderUserErrorContent(
+  other: LogOtherData | null | undefined,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string | null {
+  const parts = other?.user_content_parts
+  if (!Array.isArray(parts) || parts.length === 0) return null
+  return parts.map((part) => t(part.key, part.params)).join(', ')
+}
+
+/**
  * The token name to show for a log. A log written without a token, such as a
  * channel test, carries a name the gateway stored as an English source key.
  */

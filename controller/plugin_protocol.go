@@ -506,7 +506,7 @@ func streamTaskPluginProtocol(
 				loadElapsed.Milliseconds(),
 			)
 		}
-		view, viewErr := service.BuildTaskPluginView(task)
+		view, viewErr := service.BuildClientTaskPluginView(c, task)
 		if viewErr != nil {
 			logger.LogError(c, common.LogText("build task protocol view failed: %s", viewErr.Error()))
 			writeTaskPluginProtocolFailure(c, machine, lastStatus)

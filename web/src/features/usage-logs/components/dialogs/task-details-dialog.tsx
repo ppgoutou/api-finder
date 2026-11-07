@@ -158,9 +158,19 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
               mono
             />
           ) : null}
+          {props.log.user_fail_reason ? (
+            <DetailRow
+              label={t('Shown to the user')}
+              value={translateServerText(t, props.log.user_fail_reason)}
+            />
+          ) : null}
           {props.log.fail_reason ? (
             <DetailRow
-              label={t('Fail Reason')}
+              label={
+                props.log.user_fail_reason
+                  ? t('Actual error')
+                  : t('Fail Reason')
+              }
               value={translateServerText(t, props.log.fail_reason)}
             />
           ) : null}

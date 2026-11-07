@@ -91,18 +91,19 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		if newAPIError != nil {
 			service.RecordRequestPolicyTermination(c, newAPIError)
 			logger.LogError(c, common.LogText("relay error: %s", common.LocalLogPreview(newAPIError.Error())))
+			userFacing := service.UserFacingRelayError(c, newAPIError)
 			newAPIError.SetMessage(common.MessageWithRequestId(newAPIError.Error(), requestId))
 			switch relayFormat {
 			case types.RelayFormatOpenAIRealtime:
-				helper.WssError(c, ws, newAPIError.ToOpenAIError())
+				helper.WssError(c, ws, userFacing.ApplyToOpenAI(newAPIError.ToOpenAIError()))
 			case types.RelayFormatClaude:
 				c.JSON(newAPIError.StatusCode, gin.H{
 					"type":  "error",
-					"error": newAPIError.ToClaudeError(),
+					"error": userFacing.ApplyToClaude(newAPIError.ToClaudeError()),
 				})
 			default:
 				c.JSON(newAPIError.StatusCode, gin.H{
-					"error": newAPIError.ToOpenAIError(),
+					"error": userFacing.OpenAIErrorBody(newAPIError.ToOpenAIError()),
 				})
 			}
 		}
@@ -719,7 +720,7 @@ func presentTaskSubmission(c *gin.Context, outcome *taskSubmissionOutcome) {
 	}
 	if pinnedValue, exists := c.Get(pluginruntime.ContextKeyPinnedRoute); exists {
 		if pinned, ok := pinnedValue.(pluginruntime.PinnedRoute); ok && pinned.Plugin != nil && pinned.Route.Render != "" {
-			view, err := service.BuildTaskPluginView(outcome.Task)
+			view, err := service.BuildClientTaskPluginView(c, outcome.Task)
 			requestValue, _ := c.Get(pluginruntime.ContextKeyRouteRequest)
 			requestContext, _ := requestValue.(pluginruntime.RouteRequestContext)
 			if err == nil {
@@ -764,6 +765,7 @@ func presentTaskSubmission(c *gin.Context, outcome *taskSubmissionOutcome) {
 func respondTaskSubmissionError(c *gin.Context, taskErr *taskdto.TaskError) {
 	service.RecordRequestPolicyTermination(c, taskSubmissionAPIError(taskErr))
 	newTaskPluginSubmitDiagnostics(c).presentError(taskErr)
+	service.ApplyUserFacingTaskError(c, taskErr)
 	if middleware.RespondTaskPluginError(c, taskErr) {
 		return
 	}

@@ -100,8 +100,8 @@ func TestTokenAuthReadOnlyTranslatesErrors(t *testing.T) {
 		acceptLanguage string
 		want           string
 	}{
-		{"zh-CN", "未提供令牌"},
-		{"en-US", "Token not provided"},
+		{"zh-CN", "API 令牌无效或未填写，请到令牌管理页检查。"},
+		{"en-US", "The API token is invalid or missing. Please check it on the tokens page."},
 	} {
 		recorder := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(recorder)

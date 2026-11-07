@@ -110,7 +110,7 @@ func serveTaskPluginImageProtocol(c *gin.Context, pinned pluginruntime.PinnedEnd
 		respondTaskPluginImageError(c, service.TaskErrorWrapperLocal(errors.New(reason), "image_generation_failed", http.StatusBadRequest))
 		return
 	}
-	view, err := service.BuildTaskPluginView(task)
+	view, err := service.BuildClientTaskPluginView(c, task)
 	if err != nil {
 		logger.LogError(c, common.LogText("build task protocol view failed: %s", err.Error()))
 		respondPluginProtocolError(c, http.StatusInternalServerError, "task_protocol_error", "Task protocol request failed")
@@ -233,25 +233,19 @@ func respondTaskPluginImageError(c *gin.Context, taskErr *dto.TaskError) {
 	if taskErr.StatusCode >= 400 && taskErr.StatusCode <= 599 {
 		status = taskErr.StatusCode
 	}
-	code := taskErr.Code
-	message := taskErr.Message
-	var upstream struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
-	}
-	if common.UnmarshalJsonStr(message, &upstream) == nil && strings.TrimSpace(upstream.Message) != "" {
-		message = upstream.Message
-		if strings.TrimSpace(upstream.Code) != "" {
-			code = upstream.Code
-		}
+	// A task still running is not a failure: it settles when it completes.
+	if taskErr.Code != "task_timeout" {
+		service.ApplyUserFacingTaskError(c, taskErr)
 	}
 	errorType := "new_api_error"
 	if status < http.StatusInternalServerError {
 		errorType = "invalid_request_error"
 	}
 	c.JSON(status, gin.H{"error": gin.H{
-		"message": common.MessageWithRequestId(message, c.GetString(common.RequestIdKey)),
-		"type":    errorType,
-		"code":    code,
+		"message":        common.MessageWithRequestId(taskErr.Message, c.GetString(common.RequestIdKey)),
+		"message_key":    taskErr.MessageKey,
+		"message_params": taskErr.MessageParams,
+		"type":           errorType,
+		"code":           taskErr.Code,
 	}})
 }

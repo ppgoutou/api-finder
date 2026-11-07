@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/pkg/usererror"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -283,4 +284,39 @@ func TestLogFormattingPreservesLargeIntegerLexemes(t *testing.T) {
 		FormatAdminLogs(adminLogs)
 		assert.Equal(t, unprivileged, adminLogs[0].Other)
 	})
+}
+
+func TestErrorLogViewsSeparateOwnerAndAdmin(t *testing.T) {
+	raw := `status_code=403, {"code":"insufficient_user_quota","message":"预扣费额度失败, 用户剩余额度: ＄0.10, 需要预扣费额度: ＄0.50","data":null}`
+	other := `{"status_code":403,"error_code":"bad_response_status_code","error_type":"openai_error","admin_info":{"use_channel":["3"]}}`
+	wantKey := usererror.Result{Code: usererror.CodeServiceCannotProcess}.Key()
+
+	owner := &Log{Type: LogTypeError, Content: raw, Other: other, ModelName: "G-seedance-2.0"}
+	formatUserLog(owner)
+	assert.Equal(t, wantKey, owner.Content)
+	assert.NotContains(t, owner.Other, "0.50")
+	var ownerOther map[string]any
+	require.NoError(t, common.UnmarshalJsonStr(owner.Other, &ownerOther))
+	assert.Equal(t, usererror.CodeServiceCannotProcess, ownerOther["error_code"])
+	assert.NotContains(t, ownerOther, "error_type")
+	assert.NotContains(t, ownerOther, "admin_info")
+	assert.Equal(t, wantKey, ownerOther[logOtherContentPartsKey].([]any)[0].(map[string]any)["key"])
+
+	admin := []*Log{{Type: LogTypeError, Content: raw, Other: other, ModelName: "G-seedance-2.0"}}
+	FormatAdminLogs(admin)
+	assert.Equal(t, raw, admin[0].Content)
+	var adminOther map[string]any
+	require.NoError(t, common.UnmarshalJsonStr(admin[0].Other, &adminOther))
+	assert.Equal(t, "bad_response_status_code", adminOther["error_code"])
+	assert.NotContains(t, adminOther, logOtherContentPartsKey)
+	assert.Equal(t, wantKey, adminOther[logOtherUserContentPartsKey].([]any)[0].(map[string]any)["key"])
+}
+
+func TestRefundLogHidesRawReasonFromOwner(t *testing.T) {
+	owner := &Log{Type: LogTypeRefund, Other: `{"task_id":"task_1","reason":"upstream_create_failed: [服务信息已隐藏] please retry"}`}
+	formatUserLog(owner)
+	var other map[string]any
+	require.NoError(t, common.UnmarshalJsonStr(owner.Other, &other))
+	assert.Equal(t, usererror.Result{Code: usererror.CodeGenerationFailed}.Key(), other["reason"])
+	assert.Equal(t, "task_1", other["task_id"])
 }

@@ -15,8 +15,10 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/usererror"
 	"github.com/QuantumNous/new-api/relay"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
@@ -1717,6 +1719,7 @@ func TestServeTaskPluginImageProtocolRendersImmediateResultAndInlinesBase64(t *t
 // terminal; a failure and the protocol timeout become OpenAI error envelopes
 // while the durable task stays with the background poller.
 func TestServeTaskPluginImageProtocolWaitsForAsynchronousTask(t *testing.T) {
+	require.NoError(t, i18n.Init())
 	for _, tc := range []struct {
 		name        string
 		terminal    model.TaskStatus
@@ -1725,7 +1728,7 @@ func TestServeTaskPluginImageProtocolWaitsForAsynchronousTask(t *testing.T) {
 		wantMessage string
 	}{
 		{"success", model.TaskStatusSuccess, http.StatusOK, "", ""},
-		{"failure", model.TaskStatusFailure, http.StatusBadRequest, "image_generation_failed", "DataInspectionFailed"},
+		{"failure", model.TaskStatusFailure, http.StatusBadRequest, usererror.CodeModerationPrompt, "prompt did not pass review"},
 		{"timeout", "", http.StatusGatewayTimeout, "task_timeout", "still running"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1770,6 +1773,7 @@ func TestServeTaskPluginImageProtocolWaitsForAsynchronousTask(t *testing.T) {
 // Submission failures use the OpenAI error envelope and surface a DashScope
 // {code, message} failure body as a readable vendor message.
 func TestServeTaskPluginImageProtocolSubmissionErrorUsesOpenAIEnvelope(t *testing.T) {
+	require.NoError(t, i18n.Init())
 	pinned := imageProtocolTestEndpoint(t)
 	c, recorder := newImageProtocolTestContext("")
 	deps := pluginProtocolTestDeps()
@@ -1781,10 +1785,10 @@ func TestServeTaskPluginImageProtocolSubmissionErrorUsesOpenAIEnvelope(t *testin
 	var response map[string]any
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
 	errorBody := response["error"].(map[string]any)
-	assert.Equal(t, "InvalidParameter", errorBody["code"])
+	assert.Equal(t, usererror.CodeFallback, errorBody["code"])
 	assert.Equal(t, "invalid_request_error", errorBody["type"])
-	assert.Contains(t, errorBody["message"], "n must be 1")
-	assert.NotContains(t, errorBody["message"], "request_id")
+	assert.NotContains(t, errorBody["message"], "n must be 1")
+	assert.NotEmpty(t, errorBody["message_key"])
 }
 
 // A synchronous image submission is billable the moment DashScope accepts it.

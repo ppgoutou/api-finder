@@ -1194,7 +1194,7 @@ func renderTaskPluginQuery(
 			abortTaskPluginRouteError(c, http.StatusNotFound)
 			return
 		}
-		view, viewErr := service.BuildTaskPluginView(task)
+		view, viewErr := service.BuildClientTaskPluginView(c, task)
 		if viewErr != nil {
 			abortTaskPluginRouteError(c, http.StatusInternalServerError)
 			return
@@ -1250,6 +1250,11 @@ func RespondTaskPluginError(c *gin.Context, taskErr *dto.TaskError) bool {
 		return false
 	}
 	sanitized := sanitizedTaskPluginError(taskErr.StatusCode, taskErr.Message)
+	if taskErr.MessageKey != "" {
+		// Classified text is safe at any status, unlike a raw 5xx detail.
+		sanitized.Code = taskErr.Code
+		sanitized.Message = taskErr.Message
+	}
 	requestID := c.GetString(common.RequestIdKey)
 	hasRenderer, err := pinned.Plugin.Engine.HasCallablePath(c.Request.Context(), "native", "error")
 	requestValue, exists := c.Get(pluginruntime.ContextKeyRouteRequest)
@@ -1293,9 +1298,11 @@ func RespondTaskPluginError(c *gin.Context, taskErr *dto.TaskError) bool {
 		message = common.MessageWithRequestId(sanitized.Message, requestID)
 	}
 	c.JSON(sanitized.HTTPStatus, &dto.TaskError{
-		Code:       sanitized.Code,
-		Message:    message,
-		StatusCode: sanitized.HTTPStatus,
+		Code:          sanitized.Code,
+		Message:       message,
+		MessageKey:    taskErr.MessageKey,
+		MessageParams: taskErr.MessageParams,
+		StatusCode:    sanitized.HTTPStatus,
 	})
 	return true
 }
@@ -1307,7 +1314,11 @@ func abortTaskPluginRouteError(c *gin.Context, status int) {
 func abortTaskPluginRouteErrorDetail(c *gin.Context, status int, detail string) {
 	taskErr := sanitizedTaskPluginError(status, detail)
 	c.Abort()
-	if RespondTaskPluginError(c, &dto.TaskError{Code: taskErr.Code, Message: detail, StatusCode: taskErr.HTTPStatus}) {
+	responseErr := &dto.TaskError{Code: taskErr.Code, Message: detail, StatusCode: taskErr.HTTPStatus}
+	if detail != "" {
+		service.ApplyKnownUserFacingTaskError(c, responseErr)
+	}
+	if RespondTaskPluginError(c, responseErr) {
 		return
 	}
 	message := taskErr.Message

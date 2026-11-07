@@ -83,6 +83,7 @@ import {
   logTokenName,
   renderAuditContent,
   renderLogContent,
+  renderUserErrorContent,
 } from '../../lib/format'
 import { buildQuotaAuditOperation } from '../../lib/quota-audit-operation'
 import {
@@ -573,6 +574,9 @@ export function DetailsDialog(props: DetailsDialogProps) {
     renderLogContent(other, t) ??
     props.log.content ??
     ''
+  const userErrorContent = props.isAdmin
+    ? renderUserErrorContent(other, t)
+    : null
   const auditRoute = isManage && props.isAdmin ? other?.audit_info : undefined
   // Channel update records which fields changed (stable field tokens); render
   // them with their localized labels for admins.
@@ -1343,10 +1347,26 @@ export function DetailsDialog(props: DetailsDialogProps) {
           </DetailSection>
         )}
 
+        {/* What the log's owner sees (admin only) */}
+        {userErrorContent && (
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-semibold'>
+              {t('Shown to the user')}
+            </Label>
+            <div className='bg-muted/30 min-w-0 rounded-md border p-2.5'>
+              <p className='min-w-0 text-xs leading-relaxed break-all whitespace-pre-wrap sm:wrap-break-word'>
+                {userErrorContent}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         {details && (
           <div className='space-y-1.5'>
-            <Label className='text-xs font-semibold'>{t('Content')}</Label>
+            <Label className='text-xs font-semibold'>
+              {userErrorContent ? t('Actual error') : t('Content')}
+            </Label>
             <div className='bg-muted/30 relative min-w-0 overflow-hidden rounded-md border p-2.5'>
               <Button
                 variant='ghost'
