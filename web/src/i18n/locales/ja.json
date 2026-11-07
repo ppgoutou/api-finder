@@ -320,7 +320,7 @@
     "A token that never expires stays valid until you revoke it. Set an expiration date when possible.": "無期限のトークンは取り消すまで有効です。可能な限り有効期限を設定してください。",
     "A traveler carrying a lantern walks into a vast glowing crystal cave. Blue-violet crystals reflect on a still underground lake as the camera drifts slowly forward and tiny specks of light float in the air. An epic fantasy scene.": "ランタンを提げた旅人が、光り輝く巨大な水晶の洞窟へ足を踏み入れる。青紫の水晶が静かな地底湖に映り込み、カメラはゆっくりと前へ漂い、小さな光の粒が宙に舞う。壮大なファンタジーシーン。",
     "A vendor with this name already exists.": "この名前のプロバイダーは既に存在します。",
-    "About": "このサービスについて",
+    "About": "概要",
     "About {{days}} days left": "約 {{days}} 日分",
     "About pricing currency": "価格設定の通貨について",
     "Accept Unpriced Models": "価格設定されていないモデルを許可",
