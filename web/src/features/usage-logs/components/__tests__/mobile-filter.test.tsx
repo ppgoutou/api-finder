@@ -252,6 +252,41 @@ it('places the end action between Search and View on desktop', () => {
   expect(names.slice(-4)).toEqual(['Reset', 'Search', 'Export', 'View'])
 })
 
+it.each([
+  { inlineActions: true, sharesFilterRow: true },
+  { inlineActions: false, sharesFilterRow: false },
+])(
+  'with inlineActions=$inlineActions, stats and buttons share the filter row: $sharesFilterRow',
+  ({ inlineActions, sharesFilterRow }) => {
+    function DesktopFixture() {
+      const table = useReactTable({
+        data: [],
+        columns: [],
+        getCoreRowModel: getCoreRowModel(),
+      })
+      return (
+        <LogsFilterToolbar
+          table={table}
+          inlineActions={inlineActions}
+          primaryFilters={<span>Date Range</span>}
+          stats={<span>Total</span>}
+          hasActiveFilters={false}
+          onReset={() => {}}
+          onSearch={() => {}}
+        />
+      )
+    }
+    render(<DesktopFixture />)
+    const filterRow = screen
+      .getByText('Date Range')
+      .closest('[data-slot=logs-filter-row]')
+    expect(filterRow?.contains(screen.getByText('Total'))).toBe(sharesFilterRow)
+    expect(
+      filterRow?.contains(screen.getByRole('button', { name: 'Search' }))
+    ).toBe(sharesFilterRow)
+  }
+)
+
 it('collapses only date and statistics while keeping the right-hand quick actions visible', async () => {
   await renderMobileFilter()
   const user = userEvent.setup()

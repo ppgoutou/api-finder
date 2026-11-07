@@ -45,6 +45,8 @@ interface LogsFilterToolbarProps<TData> {
   primaryFilters: ReactNode
   advancedFilters?: ReactNode
   compactMobile?: boolean
+  /** Keeps statistics and buttons on the filter row while the width allows it. */
+  inlineActions?: boolean
   mobilePinnedFilters?: ReactNode
   mobileFilters?: ReactNode
   mobileFilterCount?: number
@@ -242,6 +244,38 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
     )
   }
 
+  const actionRow = (
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-2',
+        props.inlineActions ? 'ms-auto' : 'mt-2'
+      )}
+    >
+      {props.stats}
+      <div className='ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2'>
+        {props.actionStart}
+        <Button
+          type='button'
+          variant='outline'
+          onClick={props.onReset}
+          disabled={!props.hasActiveFilters}
+        >
+          {t('Reset')}
+        </Button>
+        <Button
+          type='button'
+          onClick={props.onSearch}
+          disabled={props.searchLoading}
+        >
+          {props.searchLoading && <Loader2 className='animate-spin' />}
+          {t('Search')}
+        </Button>
+        {props.actionEnd}
+        <DataTableViewOptions table={props.table} />
+      </div>
+    </div>
+  )
+
   return (
     <div
       className={cn(
@@ -249,8 +283,16 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
         props.className
       )}
     >
-      <div className='flex flex-wrap items-start gap-2'>
-        <div className='grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]'>
+      <div
+        data-slot='logs-filter-row'
+        className='flex flex-wrap items-start gap-2'
+      >
+        <div
+          className={cn(
+            'grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]',
+            props.inlineActions ? 'flex-[1_1_30rem]' : 'flex-1'
+          )}
+        >
           {props.primaryFilters}
         </div>
         {advancedToggle && (
@@ -258,6 +300,7 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
             {advancedToggle}
           </div>
         )}
+        {props.inlineActions && actionRow}
       </div>
 
       {advancedOpen && props.advancedFilters && (
@@ -266,30 +309,7 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
         </div>
       )}
 
-      <div className='mt-2 flex flex-wrap items-center gap-2'>
-        {props.stats}
-        <div className='ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2'>
-          {props.actionStart}
-          <Button
-            type='button'
-            variant='outline'
-            onClick={props.onReset}
-            disabled={!props.hasActiveFilters}
-          >
-            {t('Reset')}
-          </Button>
-          <Button
-            type='button'
-            onClick={props.onSearch}
-            disabled={props.searchLoading}
-          >
-            {props.searchLoading && <Loader2 className='animate-spin' />}
-            {t('Search')}
-          </Button>
-          {props.actionEnd}
-          <DataTableViewOptions table={props.table} />
-        </div>
-      </div>
+      {!props.inlineActions && actionRow}
     </div>
   )
 }

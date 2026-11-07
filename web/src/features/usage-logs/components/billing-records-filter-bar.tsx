@@ -219,6 +219,7 @@ export function BillingRecordsFilterBar<TData>(props: { table: Table<TData> }) {
     <LogsFilterToolbar
       table={props.table}
       compactMobile
+      inlineActions
       stats={<CommonLogsStats logCategory='billing' />}
       actionStart={
         <Tooltip>
