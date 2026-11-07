@@ -514,3 +514,29 @@ describe('video models pricing reference media on top', () => {
     ).toBe(false)
   })
 })
+
+describe('published prices', () => {
+  // What the server publishes to non-administrators: prices multiplied by the
+  // factor moved out of the group ratio, the expression otherwise unchanged.
+  const FACTOR = 2.5
+  const PUBLISHED_SEEDANCE_25_EXPR =
+    'u("resolution") == "480p" ? tier("480p", u("reference_video_tokens") * 100 / 1000000 + u("seconds") * 1.5) : ' +
+    'u("resolution") == "720p" ? tier("720p", u("reference_video_tokens") * 105 / 1000000 + u("seconds") * 3.75) : ' +
+    'tier("1080p", u("reference_video_tokens") * 115 / 1000000 + u("seconds") * 9.25)'
+
+  test('reads scaled prices at the factor when an expression is published scaled', () => {
+    const original = getVideoPricing(videoModel(SEEDANCE_25_EXPR))
+    const published = getVideoPricing(videoModel(PUBLISHED_SEEDANCE_25_EXPR))
+
+    expect(published?.rows.map((row) => row.option)).toEqual(
+      original?.rows.map((row) => row.option)
+    )
+    published?.rows.forEach((row, index) => {
+      const source = original?.rows[index]
+      expect(row.secondPrice).toBeCloseTo((source?.secondPrice ?? 0) * FACTOR)
+      expect(row.referencePricePerMillion).toBeCloseTo(
+        (source?.referencePricePerMillion ?? 0) * FACTOR
+      )
+    })
+  })
+})

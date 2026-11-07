@@ -78,6 +78,51 @@ func TestFormatUserLogsHidesSupplierCost(t *testing.T) {
 	assert.Equal(t, other, adminLog.Other)
 }
 
+func TestFormatUserLogsHidesSupplierCostContent(t *testing.T) {
+	other := NewLogOther()
+	content := other.setContent([]*common.Message{
+		common.NewMessage("Model price {{model_price}}, group ratio {{group_ratio}}", map[string]any{"model_price": "0.50", "group_ratio": "1.50"}),
+		common.NewMessage("Web search {{count}} times", map[string]any{"count": 2}),
+	})
+	structured := other.JSONString()
+	for _, tc := range []struct {
+		name, content, other, wantContent string
+		wantParts                         []string
+	}{
+		{"keeps other parts", content, structured, "Web search 2 times", []string{"Web search {{count}} times"}},
+		{"only cost parts", "Model ratio 1.50, group ratio 1.50", `{"content_parts":[{"key":"Model ratio {{model_ratio}}, group ratio {{group_ratio}}","params":{"model_ratio":"1.50","group_ratio":"1.50"}}]}`, "", []string{}},
+		{"cost nested in another message", "Settled: model ratio 1.50", `{"content_parts":[{"key":"Settled: {{reason}}","params":{"reason":"model ratio 1.50"}}]}`, "", []string{}},
+		{"older text only log", "模型价格 0.50，分组倍率 1.50", `{}`, "", nil},
+		{"unrelated content stays", "Web search 2 times", `{"content_parts":[{"key":"Web search 2 times"}]}`, "Web search 2 times", []string{"Web search 2 times"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			log := &Log{Type: LogTypeConsume, Content: tc.content, Other: tc.other}
+			formatUserLogs([]*Log{log}, 0)
+			assert.Equal(t, tc.wantContent, log.Content)
+			assert.NotContains(t, log.Other, "1.50")
+
+			parsed, err := common.StrToMap(log.Other)
+			require.NoError(t, err)
+			if tc.wantParts == nil {
+				assert.NotContains(t, parsed, logOtherContentPartsKey)
+				return
+			}
+			parts, ok := parsed[logOtherContentPartsKey].([]any)
+			require.True(t, ok)
+			keys := []string{}
+			for _, part := range parts {
+				keys = append(keys, part.(map[string]any)["key"].(string))
+			}
+			assert.Equal(t, tc.wantParts, keys)
+		})
+	}
+
+	adminLog := &Log{Type: LogTypeConsume, Content: content, Other: structured}
+	FormatAdminLogs([]*Log{adminLog})
+	assert.Equal(t, content, adminLog.Content)
+	assert.Contains(t, adminLog.Other, "group_ratio")
+}
+
 func TestTaskPluginLogVisibilityIsRoleSeparated(t *testing.T) {
 	other := common.MapToJsonStr(map[string]any{
 		"model_price": 1.25,

@@ -36,7 +36,14 @@ func filterPricingByUsableGroups(pricing []model.Pricing, usableGroup map[string
 }
 
 func GetPricing(c *gin.Context) {
-	pricing := model.GetPricing()
+	// Base prices are the site's supply cost: only administrators read them.
+	seesBasePrices := c.GetInt("role") >= common.RoleAdminUser
+	var pricing []model.Pricing
+	if seesBasePrices {
+		pricing = model.GetPricing()
+	} else {
+		pricing = model.GetPublicPricing()
+	}
 	userId, exists := c.Get("id")
 	usableGroup := map[string]string{}
 	groupRatio := map[string]float64{}
@@ -61,6 +68,11 @@ func GetPricing(c *gin.Context) {
 	for group := range ratio_setting.GetGroupRatioCopy() {
 		if _, ok := usableGroup[group]; !ok {
 			delete(groupRatio, group)
+		}
+	}
+	if !seesBasePrices {
+		for group, ratio := range groupRatio {
+			groupRatio[group] = ratio_setting.PublicGroupRatio(ratio)
 		}
 	}
 
