@@ -47,6 +47,31 @@ export function getPaymentErrorTranslation(
 }
 
 /**
+ * Send the browser to a backend-issued checkout page in the current tab.
+ *
+ * Opening a new tab after awaiting the payment request loses the click's user
+ * gesture, so mobile browsers block it as a popup and the button appears to do
+ * nothing. Only absolute http(s) targets are followed; returns false otherwise.
+ */
+export function redirectToPaymentPage(
+  url: string,
+  navigate: (target: string) => void = (target) =>
+    window.location.assign(target)
+): boolean {
+  let target: URL
+  try {
+    target = new URL(url.trim())
+  } catch {
+    return false
+  }
+  if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+    return false
+  }
+  navigate(target.href)
+  return true
+}
+
+/**
  * Check if browser is Safari
  */
 function isSafariBrowser(): boolean {

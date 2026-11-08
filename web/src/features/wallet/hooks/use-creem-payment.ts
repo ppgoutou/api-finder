@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { handleServerError } from '@/lib/handle-server-error'
 
 import { requestCreemPayment, isApiSuccess } from '../api'
+import { redirectToPaymentPage } from '../lib'
 
 /**
  * Hook for handling Creem payment processing
@@ -39,7 +40,10 @@ export function useCreemPayment() {
       })
 
       if (isApiSuccess(response) && response.data?.checkout_url) {
-        window.open(response.data.checkout_url, '_blank')
+        if (!redirectToPaymentPage(response.data.checkout_url)) {
+          toast.error(i18next.t('Invalid payment redirect URL'))
+          return false
+        }
         toast.success(i18next.t('Redirecting to Creem checkout...'))
         return true
       }
