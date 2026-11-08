@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Separator } from '@/components/ui/separator'
+import { redirectToPaymentPage } from '@/features/wallet/lib/payment'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { formatQuota } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
@@ -108,8 +109,11 @@ export function SubscriptionPurchaseDialog(props: Props) {
     try {
       const res = await paySubscriptionStripe({ plan_id: plan.id })
       if (res.message === 'success' && res.data?.pay_link) {
-        window.open(res.data.pay_link, '_blank')
-        toast.success(t('Payment page opened'))
+        if (!redirectToPaymentPage(res.data.pay_link)) {
+          toast.error(t('Invalid payment redirect URL'))
+          return
+        }
+        toast.success(t('Redirecting to payment page...'))
         props.onOpenChange(false)
       } else {
         handleServerError(res, t('Payment request failed'))
@@ -126,8 +130,11 @@ export function SubscriptionPurchaseDialog(props: Props) {
     try {
       const res = await paySubscriptionCreem({ plan_id: plan.id })
       if (res.message === 'success' && res.data?.checkout_url) {
-        window.open(res.data.checkout_url, '_blank')
-        toast.success(t('Payment page opened'))
+        if (!redirectToPaymentPage(res.data.checkout_url)) {
+          toast.error(t('Invalid payment redirect URL'))
+          return
+        }
+        toast.success(t('Redirecting to payment page...'))
         props.onOpenChange(false)
       } else {
         handleServerError(res, t('Payment request failed'))
