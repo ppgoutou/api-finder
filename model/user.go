@@ -410,6 +410,35 @@ func GetMaxUserId() int {
 	return user.Id
 }
 
+// generatedUsernameAttempts bounds the random-suffix retries; a collision on
+// an 8-character alphanumeric suffix is already vanishingly rare.
+const generatedUsernameAttempts = 5
+
+// NextGeneratedUsername picks a username for an account created without one
+// (OAuth, WeChat): prefix plus the next user ID, or prefix plus a random
+// suffix when that name is already held, soft-deleted users included. The
+// next-ID name alone collides whenever IDs and generated names drift apart,
+// and the unique index then fails the whole sign-up.
+func NextGeneratedUsername(prefix string) (string, error) {
+	candidate := prefix + strconv.Itoa(GetMaxUserId()+1)
+	for attempt := 0; attempt <= generatedUsernameAttempts; attempt++ {
+		if attempt > 0 {
+			candidate = prefix + strings.ToLower(common.GetRandomString(UserNameMaxLength-len(prefix)))
+		}
+		if len(candidate) > UserNameMaxLength {
+			continue
+		}
+		var count int64
+		if err := DB.Unscoped().Model(&User{}).Where("username = ?", candidate).Count(&count).Error; err != nil {
+			return "", err
+		}
+		if count == 0 {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("no free username with prefix %q after %d attempts", prefix, generatedUsernameAttempts)
+}
+
 func GetAllUsers(pageInfo *common.PageInfo, sortOptions ...UserSortOptions) (users []*User, total int64, err error) {
 	// Start transaction
 	tx := DB.Begin()
