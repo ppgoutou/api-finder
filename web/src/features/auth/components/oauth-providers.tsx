@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import { useOAuthLogin } from '../hooks/use-oauth-login'
+import { getOIDCDisplayName, isGoogleOIDC } from '../lib/oidc-provider'
 import type { SystemStatus } from '../types'
 
 type OAuthProvidersProps = {
@@ -43,17 +44,6 @@ type OAuthProvidersProps = {
   // The "Or continue with" divider only reads right when the buttons follow
   // another sign-in method; pages that list them first turn it off.
   showDivider?: boolean
-}
-
-const GOOGLE_AUTHORIZATION_HOST = 'accounts.google.com'
-
-function isGoogleAuthorizationEndpoint(endpoint: string | undefined): boolean {
-  if (!endpoint) return false
-  try {
-    return new URL(endpoint).hostname === GOOGLE_AUTHORIZATION_HOST
-  } catch {
-    return false
-  }
 }
 
 type ProviderButton = {
@@ -118,16 +108,14 @@ export function OAuthProviders({
   }
 
   if (status?.oidc_enabled) {
-    const oidcDisplayName = status.oidc_display_name?.trim() || 'OIDC'
+    const oidcDisplayName = getOIDCDisplayName(status)
     providerButtons.push({
       key: 'oidc',
       label: t('Continue with {{name}}', {
         name: oidcDisplayName,
       }),
       onClick: handleOIDCLogin,
-      icon: isGoogleAuthorizationEndpoint(
-        status.oidc_authorization_endpoint
-      ) ? (
+      icon: isGoogleOIDC(status) ? (
         <IconGoogle className='h-4 w-4' />
       ) : undefined,
     })
