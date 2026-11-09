@@ -17,22 +17,37 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Loader2, Send, Shield, UserRound, type LucideIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { IconGithub, IconLinuxDo, IconWeChat } from '@/assets/brand-icons'
+import {
+  IconGithub,
+  IconGoogle,
+  IconLinuxDo,
+  IconWeChat,
+} from '@/assets/brand-icons'
+import { useStatus } from '@/hooks/use-status'
 
 import { AuthLayout } from '../auth-layout'
+import { getOIDCDisplayName, isGoogleOIDC } from '../lib/oidc-provider'
 
 type OAuthCallbackScreenProps = {
   provider: string
   mode: 'login' | 'bind' | 'verify'
 }
 
+type ProviderIcon =
+  | LucideIcon
+  | ((props: { className?: string }) => React.JSX.Element)
+
 type ProviderMeta = {
   label: string
-  Icon: LucideIcon | ((props: { className?: string }) => React.JSX.Element)
+  Icon: ProviderIcon
 }
+
+// A normal callback finishes in a second or two; the "nothing happens" hint
+// only appears once it is clearly taking longer than that.
+export const SLOW_CALLBACK_HINT_DELAY_MS = 5000
 
 const providerDictionary: Record<string, ProviderMeta> = {
   github: {
@@ -57,30 +72,43 @@ const providerDictionary: Record<string, ProviderMeta> = {
   },
 }
 
-export function OAuthCallbackScreen({
-  provider,
-  mode,
-}: OAuthCallbackScreenProps) {
+const GoogleIcon = (props: { className?: string }) => (
+  <IconGoogle className={props.className} focusable='false' />
+)
+
+export function OAuthCallbackScreen(props: OAuthCallbackScreenProps) {
   const { t } = useTranslation()
-  const { label, Icon } = useMemo(() => {
-    const normalized = provider?.toLowerCase() ?? ''
-    return (
-      providerDictionary[normalized] || {
-        label: 'account',
-        Icon: UserRound,
-      }
+  const { status } = useStatus()
+  const [showSlowHint, setShowSlowHint] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setShowSlowHint(true),
+      SLOW_CALLBACK_HINT_DELAY_MS
     )
-  }, [provider])
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  const normalized = props.provider?.toLowerCase() ?? ''
+  let { label, Icon } = providerDictionary[normalized] || {
+    label: 'account',
+    Icon: UserRound,
+  }
+  // OIDC is a protocol name; show the provider the admin configured instead.
+  if (normalized === 'oidc') {
+    label = getOIDCDisplayName(status)
+    if (isGoogleOIDC(status)) Icon = GoogleIcon
+  }
 
   const providerLabel = t(label)
   let headline = t('Signing you in with {{provider}}', {
     provider: providerLabel,
   })
-  let description = t('Hang tight while we finish connecting your account.')
-  let secondaryNote = t(
+  let description: string | null = null
+  let slowHint = t(
     "You'll be redirected automatically. You can return to the previous page if nothing happens after a few seconds."
   )
-  if (mode === 'bind') {
+  if (props.mode === 'bind') {
     headline = t('Binding your {{provider}} account', {
       provider: providerLabel,
     })
@@ -88,45 +116,38 @@ export function OAuthCallbackScreen({
       'Hang tight while we securely link this account to your profile.'
     )
   }
-  if (mode === 'verify') {
+  if (props.mode === 'verify') {
     headline = t('Verifying your {{provider}} account', {
       provider: providerLabel,
     })
     description = t('Confirming the account linked to your profile.')
   }
-  if (mode !== 'login') {
-    secondaryNote = t('Return to the original window to continue.')
+  if (props.mode !== 'login') {
+    slowHint = t('Return to the original window to continue.')
   }
 
   return (
     <AuthLayout>
-      <div className='w-full space-y-8'>
-        <div className='flex flex-col items-center space-y-4 text-center'>
-          <div className='bg-muted flex h-16 w-16 items-center justify-center rounded-2xl'>
-            <Icon className='h-8 w-8' />
-          </div>
-          <div className='space-y-2'>
-            <h2 className='text-center text-2xl font-semibold tracking-tight'>
-              {headline}
-            </h2>
-            <p className='text-muted-foreground text-sm sm:text-base'>
-              {description}
-            </p>
-          </div>
+      <div
+        role='status'
+        className='flex w-full flex-col items-center space-y-4 text-center'
+      >
+        <div className='bg-muted flex h-16 w-16 items-center justify-center rounded-2xl'>
+          <Icon className='h-8 w-8' />
         </div>
-
-        <div className='space-y-4 text-center'>
-          <div className='flex items-center justify-center gap-2 text-sm font-medium'>
-            <Loader2 className='h-4 w-4 animate-spin' />
-            <span>{t('Processing OAuth response...')}</span>
-          </div>
-          <p className='text-muted-foreground text-sm'>{secondaryNote}</p>
-          <p className='text-muted-foreground text-xs'>
-            {t(
-              'This may take a few moments while we validate the request and update your session.'
-            )}
+        <h2 className='text-2xl font-semibold tracking-tight'>{headline}</h2>
+        {description && (
+          <p className='text-muted-foreground text-sm sm:text-base'>
+            {description}
           </p>
-        </div>
+        )}
+        <Loader2
+          aria-hidden='true'
+          className='text-muted-foreground h-5 w-5 animate-spin'
+        />
+        {showSlowHint && (
+          <p className='text-muted-foreground text-sm'>{slowHint}</p>
+        )}
       </div>
     </AuthLayout>
   )
