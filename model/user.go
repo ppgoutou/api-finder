@@ -46,7 +46,8 @@ func NewUserSortOptions(sortBy string, sortOrder string) UserSortOptions {
 	normalizedSortBy := strings.ToLower(strings.TrimSpace(sortBy))
 	normalizedSortOrder := strings.ToLower(strings.TrimSpace(sortOrder))
 	if _, ok := userSortColumns[normalizedSortBy]; !ok {
-		normalizedSortBy = "id"
+		// Newest registrations first. Ids are random, so they carry no order.
+		normalizedSortBy = "created_at"
 		normalizedSortOrder = "desc"
 	} else if normalizedSortOrder != "asc" {
 		normalizedSortOrder = "desc"
