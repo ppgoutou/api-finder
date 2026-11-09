@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -640,4 +641,34 @@ func TestUserInsertAssignsRandomFourDigitId(t *testing.T) {
 		assert.Equal(t, user.Id, stored.Id)
 	}
 	assert.NotEqual(t, first.Id, second.Id)
+}
+
+func TestNextGeneratedUsernameUsesNextIDWhenFree(t *testing.T) {
+	setupUserUpdateTestState(t)
+	user := createUserBindTestUser(t)
+
+	username, err := NextGeneratedUsername("oidc_")
+
+	require.NoError(t, err)
+	assert.Equal(t, "oidc_"+strconv.Itoa(user.Id+1), username)
+}
+
+func TestNextGeneratedUsernameAvoidsNameHeldBySoftDeletedUser(t *testing.T) {
+	setupUserUpdateTestState(t)
+	newest := User{Id: 10, Username: "newest-user", Password: "unused-password-hash", Status: common.UserStatusEnabled, Group: "default", AffCode: "newest-aff-code"}
+	require.NoError(t, DB.Create(&newest).Error)
+	// An older, soft-deleted account already holds the name the next ID points at.
+	holder := User{Id: 5, Username: "oidc_11", Password: "unused-password-hash", Status: common.UserStatusEnabled, Group: "default", AffCode: "holder-aff-code"}
+	require.NoError(t, DB.Create(&holder).Error)
+	require.NoError(t, DB.Delete(&holder).Error)
+
+	username, err := NextGeneratedUsername("oidc_")
+
+	require.NoError(t, err)
+	assert.NotEqual(t, "oidc_11", username)
+	assert.True(t, strings.HasPrefix(username, "oidc_"))
+	assert.LessOrEqual(t, len(username), UserNameMaxLength)
+	var count int64
+	require.NoError(t, DB.Unscoped().Model(&User{}).Where("username = ?", username).Count(&count).Error)
+	assert.Zero(t, count)
 }
