@@ -83,11 +83,12 @@ func TestClassifyFailReason(t *testing.T) {
 		"生成失败，请检查提示词和素材后请重新提交。":                                                                     CodeGenerationMaybeContent,
 		"生成的视频：审核判定含敏感画面，请修改提示词或更换参考素材后重新提交":                                                        CodeModerationOutput,
 		"请检查上传素材和提示词，图片宽度大于300，参考音视频时长必须为2至15秒，总时长不能高于15秒。":                                         CodeMaterialRequirements,
-		"按管理员要求驳回：当前未进入生成阶段":                                                                        CodeTaskCancelledByAdmin,
-		"Upstream task not found": CodeTaskResultUnavailable,
-		"系统有问题，请联系站长修复":           CodeGenerationFailed,
+		"视频任务未被受理（请求参数或内容未通过校验），任务未开始生成，预扣费用已原路退回，请检查后重试。上游原因：内容未通过上游安全审核（素材疑似含真人人脸/隐私信息），请修改提示词或素材后重试": CodeModerationRealPerson,
+		"按管理员要求驳回：当前未进入生成阶段":                                                CodeTaskCancelledByAdmin,
+		"Upstream task not found":                                           CodeTaskResultUnavailable,
+		"系统有问题，请联系站长修复":                                                     CodeGenerationFailed,
 		"upstream_create_failed: [服务信息已隐藏] service temporarily unavailable": CodeGenerationFailed,
-		"Video generation failed": CodeGenerationFailed,
+		"Video generation failed":                                           CodeGenerationFailed,
 	} {
 		assert.Equal(t, want, ClassifyFailReason(reason).Code, reason)
 	}

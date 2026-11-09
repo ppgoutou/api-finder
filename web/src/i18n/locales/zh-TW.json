@@ -8106,7 +8106,7 @@
     "Video assets must be 24-60 FPS. Please adjust and upload again.": "影片素材影格率需為 24–60 FPS，請調整後重新上傳。",
     "An asset's resolution is too low or too high. Please adjust it and upload again.": "素材解析度過小或過大，請調整後重新上傳。",
     "An asset does not meet the requirements: images must be wider than 300 pixels, and reference audio or video must be 2-15 seconds each and at most 15 seconds in total. Any charge has been refunded. Please adjust and submit again.": "素材不符合要求：圖片寬度需大於 300 像素，參考音視訊每段 2–15 秒、總時長不超過 15 秒。如已扣費，費用已退回，請調整後重新提交。",
-    "An asset may contain a real person and did not pass review. Please use another asset and try again.": "素材可能包含真實人物，未通過審核。請更換素材後重試。",
+    "An asset may contain a real person's face or private information and did not pass the content review, so generation did not start. Any charge has been refunded. Please use another asset or edit the prompt, then submit again.": "素材疑似包含真人人臉或隱私資訊，未通過內容審核，任務未開始生成，費用已退回。請更換素材或修改提示詞後重新提交。",
     "An asset may be subject to copyright restrictions and did not pass review. Please use another asset and try again.": "素材可能涉及版權限制，未通過審核。請更換素材後重試。",
     "The generated content did not pass review. Your charge has been refunded. Please change the prompt or assets and try again.": "生成內容未通過審核，費用已退回。請修改提示詞或更換素材後重試。",
     "The prompt did not pass review. Please change it and try again.": "提示詞未通過審核，請修改後重試。",

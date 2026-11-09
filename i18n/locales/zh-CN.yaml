@@ -95,7 +95,7 @@ user_error.material_public_url: "素材需要使用公网可访问的 http(s) �
 user_error.material_frame_rate: "视频素材帧率需为 24–60 FPS，请调整后重新上传。"
 user_error.material_pixels: "素材分辨率过小或过大，请调整后重新上传。"
 user_error.material_requirements: "素材不符合要求：图片宽度需大于 300 像素，参考音视频每段 2–15 秒、总时长不超过 15 秒。如已扣费，费用已退回，请调整后重新提交。"
-user_error.moderation_real_person: "素材可能包含真实人物，未通过审核。请更换素材后重试。"
+user_error.moderation_real_person: "素材疑似包含真人人脸或隐私信息，未通过内容审核，任务未开始生成，费用已退回。请更换素材或修改提示词后重新提交。"
 user_error.moderation_copyright: "素材可能涉及版权限制，未通过审核。请更换素材后重试。"
 user_error.moderation_output: "生成内容未通过审核，费用已退回。请修改提示词或更换素材后重试。"
 user_error.moderation_prompt: "提示词未通过审核，请修改后重试。"
