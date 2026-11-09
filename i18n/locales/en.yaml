@@ -94,7 +94,7 @@ user_error.material_public_url: "Assets must use a publicly accessible http(s) l
 user_error.material_frame_rate: "Video assets must be 24-60 FPS. Please adjust and upload again."
 user_error.material_pixels: "An asset's resolution is too low or too high. Please adjust it and upload again."
 user_error.material_requirements: "An asset does not meet the requirements: images must be wider than 300 pixels, and reference audio or video must be 2-15 seconds each and at most 15 seconds in total. Any charge has been refunded. Please adjust and submit again."
-user_error.moderation_real_person: "An asset may contain a real person and did not pass review. Please use another asset and try again."
+user_error.moderation_real_person: "An asset may contain a real person's face or private information and did not pass the content review, so generation did not start. Any charge has been refunded. Please use another asset or edit the prompt, then submit again."
 user_error.moderation_copyright: "An asset may be subject to copyright restrictions and did not pass review. Please use another asset and try again."
 user_error.moderation_output: "The generated content did not pass review. Your charge has been refunded. Please change the prompt or assets and try again."
 user_error.moderation_prompt: "The prompt did not pass review. Please change it and try again."

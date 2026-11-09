@@ -8106,7 +8106,7 @@
     "Video assets must be 24-60 FPS. Please adjust and upload again.": "動画素材のフレームレートは 24〜60 FPS にしてください。調整してから再度アップロードしてください。",
     "An asset's resolution is too low or too high. Please adjust it and upload again.": "素材の解像度が低すぎるか高すぎます。調整してから再度アップロードしてください。",
     "An asset does not meet the requirements: images must be wider than 300 pixels, and reference audio or video must be 2-15 seconds each and at most 15 seconds in total. Any charge has been refunded. Please adjust and submit again.": "素材が要件を満たしていません：画像の幅は 300 ピクセルより大きく、参照音声・動画は各 2〜15 秒、合計 15 秒以内にしてください。課金分は返金済みです。調整してから再送信してください。",
-    "An asset may contain a real person and did not pass review. Please use another asset and try again.": "素材に実在の人物が含まれている可能性があり、審査を通過しませんでした。別の素材でもう一度お試しください。",
+    "An asset may contain a real person's face or private information and did not pass the content review, so generation did not start. Any charge has been refunded. Please use another asset or edit the prompt, then submit again.": "素材に実在の人物の顔または個人情報が含まれている可能性があり、コンテンツ審査を通過しなかったため、生成は開始されませんでした。費用は返金済みです。別の素材を使うかプロンプトを修正してから、もう一度送信してください。",
     "An asset may be subject to copyright restrictions and did not pass review. Please use another asset and try again.": "素材に著作権上の制限がある可能性があり、審査を通過しませんでした。別の素材でもう一度お試しください。",
     "The generated content did not pass review. Your charge has been refunded. Please change the prompt or assets and try again.": "生成された内容が審査を通過しませんでした。料金は返金済みです。プロンプトまたは素材を変更してもう一度お試しください。",
     "The prompt did not pass review. Please change it and try again.": "プロンプトが審査を通過しませんでした。修正してもう一度お試しください。",
