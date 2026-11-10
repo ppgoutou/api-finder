@@ -1,6 +1,7 @@
 package billingexpr
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -9,25 +10,27 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// tokenPriceScale is the divisor of a canonical token term,
-// u("tokens") * <dollars per 1M tokens> / 1000000.
-const tokenPriceScale = 1000000
+// markupDigits is the precision of a rewritten price literal.
+const markupDigits = 12
+
+var oneMillion = decimal.NewFromInt(1_000_000)
 
 // UnitPriceAdd raises the unit price of one usage field in one tier.
 type UnitPriceAdd struct {
 	Field string
-	// Delta is added to the term's coefficient as written: dollars per unit
-	// for a bare term, dollars per 1M units for a token term.
-	Delta decimal.Decimal
-	// PerMillion requires the canonical token shape u(f) * price / 1000000;
-	// otherwise the term must be the bare u(f) * price.
+	// Delta is added to the term's effective coefficient: dollars per unit,
+	// or dollars per 1M units when PerMillion is set.
+	Delta      decimal.Decimal
 	PerMillion bool
 }
 
 // AddTierUnitPrices returns the expression with each named tier's usage term
-// coefficient raised by its delta. Conditions, other tiers and request rules
-// stay as written, so the result keeps the canonical task shape. Every named
-// tier must exist once and hold exactly one matching term.
+// raised by its delta. A term is u(field) multiplied and divided by numeric
+// literals, such as u("seconds") * 0.5, u("tokens") * 28 / 1000000 or
+// u("seconds") * 20000 * 12 / 7 / 1000000. Only its outermost multiplier
+// literal is rewritten, so divisors, conditions, other tiers and request rules
+// stay as written. Every named tier must exist once and hold exactly one term
+// for its field.
 func AddTierUnitPrices(exprStr string, adds map[string]UnitPriceAdd) (string, error) {
 	_, body := ParseExprVersion(exprStr)
 	tree, err := parser.Parse(body)
@@ -55,14 +58,9 @@ func AddTierUnitPrices(exprStr string, adds map[string]UnitPriceAdd) (string, er
 			return true
 		}
 		found[label.Value] = true
-		literal, err := unitPriceLiteral(args[1], add)
+		literal, err := raisedUnitPrice(args[1], add)
 		if err != nil {
 			walkErr = fmt.Errorf("tier %q: %w", label.Value, err)
-			return true
-		}
-		literal.value = literal.value.Add(add.Delta)
-		if literal.value.IsNegative() {
-			walkErr = fmt.Errorf("tier %q: unit price would be negative", label.Value)
 			return true
 		}
 		prices = append(prices, literal)
@@ -85,72 +83,121 @@ func AddTierUnitPrices(exprStr string, adds map[string]UnitPriceAdd) (string, er
 	return exprStr[:len(exprStr)-len(body)] + string(source), nil
 }
 
-// unitPriceLiteral finds the single coefficient of add.Field in a tier body.
-func unitPriceLiteral(body ast.Node, add UnitPriceAdd) (priceLiteral, error) {
-	var matches []priceLiteral
-	ast.Find(body, func(node ast.Node) bool {
-		product := node
-		if add.PerMillion {
-			division, ok := node.(*ast.BinaryNode)
-			if !ok || division.Operator != "/" {
-				return false
-			}
-			scale, ok := numericLiteral(division.Right)
-			if !ok || !scale.Equal(decimal.NewFromInt(tokenPriceScale)) {
-				return false
-			}
-			product = division.Left
-		}
-		literal, ok := usageCoefficient(product, add.Field)
-		if !ok {
-			return false
-		}
-		if !add.PerMillion && isScaledTerm(body, product) {
-			return false
-		}
-		matches = append(matches, literal)
-		return false
-	})
+// usageTerm is u(field) times and divided by numeric literals.
+type usageTerm struct {
+	field       string
+	coefficient decimal.Decimal
+	// multipliers are the literals multiplying u(field), innermost first.
+	multipliers []priceLiteral
+}
+
+// raisedUnitPrice finds the single term of add.Field in a tier body and
+// returns its outermost multiplier literal raised so the term's coefficient
+// grows by the delta.
+func raisedUnitPrice(body ast.Node, add UnitPriceAdd) (priceLiteral, error) {
+	var matches []usageTerm
+	collectUsageTerms(body, add.Field, &matches)
 	if len(matches) != 1 {
-		shape := "u(%q) * price"
-		if add.PerMillion {
-			shape = "u(%q) * price / 1000000"
-		}
-		return priceLiteral{}, fmt.Errorf("expected one term "+shape+", found %d", add.Field, len(matches))
+		return priceLiteral{}, fmt.Errorf("expected one term of u(%q) times a price, found %d", add.Field, len(matches))
 	}
-	return matches[0], nil
+	term := matches[0]
+	if len(term.multipliers) == 0 || term.coefficient.IsZero() {
+		return priceLiteral{}, fmt.Errorf("the term of u(%q) has no price to raise", add.Field)
+	}
+	delta := add.Delta
+	if add.PerMillion {
+		delta = delta.Div(oneMillion)
+	}
+	literal := term.multipliers[len(term.multipliers)-1]
+	// The literal is coefficient / rest, so raising the coefficient by delta
+	// raises the literal by delta / rest = delta * literal / coefficient.
+	raised := literal.value.Add(delta.Mul(literal.value).DivRound(term.coefficient, markupDigits))
+	if raised.IsNegative() {
+		return priceLiteral{}, errors.New("unit price would be negative")
+	}
+	literal.value = raised
+	return literal, nil
 }
 
-// usageCoefficient reads u(field) * literal or literal * u(field).
-func usageCoefficient(node ast.Node, field string) (priceLiteral, bool) {
-	product, ok := node.(*ast.BinaryNode)
-	if !ok || product.Operator != "*" {
-		return priceLiteral{}, false
-	}
-	for _, pair := range [][2]ast.Node{{product.Left, product.Right}, {product.Right, product.Left}} {
-		name, args := calledFunction(pair[0])
-		if name != "u" || len(args) != 1 {
-			continue
+// collectUsageTerms appends every maximal term of field under node.
+func collectUsageTerms(node ast.Node, field string, terms *[]usageTerm) {
+	if term, ok := readUsageTerm(node); ok {
+		if term.field == field {
+			*terms = append(*terms, term)
 		}
+		return
+	}
+	switch typed := node.(type) {
+	case *ast.BinaryNode:
+		collectUsageTerms(typed.Left, field, terms)
+		collectUsageTerms(typed.Right, field, terms)
+	case *ast.UnaryNode:
+		collectUsageTerms(typed.Node, field, terms)
+	case *ast.ConditionalNode:
+		collectUsageTerms(typed.Cond, field, terms)
+		collectUsageTerms(typed.Exp1, field, terms)
+		collectUsageTerms(typed.Exp2, field, terms)
+	case *ast.CallNode:
+		for _, arg := range typed.Arguments {
+			collectUsageTerms(arg, field, terms)
+		}
+	case *ast.BuiltinNode:
+		for _, arg := range typed.Arguments {
+			collectUsageTerms(arg, field, terms)
+		}
+	}
+}
+
+// readUsageTerm reads node as one u() call combined with literals by * and /,
+// where every divisor is a literal.
+func readUsageTerm(node ast.Node) (usageTerm, bool) {
+	part, ok := readTermPart(node)
+	if !ok || part.field == "" {
+		return usageTerm{}, false
+	}
+	return part, true
+}
+
+// readTermPart reads a literal, a u() call, or a product or quotient of them.
+// A part without a u() call has an empty field.
+func readTermPart(node ast.Node) (usageTerm, bool) {
+	if value, ok := numericLiteral(node); ok {
+		location := node.Location()
+		return usageTerm{coefficient: value, multipliers: []priceLiteral{{from: location.From, to: location.To, value: value}}}, true
+	}
+	if name, args := calledFunction(node); name == "u" && len(args) == 1 {
 		key, ok := args[0].(*ast.StringNode)
-		if !ok || key.Value != field {
-			continue
-		}
-		value, ok := numericLiteral(pair[1])
 		if !ok {
-			return priceLiteral{}, false
+			return usageTerm{}, false
 		}
-		location := pair[1].Location()
-		return priceLiteral{from: location.From, to: location.To, value: value}, true
+		return usageTerm{field: key.Value, coefficient: decimal.NewFromInt(1)}, true
 	}
-	return priceLiteral{}, false
-}
-
-// isScaledTerm reports whether product is the left side of a "/ n" division,
-// so a bare-term search does not take a token term's coefficient.
-func isScaledTerm(body ast.Node, product ast.Node) bool {
-	return ast.Find(body, func(node ast.Node) bool {
-		division, ok := node.(*ast.BinaryNode)
-		return ok && division.Operator == "/" && division.Left == product
-	}) != nil
+	binary, ok := node.(*ast.BinaryNode)
+	if !ok {
+		return usageTerm{}, false
+	}
+	left, ok := readTermPart(binary.Left)
+	if !ok {
+		return usageTerm{}, false
+	}
+	switch binary.Operator {
+	case "*":
+		right, ok := readTermPart(binary.Right)
+		if !ok || (left.field != "" && right.field != "") {
+			return usageTerm{}, false
+		}
+		return usageTerm{
+			field:       left.field + right.field,
+			coefficient: left.coefficient.Mul(right.coefficient),
+			multipliers: slices.Concat(left.multipliers, right.multipliers),
+		}, true
+	case "/":
+		divisor, ok := numericLiteral(binary.Right)
+		if !ok || divisor.IsZero() {
+			return usageTerm{}, false
+		}
+		left.coefficient = left.coefficient.DivRound(divisor, 24)
+		return left, true
+	}
+	return usageTerm{}, false
 }
