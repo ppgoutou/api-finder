@@ -17,10 +17,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import i18next from 'i18next'
-import { CircleDollarSign, CreditCard, Landmark } from 'lucide-react'
+import { CreditCard, Landmark } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { IconAlipay, IconWeChat, IconStripe } from '@/assets/brand-icons'
+import {
+  IconAlipay,
+  IconWeChat,
+  IconStripe,
+  IconTether,
+} from '@/assets/brand-icons'
 import { ReactIconByName } from '@/components/react-icon-by-name'
 
 import { PAYMENT_TYPES, PAYMENT_ICON_COLORS } from '../constants'
@@ -61,12 +66,16 @@ function normalizeHttpIconUrl(raw: string | undefined | null): string | null {
  * When icon is provided, render a safe http(s) image URL or resolve it as a
  * react-icons component name. Invalid configured icons intentionally render
  * nothing instead of falling back to the payment type.
+ *
+ * inheritColor drops the brand color of a built-in icon so it takes the text
+ * color of its container, e.g. white on a filled button.
  */
 export function getPaymentIcon(
   paymentType: string | undefined,
   className: string = 'h-4 w-4',
   icon?: string,
-  altName?: string
+  altName?: string,
+  inheritColor: boolean = false
 ): ReactNode {
   const iconValue = icon?.trim()
   const safeIconUrl = normalizeHttpIconUrl(iconValue)
@@ -97,47 +106,50 @@ export function getPaymentIcon(
     return <CreditCard className={className} />
   }
 
+  const brandColor = (type: keyof typeof PAYMENT_ICON_COLORS) =>
+    inheritColor ? undefined : { color: PAYMENT_ICON_COLORS[type] }
+
   switch (paymentType) {
     case PAYMENT_TYPES.ALIPAY:
       return (
         <IconAlipay
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.ALIPAY] }}
+          style={brandColor(PAYMENT_TYPES.ALIPAY)}
         />
       )
     case PAYMENT_TYPES.WECHAT:
       return (
         <IconWeChat
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.WECHAT] }}
+          style={brandColor(PAYMENT_TYPES.WECHAT)}
         />
       )
     case PAYMENT_TYPES.STRIPE:
       return (
         <IconStripe
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.STRIPE] }}
+          style={brandColor(PAYMENT_TYPES.STRIPE)}
         />
       )
     case PAYMENT_TYPES.CREEM:
       return (
         <Landmark
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.CREEM] }}
+          style={brandColor(PAYMENT_TYPES.CREEM)}
         />
       )
     case PAYMENT_TYPES.WAFFO:
       return (
         <CreditCard
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.WAFFO] }}
+          style={brandColor(PAYMENT_TYPES.WAFFO)}
         />
       )
     case PAYMENT_TYPES.USDT:
       return (
-        <CircleDollarSign
+        <IconTether
           className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.USDT] }}
+          style={brandColor(PAYMENT_TYPES.USDT)}
         />
       )
     case PAYMENT_TYPES.WAFFO_PANCAKE:

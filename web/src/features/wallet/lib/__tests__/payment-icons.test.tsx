@@ -26,6 +26,7 @@ test.each([
   [PAYMENT_TYPES.ALIPAY, 'Alipay'],
   [PAYMENT_TYPES.WECHAT, 'WeChat'],
   [PAYMENT_TYPES.STRIPE, 'Stripe'],
+  [PAYMENT_TYPES.USDT, 'Tether'],
 ])(
   'the built-in %s icon preserves the requested size and payment color',
   (type, label) => {
@@ -47,4 +48,11 @@ test('an admin-configured Simple Icon still resolves through the lazy icon loade
   )
   const title = await screen.findByTitle('Configured Alipay')
   expect(title.closest('svg')).toHaveClass('h-4', 'w-4')
+})
+
+test('a built-in icon on a filled button drops its brand color to follow the button text', () => {
+  render(
+    getPaymentIcon(PAYMENT_TYPES.STRIPE, 'h-4 w-4', undefined, 'Stripe', true)
+  )
+  expect(screen.getByRole('img', { name: 'Stripe' }).style.color).toBe('')
 })

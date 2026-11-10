@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { createInstance } from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { beforeEach, expect, it, vi } from 'vitest'
@@ -192,6 +192,47 @@ it('names the selected amount on the pay button and starts payment on click', ()
   fireEvent.click(pay)
 
   expect(onSelect).toHaveBeenCalledWith({ name: 'Stripe', type: 'stripe' })
+})
+
+it('shows only the method logo and name on the pay button, without the amount', () => {
+  renderPayMethods(100)
+
+  const pay = screen.getByRole('button', { name: /^Stripe 付款 .*100/ })
+  expect(pay).not.toHaveTextContent(/100|付款/)
+  expect(within(pay).getByRole('img', { name: 'Stripe' })).toBeVisible()
+})
+
+it('lists the payment methods Stripe accepts while Stripe is available', () => {
+  renderPayMethods(100, vi.fn(), [
+    { name: 'Stripe', type: 'stripe' },
+    { name: 'USDT', type: 'usdt' },
+  ])
+
+  const accepted = within(screen.getByRole('list', { name: 'Stripe 支持' }))
+  expect(
+    accepted.getAllByRole('listitem').map((item) => item.textContent)
+  ).toEqual([
+    '微信支付',
+    'Apple Pay',
+    'Google Pay',
+    'Visa',
+    'Mastercard',
+    '银联',
+  ])
+})
+
+it.each([
+  {
+    case: 'paused',
+    methods: [{ name: 'Stripe', type: 'stripe', paused: true }],
+  },
+  { case: 'absent', methods: [{ name: 'USDT', type: 'usdt' }] },
+])('hides the Stripe accepted methods when Stripe is $case', ({ methods }) => {
+  renderPayMethods(100, vi.fn(), methods)
+
+  expect(
+    screen.queryByRole('list', { name: 'Stripe 支持' })
+  ).not.toBeInTheDocument()
 })
 
 it('disables the pay button below the minimum and states the minimum', () => {
