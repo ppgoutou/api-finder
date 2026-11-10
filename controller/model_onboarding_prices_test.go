@@ -11,8 +11,10 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 
 	"github.com/stretchr/testify/assert"
@@ -576,4 +578,98 @@ func TestStripDescriptionPrices(t *testing.T) {
 			assert.Equal(t, testCase.expected, stripDescriptionPrices(testCase.input))
 		})
 	}
+}
+
+const tokenVideoPluginSource = `
+export const meta = {
+	apiVersion: 1,
+	key: "token-video",
+	name: "Token video",
+	version: "1.0.0",
+	author: {name: "Test"},
+	models: ["video"],
+	fetchMode: "per_task",
+	usageSchema: {
+		tokens: {type: "number", unit: "token", description: "Billing token unit price"},
+		video_input: {enum: ["none", "video"], description: "Reference video"},
+	},
+	usageExamples: [{label: "480p · 10s", facts: {tokens: 100000, video_input: "none"}}],
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+`
+
+func TestOnboardingPriceMarkupChargesAFixedAmountAfterTheGroupRatio(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	require.NoError(t, model.DB.AutoMigrate(&model.TaskPlugin{}))
+	require.NoError(t, model.SaveTaskPlugin(&model.TaskPlugin{Key: "token-video", APIVersion: 1, Version: "1.0.0", Source: tokenVideoPluginSource, SourceHash: "token-video-1", Enabled: true}))
+	require.NoError(t, model.ActivateTaskPlugin("token-video", "1.0.0"))
+	require.NoError(t, syncTaskPluginsOnce())
+	t.Cleanup(func() { jsplugin.DefaultRegistry.Unregister("token-video") })
+	previousRatios := ratio_setting.GroupRatio2JSONString()
+	t.Cleanup(func() { require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(previousRatios)) })
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.2}`))
+	const supplier = `u("video_input") == "none" ? tier("480p·none", u("tokens") * 28 / 1000000) : tier("480p·video", u("tokens") * 16 / 1000000)`
+	require.NoError(t, model.UpdateModelPricing([]model.ModelPricingChange{{
+		ModelName: "video", ExpectedVersion: model.ModelPricingVersion(model.PricingValues{}),
+		Pricing: model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": supplier},
+	}}))
+	expression := func() string {
+		t.Helper()
+		snapshot, err := model.GetModelPricingSnapshot([]string{"video"})
+		require.NoError(t, err)
+		return snapshot.Entries[0].Configured["billing_setting.billing_expr"].(string)
+	}
+	// customerCost is what a 10-second order costs a default-group customer:
+	// the expression's dollars times the group ratio.
+	customerCost := func(expr string, videoInput string) float64 {
+		t.Helper()
+		cost, _, err := billingexpr.RunExprWithRequest(expr, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: map[string]any{"tokens": 100000.0, "video_input": videoInput}})
+		require.NoError(t, err)
+		return cost * ratio_setting.PublicPriceFactor()
+	}
+	setMarkup := func(body string) map[string]any {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		context, _ := gin.CreateTestContext(recorder)
+		context.Request = httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
+		SetOnboardingPriceMarkup(context)
+		var response struct {
+			Success bool           `json:"success"`
+			Message string         `json:"message"`
+			Data    map[string]any `json:"data"`
+		}
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		require.True(t, response.Success, response.Message)
+		return response.Data
+	}
+
+	report := setMarkup(`{"model_name":"video","tiers":{"480p·none":{"field":"tokens","per_second":0.1,"tokens_per_second":10000}}}`)
+
+	assert.InDelta(t, 2.8*1.2+1, customerCost(expression(), "none"), 1e-6, "10 seconds at $0.1/s on top of the ratio price")
+	assert.InDelta(t, 1.6*1.2, customerCost(expression(), "video"), 1e-6, "a tier without a markup keeps the ratio price")
+	assert.Equal(t, 1.2, report["price_factor"])
+	assert.Equal(t, supplier, report["markups"].(map[string]any)["video"].(map[string]any)["base_expr"])
+
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.5}`))
+	assert.Empty(t, recomposeOnboardingMarkups())
+
+	assert.InDelta(t, 2.8*1.5+1, customerCost(expression(), "none"), 1e-6, "a new ratio keeps the fixed markup")
+
+	const newSupplier = `u("video_input") == "none" ? tier("480p·none", u("tokens") * 30 / 1000000) : tier("480p·video", u("tokens") * 18 / 1000000)`
+	pricing, markup, err := markedUpPricing("video", model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": newSupplier})
+	require.NoError(t, err)
+	require.NotNil(t, markup)
+	assert.Equal(t, newSupplier, markup.BaseExpr)
+	assert.InDelta(t, 3.0*1.5+1, customerCost(pricing["billing_setting.billing_expr"].(string), "none"), 1e-6, "a new supplier price keeps the markup")
+
+	_, _, err = markedUpPricing("video", model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": `tier("720p", u("tokens") * 30 / 1000000)`})
+	assert.Error(t, err, "a supplier price without the marked-up tier is not applied silently")
+
+	setMarkup(`{"model_name":"video","tiers":{}}`)
+
+	assert.Equal(t, supplier, expression(), "clearing the markup restores the supplier expression")
+	assert.NotContains(t, readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption), "video")
 }

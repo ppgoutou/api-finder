@@ -8135,6 +8135,18 @@
     "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.": "В работе сервиса временный сбой, и запрос не выполнен. Повторите попытку позже. Если сбой повторяется, сообщите ID запроса в поддержку.",
     "The task has no upstream task ID": "У задачи нет ID вышестоящей задачи",
     "Shown to the user": "Показано пользователю",
-    "Actual error": "Фактическая ошибка"
+    "Actual error": "Фактическая ошибка",
+    "Markup saved": "Наценка сохранена",
+    "Supply price": "Закупочная цена",
+    "Group ratio price (×{{ratio}})": "Цена с коэффициентом (×{{ratio}})",
+    "Extra markup": "Доп. наценка",
+    "Extra markup per second for {{tier}}": "Доп. наценка в секунду для {{tier}}",
+    "Final price": "Итоговая цена",
+    "Enter a markup of 0 or more": "Введите наценку от 0",
+    "Save markup": "Сохранить наценку",
+    "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Цены следуют за поставщиком. Клиенты платят цену с коэффициентом плюс доп. наценку.",
+    "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Цены за токены показаны за секунду видео для каждого разрешения. При референсных видео наценка берётся и с выходных, и с референсных секунд. Клиенты платят итоговую цену; новый коэффициент группы не меняет наценку.",
+    "Only expression prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению. Сначала подтвердите цену поставщика.",
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Коэффициенты групп сохранены, но наценки этих моделей не удалось обновить: {{models}}"
   }
 }

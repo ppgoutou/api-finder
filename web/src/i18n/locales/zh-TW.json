@@ -8135,6 +8135,18 @@
     "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.": "服務暫時異常，本次未成功，請稍後重試。如持續出現，請將請求 ID 提供給客服。",
     "The task has no upstream task ID": "任務沒有上游任務 ID",
     "Shown to the user": "向使用者顯示的錯誤",
-    "Actual error": "實際錯誤"
+    "Actual error": "實際錯誤",
+    "Markup saved": "加價已儲存",
+    "Supply price": "供貨價",
+    "Group ratio price (×{{ratio}})": "倍率價（×{{ratio}}）",
+    "Extra markup": "額外加價",
+    "Extra markup per second for {{tier}}": "{{tier}} 每秒額外加價",
+    "Final price": "最終價",
+    "Enter a markup of 0 or more": "加價須為 0 或以上",
+    "Save markup": "儲存加價",
+    "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "價格跟隨上游。客戶支付倍率價加上額外加價。",
+    "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Token 價格按各解析度每秒影片換算顯示。有參考影片時，加價按輸出秒和參考秒一起收取。客戶支付最終價；修改分組倍率後加價保持不變。",
+    "Only expression prices can take a markup. Confirm the upstream price first.": "只有表達式價格可以加價。請先確認上游價格。",
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分組倍率已儲存，但以下模型的加價未能更新：{{models}}"
   }
 }

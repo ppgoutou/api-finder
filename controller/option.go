@@ -467,6 +467,13 @@ func UpdateOption(c *gin.Context) {
 	recordManageAudit(c, "option.update", map[string]any{
 		"key": option.Key,
 	})
+	if option.Key == "GroupRatio" {
+		// Marked-up prices divide the markup by the ratio; keep what customers pay.
+		if failed := recomposeOnboardingMarkups(); len(failed) > 0 {
+			common.ApiErrorStatus(c, http.StatusOK, common.NewMessage("Group ratios saved, but the markups of these models could not be updated: {{models}}", map[string]any{"models": strings.Join(failed, ", ")}))
+			return
+		}
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",

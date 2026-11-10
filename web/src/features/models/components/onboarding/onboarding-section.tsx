@@ -447,6 +447,8 @@ export function OnboardingSection() {
             upstreamPrice={
               upstreamPrices.data?.models?.[current.item.model_name]
             }
+            markup={upstreamPrices.data?.markups?.[current.item.model_name]}
+            priceFactor={upstreamPrices.data?.price_factor ?? 1}
             applyingUpstreamPrice={applyPrice.isPending}
             onApplyUpstreamPrice={() =>
               applyPrice.mutate(current.item.model_name)

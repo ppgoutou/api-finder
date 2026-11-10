@@ -40,7 +40,8 @@ import { requireServerSuccess } from '@/lib/server-error-message'
 import { checkUpstreamPrices } from '../../api'
 import { hasEffectivePricing, undeclaredUsageKeys } from '../../lib/onboarding'
 import { modelsQueryKeys } from '../../lib/query-keys'
-import type { UpstreamModelPrice } from '../../types'
+import type { OnboardingMarkup, UpstreamModelPrice } from '../../types'
+import { OnboardingMarkupTable } from './onboarding-markup-table'
 
 /**
  * Read-only price of an onboarding model. Prices follow the supplier. Local
@@ -52,6 +53,8 @@ import type { UpstreamModelPrice } from '../../types'
 export function OnboardingPriceCard(props: {
   modelName: string
   upstream: UpstreamModelPrice | undefined
+  markup: OnboardingMarkup | undefined
+  priceFactor: number
   applying: boolean
   onApply: () => void
   acknowledging: boolean
@@ -173,6 +176,13 @@ export function OnboardingPriceCard(props: {
         ) : (
           current
         )}
+        {entry && priced && (
+          <OnboardingMarkupTable
+            entry={entry}
+            markup={props.markup}
+            priceFactor={props.priceFactor}
+          />
+        )}
       </div>
     )
   }
@@ -181,7 +191,7 @@ export function OnboardingPriceCard(props: {
     <TitledCard
       title={t('Pricing')}
       description={t(
-        'Prices follow the upstream. Your markup comes from the group ratio.'
+        'Prices follow the upstream. Customers pay the group ratio price plus any extra markup.'
       )}
     >
       {body}

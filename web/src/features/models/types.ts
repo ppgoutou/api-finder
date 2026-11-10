@@ -373,10 +373,27 @@ export type UpstreamModelPrice = {
   in_sync: boolean
 }
 
+/** A fixed amount, in USD per second of video, added after the group ratio. */
+export type TierMarkup = {
+  field: string
+  per_second: number
+  /** Converts a token-priced tier; absent for a per-second tier. */
+  tokens_per_second?: number
+}
+
+export type OnboardingMarkup = {
+  /** The supplier expression the markups are added to. */
+  base_expr: string
+  tiers: Record<string, TierMarkup>
+}
+
 export type UpstreamPriceReport = {
   channels: UpstreamPriceChannel[]
   changes: UpstreamPriceChange[]
   models?: Record<string, UpstreamModelPrice>
+  markups?: Record<string, OnboardingMarkup>
+  /** The default group ratio customers pay. */
+  price_factor?: number
 }
 
 export interface UpstreamPriceReportResponse {
