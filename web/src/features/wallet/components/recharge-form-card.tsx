@@ -38,6 +38,7 @@ import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import {
+  PAYMENT_TYPES,
   WALLET_CARD_HEADER_CLASS,
   WALLET_HEADER_ACTION_CLASS,
   WALLET_SURFACE_CLASS,
@@ -51,6 +52,7 @@ import type {
   WaffoPayMethod,
 } from '../types'
 import { CreemProductsSection } from './creem-products-section'
+import { StripeAcceptedMethods } from './stripe-accepted-methods'
 
 interface RechargeFormCardProps {
   topupInfo: TopupInfo | null
@@ -127,6 +129,13 @@ export function RechargeFormCard({
     enableWaffoPancakeTopup
   const hasAnyTopup = hasConfigurableTopup || enableCreemTopup
   const primaryMethod = topupInfo?.pay_methods?.find((item) => !item.paused)
+  const stripeMethodIndex =
+    topupInfo?.pay_methods?.findIndex(
+      (item) => item.type === PAYMENT_TYPES.STRIPE && !item.paused
+    ) ?? -1
+  // With exactly two methods each button is one column, so the logos can sit
+  // under the Stripe button on wide screens.
+  const stripeHasOwnColumn = topupInfo?.pay_methods?.length === 2
   const hasWaffoPaymentMethods =
     Array.isArray(waffoPayMethods) && waffoPayMethods.length > 0
   const minTopup = getMinTopupAmount(topupInfo)
@@ -339,7 +348,7 @@ export function RechargeFormCard({
                               : payLabel
                           }
                           className={cn(
-                            'min-h-13 min-w-0 gap-2 rounded-xl px-3 py-2 text-base font-semibold',
+                            'min-h-13 min-w-0 gap-1.5 rounded-xl px-2 py-2 text-sm font-semibold sm:gap-2 sm:px-3 sm:text-base',
                             isPrimary
                               ? 'bg-brand hover:bg-brand-hover text-white'
                               : 'text-foreground'
@@ -348,18 +357,17 @@ export function RechargeFormCard({
                           {paymentLoading === method.type && (
                             <Loader2 className='h-4 w-4 animate-spin' />
                           )}
-                          {/* Brand-colored payment icons lose contrast on the blue button. */}
                           {paymentLoading !== method.type &&
-                            !isPrimary &&
                             getPaymentIcon(
                               method.type,
                               'h-4 w-4',
                               method.icon,
-                              method.name
+                              method.name,
+                              isPrimary
                             )}
                           <span className='flex min-w-0 flex-col items-center gap-0.5'>
                             <span className='max-w-full truncate'>
-                              {payLabel}
+                              {method.name}
                             </span>
                             {disabledLabel && (
                               <span className='max-w-full truncate text-[11px] leading-4 font-normal opacity-80'>
@@ -383,6 +391,25 @@ export function RechargeFormCard({
                     })}
                   </div>
                 ) : null}
+                {stripeMethodIndex >= 0 && (
+                  <div
+                    className={cn(
+                      'grid',
+                      stripeHasOwnColumn && 'sm:grid-cols-2 sm:gap-2.5'
+                    )}
+                  >
+                    <StripeAcceptedMethods
+                      className={cn(
+                        stripeHasOwnColumn &&
+                          stripeMethodIndex === 1 &&
+                          'sm:col-start-2'
+                      )}
+                      labelClassName={
+                        stripeHasOwnColumn ? 'sm:hidden' : undefined
+                      }
+                    />
+                  </div>
+                )}
                 {!hasStandardPaymentMethods && !hasWaffoPaymentMethods && (
                   <Alert>
                     <AlertDescription>
