@@ -47,6 +47,7 @@ import { PRESSED_BADGE_CLASSES } from '../../lib/pricing-categories'
 import type {
   OnboardingChannel,
   OnboardingModel,
+  OnboardingMarkup,
   UpstreamModelPrice,
   Vendor,
 } from '../../types'
@@ -67,6 +68,8 @@ export function OnboardingEditor(props: {
   changingIgnored: boolean
   onToggleIgnored: () => void
   upstreamPrice: UpstreamModelPrice | undefined
+  markup: OnboardingMarkup | undefined
+  priceFactor: number
   applyingUpstreamPrice: boolean
   onApplyUpstreamPrice: () => void
   acknowledgingUpstreamPrice: boolean
@@ -161,6 +164,8 @@ export function OnboardingEditor(props: {
       <OnboardingPriceCard
         modelName={props.item.model_name}
         upstream={props.upstreamPrice}
+        markup={props.markup}
+        priceFactor={props.priceFactor}
         applying={props.applyingUpstreamPrice}
         onApply={props.onApplyUpstreamPrice}
         acknowledging={props.acknowledgingUpstreamPrice}

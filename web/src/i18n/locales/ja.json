@@ -8138,6 +8138,18 @@
     "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.": "サービスに一時的な問題が発生し、このリクエストは成功しませんでした。後でもう一度お試しください。続く場合は、リクエスト ID をサポートにお送りください。",
     "The task has no upstream task ID": "タスクにアップストリームのタスク ID がありません",
     "Shown to the user": "ユーザーに表示されるエラー",
-    "Actual error": "実際のエラー"
+    "Actual error": "実際のエラー",
+    "Markup saved": "上乗せを保存しました",
+    "Supply price": "仕入れ価格",
+    "Group ratio price (×{{ratio}})": "倍率価格（×{{ratio}}）",
+    "Extra markup": "追加上乗せ",
+    "Extra markup per second for {{tier}}": "{{tier}} の1秒あたり追加上乗せ",
+    "Final price": "最終価格",
+    "Enter a markup of 0 or more": "上乗せは 0 以上で入力してください",
+    "Save markup": "上乗せを保存",
+    "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "価格は上流に連動します。顧客は倍率価格と追加上乗せの合計を支払います。",
+    "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "トークン価格は解像度ごとの動画1秒あたりで表示します。参照動画がある場合、上乗せは出力秒と参照秒の両方に課金されます。顧客は最終価格を支払い、グループ倍率を変えても上乗せは変わりません。",
+    "Only expression prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格のみです。先に上流価格を確定してください。",
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "グループ倍率は保存しましたが、次のモデルの上乗せを更新できませんでした：{{models}}"
   }
 }

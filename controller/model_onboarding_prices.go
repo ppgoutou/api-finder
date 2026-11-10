@@ -19,6 +19,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
 )
@@ -469,7 +470,11 @@ func upstreamPriceReport(rows []upstreamPriceChannel) (gin.H, error) {
 			prices[entry.ModelName] = price
 		}
 	}
-	return gin.H{"channels": rows, "changes": changes, "models": prices}, nil
+	return gin.H{
+		"channels": rows, "changes": changes, "models": prices,
+		"markups":      readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption),
+		"price_factor": ratio_setting.PublicPriceFactor(),
+	}, nil
 }
 
 func respondUpstreamPriceReport(c *gin.Context, rows []upstreamPriceChannel) {
@@ -630,7 +635,14 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 			if pricing == nil || price.pending || len(chargedModelPricing(entry.Configured)) > 0 {
 				continue
 			}
-			if err := applyUpstreamModelPrice(entry.ModelName, entry, pricing); err != nil {
+			pricing, markup, err := markedUpPricing(entry.ModelName, pricing)
+			if err == nil {
+				err = applyUpstreamModelPrice(entry.ModelName, entry, pricing)
+			}
+			if err == nil && markup != nil {
+				err = saveOnboardingMarkup(entry.ModelName, markup)
+			}
+			if err != nil {
 				common.SysError(common.LogText("failed to apply upstream price to model %s: %s", entry.ModelName, err.Error()))
 				continue
 			}
@@ -683,9 +695,20 @@ func ApplyOnboardingUpstreamPrice(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	if err := applyUpstreamModelPrice(name, local.Entries[0], price.Pricing); err != nil {
+	pricing, markup, err := markedUpPricing(name, price.Pricing)
+	if err != nil {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage(err.Error()))
+		return
+	}
+	if err := applyUpstreamModelPrice(name, local.Entries[0], pricing); err != nil {
 		common.ApiError(c, err)
 		return
+	}
+	if markup != nil {
+		if err := saveOnboardingMarkup(name, markup); err != nil {
+			common.ApiError(c, err)
+			return
+		}
 	}
 	acceptUpstreamBaseline(snapshots, []string{name})
 	if err := writeOnboardingOption(onboardingPriceSnapshotOption, snapshots); err != nil {

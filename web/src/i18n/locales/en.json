@@ -8138,6 +8138,18 @@
     "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.": "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.",
     "The task has no upstream task ID": "The task has no upstream task ID",
     "Shown to the user": "Shown to the user",
-    "Actual error": "Actual error"
+    "Actual error": "Actual error",
+    "Markup saved": "Markup saved",
+    "Supply price": "Supply price",
+    "Group ratio price (×{{ratio}})": "Group ratio price (×{{ratio}})",
+    "Extra markup": "Extra markup",
+    "Extra markup per second for {{tier}}": "Extra markup per second for {{tier}}",
+    "Final price": "Final price",
+    "Enter a markup of 0 or more": "Enter a markup of 0 or more",
+    "Save markup": "Save markup",
+    "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.",
+    "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.",
+    "Only expression prices can take a markup. Confirm the upstream price first.": "Only expression prices can take a markup. Confirm the upstream price first.",
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}"
   }
 }

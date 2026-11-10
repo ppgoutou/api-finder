@@ -441,6 +441,7 @@ func SetApiRouter(router *gin.Engine) {
 				upstreamPricesRoute.POST("/description_llm/models", controller.ListOnboardingDescriptionLLMModels)
 				upstreamPricesRoute.POST("/acknowledge", controller.AcknowledgeOnboardingUpstreamPrices)
 				upstreamPricesRoute.POST("/apply", controller.ApplyOnboardingUpstreamPrice)
+				upstreamPricesRoute.PUT("/markup", controller.SetOnboardingPriceMarkup)
 				upstreamPricesRoute.PUT("/token", controller.SetOnboardingUpstreamPricingToken)
 			}
 			modelsRoute.GET("/", controller.GetAllModelsMeta)

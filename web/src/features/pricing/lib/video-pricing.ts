@@ -38,7 +38,7 @@ export const VIDEO_TOKENS_PER_SECOND: Readonly<Record<string, number>> = {
  * `none`) carries its supplier's own conversion; otherwise the reference table
  * applies.
  */
-function videoTokensPerSecond(
+export function videoTokensPerSecond(
   model: Pick<PricingModel, 'billing_usage_examples'>,
   optionField: string,
   option: string

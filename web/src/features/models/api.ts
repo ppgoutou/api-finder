@@ -33,6 +33,7 @@ import type {
   OnboardingOverviewResponse,
   OnboardingDraft,
   DescriptionLLMConfig,
+  TierMarkup,
   UpstreamPriceReportResponse,
   PrefillGroupsResponse,
   SyncLocale,
@@ -320,6 +321,20 @@ export async function applyUpstreamPrice(request: {
 }): Promise<UpstreamPriceReportResponse> {
   const res = await api.post(
     '/api/models/onboarding/upstream_prices/apply',
+    request
+  )
+  return res.data
+}
+
+/**
+ * Set or clear (no tiers) the per-second markups of one model
+ */
+export async function setPriceMarkup(request: {
+  model_name: string
+  tiers: Record<string, TierMarkup>
+}): Promise<UpstreamPriceReportResponse> {
+  const res = await api.put(
+    '/api/models/onboarding/upstream_prices/markup',
     request
   )
   return res.data

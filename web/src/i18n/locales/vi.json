@@ -8138,6 +8138,18 @@
     "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support.": "Dịch vụ tạm thời gặp sự cố và yêu cầu này chưa thành công. Vui lòng thử lại sau. Nếu vẫn xảy ra, hãy gửi ID yêu cầu cho bộ phận hỗ trợ.",
     "The task has no upstream task ID": "Tác vụ không có ID tác vụ phía nguồn",
     "Shown to the user": "Hiển thị cho người dùng",
-    "Actual error": "Lỗi thực tế"
+    "Actual error": "Lỗi thực tế",
+    "Markup saved": "Đã lưu phần cộng thêm",
+    "Supply price": "Giá nhập",
+    "Group ratio price (×{{ratio}})": "Giá theo hệ số (×{{ratio}})",
+    "Extra markup": "Cộng thêm",
+    "Extra markup per second for {{tier}}": "Cộng thêm mỗi giây cho {{tier}}",
+    "Final price": "Giá cuối",
+    "Enter a markup of 0 or more": "Nhập phần cộng thêm từ 0 trở lên",
+    "Save markup": "Lưu phần cộng thêm",
+    "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Giá theo nhà cung cấp. Khách hàng trả giá theo hệ số cộng phần cộng thêm.",
+    "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Giá theo token được hiển thị theo mỗi giây video ở từng độ phân giải. Khi có video tham chiếu, phần cộng thêm tính cho cả giây đầu ra lẫn giây tham chiếu. Khách hàng trả giá cuối; đổi hệ số nhóm không làm thay đổi phần cộng thêm.",
+    "Only expression prices can take a markup. Confirm the upstream price first.": "Chỉ giá dạng biểu thức mới cộng thêm được. Hãy xác nhận giá nhà cung cấp trước.",
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Đã lưu hệ số nhóm, nhưng không cập nhật được phần cộng thêm của các mô hình: {{models}}"
   }
 }
