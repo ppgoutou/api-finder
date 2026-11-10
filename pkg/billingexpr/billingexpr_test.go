@@ -1294,14 +1294,53 @@ func TestAddTierUnitPricesRejectsTermsItCannotFind(t *testing.T) {
 	}{
 		{"missing tier", `tier("720p", u("seconds") * 0.4)`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(1)}, "480p"},
 		{"field absent", `tier("base", u("seconds") * 0.4)`, billingexpr.UnitPriceAdd{Field: "tokens", Delta: decimal.NewFromInt(1)}, "base"},
-		{"token term taken as bare", `tier("base", u("tokens") * 30 / 1000000)`, billingexpr.UnitPriceAdd{Field: "tokens", Delta: decimal.NewFromInt(1)}, "base"},
-		{"bare term taken as token", `tier("base", u("seconds") * 0.4)`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(1), PerMillion: true}, "base"},
+		{"price of zero", `tier("base", u("seconds") * 0)`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(1)}, "base"},
+		{"usage divided by usage", `tier("base", u("seconds") * 0.4 / u("seconds"))`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(1)}, "base"},
 		{"duplicate tier", `u("a") == "x" ? tier("base", u("seconds") * 0.4) : tier("base", u("seconds") * 0.5)`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(1)}, "base"},
 		{"negative result", `tier("base", u("seconds") * 0.4)`, billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.NewFromInt(-1)}, "base"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := billingexpr.AddTierUnitPrices(tc.expression, map[string]billingexpr.UnitPriceAdd{tc.tier: tc.add})
 			assert.Error(t, err)
+		})
+	}
+}
+
+func TestAddTierUnitPricesRaisesScaledTermsByTheExactDelta(t *testing.T) {
+	for _, tc := range []struct {
+		name, expression, tier string
+		add                    billingexpr.UnitPriceAdd
+		usage                  map[string]any
+		want                   float64
+	}{
+		{
+			"seconds price written in another currency",
+			`u("resolution") == "480p" ? tier("480p", u("seconds") * 0.3 / 7) : tier("720p", u("seconds") * 0.6 / 7)`,
+			"480p", billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.RequireFromString("0.1")},
+			map[string]any{"seconds": 10.0, "resolution": "480p"}, 1,
+		},
+		{
+			"seconds price with a token rate folded in",
+			`tier("720p", u("seconds") * 20000 * 12 / 7 / 1000000)`,
+			"720p", billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.RequireFromString("0.1")},
+			map[string]any{"seconds": 10.0}, 1,
+		},
+		{
+			"token price per million",
+			`tier("480p", u("tokens") * 28 / 1000000)`,
+			"480p", billingexpr.UnitPriceAdd{Field: "tokens", Delta: decimal.RequireFromString("9.5"), PerMillion: true},
+			map[string]any{"tokens": 100000.0}, 0.95,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			raised, err := billingexpr.AddTierUnitPrices(tc.expression, map[string]billingexpr.UnitPriceAdd{tc.tier: tc.add})
+			require.NoError(t, err)
+			before, _, err := billingexpr.RunExprWithRequest(tc.expression, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: tc.usage})
+			require.NoError(t, err)
+			after, trace, err := billingexpr.RunExprWithRequest(raised, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: tc.usage})
+			require.NoError(t, err)
+			assert.InDelta(t, tc.want, after-before, 1e-9)
+			assert.Equal(t, tc.tier, trace.MatchedTier)
 		})
 	}
 }
