@@ -301,6 +301,7 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"POST /api/models/onboarding/upstream_prices/description_llm/models": accessTokenSessionRule,
 	"POST /api/models/onboarding/upstream_prices/acknowledge":            accessTokenScopeRule("model:write"),
 	"POST /api/models/onboarding/upstream_prices/apply":                  accessTokenSessionRule,
+	"PUT /api/models/onboarding/upstream_prices/markup":                  accessTokenSessionRule,
 	"PUT /api/models/onboarding/upstream_prices/token":                   accessTokenSessionRule,
 	"GET /api/models/":       accessTokenScopeRule("model:read"),
 	"GET /api/models/search": accessTokenScopeRule("model:read"),
