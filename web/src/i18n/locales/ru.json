@@ -6473,6 +6473,7 @@
     "Strip suffix": "Убрать суффикс",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe принимает",
+    "{{count}} more payment methods": "Ещё способов оплаты: {{count}}",
     "Stripe API key (leave blank unless updating)": "Ключ API Stripe (оставьте пустым, если не обновляете)",
     "Stripe Dashboard": "Панель управления Stripe",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Спор Stripe закрыт в вашу пользу, пополнение восстановлено: {{quota}}",

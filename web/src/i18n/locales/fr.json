@@ -6473,6 +6473,7 @@
     "Strip suffix": "Supprimer le suffixe",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe accepte",
+    "{{count}} more payment methods": "{{count}} autres moyens de paiement",
     "Stripe API key (leave blank unless updating)": "Clé API Stripe (laisser vide sauf en cas de mise à jour)",
     "Stripe Dashboard": "Tableau de bord Stripe",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Litige Stripe clos en votre faveur, montant de recharge rétabli : {{quota}}",
