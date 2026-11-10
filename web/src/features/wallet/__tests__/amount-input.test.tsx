@@ -212,13 +212,25 @@ it('lists the payment methods Stripe accepts while Stripe is available', () => {
   expect(
     accepted.getAllByRole('listitem').map((item) => item.textContent)
   ).toEqual([
-    '微信支付',
-    'Apple Pay',
-    'Google Pay',
     'Visa',
     'Mastercard',
     '银联',
+    '微信支付',
+    'Apple Pay',
+    'Google Pay',
   ])
+})
+
+it('reveals the remaining Stripe payment methods when the +8 chip is opened', async () => {
+  renderPayMethods(100, vi.fn(), [{ name: 'Stripe', type: 'stripe' }])
+
+  fireEvent.click(screen.getByRole('button', { name: '另外 8 种付款方式' }))
+
+  const more = await screen.findByRole('list', { name: '另外 8 种付款方式' })
+  expect(within(more).getAllByRole('listitem')).toHaveLength(8)
+  for (const name of ['Kakao Pay', 'Samsung Pay', 'Bancontact']) {
+    expect(within(more).getByText(name)).toBeVisible()
+  }
 })
 
 it.each([

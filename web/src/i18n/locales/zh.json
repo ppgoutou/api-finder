@@ -6473,6 +6473,7 @@
     "Strip suffix": "去掉后缀",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe 支持",
+    "{{count}} more payment methods": "另外 {{count}} 种付款方式",
     "Stripe API key (leave blank unless updating)": "Stripe API 密钥（除非更新，否则留空）",
     "Stripe Dashboard": "Stripe 控制面板",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Stripe 争议已撤销或胜诉，恢复充值额度: {{quota}}",

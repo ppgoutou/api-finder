@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -34,7 +34,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { formatLocalCurrencyAmount } from '@/lib/currency'
-import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import {
@@ -237,13 +236,21 @@ export function RechargeFormCard({
                         variant='ghost'
                         aria-pressed={selectedPreset === preset.value}
                         className={cn(
-                          'flex h-full min-h-[60px] flex-col items-center justify-center rounded-xl px-3 py-2.5 text-center whitespace-normal sm:min-h-[68px]',
+                          'relative flex h-full min-h-12 items-center justify-center overflow-hidden rounded-xl border px-3 py-2 text-center whitespace-normal sm:min-h-[52px]',
                           selectedPreset === preset.value
-                            ? 'bg-brand/15 text-brand-hover hover:bg-brand/20 hover:text-brand-hover dark:text-brand-on-dark dark:hover:text-brand-on-dark'
-                            : 'bg-muted hover:bg-muted/70'
+                            ? 'border-brand bg-brand/10 text-brand-hover hover:bg-brand/15 hover:text-brand-hover dark:text-brand-on-dark dark:hover:text-brand-on-dark border-2'
+                            : 'border-foreground/25 bg-background hover:border-foreground/40 hover:bg-muted/50'
                         )}
                         onClick={() => onSelectPreset(preset)}
                       >
+                        {selectedPreset === preset.value && (
+                          <span
+                            aria-hidden='true'
+                            className='bg-brand absolute top-0 right-0 flex size-5 items-center justify-center rounded-bl-lg text-white'
+                          >
+                            <Check className='size-3.5' strokeWidth={3} />
+                          </span>
+                        )}
                         <div className='flex w-full items-center justify-center gap-2'>
                           <div className='text-lg font-bold tabular-nums sm:text-xl'>
                             {formatCredit(preset.value)}
@@ -254,13 +261,6 @@ export function RechargeFormCard({
                             </div>
                           )}
                         </div>
-                        {amountUnit === 'USD' && (
-                          <div className='text-muted-foreground mt-1.5 w-full text-xs sm:mt-2'>
-                            {t('{{amount}} USD credit', {
-                              amount: formatNumber(preset.value),
-                            })}
-                          </div>
-                        )}
                       </Button>
                     )
                   })}
@@ -284,10 +284,10 @@ export function RechargeFormCard({
                     }
                     placeholder={t('Custom Amount')}
                     className={cn(
-                      'h-full min-h-[60px] rounded-xl border-0 px-3 text-center text-base font-semibold sm:min-h-[68px]',
+                      'h-full min-h-12 rounded-xl border border-dashed px-3 text-center text-base font-semibold sm:min-h-[52px]',
                       selectedPreset === null && topupAmount > 0
-                        ? 'bg-brand/15 text-brand-hover dark:bg-brand/15 dark:text-brand-on-dark'
-                        : 'bg-muted dark:bg-muted'
+                        ? 'border-brand bg-brand/10 text-brand-hover dark:bg-brand/10 dark:text-brand-on-dark border-2 border-solid'
+                        : 'border-foreground/30 bg-background dark:bg-background'
                     )}
                   />
                 </div>

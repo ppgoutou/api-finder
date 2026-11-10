@@ -6473,6 +6473,7 @@
     "Strip suffix": "Bỏ hậu tố",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe hỗ trợ",
+    "{{count}} more payment methods": "{{count}} phương thức thanh toán khác",
     "Stripe API key (leave blank unless updating)": "Khóa API Stripe (để trống trừ khi cập nhật)",
     "Stripe Dashboard": "Bảng điều khiển Stripe",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Tranh chấp Stripe đã kết thúc có lợi cho bạn, đã khôi phục số tiền nạp: {{quota}}",

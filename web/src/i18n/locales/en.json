@@ -6473,6 +6473,7 @@
     "Strip suffix": "Strip suffix",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe supports",
+    "{{count}} more payment methods": "{{count}} more payment methods",
     "Stripe API key (leave blank unless updating)": "Stripe API key (leave blank unless updating)",
     "Stripe Dashboard": "Stripe Dashboard",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Stripe dispute closed in your favor, top-up quota restored: {{quota}}",

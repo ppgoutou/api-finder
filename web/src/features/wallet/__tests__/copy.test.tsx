@@ -75,7 +75,7 @@ it('translates billing history statuses and updates them when the language chang
   }
 })
 
-it('labels recharge presets and the custom amount as USD credit without a payable amount before a payment method is chosen', async () => {
+it('shows recharge presets as bare amounts without a USD credit note or payable amount before a payment method is chosen', async () => {
   render(
     <I18nextProvider i18n={i18n}>
       <RechargeFormCard
@@ -98,13 +98,13 @@ it('labels recharge presets and the custom amount as USD credit without a payabl
       />
     </I18nextProvider>
   )
-  expect(screen.getByText('100 美元额度')).toBeVisible()
+  expect(screen.queryByText(/美元额度/)).not.toBeInTheDocument()
   expect(screen.getByText('优惠 20%')).toBeVisible()
   expect(screen.getByLabelText('自定义金额（美元）')).toBeVisible()
   expect(screen.queryByText(/^支付 /)).not.toBeInTheDocument()
   expect(screen.getByPlaceholderText('自定义金额')).toBeVisible()
   await act(() => i18n.changeLanguage('en'))
-  expect(screen.getByText('20 USD credit')).toBeVisible()
+  expect(screen.queryByText(/USD credit/)).not.toBeInTheDocument()
   expect(screen.getByLabelText('Custom amount (USD)')).toBeVisible()
 })
 

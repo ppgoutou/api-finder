@@ -6473,6 +6473,7 @@
     "Strip suffix": "サフィックスを削除",
     "Stripe": "Stripe",
     "Stripe supports": "Stripe 対応",
+    "{{count}} more payment methods": "その他 {{count}} 種類の支払い方法",
     "Stripe API key (leave blank unless updating)": "Stripe APIキー（更新する場合を除き空白のままにしてください）",
     "Stripe Dashboard": "Stripeダッシュボード",
     "Stripe dispute closed in your favor, top-up quota restored: {{quota}}": "Stripe の異議はあなたに有利な形で終了し、チャージ額を戻しました：{{quota}}",
