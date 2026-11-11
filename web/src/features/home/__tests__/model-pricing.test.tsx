@@ -168,7 +168,7 @@ afterEach(() => {
 })
 
 describe('home model pricing', () => {
-  it('prices a series only from its own category, listing variant categories by name', async () => {
+  it('prices a series only from its own category against its official price, listing variant categories by name', async () => {
     mockPricingApi(
       [
         secondModel(
@@ -176,11 +176,17 @@ describe('home model pricing', () => {
           { '480p': 0.2, '720p': 0.4, '4k': 1 },
           { minDuration: 4, maxDuration: 15, ratios: ['16:9', '9:16'] }
         ),
-        secondModel(
-          'G-seedance-2.0',
-          { '480p': 0.3, '720p': 0.3 },
-          { minDuration: 5, maxDuration: 12, ratios: ['16:9', '1:1'] }
-        ),
+        {
+          ...secondModel(
+            'G-seedance-2.0',
+            { '480p': 0.3, '720p': 0.3 },
+            { minDuration: 5, maxDuration: 12, ratios: ['16:9', '1:1'] }
+          ),
+          // Display-only, so the half group ratio never applies to it.
+          official_price_expr:
+            'u("resolution") == "480p" ? tier("480p", u("seconds") * 0.4) : ' +
+            'tier("720p", u("seconds") * 0.5)',
+        },
         secondModel('G-seedance-2.0-fast', { '480p': 0.1, '720p': 0.1 }),
         secondModel('E-seedance-2.0-mini', { '480p': 0.05 }),
       ],
@@ -194,9 +200,9 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.0')).toEqual([
-      ['480p', '$0.1', 'E-seedance-2.0'],
-      ['720p', '$0.15', 'G-seedance-2.0'],
-      ['4K', '$0.5', 'E-seedance-2.0'],
+      ['480p', '$0.1', '$0.4', '75% off'],
+      ['720p', '$0.15', '$0.5', '70% off'],
+      ['4K', '$0.5', '—', '—'],
     ])
     const card = screen
       .getByRole('heading', { level: 3, name: 'Seedance 2.0' })
@@ -204,6 +210,7 @@ describe('home model pricing', () => {
     expect(
       within(card).getByText('Also in the series: fast · Mini')
     ).toBeVisible()
+    expect(within(card).getByText('75% off official prices')).toBeVisible()
     expect(within(card).getByText('480p–4K')).toBeVisible()
     expect(within(card).getByText('4–15 seconds')).toBeVisible()
     expect(within(card).getByText('3 ratios')).toBeVisible()
@@ -228,9 +235,9 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('MiniMax-H3')).toEqual([
-      ['768p', '$0.1', 'E-MiniMax-H3'],
-      ['1080p', '$0.15', 'H-MiniMax-H3-Fast'],
-      ['2K', '$0.2', 'E-MiniMax-H3'],
+      ['768p', '$0.1', '—', '—'],
+      ['1080p', '$0.15', '—', '—'],
+      ['2K', '$0.2', '—', '—'],
     ])
     expect(
       screen
@@ -255,8 +262,8 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.0 Mini')).toEqual([
-      ['480p', '$0.05', 'E-seedance-2.0-mini'],
-      ['720p', '≈$0.03', 'A-seedance-2.0-mini-P'],
+      ['480p', '$0.05', '—', '—'],
+      ['720p', '≈$0.03', '—', '—'],
     ])
   })
 
@@ -268,7 +275,7 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.5')).toEqual([
-      ['480p', '$0.1', 'G-seedance-2.5'],
+      ['480p', '$0.1', '—', '—'],
     ])
     const card = screen
       .getByRole('heading', { level: 3, name: 'Seedance 2.5' })
@@ -289,7 +296,7 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.5')).toEqual([
-      ['480p', '$0.1', 'G-seedance-2.5'],
+      ['480p', '$0.1', '—', '—'],
     ])
   })
 
