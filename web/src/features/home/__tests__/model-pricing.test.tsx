@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -155,12 +155,33 @@ async function seriesRows(name: string): Promise<(string | null)[][]> {
 }
 
 beforeEach(() => {
+  // The cards sit in an embla carousel, which needs these browser APIs.
+  const Observer = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  vi.stubGlobal('IntersectionObserver', Observer)
+  vi.stubGlobal('ResizeObserver', Observer)
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+    }))
+  )
   useSystemConfigStore.getState().setConfig({
     currency: { ...DEFAULT_CURRENCY_CONFIG, quotaDisplayType: 'USD' },
   })
 })
 
 afterEach(() => {
+  // Unmount the carousel before its browser API stubs go away.
+  cleanup()
+  vi.unstubAllGlobals()
   vi.restoreAllMocks()
   useSystemConfigStore
     .getState()
@@ -246,27 +267,33 @@ describe('home model pricing', () => {
     ).toEqual(['MiniMax-H3', 'Seedance 2.5'])
   })
 
-  it.each([
-    [3, true],
-    [4, false],
-  ])(
-    'lays %i series out in three columns only when there are exactly three (%s)',
-    async (count, threeColumns) => {
-      const names = ['Seedance 2.0', 'Seedance 2.5', 'Wan 3.0', 'MiniMax-H3']
-      const series = names.slice(0, count)
-      mockPricingApi(
-        series.map((name) => secondModel(`m-${name}`, { '480p': 0.2 })),
-        series.map((name) => ({ name, models: [`m-${name}`] }))
-      )
-      renderPricing()
+  it('puts every series in one carousel row and gives all cards the official price columns when any series has one', async () => {
+    mockPricingApi(
+      [
+        {
+          ...secondModel('E-seedance-2.0', { '480p': 0.2 }),
+          official_price_expr: 'tier("480p", u("seconds") * 0.4)',
+        },
+        secondModel('G-seedance-2.5', { '480p': 0.2 }),
+        secondModel('W-wan-3.0', { '720p': 0.2 }),
+        secondModel('E-MiniMax-H3', { '768P': 0.2 }),
+      ],
+      [
+        { name: 'Seedance 2.0', models: ['E-seedance-2.0'] },
+        { name: 'Seedance 2.5', models: ['G-seedance-2.5'] },
+        { name: 'Wan 3.0', models: ['W-wan-3.0'] },
+        { name: 'MiniMax-H3', models: ['E-MiniMax-H3'] },
+      ]
+    )
+    renderPricing()
 
-      await screen.findByRole('heading', { level: 3, name: series[0] })
-      expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(count)
-      expect(
-        screen.getByTestId('series-grid').classList.contains('lg:grid-cols-3')
-      ).toBe(threeColumns)
-    }
-  )
+    expect(await seriesRows('MiniMax-H3')).toEqual([['768p', '$0.1', '—', '—']])
+    const carousel = screen.getByRole('region', { name: 'Models and pricing' })
+    expect(within(carousel).getAllByRole('group')).toHaveLength(4)
+    expect(within(carousel).getAllByRole('heading', { level: 3 })).toHaveLength(
+      4
+    )
+  })
 
   it('keeps the exact price when a token-billed model displays the same price', async () => {
     mockPricingApi(
