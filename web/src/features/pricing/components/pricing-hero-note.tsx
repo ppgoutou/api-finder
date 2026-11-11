@@ -28,9 +28,6 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { SUPPORT_TELEGRAM } from '@/features/home/lib/video-home'
@@ -97,24 +94,14 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
             aria-hidden
           />
         </PopoverTrigger>
-        <PopoverContent className='w-80 max-w-[calc(100vw-2rem)] gap-3 p-3.5'>
-          <PopoverHeader>
-            <PopoverTitle>
-              {t('Unlock unrestricted content models')}
-            </PopoverTitle>
-            <PopoverDescription>
-              {t(
-                'Message our support on Telegram and they will enable unrestricted content models for your account.'
-              )}
-            </PopoverDescription>
-          </PopoverHeader>
+        <PopoverContent className='w-auto max-w-[calc(100vw-2rem)] p-2'>
           <a
             href={`https://t.me/${SUPPORT_TELEGRAM}`}
             target='_blank'
             rel='noopener noreferrer'
             className={cn(
               buttonVariants(),
-              'h-auto min-h-8 w-full py-1.5 whitespace-normal'
+              'h-auto min-h-8 py-1.5 whitespace-normal'
             )}
           >
             <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />
