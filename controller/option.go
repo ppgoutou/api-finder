@@ -248,6 +248,14 @@ func UpdateOption(c *gin.Context) {
 			common.ApiErrorT(c, "Invalid pricing category settings")
 			return
 		}
+		var officialPrice *pricingCategoryOfficialPriceError
+		common.OptionMapRWMutex.RLock()
+		previous := common.OptionMap[pricingCategoriesOptionKey]
+		common.OptionMapRWMutex.RUnlock()
+		if err := validatePricingCategoryOfficialPrices(previous, option.Value.(string)); errors.As(err, &officialPrice) {
+			common.ApiErrorT(c, "The category official price does not fit model {{model}}", map[string]any{"model": officialPrice.Model})
+			return
+		}
 	}
 	if option.Key == "TaskPublicAddress" && option.Value.(string) != "" {
 		if err := service.ValidateTaskArtifactBaseURL(option.Value.(string)); err != nil {

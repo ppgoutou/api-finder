@@ -67,6 +67,7 @@ import { usePricingData } from '../hooks/use-pricing-data'
 import type { ParsedTaskTier } from '../lib/billing-expr'
 import { formatBillingCondition } from '../lib/billing-expression/condition-display'
 import {
+  formatDynamicUnitPrice,
   formatTaskUsageUnitPrice,
   getDynamicPriceEntries,
   getDynamicPriceUnitLabelKey,
@@ -78,6 +79,7 @@ import {
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
 import { getAvailableGroups, isTokenBasedModel } from '../lib/model-helpers'
+import { getOfficialTokenPricing } from '../lib/official-price'
 import { withPluginPricing } from '../lib/plugin-pricing'
 import { formatFixedPrice, formatGroupPrice } from '../lib/price'
 import {
@@ -703,6 +705,72 @@ function getDynamicFormattedPricesByTier(
 }
 
 // ----------------------------------------------------------------------------
+// Official token price
+// ----------------------------------------------------------------------------
+
+/** The vendor's published per-token price; display-only, no group ratio. */
+function OfficialTokenPricingSection(props: {
+  model: PricingModel
+  priceRate: number
+  usdExchangeRate: number
+  tokenUnit: TokenUnit
+  showRechargePrice: boolean
+}) {
+  const { t } = useTranslation()
+  const official = getOfficialTokenPricing(props.model)
+  if (!official) return null
+  const options: DynamicPriceOptions = {
+    tokenUnit: props.tokenUnit,
+    showRechargePrice: props.showRechargePrice,
+    priceRate: props.priceRate,
+    usdExchangeRate: props.usdExchangeRate,
+  }
+  const prices = [
+    { key: 'input', label: t('Input'), value: official.input },
+    { key: 'output', label: t('Output'), value: official.output },
+    ...(official.cacheRead !== undefined
+      ? [
+          {
+            key: 'cache-read',
+            label: t('Cache Read'),
+            value: official.cacheRead,
+          },
+        ]
+      : []),
+    ...(official.cacheWrite !== undefined
+      ? [
+          {
+            key: 'cache-write',
+            label: t('Cache Write'),
+            value: official.cacheWrite,
+          },
+        ]
+      : []),
+  ]
+  return (
+    <section aria-label={t('Official Price')}>
+      <h4 className='text-muted-foreground mb-2 text-xs font-medium'>
+        {t('Official Price')}
+      </h4>
+      <dl className='grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4'>
+        {prices.map((price) => (
+          <div key={price.key}>
+            <dt className='text-muted-foreground text-xs'>{price.label}</dt>
+            <dd className='mt-1 font-mono tabular-nums'>
+              {formatDynamicUnitPrice(price.value, options)}
+              <span className='text-muted-foreground text-xs'>
+                {' '}
+                / {props.tokenUnit === 'K' ? '1K' : '1M'}
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+// ----------------------------------------------------------------------------
 // Group pricing table
 // ----------------------------------------------------------------------------
 
@@ -1246,6 +1314,15 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
                 groupRatio={props.groupRatio}
                 priceRate={props.priceRate}
                 usdExchangeRate={props.usdExchangeRate}
+                showRechargePrice={showRechargePrice}
+              />
+            )}
+            {!videoPricing && (
+              <OfficialTokenPricingSection
+                model={props.model}
+                priceRate={props.priceRate}
+                usdExchangeRate={props.usdExchangeRate}
+                tokenUnit={props.tokenUnit}
                 showRechargePrice={showRechargePrice}
               />
             )}
