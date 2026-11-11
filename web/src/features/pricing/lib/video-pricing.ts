@@ -175,8 +175,58 @@ export function getVideoPricing(model: PricingModel): VideoPricing | null {
 export function getOfficialVideoPricing(
   model: PricingModel
 ): VideoPricing | null {
-  if (!model.official_price_expr?.trim()) return null
-  return videoPricingFromExpr(model, model.official_price_expr)
+  if (model.official_price_expr?.trim()) {
+    return videoPricingFromExpr(model, model.official_price_expr)
+  }
+  const table = model.official_price
+  const schema = model.billing_usage_schema
+  const optionField = getVideoOptionField(schema)
+  if (table?.kind !== 'video' || !schema || !optionField) return null
+  // A category table lists every option of its models; each model shows the
+  // rows of the options it supports, in its own order.
+  const rows = (schema[optionField]?.enum ?? []).flatMap(
+    (option): VideoPricingRow[] => {
+      const row = table.rows.find((item) => item.option === option)
+      if (!row) return []
+      return [
+        {
+          option,
+          secondPrice: row.second,
+          ...(row.reference_second
+            ? { referenceSecondPrice: row.reference_second }
+            : {}),
+        },
+      ]
+    }
+  )
+  if (rows.length === 0) return null
+  return {
+    optionField,
+    hasReferencePricing: rows.some(
+      (row) => row.referenceSecondPrice !== undefined
+    ),
+    durationRange: getModelDurationRange(model),
+    rows,
+  }
+}
+
+/**
+ * The enum, such as resolution, a video model's per-second price is shown by:
+ * the option of a per-second schema, or the resolution of a model billed by
+ * video tokens. Undefined for schemas the page does not show per second.
+ */
+export function getVideoOptionField(
+  schema: BillingUsageSchema | null | undefined
+): string | undefined {
+  const fields = getVideoSchemaFields(schema)
+  if (fields) return fields.optionField
+  const numberFields = getTaskNumberFields(schema)
+  if (numberFields.length !== 1 || numberFields[0][1].unit !== 'token') {
+    return undefined
+  }
+  return getTaskEnumFields(schema).find((entry) =>
+    entry[1].enum?.every((value) => VIDEO_TOKENS_PER_SECOND[value])
+  )?.[0]
 }
 
 function videoPricingFromExpr(

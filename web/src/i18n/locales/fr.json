@@ -8178,7 +8178,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "Le prix officiel enregistré ne peut pas être affiché dans ce formulaire. L’enregistrement le remplacera.",
     "Use category price": "Utiliser le prix de la catégorie",
     "Models of this category show it when they have no official price of their own. It is never charged.": "Les modèles de cette catégorie sans prix officiel propre l’affichent. Il n’est jamais facturé.",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Un prix officiel unique n’est possible que si tous les modèles sont facturés de la même façon : à la seconde avec les mêmes résolutions, ou au token. Modèles différents : {{models}}",
-    "The category official price does not fit model {{model}}": "Le prix officiel de la catégorie ne convient pas au modèle {{model}}"
+    "The category official price does not fit model {{model}}": "Le prix officiel de la catégorie ne convient pas au modèle {{model}}",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Chaque modèle affiche les résolutions qu’il prend en charge. Laissez une résolution vide pour la masquer.",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Un prix officiel unique exige que tous les modèles soient affichés de la même façon : tous à la seconde ou tous au token. Modèles affichés autrement : {{models}}"
   }
 }

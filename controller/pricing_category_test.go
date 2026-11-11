@@ -34,6 +34,14 @@ func TestValidatePricingCategories(t *testing.T) {
 		{name: "repeated badge", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.0":["hot","hot"]}}]`},
 		{name: "badge on a model outside the category", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.5":["hot"]}}]`},
 		{name: "category official price", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price_expr":"tier(\"base\", p * 2 + c * 8)"}]`, valid: true},
+		{name: "video official price table", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":0.5},{"option":"720p","second":1,"reference_second":1.2}]}}]`, valid: true},
+		{name: "token official price table", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":2,"output":8,"cache_read":0.5}}]`, valid: true},
+		{name: "video row without a per-second price", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":0}]}}]`},
+		{name: "video rows with a repeated option", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":1},{"option":"480p","second":2}]}}]`},
+		{name: "negative reference price", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":1,"reference_second":-1}]}}]`},
+		{name: "token price without output", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":2}}]`},
+		{name: "token price of zero", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":0,"output":0}}]`},
+		{name: "unknown official price kind", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"request"}}]`},
 		{name: "padded official price", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price_expr":" tier(\"base\", p * 2)"}]`},
 	}
 	for _, tt := range tests {
@@ -130,4 +138,22 @@ func TestValidatePricingCategoryOfficialPrices(t *testing.T) {
 			assert.Equal(t, tt.model, officialPrice.Model)
 		})
 	}
+}
+
+func TestInheritCategoryOfficialPriceTable(t *testing.T) {
+	table := &model.OfficialPriceTable{Kind: "video", Rows: []model.OfficialPriceVideoRow{{Option: "720p", Second: 1}}}
+	categories := []pricingCategory{
+		{ID: "sd", Name: "Seedance", Models: []string{"line-a", "line-b"}, OfficialPrice: table},
+	}
+	pricing := []model.Pricing{
+		{ModelName: "line-a"},
+		{ModelName: "line-b", OfficialPriceExpr: `tier("720p", u("seconds") * 2)`},
+	}
+
+	inheritCategoryOfficialPrices(pricing, categories)
+	public := publicPricingCategories(pricing, categories)
+
+	assert.Same(t, table, pricing[0].OfficialPrice)
+	assert.Nil(t, pricing[1].OfficialPrice, "a model's own official price takes precedence")
+	assert.Nil(t, public[0].OfficialPrice, "the category list does not repeat the inherited table")
 }

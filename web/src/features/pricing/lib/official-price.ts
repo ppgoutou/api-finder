@@ -16,10 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { BillingUsageSchema, PricingModel } from '../types'
+import type {
+  BillingUsageSchema,
+  OfficialPriceTable,
+  PricingModel,
+} from '../types'
 import { hasTaskUsageSchema } from './dynamic-price'
 import { isTokenBasedModel } from './model-helpers'
-import { TASK_TOKEN_PRICE_SCALE } from './task-expr'
+import { getTaskEnumFields, TASK_TOKEN_PRICE_SCALE } from './task-expr'
 import {
   exprUsesExtraVars,
   generateExprFromVisualConfig,
@@ -27,7 +31,9 @@ import {
 } from './tier-expr'
 import {
   getOfficialVideoPricing,
+  getVideoOptionField,
   getVideoSchemaFields,
+  VIDEO_TOKENS_PER_SECOND,
   INPUT_IMAGES_FIELD,
   INPUT_VIDEO_SECONDS_FIELD,
   type VideoSchemaFields,
@@ -127,70 +133,64 @@ export function officialPriceLayout(
   }
 }
 
-function sameVideoLayout(
-  left: VideoOfficialLayout,
-  right: VideoOfficialLayout
-): boolean {
-  return (
-    JSON.stringify([
-      left.fields,
-      left.options,
-      left.referenceSwitchValue,
-      left.inputVideoSeconds,
-      left.inputImages,
-    ]) ===
-    JSON.stringify([
-      right.fields,
-      right.options,
-      right.referenceSwitchValue,
-      right.inputVideoSeconds,
-      right.inputImages,
-    ])
-  )
-}
-
 export type CategoryOfficialLayout =
   | { layout: OfficialPriceLayout; conflicts: [] }
   | { layout: null; conflicts: string[] }
 
 /**
- * One layout for every model of a category. Models shown another way, or video
- * models with other resolutions or reference pricing, are returned as
- * conflicts, since one official price cannot be shown for all of them.
+ * One layout for every model of a category, following how the pricing page
+ * shows their prices. Video models, billed per second or by video tokens, share
+ * one per-second table over every option of the category; token models share
+ * one per-1M-token price. Models shown any other way are returned as conflicts.
  */
 export function categoryOfficialLayout(
   models: PricingModel[]
 ): CategoryOfficialLayout {
-  const layouts = models.map((model) => ({
-    name: model.model_name,
-    layout: officialPriceLayout(model),
-  }))
-  const first = layouts.find((item) => item.layout)?.layout
-  if (!first) {
-    return { layout: null, conflicts: layouts.map((item) => item.name) }
-  }
-  const conflicts = layouts
-    .filter((item) => {
-      if (!item.layout || item.layout.kind !== first.kind) return true
-      if (item.layout.kind === 'video' && first.kind === 'video') {
-        return !sameVideoLayout(item.layout, first)
+  const options: string[] = []
+  let reference = false
+  const video: string[] = []
+  const token: string[] = []
+  const other: string[] = []
+  let cache = false
+  for (const model of models) {
+    const schema = model.billing_usage_schema
+    const optionField = getVideoOptionField(schema)
+    if (hasTaskUsageSchema(model) && schema && optionField) {
+      video.push(model.model_name)
+      for (const option of schema[optionField]?.enum ?? []) {
+        if (!options.includes(option)) options.push(option)
       }
-      return false
-    })
-    .map((item) => item.name)
-  if (conflicts.length > 0) return { layout: null, conflicts }
-  if (first.kind === 'token') {
-    return {
-      layout: {
-        kind: 'token',
-        cache: layouts.some(
-          (item) => item.layout?.kind === 'token' && item.layout.cache
-        ),
-      },
-      conflicts: [],
+      reference ||= getTaskEnumFields(schema).some(
+        (entry) => entry[0] !== optionField && entry[1].enum?.includes('none')
+      )
+      continue
     }
+    const layout = officialPriceLayout(model)
+    if (layout?.kind === 'token') {
+      token.push(model.model_name)
+      cache ||= layout.cache
+      continue
+    }
+    other.push(model.model_name)
   }
-  return { layout: first, conflicts: [] }
+  if (other.length > 0 || (video.length > 0 && token.length > 0)) {
+    const minority = video.length >= token.length ? token : video
+    return { layout: null, conflicts: [...other, ...minority] }
+  }
+  if (token.length > 0) {
+    return { layout: { kind: 'token', cache }, conflicts: [] }
+  }
+  const known = Object.keys(VIDEO_TOKENS_PER_SECOND)
+  if (options.every((option) => known.includes(option))) {
+    options.sort((left, right) => known.indexOf(left) - known.indexOf(right))
+  }
+  const layout = videoLayout({
+    seconds: { type: 'number', unit: 'second' },
+    resolution: { enum: options },
+    ...(reference ? { video_input: { enum: ['none', 'video'] } } : {}),
+  })
+  if (!layout) return { layout: null, conflicts: [] }
+  return { layout, conflicts: [] }
 }
 
 export function emptyOfficialDraft(
@@ -298,18 +298,94 @@ export function isOfficialDraftEmpty(draft: OfficialPriceDraft): boolean {
   )
 }
 
-/** Why the draft cannot be saved yet; null when it can. */
+/**
+ * Why the draft cannot be saved yet; null when it can. A model's price needs
+ * every option; a category table may leave options out, and those rows are
+ * simply not shown.
+ */
 export function officialDraftError(
-  draft: OfficialPriceDraft
+  draft: OfficialPriceDraft,
+  options: { allowBlankRows?: boolean } = {}
 ): OfficialPriceDraftError | null {
   if (draft.kind === 'token' || isOfficialDraftEmpty(draft)) return null
   const rows = Object.values(draft.rows)
+  if (options.allowBlankRows) {
+    const partial = rows.some(
+      (row) =>
+        !filled(row.second) && Object.values(row).some((value) => filled(value))
+    )
+    return partial ? 'missing-second' : null
+  }
   if (rows.some((row) => !filled(row.second))) return 'missing-second'
   const referenced = rows.filter((row) => filled(row.referenceSecond))
   if (referenced.length > 0 && referenced.length !== rows.length) {
     return 'missing-reference'
   }
   return null
+}
+
+/** The form values of an official price table in this layout. */
+export function officialDraftFromTable(
+  layout: OfficialPriceLayout,
+  table: OfficialPriceTable
+): OfficialPriceDraft | null {
+  if (layout.kind === 'token') {
+    if (table.kind !== 'token') return null
+    return {
+      kind: 'token',
+      input: amountText(table.input),
+      output: amountText(table.output),
+      cacheRead: amountText(table.cache_read),
+      cacheWrite: amountText(table.cache_write),
+    }
+  }
+  if (table.kind !== 'video') return null
+  const draft = emptyOfficialDraft(layout) as VideoOfficialDraft
+  for (const row of table.rows) {
+    const current = draft.rows[row.option]
+    if (!current) continue
+    draft.rows[row.option] = {
+      ...current,
+      second: amountText(row.second),
+      referenceSecond: amountText(row.reference_second),
+    }
+  }
+  return draft
+}
+
+/** The official price table to save; null when the draft holds no price. */
+export function officialTableFromDraft(
+  draft: OfficialPriceDraft
+): OfficialPriceTable | null {
+  if (isOfficialDraftEmpty(draft)) return null
+  if (draft.kind === 'token') {
+    if (!filled(draft.input) && !filled(draft.output)) return null
+    return {
+      kind: 'token',
+      input: Number(draft.input) || 0,
+      output: Number(draft.output) || 0,
+      ...(filled(draft.cacheRead)
+        ? { cache_read: Number(draft.cacheRead) }
+        : {}),
+      ...(filled(draft.cacheWrite)
+        ? { cache_write: Number(draft.cacheWrite) }
+        : {}),
+    }
+  }
+  const rows = Object.entries(draft.rows).flatMap(([option, row]) =>
+    filled(row.second)
+      ? [
+          {
+            option,
+            second: Number(row.second),
+            ...(filled(row.referenceSecond)
+              ? { reference_second: Number(row.referenceSecond) }
+              : {}),
+          },
+        ]
+      : []
+  )
+  return rows.length > 0 ? { kind: 'video', rows } : null
 }
 
 function price(value: string): string {
@@ -425,10 +501,17 @@ export type TokenOfficialPricing = {
 export function getOfficialTokenPricing(
   model: PricingModel
 ): TokenOfficialPricing | null {
-  if (!model.official_price_expr?.trim()) return null
   if (officialPriceLayout(model)?.kind !== 'token') return null
-  const draft = parseTokenOfficialPrice(model.official_price_expr)
-  if (!draft || isOfficialDraftEmpty(draft)) return null
+  let draft: OfficialPriceDraft | null = null
+  if (model.official_price_expr?.trim()) {
+    draft = parseTokenOfficialPrice(model.official_price_expr)
+  } else if (model.official_price) {
+    draft = officialDraftFromTable(
+      { kind: 'token', cache: true },
+      model.official_price
+    )
+  }
+  if (draft?.kind !== 'token' || isOfficialDraftEmpty(draft)) return null
   return {
     input: Number(draft.input) || 0,
     output: Number(draft.output) || 0,

@@ -75,3 +75,28 @@ it('shows no official price section for a token model without one', () => {
 
   expect(screen.queryByRole('region', { name: 'Official Price' })).toBeNull()
 })
+
+it('shows the inherited per-second table on a line billed by video tokens', () => {
+  renderDetails({
+    ...tokenModel,
+    model_name: 'e-line',
+    billing_mode: 'tiered_expr',
+    billing_expr: 'tier("base", u("tokens") * 40 / 1000000)',
+    billing_usage_schema: {
+      tokens: { type: 'number', unit: 'token' },
+      resolution: { enum: ['720p', '4k'] },
+      video_input: { enum: ['none', 'video'] },
+    },
+    official_price: {
+      kind: 'video',
+      rows: [
+        { option: '480p', second: 0.5 },
+        { option: '720p', second: 1 },
+      ],
+    },
+  })
+
+  expect(screen.getByText('Official Price')).toBeVisible()
+  expect(screen.getByText('720p')).toBeVisible()
+  expect(screen.queryByText('480p')).toBeNull()
+})

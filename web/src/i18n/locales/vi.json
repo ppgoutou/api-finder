@@ -8178,7 +8178,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "Không thể hiển thị giá chính thức đã lưu trong biểu mẫu này. Lưu sẽ thay thế nó.",
     "Use category price": "Dùng giá danh mục",
     "Models of this category show it when they have no official price of their own. It is never charged.": "Các mô hình trong danh mục chưa có giá chính thức riêng sẽ hiển thị giá này. Không bao giờ bị tính phí.",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Chỉ đặt được một giá chính thức khi mọi mô hình tính giá giống nhau: theo giây với cùng độ phân giải, hoặc theo token. Mô hình khác biệt: {{models}}",
-    "The category official price does not fit model {{model}}": "Giá chính thức của danh mục không phù hợp với mô hình {{model}}"
+    "The category official price does not fit model {{model}}": "Giá chính thức của danh mục không phù hợp với mô hình {{model}}",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Mỗi mô hình chỉ hiển thị các độ phân giải nó hỗ trợ. Để trống một độ phân giải để ẩn nó.",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Một giá chính thức chung yêu cầu mọi mô hình hiển thị giống nhau: tất cả theo giây hoặc tất cả theo token. Mô hình hiển thị khác: {{models}}"
   }
 }

@@ -32,7 +32,10 @@ import { pricingOptions } from '../pricing'
 const CATEGORY_PRICE = 'tier("base", p * 2 + c * 8)'
 const OWN_PRICE = 'tier("base", p * 1 + c * 4)'
 
-function mockApi(ownPrice?: string) {
+function mockApi(
+  ownPrice?: string,
+  category: Record<string, unknown> = { official_price_expr: CATEGORY_PRICE }
+) {
   const configured: Record<string, string> = ownPrice
     ? { 'billing_setting.official_price_expr': ownPrice }
     : {}
@@ -53,7 +56,7 @@ function mockApi(ownPrice?: string) {
           id: 'chat',
           name: 'Chat',
           models: ['chat-x'],
-          official_price_expr: CATEGORY_PRICE,
+          ...category,
         },
       ]
       return {
@@ -122,6 +125,26 @@ describe('model official price editor', () => {
       '/api/option/model_pricing/official',
       { model_name: 'chat-x', expression: 'tier("base", p * 3 + c * 8)' },
     ])
+  })
+
+  it('prefills the inherited price from a category price table', async () => {
+    mockApi(undefined, {
+      official_price: { kind: 'token', input: 2.5, output: 10 },
+    })
+    renderEditor()
+
+    expect(
+      await screen.findByText(/Inherited from category Chat/)
+    ).toBeVisible()
+    await waitFor(() =>
+      expect(screen.getByLabelText('Input (USD / 1M tokens)')).toHaveValue(
+        '2.5'
+      )
+    )
+    expect(screen.getByLabelText('Output (USD / 1M tokens)')).toHaveValue('10')
+    expect(
+      screen.getByRole('button', { name: 'Save official price' })
+    ).toBeDisabled()
   })
 
   it('shows the model own price over the category and removes it to inherit again', async () => {

@@ -19,6 +19,9 @@ const (
 	pricingCategoryIDMaxLength      = 64
 	pricingCategoryModelNameMaxSize = 255
 	pricingCategoryOfficialMaxSize  = 8192
+	officialPriceRowsMax            = 32
+	officialPriceOptionMaxLength    = 32
+	officialPriceAmountMax          = 1_000_000
 )
 
 // pricingModelBadges are the highlight labels an administrator can put on a
@@ -27,15 +30,17 @@ var pricingModelBadges = []string{"recommended", "hot", "new"}
 
 // pricingCategory groups models on the public pricing page. The option stores
 // them in display order, each model listed in the order it is shown, and the
-// badges shown on the cards of its models. OfficialPriceExpr is the
-// display-only official price its models show when they have none of their own.
+// badges shown on the cards of its models. OfficialPrice is the display-only
+// official price table its models show when they have no official price of
+// their own; OfficialPriceExpr is the expression form saved before the table.
 type pricingCategory struct {
-	ID                string              `json:"id"`
-	Name              string              `json:"name"`
-	Description       string              `json:"description"`
-	Models            []string            `json:"models"`
-	Badges            map[string][]string `json:"badges,omitempty"`
-	OfficialPriceExpr string              `json:"official_price_expr,omitempty"`
+	ID                string                    `json:"id"`
+	Name              string                    `json:"name"`
+	Description       string                    `json:"description"`
+	Models            []string                  `json:"models"`
+	Badges            map[string][]string       `json:"badges,omitempty"`
+	OfficialPriceExpr string                    `json:"official_price_expr,omitempty"`
+	OfficialPrice     *model.OfficialPriceTable `json:"official_price,omitempty"`
 }
 
 var errInvalidPricingCategories = errors.New("invalid pricing categories")
@@ -91,6 +96,9 @@ func validatePricingCategories(value string) error {
 		if len(category.OfficialPriceExpr) > pricingCategoryOfficialMaxSize || category.OfficialPriceExpr != strings.TrimSpace(category.OfficialPriceExpr) {
 			return errInvalidPricingCategories
 		}
+		if category.OfficialPrice != nil && !validOfficialPriceTable(category.OfficialPrice) {
+			return errInvalidPricingCategories
+		}
 		if _, seen := ids[id]; seen {
 			return errInvalidPricingCategories
 		}
@@ -119,6 +127,54 @@ func validatePricingCategories(value string) error {
 		}
 	}
 	return nil
+}
+
+func validOfficialPriceAmount(amount *float64, required bool) bool {
+	if amount == nil {
+		return !required
+	}
+	return *amount >= 0 && *amount <= officialPriceAmountMax
+}
+
+// validOfficialPriceTable accepts a video table of distinct options with a
+// positive per-second price each, or a token price with input and output.
+func validOfficialPriceTable(table *model.OfficialPriceTable) bool {
+	switch table.Kind {
+	case "video":
+		if len(table.Rows) == 0 || len(table.Rows) > officialPriceRowsMax {
+			return false
+		}
+		if table.Input != nil || table.Output != nil || table.CacheRead != nil || table.CacheWrite != nil {
+			return false
+		}
+		seen := make(map[string]struct{}, len(table.Rows))
+		for _, row := range table.Rows {
+			option := strings.TrimSpace(row.Option)
+			if option == "" || option != row.Option || len(option) > officialPriceOptionMaxLength {
+				return false
+			}
+			if _, duplicate := seen[option]; duplicate {
+				return false
+			}
+			seen[option] = struct{}{}
+			second := row.Second
+			if second <= 0 || !validOfficialPriceAmount(&second, true) || !validOfficialPriceAmount(row.ReferenceSecond, false) {
+				return false
+			}
+		}
+		return true
+	case "token":
+		if len(table.Rows) > 0 {
+			return false
+		}
+		if !validOfficialPriceAmount(table.Input, true) || !validOfficialPriceAmount(table.Output, true) ||
+			!validOfficialPriceAmount(table.CacheRead, false) || !validOfficialPriceAmount(table.CacheWrite, false) {
+			return false
+		}
+		return *table.Input > 0 || *table.Output > 0
+	default:
+		return false
+	}
 }
 
 // validatePricingCategoryOfficialPrices checks each category's official price
@@ -173,22 +229,28 @@ func savedPricingCategories() []pricingCategory {
 // its own the official price of its category. The slice must be the caller's
 // copy, never the shared pricing cache.
 func inheritCategoryOfficialPrices(pricing []model.Pricing, categories []pricingCategory) {
-	inherited := make(map[string]string)
-	for _, category := range categories {
-		if category.OfficialPriceExpr == "" {
+	owners := make(map[string]*pricingCategory)
+	for i := range categories {
+		if categories[i].OfficialPrice == nil && categories[i].OfficialPriceExpr == "" {
 			continue
 		}
-		for _, modelName := range category.Models {
-			inherited[modelName] = category.OfficialPriceExpr
+		for _, modelName := range categories[i].Models {
+			owners[modelName] = &categories[i]
 		}
 	}
 	for i := range pricing {
 		if strings.TrimSpace(pricing[i].OfficialPriceExpr) != "" {
 			continue
 		}
-		if expression, ok := inherited[pricing[i].ModelName]; ok {
-			pricing[i].OfficialPriceExpr = expression
+		category, ok := owners[pricing[i].ModelName]
+		if !ok {
+			continue
 		}
+		if category.OfficialPrice != nil {
+			pricing[i].OfficialPrice = category.OfficialPrice
+			continue
+		}
+		pricing[i].OfficialPriceExpr = category.OfficialPriceExpr
 	}
 }
 
@@ -212,6 +274,7 @@ func publicPricingCategories(pricing []model.Pricing, categories []pricingCatego
 		}
 		category.Models = models
 		category.OfficialPriceExpr = ""
+		category.OfficialPrice = nil
 		for modelName := range category.Badges {
 			if _, ok := visible[modelName]; !ok {
 				delete(category.Badges, modelName)

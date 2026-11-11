@@ -114,7 +114,8 @@ export function PricingCategoriesSection() {
       description: values.description.trim(),
       models: values.models,
       badges: selectedModelBadges(values.models, values.badges),
-      ...(values.officialPriceExpr.trim()
+      ...(values.officialPrice ? { official_price: values.officialPrice } : {}),
+      ...(!values.officialPrice && values.officialPriceExpr.trim()
         ? { official_price_expr: values.officialPriceExpr.trim() }
         : {}),
     }

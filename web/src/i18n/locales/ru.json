@@ -8178,7 +8178,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "Сохранённую официальную цену нельзя показать в этой форме. Сохранение заменит её.",
     "Use category price": "Использовать цену категории",
     "Models of this category show it when they have no official price of their own. It is never charged.": "Модели категории без собственной официальной цены показывают эту. Она никогда не списывается.",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Единую официальную цену можно задать, только если все модели тарифицируются одинаково: за секунду с одинаковыми разрешениями или за токены. Отличаются: {{models}}",
-    "The category official price does not fit model {{model}}": "Официальная цена категории не подходит для модели {{model}}"
+    "The category official price does not fit model {{model}}": "Официальная цена категории не подходит для модели {{model}}",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Каждая модель показывает только поддерживаемые разрешения. Оставьте разрешение пустым, чтобы скрыть его.",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Единая официальная цена требует одинакового отображения всех моделей: все за секунду или все за токены. Отображаются иначе: {{models}}"
   }
 }

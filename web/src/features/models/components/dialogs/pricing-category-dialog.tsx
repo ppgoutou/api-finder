@@ -75,6 +75,7 @@ export function PricingCategoryDialog(props: {
       models: [],
       badges: {},
       officialPriceExpr: '',
+      officialPrice: null,
     },
   })
   const canEditPricing = useCanEditModelPricing()
@@ -88,6 +89,7 @@ export function PricingCategoryDialog(props: {
       models: props.category?.models ?? [],
       badges: props.category?.badges ?? {},
       officialPriceExpr: props.category?.official_price_expr ?? '',
+      officialPrice: props.category?.official_price ?? null,
     })
   }, [props.open, props.category, form])
 
@@ -297,13 +299,17 @@ export function PricingCategoryDialog(props: {
           {canEditPricing && (
             <FormField
               control={form.control}
-              name='officialPriceExpr'
+              name='officialPrice'
               render={({ field }) => (
                 <FormItem>
                   <CategoryOfficialPrice
                     models={selectedModels}
                     value={field.value}
-                    onChange={field.onChange}
+                    legacyExpression={form.watch('officialPriceExpr')}
+                    onChange={(table) => {
+                      field.onChange(table)
+                      form.setValue('officialPriceExpr', '')
+                    }}
                     onBlockedChange={setOfficialBlocked}
                     disabled={props.isSaving}
                   />

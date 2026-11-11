@@ -28,6 +28,7 @@ import {
 import {
   officialDraftError,
   officialDraftFromExpr,
+  officialDraftFromTable,
   officialExprFromDraft,
   officialPriceLayout,
   type OfficialPriceDraft,
@@ -64,19 +65,29 @@ export function OfficialPriceEditor(props: { modelName: string }) {
       : undefined
     return parsePricingCategories(stored).find(
       (item) =>
-        item.models.includes(props.modelName) && item.official_price_expr
+        item.models.includes(props.modelName) &&
+        (item.official_price || item.official_price_expr)
     )
   }, [options.data, props.modelName])
-  const inherited = category?.official_price_expr ?? ''
   const layout = useMemo(
     () => (entry ? officialPriceLayout(modelPricingDisplay(entry)) : null),
     [entry]
   )
-  const source = own || inherited
-  const initial = useMemo(
-    () => (layout ? officialDraftFromExpr(layout, source) : null),
-    [layout, source]
-  )
+  const inheritedDraft = useMemo(() => {
+    if (!layout || !category) return null
+    if (category.official_price) {
+      return officialDraftFromTable(layout, category.official_price)
+    }
+    return officialDraftFromExpr(layout, category.official_price_expr)
+  }, [layout, category])
+  const inherited =
+    layout && inheritedDraft
+      ? officialExprFromDraft(layout, inheritedDraft)
+      : ''
+  const initial = useMemo(() => {
+    if (!layout) return null
+    return own ? officialDraftFromExpr(layout, own) : inheritedDraft
+  }, [layout, own, inheritedDraft])
   const [draft, setDraft] = useState<OfficialPriceDraft | null>(null)
 
   useEffect(() => {

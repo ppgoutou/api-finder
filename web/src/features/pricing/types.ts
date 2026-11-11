@@ -43,7 +43,26 @@ export type PricingCategory = {
    * own. Only the administrator option holds it; the public list leaves it out.
    */
   official_price_expr?: string
+  /** Official price table its models show when they have none of their own. */
+  official_price?: OfficialPriceTable
 }
+
+/**
+ * A display-only official price entered the way the pricing page shows it, in
+ * USD before any group ratio. A video model shows the rows of its options.
+ */
+export type OfficialPriceTable =
+  | {
+      kind: 'video'
+      rows: { option: string; second: number; reference_second?: number }[]
+    }
+  | {
+      kind: 'token'
+      input: number
+      output: number
+      cache_read?: number
+      cache_write?: number
+    }
 
 export type BillingUsageUnit = 'second' | 'count' | 'token' | 'credit'
 
@@ -105,6 +124,8 @@ export type PricingModel = {
   billing_expr?: string
   /** Display-only vendor price in the billing expression language; never charged. */
   official_price_expr?: string
+  /** Official price table inherited from the model's pricing category. */
+  official_price?: OfficialPriceTable
   /** Task-plugin usage facts and their billing units. */
   billing_usage_schema?: BillingUsageSchema
   /** Display-only labeled usage vectors for pricing examples. */
