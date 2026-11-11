@@ -29,6 +29,7 @@ import { useEffect } from 'react'
 
 import { AuroraBackground } from '@/components/aurora-background'
 import { NavigationProgress } from '@/components/navigation-progress'
+import { SupportWidget } from '@/components/support-widget'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeCustomizationProvider } from '@/context/theme-customization-provider'
 import { saveAffiliateCode } from '@/features/auth/lib/storage'
@@ -98,6 +99,7 @@ function RootComponent() {
       <AuroraBackground />
       <NavigationProgress />
       <Outlet />
+      <SupportWidget />
       <Toaster closeButton duration={5000} position='top-center' richColors />
       {import.meta.env.MODE === 'development' && (
         <>
