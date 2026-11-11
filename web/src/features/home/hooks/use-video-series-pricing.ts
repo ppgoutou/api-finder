@@ -21,6 +21,7 @@ import { formatTaskUsageUnitPrice } from '@/features/pricing/lib/dynamic-price'
 import { getDisplayGroupRatio } from '@/features/pricing/lib/model-helpers'
 import {
   getModelDurationRange,
+  getOfficialVideoPricing,
   getPerVideoPricing,
   getTokenVideoPricing,
   getVideoPricing,
@@ -28,6 +29,8 @@ import {
 } from '@/features/pricing/lib/video-pricing'
 import type { PricingCategory } from '@/features/pricing/types'
 import { useSystemConfigStore } from '@/stores/system-config-store'
+
+import { getPriceDiscount, type PriceDiscount } from '../lib/video-home'
 
 export type SeriesPriceRow = {
   option: string
@@ -37,6 +40,13 @@ export type SeriesPriceRow = {
   modelName: string
   /** The price is converted from video tokens, so it is an estimate. */
   approximate: boolean
+  /**
+   * Admin-configured official price per second for this resolution, from
+   * any model of the category; null when none is configured.
+   */
+  officialPrice: string | null
+  /** Discount of the price against the official price, if any. */
+  discount: PriceDiscount | null
 }
 
 export type VideoSeriesPricing = {
@@ -58,14 +68,9 @@ export type VideoSeriesPricing = {
   aspectRatioCount: number
 }
 
-type PriceCandidate = SeriesPriceRow & { value: number }
-
-const toRow = (candidate: PriceCandidate): SeriesPriceRow => ({
-  option: candidate.option,
-  price: candidate.price,
-  modelName: candidate.modelName,
-  approximate: candidate.approximate,
-})
+type PriceCandidate = Omit<SeriesPriceRow, 'officialPrice' | 'discount'> & {
+  value: number
+}
 
 /** Sort key of a lowercase resolution option: 480p < 768p < 1080p < 2k < 4k. */
 function resolutionRank(option: string): number {
@@ -158,6 +163,7 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
     )
 
     const bestByOption = new Map<string, PriceCandidate>()
+    const officialByOption = new Map<string, number>()
     let perVideo: PriceCandidate | undefined
     let minDuration = Infinity
     let maxDuration = 0
@@ -192,6 +198,13 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
         }
         if (isBetterPrice(candidate, perVideo)) perVideo = candidate
       }
+      // The official price is display-only, so group ratios never apply.
+      for (const row of getOfficialVideoPricing(model)?.rows ?? []) {
+        const option = row.option.toLowerCase()
+        if (!officialByOption.has(option) && row.secondPrice > 0) {
+          officialByOption.set(option, row.secondPrice)
+        }
+      }
       const range = getModelDurationRange(model)
       if (range) {
         minDuration = Math.min(minDuration, range[0])
@@ -202,6 +215,20 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
       }
     }
     if (bestByOption.size === 0 && !perVideo) return []
+
+    const toRow = (candidate: PriceCandidate): SeriesPriceRow => {
+      const official = officialByOption.get(candidate.option)
+      return {
+        option: candidate.option,
+        price: candidate.price,
+        modelName: candidate.modelName,
+        approximate: candidate.approximate,
+        officialPrice: official ? formatPrice(official) : null,
+        discount: official
+          ? getPriceDiscount(candidate.value / official)
+          : null,
+      }
+    }
 
     const ranked = [...bestByOption.values()].sort(
       (a, b) => resolutionRank(a.option) - resolutionRank(b.option)
@@ -217,7 +244,9 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
         isNew,
         rows: ranked.map(toRow),
         lowest: lowest ? toRow(lowest) : null,
-        perVideo: perVideo ? toRow(perVideo) : null,
+        perVideo: perVideo
+          ? { ...toRow(perVideo), officialPrice: null, discount: null }
+          : null,
         durationRange:
           maxDuration > 0 ? ([minDuration, maxDuration] as const) : undefined,
         aspectRatioCount: aspectRatios.size,
