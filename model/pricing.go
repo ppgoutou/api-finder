@@ -32,25 +32,28 @@ type Pricing struct {
 	Tags                  string                 `json:"tags,omitempty"`
 	VendorID              int                    `json:"vendor_id,omitempty"`
 	// Unavailable marks a listed model that refuses new requests for now.
-	Unavailable            bool                                 `json:"unavailable,omitempty"`
-	UnavailableReason      string                               `json:"unavailable_reason,omitempty"`
-	QuotaType              int                                  `json:"quota_type"`
-	ModelRatio             float64                              `json:"model_ratio"`
-	ModelPrice             float64                              `json:"model_price"`
-	OwnerBy                string                               `json:"owner_by"`
-	CompletionRatio        float64                              `json:"completion_ratio"`
-	CacheRatio             *float64                             `json:"cache_ratio,omitempty"`
-	CreateCacheRatio       *float64                             `json:"create_cache_ratio,omitempty"`
-	ImageRatio             *float64                             `json:"image_ratio,omitempty"`
-	AudioRatio             *float64                             `json:"audio_ratio,omitempty"`
-	AudioCompletionRatio   *float64                             `json:"audio_completion_ratio,omitempty"`
-	EnableGroup            []string                             `json:"enable_groups"`
-	SupportedEndpointTypes []constant.EndpointType              `json:"supported_endpoint_types"`
-	BillingMode            string                               `json:"billing_mode,omitempty"`
-	BillingExpr            string                               `json:"billing_expr,omitempty"`
-	OfficialPriceExpr      string                               `json:"official_price_expr,omitempty"`
-	BillingUsageSchema     map[string]jsplugin.UsageFieldSchema `json:"billing_usage_schema,omitempty"`
-	BillingUsageExamples   []jsplugin.UsageExample              `json:"billing_usage_examples,omitempty"`
+	Unavailable            bool                    `json:"unavailable,omitempty"`
+	UnavailableReason      string                  `json:"unavailable_reason,omitempty"`
+	QuotaType              int                     `json:"quota_type"`
+	ModelRatio             float64                 `json:"model_ratio"`
+	ModelPrice             float64                 `json:"model_price"`
+	OwnerBy                string                  `json:"owner_by"`
+	CompletionRatio        float64                 `json:"completion_ratio"`
+	CacheRatio             *float64                `json:"cache_ratio,omitempty"`
+	CreateCacheRatio       *float64                `json:"create_cache_ratio,omitempty"`
+	ImageRatio             *float64                `json:"image_ratio,omitempty"`
+	AudioRatio             *float64                `json:"audio_ratio,omitempty"`
+	AudioCompletionRatio   *float64                `json:"audio_completion_ratio,omitempty"`
+	EnableGroup            []string                `json:"enable_groups"`
+	SupportedEndpointTypes []constant.EndpointType `json:"supported_endpoint_types"`
+	BillingMode            string                  `json:"billing_mode,omitempty"`
+	BillingExpr            string                  `json:"billing_expr,omitempty"`
+	OfficialPriceExpr      string                  `json:"official_price_expr,omitempty"`
+	// OfficialPrice is the official price table a model inherits from its
+	// pricing category; filled per request, never cached.
+	OfficialPrice        *OfficialPriceTable                  `json:"official_price,omitempty"`
+	BillingUsageSchema   map[string]jsplugin.UsageFieldSchema `json:"billing_usage_schema,omitempty"`
+	BillingUsageExamples []jsplugin.UsageExample              `json:"billing_usage_examples,omitempty"`
 	// ModelLimits is what the serving plugin says the model can generate.
 	ModelLimits    *jsplugin.ModelLimits `json:"model_limits,omitempty"`
 	PricingVersion string                `json:"pricing_version,omitempty"`
@@ -92,6 +95,27 @@ func pricingCacheStale() bool {
 	return time.Since(lastGetPricingTime) > time.Minute*1 ||
 		len(pricingMap) == 0 ||
 		jsplugin.DefaultRegistry.Generation().Number != pricingPluginGeneration
+}
+
+// OfficialPriceTable is a display-only official price entered the way the
+// pricing page shows it: per output second by option, such as resolution, for
+// video models, or per 1M tokens for token models. Amounts are USD before any
+// group ratio. A model shows only the rows of the options it supports.
+type OfficialPriceTable struct {
+	Kind       string                  `json:"kind"`
+	Rows       []OfficialPriceVideoRow `json:"rows,omitempty"`
+	Input      *float64                `json:"input,omitempty"`
+	Output     *float64                `json:"output,omitempty"`
+	CacheRead  *float64                `json:"cache_read,omitempty"`
+	CacheWrite *float64                `json:"cache_write,omitempty"`
+}
+
+// OfficialPriceVideoRow is the official price of one video option, with the
+// per-second price of orders that carry a reference video when it differs.
+type OfficialPriceVideoRow struct {
+	Option          string   `json:"option"`
+	Second          float64  `json:"second"`
+	ReferenceSecond *float64 `json:"reference_second,omitempty"`
 }
 
 func GetPricing() []Pricing {

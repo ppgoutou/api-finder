@@ -8176,7 +8176,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "保存済みの公式価格はこのフォームで表示できません。保存すると置き換えられます。",
     "Use category price": "カテゴリ価格を使う",
     "Models of this category show it when they have no official price of their own. It is never charged.": "独自の公式価格がないこのカテゴリのモデルに表示されます。課金には使われません。",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "統一の公式価格は、すべてのモデルの料金方式が同じ場合（同じ解像度の秒単位、またはトークン単位）にのみ設定できます。異なるモデル：{{models}}",
-    "The category official price does not fit model {{model}}": "カテゴリの公式価格はモデル {{model}} に適用できません"
+    "The category official price does not fit model {{model}}": "カテゴリの公式価格はモデル {{model}} に適用できません",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "各モデルは対応する解像度のみ表示します。空欄の解像度は表示されません。",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "統一の公式価格を設定するには、すべてのモデルの表示方法が同じ（すべて秒単位、またはすべてトークン単位）である必要があります。表示方法が異なるモデル：{{models}}"
   }
 }

@@ -20,6 +20,7 @@ import { z } from 'zod'
 
 import { PRICING_MODEL_BADGES } from '@/features/pricing/lib/categories'
 import type {
+  OfficialPriceTable,
   PricingCategory,
   PricingModelBadge,
 } from '@/features/pricing/types'
@@ -42,6 +43,7 @@ export const pricingCategoryFormSchema = z.object({
   models: z.array(z.string()),
   badges: z.record(z.string(), z.array(z.enum(PRICING_MODEL_BADGES))),
   officialPriceExpr: z.string(),
+  officialPrice: z.custom<OfficialPriceTable | null>(),
 })
 
 export type PricingCategoryFormValues = z.infer<
@@ -74,6 +76,9 @@ export function parsePricingCategories(
               )
             : [],
           badges: parseModelBadges(record.badges),
+          ...(record.official_price && typeof record.official_price === 'object'
+            ? { official_price: record.official_price as OfficialPriceTable }
+            : {}),
           ...(typeof record.official_price_expr === 'string' &&
           record.official_price_expr.trim()
             ? { official_price_expr: record.official_price_expr }

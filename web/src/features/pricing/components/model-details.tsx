@@ -1278,6 +1278,11 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
   const showRechargePrice = props.showRechargePrice ?? false
 
   const videoPricing = getVideoPricing(props.model)
+  // Models billed by video tokens keep their token breakdown below, with the
+  // official per-second table above it.
+  const officialVideoPricing = videoPricing
+    ? null
+    : getOfficialVideoPricing(props.model)
 
   return (
     <div className='@container/details space-y-4'>
@@ -1311,6 +1316,18 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
                 pricing={videoPricing}
                 officialPricing={getOfficialVideoPricing(props.model)}
                 groups={getAvailableGroups(props.model, props.usableGroup)}
+                groupRatio={props.groupRatio}
+                priceRate={props.priceRate}
+                usdExchangeRate={props.usdExchangeRate}
+                showRechargePrice={showRechargePrice}
+              />
+            )}
+            {officialVideoPricing && (
+              <VideoPricingTables
+                model={props.model}
+                pricing={officialVideoPricing}
+                officialPricing={officialVideoPricing}
+                groups={[]}
                 groupRatio={props.groupRatio}
                 priceRate={props.priceRate}
                 usdExchangeRate={props.usdExchangeRate}

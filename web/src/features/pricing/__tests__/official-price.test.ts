@@ -23,8 +23,10 @@ import {
   getOfficialTokenPricing,
   officialDraftError,
   officialDraftFromExpr,
+  officialDraftFromTable,
   officialExprFromDraft,
   officialPriceLayout,
+  officialTableFromDraft,
   type OfficialPriceLayout,
   type VideoOfficialDraft,
 } from '../lib/official-price'
@@ -262,5 +264,113 @@ describe('official price expressions', () => {
         'len > 200000 ? tier("long", p * 6 + c * 22) : tier("base", p * 3 + c * 15)'
       )
     ).toBeNull()
+  })
+})
+
+describe('category official price table', () => {
+  const TOKEN_VIDEO_SCHEMA: BillingUsageSchema = {
+    tokens: { type: 'number', unit: 'token' },
+    resolution: { enum: ['720p', '4k'] },
+    video_input: { enum: ['none', 'video'] },
+  }
+
+  test('per-second and token-billed video lines share one table over all their resolutions', () => {
+    const result = categoryOfficialLayout([
+      model({
+        model_name: 'g',
+        billing_usage_schema: {
+          seconds: { type: 'number', unit: 'second' },
+          resolution: { enum: ['480p', '720p'] },
+        },
+      }),
+      model({ model_name: 'e', billing_usage_schema: TOKEN_VIDEO_SCHEMA }),
+    ])
+
+    expect(result.conflicts).toEqual([])
+    expect(result.layout?.kind === 'video' && result.layout.options).toEqual([
+      '480p',
+      '720p',
+      '4k',
+    ])
+    expect(
+      result.layout?.kind === 'video' && result.layout.referenceSwitchValue
+    ).toBe('video')
+  })
+
+  test('a table keeps only the filled resolutions and round-trips through the form', () => {
+    const result = categoryOfficialLayout([
+      model({ billing_usage_schema: TOKEN_VIDEO_SCHEMA }),
+    ])
+    const layout = result.layout
+    if (!layout) throw new Error('expected a layout')
+    const draft: VideoOfficialDraft = {
+      kind: 'video',
+      rows: {
+        '720p': videoRow('1', { referenceSecond: '1.2' }),
+        '4k': videoRow(''),
+      },
+    }
+
+    const table = officialTableFromDraft(draft)
+
+    expect(table).toEqual({
+      kind: 'video',
+      rows: [{ option: '720p', second: 1, reference_second: 1.2 }],
+    })
+    expect(officialDraftError(draft, { allowBlankRows: true })).toBeNull()
+    if (!table) throw new Error('expected a table')
+    expect(officialDraftFromTable(layout, table)).toEqual(draft)
+  })
+
+  test('a model shows the table rows of the resolutions it supports', () => {
+    const pricing = getOfficialVideoPricing(
+      model({
+        billing_usage_schema: TOKEN_VIDEO_SCHEMA,
+        official_price: {
+          kind: 'video',
+          rows: [
+            { option: '480p', second: 0.5 },
+            { option: '4k', second: 3, reference_second: 3.5 },
+            { option: '720p', second: 1 },
+          ],
+        },
+      })
+    )
+
+    expect(pricing?.optionField).toBe('resolution')
+    expect(
+      pricing?.rows.map((row) => [
+        row.option,
+        row.secondPrice,
+        row.referenceSecondPrice,
+      ])
+    ).toEqual([
+      ['720p', 1, undefined],
+      ['4k', 3, 3.5],
+    ])
+  })
+
+  test('a model official price expression takes precedence over the inherited table', () => {
+    const pricing = getOfficialVideoPricing(
+      model({
+        billing_usage_schema: SWITCH_SCHEMA,
+        official_price_expr:
+          'u("resolution") == "480p" && u("video_input") == "none" ? tier("480p", u("seconds") * 0.4) : u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.5) : u("resolution") == "720p" && u("video_input") == "none" ? tier("720p", u("seconds") * 0.6) : tier("720p·video", u("seconds") * 0.7)',
+        official_price: {
+          kind: 'video',
+          rows: [{ option: '480p', second: 9 }],
+        },
+      })
+    )
+
+    expect(pricing?.rows.map((row) => row.secondPrice)).toEqual([0.4, 0.6])
+  })
+
+  test('a token table shows as per-1M-token prices', () => {
+    expect(
+      getOfficialTokenPricing(
+        model({ official_price: { kind: 'token', input: 2, output: 8 } })
+      )
+    ).toEqual({ input: 2, output: 8 })
   })
 })

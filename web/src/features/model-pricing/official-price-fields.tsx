@@ -251,10 +251,14 @@ export function OfficialPriceFields(props: {
   onChange: (draft: OfficialPriceDraft) => void
   disabled?: boolean
   idPrefix: string
+  /** A category table may leave options out; a model price needs them all. */
+  allowBlankRows?: boolean
 }) {
   const { t } = useTranslation()
   const currency = useOfficialPriceCurrency()
-  const error = officialDraftError(props.draft)
+  const error = officialDraftError(props.draft, {
+    allowBlankRows: props.allowBlankRows,
+  })
 
   return (
     <div className='space-y-2'>

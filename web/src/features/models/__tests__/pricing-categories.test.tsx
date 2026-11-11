@@ -217,7 +217,7 @@ describe('category official price', () => {
     return screen.findByRole('dialog')
   }
 
-  it('saves per-second prices entered for each resolution as the category official price', async () => {
+  it('saves the per-second prices entered for each resolution as the category price table', async () => {
     const user = userEvent.setup()
     const put = mockPricing({ 'sd-2.0-line-1': VIDEO_SCHEMA })
     const dialog = await openSeedanceCategory(user)
@@ -228,7 +228,6 @@ describe('category official price', () => {
       ),
       '0.5'
     )
-    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled()
     await user.type(
       within(dialog).getByLabelText('720p Price per second (USD /second)'),
       '1.2'
@@ -238,12 +237,48 @@ describe('category official price', () => {
     await waitFor(() => expect(put).toHaveBeenCalledOnce())
     expect(savedCategories(put)[0]).toEqual({
       ...stored[0],
-      official_price_expr:
-        'u("resolution") == "480p" ? tier("480p", u("seconds") * 0.5) : tier("720p", u("seconds") * 1.2)',
+      official_price: {
+        kind: 'video',
+        rows: [
+          { option: '480p', second: 0.5 },
+          { option: '720p', second: 1.2 },
+        ],
+      },
     })
   })
 
-  it('names the models priced another way instead of offering one official price', async () => {
+  it('offers every resolution of per-second and token-billed lines in one table', async () => {
+    const user = userEvent.setup()
+    mockPricing({
+      'sd-2.0-line-1': VIDEO_SCHEMA,
+      'seedance-2.0': {
+        tokens: { type: 'number', unit: 'token' },
+        resolution: { enum: ['720p', '4k'] },
+        video_input: { enum: ['none', 'video'] },
+      } as unknown as typeof VIDEO_SCHEMA,
+    })
+    const dialog = await openSeedanceCategory(user)
+    await user.click(within(dialog).getByRole('combobox'))
+    await user.click(
+      await screen.findByRole('option', { name: /seedance-2\.0/ })
+    )
+    await user.keyboard('{Escape}')
+
+    for (const option of ['480p', '720p', '4k']) {
+      expect(
+        await within(dialog).findByLabelText(
+          `${option} Price per second (USD /second)`
+        )
+      ).toBeVisible()
+    }
+    expect(
+      within(dialog).getByLabelText(
+        '480p Reference video order price (USD /second)'
+      )
+    ).toBeVisible()
+  })
+
+  it('names the models shown another way instead of offering one official price', async () => {
     const user = userEvent.setup()
     mockPricing({ 'sd-2.0-line-1': VIDEO_SCHEMA, 'seedance-2.0': undefined })
     const dialog = await openSeedanceCategory(user)
@@ -254,7 +289,7 @@ describe('category official price', () => {
     await user.keyboard('{Escape}')
 
     expect(
-      await within(dialog).findByText(/Models that differ: seedance-2\.0/)
+      await within(dialog).findByText(/Models shown differently: seedance-2\.0/)
     ).toBeVisible()
     expect(
       within(dialog).queryByLabelText('480p Price per second (USD /second)')

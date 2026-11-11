@@ -8176,7 +8176,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "已保存的官方价无法在此表单中显示，保存后将被替换。",
     "Use category price": "改用类目价",
     "Models of this category show it when they have no official price of their own. It is never charged.": "类目内没有单独设置官方价的模型会展示这个价格，不参与计费。",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "只有类目内所有模型计价方式相同（都按秒且分辨率一致，或都按 token）时，才能设置统一的官方价。计价方式不同的模型：{{models}}",
-    "The category official price does not fit model {{model}}": "类目官方价不适用于模型 {{model}}"
+    "The category official price does not fit model {{model}}": "类目官方价不适用于模型 {{model}}",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "每个模型只显示自己支持的分辨率；某个分辨率留空则不显示。",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "类目内所有模型的对外展示方式必须相同（都按秒，或都按 token）才能设置统一的官方价。展示方式不同的模型：{{models}}"
   }
 }

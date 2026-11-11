@@ -8176,7 +8176,8 @@
     "The saved official price cannot be shown in this form. Saving replaces it.": "The saved official price cannot be shown in this form. Saving replaces it.",
     "Use category price": "Use category price",
     "Models of this category show it when they have no official price of their own. It is never charged.": "Models of this category show it when they have no official price of their own. It is never charged.",
-    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}",
-    "The category official price does not fit model {{model}}": "The category official price does not fit model {{model}}"
+    "The category official price does not fit model {{model}}": "The category official price does not fit model {{model}}",
+    "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Each model shows the resolutions it supports. Leave a resolution empty to hide it.",
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}"
   }
 }
