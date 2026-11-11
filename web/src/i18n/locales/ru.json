@@ -8151,6 +8151,8 @@
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Цены следуют за поставщиком. Клиенты платят цену с коэффициентом плюс доп. наценку.",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Цены за токены показаны за секунду видео для каждого разрешения. При референсных видео наценка берётся и с выходных, и с референсных секунд. Клиенты платят итоговую цену; новый коэффициент группы не меняет наценку.",
     "Only expression prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению. Сначала подтвердите цену поставщика.",
-    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Коэффициенты групп сохранены, но наценки этих моделей не удалось обновить: {{models}}"
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Коэффициенты групп сохранены, но наценки этих моделей не удалось обновить: {{models}}",
+    "Also in the series: {{models}}": "Также в серии: {{models}}",
+    "/ second": "/ сек"
   }
 }

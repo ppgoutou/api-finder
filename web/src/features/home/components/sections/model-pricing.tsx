@@ -17,45 +17,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
+import { ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
   StaticDataTable,
+  staticDataTableClassNames,
   type StaticDataTableColumn,
 } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 import {
   useVideoSeriesPricing,
   type SeriesPriceRow,
+  type VideoSeriesPricing,
 } from '../../hooks/use-video-series-pricing'
+
+const formatResolution = (option: string) => option.replace(/k$/i, 'K')
+const formatPrice = (row: SeriesPriceRow) =>
+  row.approximate ? `≈${row.price}` : row.price
 
 export function ModelPricing() {
   const { t } = useTranslation()
   const seriesList = useVideoSeriesPricing()
-
-  const formatResolution = (option: string) => option.replace(/k$/i, 'K')
-  const columns: StaticDataTableColumn<SeriesPriceRow>[] = [
-    {
-      id: 'option',
-      header: t('Resolution'),
-      className: 'w-[20%]',
-      cell: (row) => formatResolution(row.option),
-    },
-    {
-      id: 'price',
-      header: t('Lowest per second'),
-      className: 'w-[28%]',
-      cellClassName: 'font-mono font-semibold whitespace-nowrap tabular-nums',
-      cell: (row) => (row.approximate ? `≈${row.price}` : row.price),
-    },
-    {
-      id: 'model',
-      header: t('Model'),
-      cellClassName: 'text-muted-foreground text-[11px]!',
-      cell: (row) => row.modelName,
-    },
-  ]
 
   return (
     <section
@@ -63,125 +48,153 @@ export function ModelPricing() {
       className='relative z-10 scroll-mt-20 px-6 py-14 md:py-20'
     >
       <div className='mx-auto max-w-6xl'>
-        <p className='text-brand dark:text-brand-on-dark mb-2 text-sm font-semibold'>
-          {t('Models and pricing')}
-        </p>
-        <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
-          {t('Billed per second, as low as half the official price')}
-        </h2>
-        <p className='text-muted-foreground mt-3 max-w-2xl'>
-          {t(
-            'No monthly fee or minimum spend: pay only for what you generate. Each resolution shows the cheapest model in the series.'
-          )}
-        </p>
-
-        {seriesList.length === 0 ? (
+        <div className='flex flex-wrap items-end justify-between gap-4'>
+          <div>
+            <p className='text-brand dark:text-brand-on-dark mb-2 text-sm font-semibold'>
+              {t('Models and pricing')}
+            </p>
+            <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
+              {t('Billed per second, as low as half the official price')}
+            </h2>
+            <p className='text-muted-foreground mt-3 max-w-2xl'>
+              {t(
+                'No monthly fee or minimum spend: pay only for what you generate. Each resolution shows the cheapest model in the series.'
+              )}
+            </p>
+          </div>
           <Link
             to='/pricing'
-            className='text-brand dark:text-brand-on-dark mt-8 inline-block text-sm font-semibold hover:underline'
+            className='group text-brand dark:text-brand-on-dark inline-flex items-center text-sm font-semibold hover:underline'
           >
-            {t('See prices in the model square')} →
+            {t('See prices in the model square')}
+            <ArrowRight
+              aria-hidden='true'
+              className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5'
+            />
           </Link>
-        ) : (
-          <div className='mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3'>
-            {seriesList.map((series) => {
-              const first = series.rows[0]
-              const last = series.rows.at(-1)
+        </div>
 
-              return (
-                <article
-                  key={series.name}
-                  className='bg-card border-border/60 flex flex-col gap-4 rounded-2xl border p-5'
-                >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <h3 className='font-mono text-lg font-medium whitespace-nowrap sm:text-xl'>
-                          {series.name}
-                        </h3>
-                        {series.isNew && <Badge>{t('New')}</Badge>}
-                      </div>
-                      <p className='text-muted-foreground mt-1 text-sm'>
-                        {t('Supports {{models}}', {
-                          models: series.variants.join(' / '),
-                        })}
-                      </p>
-                    </div>
-                    {series.lowest && (
-                      <p className='shrink-0 text-right'>
-                        <span className='text-muted-foreground block text-xs'>
-                          {t('From')}
-                        </span>
-                        <span className='text-xl font-bold whitespace-nowrap tabular-nums sm:text-2xl'>
-                          {t('{{price}} / s', {
-                            price: series.lowest.approximate
-                              ? `≈${series.lowest.price}`
-                              : series.lowest.price,
-                          })}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  <dl className='grid grid-cols-3 gap-2 text-xs sm:text-sm'>
-                    <div className='bg-muted/50 rounded-lg px-2.5 py-2'>
-                      <dt className='text-muted-foreground text-xs'>
-                        {t('Resolution')}
-                      </dt>
-                      <dd className='mt-0.5 font-medium whitespace-nowrap'>
-                        {first && last && first !== last
-                          ? `${formatResolution(first.option)}–${formatResolution(last.option)}`
-                          : formatResolution(first?.option ?? '-')}
-                      </dd>
-                    </div>
-                    <div className='bg-muted/50 rounded-lg px-2.5 py-2'>
-                      <dt className='text-muted-foreground text-xs'>
-                        {t('Duration per clip')}
-                      </dt>
-                      <dd className='mt-0.5 font-medium whitespace-nowrap'>
-                        {series.durationRange
-                          ? t('{{min}}–{{max}} seconds', {
-                              min: series.durationRange[0],
-                              max: series.durationRange[1],
-                            })
-                          : '-'}
-                      </dd>
-                    </div>
-                    <div className='bg-muted/50 rounded-lg px-2.5 py-2'>
-                      <dt className='text-muted-foreground text-xs'>
-                        {t('Aspect ratio')}
-                      </dt>
-                      <dd className='mt-0.5 font-medium whitespace-nowrap'>
-                        {series.aspectRatioCount > 0
-                          ? t('{{count}} ratios', {
-                              count: series.aspectRatioCount,
-                            })
-                          : '-'}
-                      </dd>
-                    </div>
-                  </dl>
-                  <StaticDataTable
-                    tableClassName='table-fixed'
-                    columns={columns}
-                    data={series.rows}
-                    getRowKey={(row) => row.option}
-                  />
-                  {series.perVideo && (
-                    <p className='text-muted-foreground text-xs'>
-                      {t('Per video')}{' '}
-                      <span className='text-foreground font-mono font-semibold'>
-                        {t('{{price}} / video', {
-                          price: series.perVideo.price,
-                        })}
-                      </span>{' '}
-                      · {series.perVideo.modelName}
-                    </p>
-                  )}
-                </article>
-              )
-            })}
+        {seriesList.length > 0 && (
+          <div className='mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3'>
+            {seriesList.map((series) => (
+              <SeriesCard key={series.name} series={series} />
+            ))}
           </div>
         )}
       </div>
     </section>
+  )
+}
+
+type SeriesCardProps = {
+  series: VideoSeriesPricing
+}
+
+function SeriesCard(props: SeriesCardProps) {
+  const { t } = useTranslation()
+  const series = props.series
+  const first = series.rows[0]
+  const last = series.rows.at(-1)
+  const lowest = series.lowest
+
+  const specs = [
+    first && last && first !== last
+      ? `${formatResolution(first.option)}–${formatResolution(last.option)}`
+      : first && formatResolution(first.option),
+    series.durationRange &&
+      t('{{min}}–{{max}} seconds', {
+        min: series.durationRange[0],
+        max: series.durationRange[1],
+      }),
+    series.aspectRatioCount > 0 &&
+      t('{{count}} ratios', { count: series.aspectRatioCount }),
+  ].filter((spec): spec is string => Boolean(spec))
+
+  const columns: StaticDataTableColumn<SeriesPriceRow>[] = [
+    {
+      id: 'option',
+      header: t('Resolution'),
+      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[22%]'),
+      cellClassName: 'py-2 font-medium',
+      cell: (row) => formatResolution(row.option),
+    },
+    {
+      id: 'price',
+      header: t('Lowest per second'),
+      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[26%]'),
+      cellClassName:
+        'py-2 font-mono font-semibold whitespace-nowrap tabular-nums',
+      cell: formatPrice,
+    },
+    {
+      id: 'model',
+      header: t('Model'),
+      className: staticDataTableClassNames.compactHeaderCell,
+      cellClassName: 'text-muted-foreground truncate py-2 text-xs',
+      cell: (row) => <span title={row.modelName}>{row.modelName}</span>,
+    },
+  ]
+
+  return (
+    <article className='bg-card border-border/60 flex flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <h3 className='text-lg font-semibold tracking-tight sm:text-xl'>
+          {series.name}
+        </h3>
+        {series.isNew && <Badge>{t('New')}</Badge>}
+      </div>
+      {series.variants.length > 0 && (
+        <p className='text-muted-foreground mt-1 text-xs'>
+          {t('Also in the series: {{models}}', {
+            models: series.variants.join(' · '),
+          })}
+        </p>
+      )}
+
+      {lowest && (
+        <p className='mt-4 flex items-baseline gap-1.5'>
+          <span className='text-muted-foreground text-xs'>{t('From')}</span>
+          <span className='text-3xl font-bold tracking-tight tabular-nums'>
+            {formatPrice(lowest)}
+          </span>
+          <span className='text-muted-foreground text-sm'>{t('/ second')}</span>
+        </p>
+      )}
+
+      {specs.length > 0 && (
+        <ul className='mt-3 flex flex-wrap gap-1.5'>
+          {specs.map((spec) => (
+            <li key={spec}>
+              <Badge variant='secondary'>{spec}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {series.rows.length > 0 && (
+        <StaticDataTable
+          className={cn(staticDataTableClassNames.sectionContainer, 'mt-5')}
+          tableClassName={cn(
+            staticDataTableClassNames.compactTable,
+            'table-fixed'
+          )}
+          headerRowClassName={staticDataTableClassNames.mutedHeaderRow}
+          getRowClassName={() => 'h-auto!'}
+          columns={columns}
+          data={series.rows}
+          getRowKey={(row) => row.option}
+        />
+      )}
+
+      {series.perVideo && (
+        <p className='text-muted-foreground mt-auto pt-4 text-xs'>
+          {t('Per video')}{' '}
+          <span className='text-foreground font-mono font-semibold'>
+            {t('{{price}} / video', { price: series.perVideo.price })}
+          </span>{' '}
+          · {series.perVideo.modelName}
+        </p>
+      )}
+    </article>
   )
 }

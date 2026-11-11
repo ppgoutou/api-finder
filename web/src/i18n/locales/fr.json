@@ -8151,6 +8151,8 @@
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Les prix suivent l'amont. Les clients paient le prix avec ratio plus toute majoration supplémentaire.",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Les prix au token sont affichés par seconde de vidéo à chaque résolution. Avec des vidéos de référence, la majoration s'applique aussi bien aux secondes produites qu'aux secondes de référence. Les clients paient le prix final ; un nouveau ratio de groupe ne change pas la majoration.",
     "Only expression prices can take a markup. Confirm the upstream price first.": "Seuls les prix par expression acceptent une majoration. Confirmez d'abord le prix amont.",
-    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Ratios de groupe enregistrés, mais la majoration de ces modèles n'a pas pu être mise à jour : {{models}}"
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Ratios de groupe enregistrés, mais la majoration de ces modèles n'a pas pu être mise à jour : {{models}}",
+    "Also in the series: {{models}}": "Aussi dans la série : {{models}}",
+    "/ second": "/ seconde"
   }
 }
