@@ -37,6 +37,10 @@ import {
 const formatResolution = (option: string) => option.replace(/k$/i, 'K')
 const formatPrice = (row: SeriesPriceRow) =>
   row.approximate ? `≈${row.price}` : row.price
+// Headers wrap so longer languages (Russian, French, Vietnamese) never
+// overlap or push the table into a horizontal scroll.
+const HEADER_CELL =
+  'text-muted-foreground h-auto px-1 py-2 align-bottom text-[11px] leading-tight font-medium whitespace-normal [overflow-wrap:anywhere]'
 
 export function ModelPricing() {
   const { t } = useTranslation()
@@ -75,7 +79,15 @@ export function ModelPricing() {
         </div>
 
         {seriesList.length > 0 && (
-          <div className='mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3'>
+          <div
+            data-testid='series-grid'
+            className={cn(
+              'mt-8 grid gap-5 md:grid-cols-2',
+              // Three cards fill one row; any other count pairs up in two
+              // columns so no card is left alone on the last row.
+              seriesList.length === 3 && 'lg:grid-cols-3'
+            )}
+          >
             {seriesList.map((series) => (
               <SeriesCard key={series.name} series={series} />
             ))}
@@ -118,28 +130,28 @@ function SeriesCard(props: SeriesCardProps) {
       t('{{count}} ratios', { count: series.aspectRatioCount }),
   ].filter((spec): spec is string => Boolean(spec))
 
-  const columns: StaticDataTableColumn<SeriesPriceRow>[] = [
+  const allColumns: StaticDataTableColumn<SeriesPriceRow>[] = [
     {
       id: 'option',
       header: t('Resolution'),
-      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[22%]'),
-      cellClassName: 'py-2 font-medium',
+      className: HEADER_CELL,
+      cellClassName: 'px-1 py-2 font-medium',
       cell: (row) => formatResolution(row.option),
     },
     {
       id: 'price',
       header: t('Lowest per second'),
-      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[26%]'),
+      className: HEADER_CELL,
       cellClassName:
-        'py-2 font-mono font-semibold whitespace-nowrap tabular-nums',
+        'px-1 py-2 font-mono font-semibold whitespace-nowrap tabular-nums',
       cell: formatPrice,
     },
     {
       id: 'official',
       header: t('Official price'),
-      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[26%]'),
+      className: HEADER_CELL,
       cellClassName:
-        'text-muted-foreground py-2 font-mono whitespace-nowrap tabular-nums',
+        'text-muted-foreground px-1 py-2 font-mono whitespace-nowrap tabular-nums',
       cell: (row) =>
         row.officialPrice ? (
           <span className='line-through'>{row.officialPrice}</span>
@@ -150,8 +162,8 @@ function SeriesCard(props: SeriesCardProps) {
     {
       id: 'discount',
       header: t('Discount'),
-      className: staticDataTableClassNames.compactHeaderCell,
-      cellClassName: 'py-2 whitespace-nowrap',
+      className: HEADER_CELL,
+      cellClassName: 'px-1 py-2 whitespace-nowrap',
       cell: (row) =>
         row.discount ? (
           <Badge className='bg-red-600 font-bold text-white dark:bg-red-500'>
@@ -165,9 +177,17 @@ function SeriesCard(props: SeriesCardProps) {
         ),
     },
   ]
+  // Without any configured official price the two comparison columns would
+  // only hold dashes, so the table keeps resolution and price alone.
+  const hasOfficialPrice = series.rows.some((row) => row.officialPrice)
+  const columns = hasOfficialPrice
+    ? allColumns
+    : allColumns.filter(
+        (column) => column.id !== 'official' && column.id !== 'discount'
+      )
 
   return (
-    <article className='bg-card border-border/60 flex flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6'>
+    <article className='bg-card border-border/60 flex flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
       <div className='flex flex-wrap items-center gap-2'>
         <h3 className='text-lg font-semibold tracking-tight sm:text-xl'>
           {series.name}
@@ -189,14 +209,14 @@ function SeriesCard(props: SeriesCardProps) {
             {formatPrice(lowest)}
           </span>
           <span className='text-muted-foreground text-sm'>{t('/ second')}</span>
-          {bestDiscount && (
-            <span className='ml-auto self-center rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm font-bold whitespace-nowrap text-white shadow-sm shadow-red-500/30'>
-              {t('{{percentOff}}% off official prices', {
-                percentOff: bestDiscount.percentOff,
-                zhe: bestDiscount.zhe,
-              })}
-            </span>
-          )}
+        </p>
+      )}
+      {bestDiscount && (
+        <p className='mt-2 w-fit max-w-full rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm leading-snug font-bold text-white shadow-sm shadow-red-500/30'>
+          {t('{{percentOff}}% off official prices', {
+            percentOff: bestDiscount.percentOff,
+            zhe: bestDiscount.zhe,
+          })}
         </p>
       )}
 
@@ -213,10 +233,7 @@ function SeriesCard(props: SeriesCardProps) {
       {series.rows.length > 0 && (
         <StaticDataTable
           className={cn(staticDataTableClassNames.sectionContainer, 'mt-5')}
-          tableClassName={cn(
-            staticDataTableClassNames.compactTable,
-            'table-fixed'
-          )}
+          tableClassName={staticDataTableClassNames.compactTable}
           headerRowClassName={staticDataTableClassNames.mutedHeaderRow}
           getRowClassName={() => 'h-auto!'}
           columns={columns}

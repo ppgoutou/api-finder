@@ -217,7 +217,7 @@ describe('home model pricing', () => {
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
   })
 
-  it('shows every priced video category as its own card in category order, merging resolutions spelled in either case', async () => {
+  it('shows every priced video category as its own card in category order, merging resolutions spelled in either case and hiding official price columns when none is configured', async () => {
     mockPricingApi(
       [
         secondModel('E-MiniMax-H3', { '2K': 0.4, '768P': 0.2 }),
@@ -235,9 +235,9 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('MiniMax-H3')).toEqual([
-      ['768p', '$0.1', '—', '—'],
-      ['1080p', '$0.15', '—', '—'],
-      ['2K', '$0.2', '—', '—'],
+      ['768p', '$0.1'],
+      ['1080p', '$0.15'],
+      ['2K', '$0.2'],
     ])
     expect(
       screen
@@ -245,6 +245,28 @@ describe('home model pricing', () => {
         .map((heading) => heading.textContent)
     ).toEqual(['MiniMax-H3', 'Seedance 2.5'])
   })
+
+  it.each([
+    [3, true],
+    [4, false],
+  ])(
+    'lays %i series out in three columns only when there are exactly three (%s)',
+    async (count, threeColumns) => {
+      const names = ['Seedance 2.0', 'Seedance 2.5', 'Wan 3.0', 'MiniMax-H3']
+      const series = names.slice(0, count)
+      mockPricingApi(
+        series.map((name) => secondModel(`m-${name}`, { '480p': 0.2 })),
+        series.map((name) => ({ name, models: [`m-${name}`] }))
+      )
+      renderPricing()
+
+      await screen.findByRole('heading', { level: 3, name: series[0] })
+      expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(count)
+      expect(
+        screen.getByTestId('series-grid').classList.contains('lg:grid-cols-3')
+      ).toBe(threeColumns)
+    }
+  )
 
   it('keeps the exact price when a token-billed model displays the same price', async () => {
     mockPricingApi(
@@ -262,8 +284,8 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.0 Mini')).toEqual([
-      ['480p', '$0.05', '—', '—'],
-      ['720p', '≈$0.03', '—', '—'],
+      ['480p', '$0.05'],
+      ['720p', '≈$0.03'],
     ])
   })
 
@@ -274,9 +296,7 @@ describe('home model pricing', () => {
     )
     renderPricing()
 
-    expect(await seriesRows('Seedance 2.5')).toEqual([
-      ['480p', '$0.1', '—', '—'],
-    ])
+    expect(await seriesRows('Seedance 2.5')).toEqual([['480p', '$0.1']])
     const card = screen
       .getByRole('heading', { level: 3, name: 'Seedance 2.5' })
       .closest('article') as HTMLElement
@@ -295,9 +315,7 @@ describe('home model pricing', () => {
     )
     renderPricing()
 
-    expect(await seriesRows('Seedance 2.5')).toEqual([
-      ['480p', '$0.1', '—', '—'],
-    ])
+    expect(await seriesRows('Seedance 2.5')).toEqual([['480p', '$0.1']])
   })
 
   it('links to the model square when no series has a priced model', async () => {
