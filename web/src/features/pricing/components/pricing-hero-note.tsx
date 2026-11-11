@@ -19,17 +19,22 @@ For commercial licensing, please contact support@quantumnous.com
 import {
   ArrowDown01Icon,
   CustomerSupportIcon,
+  TelegramIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
 
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { SupportContacts } from '@/features/home/components/support-contacts'
+import { SUPPORT_TELEGRAM } from '@/features/home/lib/video-home'
+import { cn } from '@/lib/utils'
 
 import type { PricingModel } from '../types'
 
@@ -44,8 +49,8 @@ type PricingHeroNoteProps = {
 /**
  * The note under the model plaza title. Viewers whose groups include
  * unrestricted models learn how to spot them; everyone else gets a
- * highlighted button that opens the support contacts, since those models
- * are hidden from them.
+ * highlighted button that points them to support on Telegram, since those
+ * models are hidden from them.
  */
 export function PricingHeroNote(props: PricingHeroNoteProps) {
   const { t } = useTranslation()
@@ -92,8 +97,29 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
             aria-hidden
           />
         </PopoverTrigger>
-        <PopoverContent className='text-muted-foreground w-72 max-w-[calc(100vw-2rem)] text-sm'>
-          <SupportContacts />
+        <PopoverContent className='w-80 max-w-[calc(100vw-2rem)] gap-3 p-3.5'>
+          <PopoverHeader>
+            <PopoverTitle>
+              {t('Unlock unrestricted content models')}
+            </PopoverTitle>
+            <PopoverDescription>
+              {t(
+                'Message our support on Telegram and they will enable unrestricted content models for your account.'
+              )}
+            </PopoverDescription>
+          </PopoverHeader>
+          <a
+            href={`https://t.me/${SUPPORT_TELEGRAM}`}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={cn(
+              buttonVariants(),
+              'h-auto min-h-8 w-full py-1.5 whitespace-normal'
+            )}
+          >
+            <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />
+            {t('Open Telegram @{{handle}}', { handle: SUPPORT_TELEGRAM })}
+          </a>
         </PopoverContent>
       </Popover>
     </div>
