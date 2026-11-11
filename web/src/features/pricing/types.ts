@@ -38,6 +38,11 @@ export type PricingCategory = {
   models: string[]
   /** Card badges keyed by model name, for models of this category. */
   badges?: Record<string, PricingModelBadge[]>
+  /**
+   * Display-only official price its models show when they have none of their
+   * own. Only the administrator option holds it; the public list leaves it out.
+   */
+  official_price_expr?: string
 }
 
 export type BillingUsageUnit = 'second' | 'count' | 'token' | 'credit'

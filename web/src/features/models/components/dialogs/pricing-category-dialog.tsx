@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowDown, ArrowUp, Check } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useCanEditModelPricing } from '@/features/model-pricing/api'
 import {
   modelBadgeLabel,
   PRICING_MODEL_BADGES,
@@ -52,6 +53,7 @@ import {
   type PricingCategoryFormValues,
   PRESSED_BADGE_CLASSES,
 } from '../../lib/pricing-categories'
+import { CategoryOfficialPrice } from './category-official-price'
 
 export function PricingCategoryDialog(props: {
   open: boolean
@@ -67,8 +69,16 @@ export function PricingCategoryDialog(props: {
   const { t } = useTranslation()
   const form = useForm<PricingCategoryFormValues>({
     resolver: zodResolver(pricingCategoryFormSchema),
-    defaultValues: { name: '', description: '', models: [], badges: {} },
+    defaultValues: {
+      name: '',
+      description: '',
+      models: [],
+      badges: {},
+      officialPriceExpr: '',
+    },
   })
+  const canEditPricing = useCanEditModelPricing()
+  const [officialBlocked, setOfficialBlocked] = useState(false)
 
   useEffect(() => {
     if (!props.open) return
@@ -77,6 +87,7 @@ export function PricingCategoryDialog(props: {
       description: props.category?.description ?? '',
       models: props.category?.models ?? [],
       badges: props.category?.badges ?? {},
+      officialPriceExpr: props.category?.official_price_expr ?? '',
     })
   }, [props.open, props.category, form])
 
@@ -122,7 +133,7 @@ export function PricingCategoryDialog(props: {
           <Button
             type='submit'
             form='pricing-category-form'
-            disabled={props.isSaving}
+            disabled={props.isSaving || officialBlocked}
           >
             {props.isSaving ? t('Saving...') : t('Save')}
           </Button>
@@ -279,6 +290,24 @@ export function PricingCategoryDialog(props: {
                       </li>
                     ))}
                   </ol>
+                </FormItem>
+              )}
+            />
+          )}
+          {canEditPricing && (
+            <FormField
+              control={form.control}
+              name='officialPriceExpr'
+              render={({ field }) => (
+                <FormItem>
+                  <CategoryOfficialPrice
+                    models={selectedModels}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlockedChange={setOfficialBlocked}
+                    disabled={props.isSaving}
+                  />
+                  <FormMessage />
                 </FormItem>
               )}
             />

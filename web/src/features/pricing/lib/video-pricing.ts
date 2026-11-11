@@ -97,8 +97,8 @@ export type VideoPricing = {
 }
 
 /** Reference media a video model prices on top of its output seconds. */
-const INPUT_VIDEO_SECONDS_FIELD = 'input_video_seconds'
-const INPUT_IMAGES_FIELD = 'input_images'
+export const INPUT_VIDEO_SECONDS_FIELD = 'input_video_seconds'
+export const INPUT_IMAGES_FIELD = 'input_images'
 
 /** Seconds reserved for reference videos while their real length is unknown. */
 export const RESERVED_REFERENCE_VIDEO_SECONDS = 15
@@ -106,14 +106,14 @@ export const RESERVED_REFERENCE_VIDEO_SECONDS = 15
 /** Usage enum whose non-`none` value marks an order with a reference video. */
 const REFERENCE_SWITCH_FIELD = 'video_input'
 
-type VideoSchemaFields = {
+export type VideoSchemaFields = {
   secondsField: string
   referenceField?: string
   referenceSwitchField?: string
   optionField: string
 }
 
-function getVideoSchemaFields(
+export function getVideoSchemaFields(
   schema: BillingUsageSchema | null | undefined
 ): VideoSchemaFields | null {
   const numberFields = getTaskNumberFields(schema).filter(

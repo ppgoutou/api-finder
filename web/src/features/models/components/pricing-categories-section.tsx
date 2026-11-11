@@ -114,6 +114,9 @@ export function PricingCategoriesSection() {
       description: values.description.trim(),
       models: values.models,
       badges: selectedModelBadges(values.models, values.badges),
+      ...(values.officialPriceExpr.trim()
+        ? { official_price_expr: values.officialPriceExpr.trim() }
+        : {}),
     }
     const next = editing
       ? categories.map((item) => (item.id === editing.id ? category : item))

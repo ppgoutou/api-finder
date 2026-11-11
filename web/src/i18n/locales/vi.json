@@ -6303,7 +6303,6 @@
     "Shown": "Hiển thị",
     "Shown {{count}} models in model square": "Đã hiển thị {{count}} mô hình trong kho mô hình",
     "Shown on the order page": "Hiển thị trên trang đơn hàng",
-    "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.": "Hiển thị cho người dùng phía trên giá theo nhóm và không bao giờ bị tính phí. Dùng cùng các trường sử dụng như biểu thức tính phí, đơn vị USD; để trống để ẩn mục này.",
     "Sidebar": "Thanh bên",
     "Sidebar collapsed by default for new users": "Thanh bên được thu gọn theo mặc định đối với người dùng mới",
     "Sidebar modules": "Mô-đun thanh bên",
@@ -8164,6 +8163,20 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Chỉ giá dạng biểu thức mới cộng thêm được. Hãy xác nhận giá nhà cung cấp trước.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Đã lưu hệ số nhóm, nhưng không cập nhật được phần cộng thêm của các mô hình: {{models}}",
     "Also in the series: {{models}}": "Cùng dòng: {{models}}",
-    "/ second": "/ giây"
+    "/ second": "/ giây",
+    "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M token)",
+    "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
+    "Free input images": "Số ảnh đầu vào miễn phí",
+    "Enter the price per second for every resolution.": "Hãy nhập giá mỗi giây cho mọi độ phân giải.",
+    "Enter the reference video price for every resolution, or for none.": "Nhập giá video tham chiếu cho mọi độ phân giải, hoặc bỏ trống tất cả.",
+    "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.": "Hiển thị phía trên giá theo nhóm, không bao giờ bị tính phí. Nhập theo cách trang bảng giá hiển thị; để trống tất cả để ẩn mục này.",
+    "Inherited from category {{name}}. Saving here gives this model its own official price.": "Kế thừa từ danh mục {{name}}. Lưu tại đây sẽ đặt giá chính thức riêng cho mô hình này.",
+    "This model's own official price takes precedence over category {{name}}.": "Giá chính thức riêng của mô hình này được ưu tiên hơn giá của danh mục {{name}}.",
+    "Official prices are only shown for models priced per second or per token.": "Giá chính thức chỉ hiển thị cho mô hình tính theo giây hoặc theo token.",
+    "The saved official price cannot be shown in this form. Saving replaces it.": "Không thể hiển thị giá chính thức đã lưu trong biểu mẫu này. Lưu sẽ thay thế nó.",
+    "Use category price": "Dùng giá danh mục",
+    "Models of this category show it when they have no official price of their own. It is never charged.": "Các mô hình trong danh mục chưa có giá chính thức riêng sẽ hiển thị giá này. Không bao giờ bị tính phí.",
+    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Chỉ đặt được một giá chính thức khi mọi mô hình tính giá giống nhau: theo giây với cùng độ phân giải, hoặc theo token. Mô hình khác biệt: {{models}}",
+    "The category official price does not fit model {{model}}": "Giá chính thức của danh mục không phù hợp với mô hình {{model}}"
   }
 }

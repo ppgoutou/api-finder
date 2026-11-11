@@ -426,18 +426,7 @@ func validateModelPricing(name string, values, previous PricingValues) error {
 			if previous[key] == expression {
 				continue
 			}
-			var err error
-			if plugins := generation.PluginsByModel(name); len(plugins) > 0 {
-				for _, plugin := range plugins {
-					schema, _ := plugin.Meta.UsageForModel(name)
-					if err = billing_setting.SmokeTestTaskExpr(expression, schema); err == nil {
-						break
-					}
-				}
-			} else {
-				err = billing_setting.SmokeTestExpr(expression)
-			}
-			if err != nil {
+			if err := officialPriceFitsModel(generation, name, expression); err != nil {
 				return fmt.Errorf("model %s: official price: %w", name, err)
 			}
 			continue
@@ -536,6 +525,28 @@ func UpdateModelPricing(changes []ModelPricingChange) error {
 		}
 		return nil
 	})
+}
+
+// ValidateOfficialPriceExpr checks that a display-only official price
+// evaluates against the usage facts of the model it is shown on, so the
+// pricing page can lay it out like the charged price.
+func ValidateOfficialPriceExpr(name string, expression string) error {
+	return officialPriceFitsModel(jsplugin.DefaultRegistry.Generation(), name, expression)
+}
+
+func officialPriceFitsModel(generation *jsplugin.RoutingGeneration, name string, expression string) error {
+	plugins := generation.PluginsByModel(name)
+	if len(plugins) == 0 {
+		return billing_setting.SmokeTestExpr(expression)
+	}
+	var err error
+	for _, plugin := range plugins {
+		schema, _ := plugin.Meta.UsageForModel(name)
+		if err = billing_setting.SmokeTestTaskExpr(expression, schema); err == nil {
+			return nil
+		}
+	}
+	return err
 }
 
 // UpdateOfficialPriceExpr sets or, with an empty expression, removes the

@@ -33,6 +33,8 @@ func TestValidatePricingCategories(t *testing.T) {
 		{name: "unknown badge", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.0":["free"]}}]`},
 		{name: "repeated badge", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.0":["hot","hot"]}}]`},
 		{name: "badge on a model outside the category", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.5":["hot"]}}]`},
+		{name: "category official price", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price_expr":"tier(\"base\", p * 2 + c * 8)"}]`, valid: true},
+		{name: "padded official price", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price_expr":" tier(\"base\", p * 2)"}]`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -66,10 +68,66 @@ func TestPublicPricingCategoriesKeepsOnlyVisibleModels(t *testing.T) {
 		common.OptionMapRWMutex.Unlock()
 	})
 
-	categories := publicPricingCategories([]model.Pricing{{ModelName: "sd-2.0-线路1"}, {ModelName: "seedance-2.0"}})
+	categories := publicPricingCategories([]model.Pricing{{ModelName: "sd-2.0-线路1"}, {ModelName: "seedance-2.0"}}, savedPricingCategories())
 
 	require.Len(t, categories, 2)
 	assert.Equal(t, []string{"seedance-2.0", "sd-2.0-线路1"}, categories[0].Models)
 	assert.Equal(t, map[string][]string{"seedance-2.0": {"hot"}}, categories[0].Badges)
 	assert.Empty(t, categories[1].Models)
+}
+
+func TestInheritCategoryOfficialPricesKeepsModelOwnPrice(t *testing.T) {
+	categories := []pricingCategory{
+		{ID: "a", Name: "A", Models: []string{"own", "inherits"}, OfficialPriceExpr: `tier("base", p * 2 + c * 8)`},
+		{ID: "b", Name: "B", Models: []string{"no-category-price"}},
+	}
+	pricing := []model.Pricing{
+		{ModelName: "own", OfficialPriceExpr: `tier("base", p * 1 + c * 4)`},
+		{ModelName: "inherits"},
+		{ModelName: "no-category-price"},
+		{ModelName: "uncategorized"},
+	}
+
+	inheritCategoryOfficialPrices(pricing, categories)
+	public := publicPricingCategories(pricing, categories)
+
+	assert.Equal(t, `tier("base", p * 1 + c * 4)`, pricing[0].OfficialPriceExpr)
+	assert.Equal(t, `tier("base", p * 2 + c * 8)`, pricing[1].OfficialPriceExpr)
+	assert.Empty(t, pricing[2].OfficialPriceExpr)
+	assert.Empty(t, pricing[3].OfficialPriceExpr)
+	assert.Empty(t, public[0].OfficialPriceExpr, "the category list does not repeat the inherited price")
+}
+
+func TestValidatePricingCategoryOfficialPrices(t *testing.T) {
+	const valid = `tier("base", p * 2 + c * 8)`
+	const broken = `tier("base", p * )`
+	category := func(expression string, models ...string) string {
+		value, err := common.Marshal([]pricingCategory{{ID: "a", Name: "A", Models: models, OfficialPriceExpr: expression}})
+		require.NoError(t, err)
+		return string(value)
+	}
+	tests := []struct {
+		name     string
+		previous string
+		value    string
+		model    string
+	}{
+		{name: "price that evaluates for every model", value: category(valid, "token-a", "token-b")},
+		{name: "category without a price", value: category("", "token-a")},
+		{name: "price that does not evaluate", value: category(broken, "token-a"), model: "token-a"},
+		{name: "unchanged price stays saveable", previous: category(broken, "token-a"), value: category(broken, "token-a")},
+		{name: "model joining a category is checked", previous: category(broken, "token-a"), value: category(broken, "token-a", "token-b"), model: "token-b"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePricingCategoryOfficialPrices(tt.previous, tt.value)
+			if tt.model == "" {
+				assert.NoError(t, err)
+				return
+			}
+			var officialPrice *pricingCategoryOfficialPriceError
+			require.ErrorAs(t, err, &officialPrice)
+			assert.Equal(t, tt.model, officialPrice.Model)
+		})
+	}
 }

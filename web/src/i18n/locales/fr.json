@@ -6303,7 +6303,6 @@
     "Shown": "Affiché",
     "Shown {{count}} models in model square": "{{count}} modèles affichés dans la galerie",
     "Shown on the order page": "Affiché sur la page de commande",
-    "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.": "Affiché aux utilisateurs au-dessus des prix par groupe. Il n'est jamais facturé. Utilisez les mêmes champs d'usage que l'expression de facturation, en USD ; laissez vide pour masquer la section.",
     "Sidebar": "Barre latérale",
     "Sidebar collapsed by default for new users": "Barre latérale masquée par défaut pour les nouveaux utilisateurs",
     "Sidebar modules": "Modules de la barre latérale",
@@ -8164,6 +8163,20 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Seuls les prix par expression acceptent une majoration. Confirmez d'abord le prix amont.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Ratios de groupe enregistrés, mais la majoration de ces modèles n'a pas pu être mise à jour : {{models}}",
     "Also in the series: {{models}}": "Aussi dans la série : {{models}}",
-    "/ second": "/ seconde"
+    "/ second": "/ seconde",
+    "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M tokens)",
+    "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
+    "Free input images": "Images d’entrée gratuites",
+    "Enter the price per second for every resolution.": "Saisissez le prix par seconde pour chaque résolution.",
+    "Enter the reference video price for every resolution, or for none.": "Saisissez le prix avec vidéo de référence pour toutes les résolutions, ou pour aucune.",
+    "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.": "Affiché au-dessus des prix par groupe, jamais facturé. Saisissez-le comme la page des tarifs l’affiche ; laissez tous les prix vides pour masquer la section.",
+    "Inherited from category {{name}}. Saving here gives this model its own official price.": "Hérité de la catégorie {{name}}. L’enregistrer ici donne à ce modèle son propre prix officiel.",
+    "This model's own official price takes precedence over category {{name}}.": "Le prix officiel propre à ce modèle prime sur celui de la catégorie {{name}}.",
+    "Official prices are only shown for models priced per second or per token.": "Les prix officiels ne s’affichent que pour les modèles facturés à la seconde ou au token.",
+    "The saved official price cannot be shown in this form. Saving replaces it.": "Le prix officiel enregistré ne peut pas être affiché dans ce formulaire. L’enregistrement le remplacera.",
+    "Use category price": "Utiliser le prix de la catégorie",
+    "Models of this category show it when they have no official price of their own. It is never charged.": "Les modèles de cette catégorie sans prix officiel propre l’affichent. Il n’est jamais facturé.",
+    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Un prix officiel unique n’est possible que si tous les modèles sont facturés de la même façon : à la seconde avec les mêmes résolutions, ou au token. Modèles différents : {{models}}",
+    "The category official price does not fit model {{model}}": "Le prix officiel de la catégorie ne convient pas au modèle {{model}}"
   }
 }
