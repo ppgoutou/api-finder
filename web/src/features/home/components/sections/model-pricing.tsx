@@ -96,6 +96,14 @@ function SeriesCard(props: SeriesCardProps) {
   const first = series.rows[0]
   const last = series.rows.at(-1)
   const lowest = series.lowest
+  // The deepest discount of any resolution, for the headline.
+  const bestDiscount = series.rows.reduce<SeriesPriceRow['discount']>(
+    (best, row) =>
+      row.discount && (!best || row.discount.percentOff > best.percentOff)
+        ? row.discount
+        : best,
+    null
+  )
 
   const specs = [
     first && last && first !== last
@@ -127,11 +135,34 @@ function SeriesCard(props: SeriesCardProps) {
       cell: formatPrice,
     },
     {
-      id: 'model',
-      header: t('Model'),
+      id: 'official',
+      header: t('Official price'),
+      className: cn(staticDataTableClassNames.compactHeaderCell, 'w-[26%]'),
+      cellClassName:
+        'text-muted-foreground py-2 font-mono whitespace-nowrap tabular-nums',
+      cell: (row) =>
+        row.officialPrice ? (
+          <span className='line-through'>{row.officialPrice}</span>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      id: 'discount',
+      header: t('Discount'),
       className: staticDataTableClassNames.compactHeaderCell,
-      cellClassName: 'text-muted-foreground truncate py-2 text-xs',
-      cell: (row) => <span title={row.modelName}>{row.modelName}</span>,
+      cellClassName: 'py-2 whitespace-nowrap',
+      cell: (row) =>
+        row.discount ? (
+          <Badge className='bg-red-600 font-bold text-white dark:bg-red-500'>
+            {t('{{percentOff}}% off', {
+              percentOff: row.discount.percentOff,
+              zhe: row.discount.zhe,
+            })}
+          </Badge>
+        ) : (
+          <span className='text-muted-foreground'>—</span>
+        ),
     },
   ]
 
@@ -152,12 +183,20 @@ function SeriesCard(props: SeriesCardProps) {
       )}
 
       {lowest && (
-        <p className='mt-4 flex items-baseline gap-1.5'>
+        <p className='mt-4 flex flex-wrap items-baseline gap-1.5'>
           <span className='text-muted-foreground text-xs'>{t('From')}</span>
           <span className='text-3xl font-bold tracking-tight tabular-nums'>
             {formatPrice(lowest)}
           </span>
           <span className='text-muted-foreground text-sm'>{t('/ second')}</span>
+          {bestDiscount && (
+            <span className='ml-auto self-center rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm font-bold whitespace-nowrap text-white shadow-sm shadow-red-500/30'>
+              {t('{{percentOff}}% off official prices', {
+                percentOff: bestDiscount.percentOff,
+                zhe: bestDiscount.zhe,
+              })}
+            </span>
+          )}
         </p>
       )}
 
