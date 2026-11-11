@@ -8164,6 +8164,8 @@
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "グループ倍率は保存しましたが、次のモデルの上乗せを更新できませんでした：{{models}}",
     "Also in the series: {{models}}": "同シリーズ：{{models}}",
     "/ second": "/ 秒",
+    "Price / s": "秒単価",
+    "List price": "公式価格",
     "{{label}} ({{currency}} / 1M tokens)": "{{label}}（{{currency}} / 1M トークン）",
     "{{label}} ({{currency}} {{suffix}})": "{{label}}（{{currency}} {{suffix}}）",
     "Free input images": "無料の入力画像数",

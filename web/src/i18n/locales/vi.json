@@ -8164,6 +8164,8 @@
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Đã lưu hệ số nhóm, nhưng không cập nhật được phần cộng thêm của các mô hình: {{models}}",
     "Also in the series: {{models}}": "Cùng dòng: {{models}}",
     "/ second": "/ giây",
+    "Price / s": "Đơn giá",
+    "List price": "Giá gốc",
     "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M token)",
     "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
     "Free input images": "Số ảnh đầu vào miễn phí",

@@ -8164,6 +8164,8 @@
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}",
     "Also in the series: {{models}}": "Also in the series: {{models}}",
     "/ second": "/ second",
+    "Price / s": "Price / s",
+    "List price": "List price",
     "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M tokens)",
     "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
     "Free input images": "Free input images",

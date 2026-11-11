@@ -8164,6 +8164,8 @@
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Коэффициенты групп сохранены, но наценки этих моделей не удалось обновить: {{models}}",
     "Also in the series: {{models}}": "Также в серии: {{models}}",
     "/ second": "/ сек",
+    "Price / s": "Цена / с",
+    "List price": "Офиц. цена",
     "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M токенов)",
     "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
     "Free input images": "Бесплатные входные изображения",

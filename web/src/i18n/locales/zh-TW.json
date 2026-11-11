@@ -8164,6 +8164,8 @@
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分組倍率已儲存，但以下模型的加價未能更新：{{models}}",
     "Also in the series: {{models}}": "同系列還有：{{models}}",
     "/ second": "/ 秒",
+    "Price / s": "每秒低至",
+    "List price": "官方價",
     "{{label}} ({{currency}} / 1M tokens)": "{{label}}（{{currency}} / 1M tokens）",
     "{{label}} ({{currency}} {{suffix}})": "{{label}}（{{currency}} {{suffix}}）",
     "Free input images": "免費輸入圖片數",
