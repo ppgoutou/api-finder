@@ -63,7 +63,11 @@ func GetPricing(c *gin.Context) {
 	}
 
 	usableGroup = service.GetUserUsableGroups(group)
+	// The filter copies the cached entries, so inheriting here leaves the
+	// shared pricing cache untouched.
 	pricing = filterPricingByUsableGroups(pricing, usableGroup)
+	categories := savedPricingCategories()
+	inheritCategoryOfficialPrices(pricing, categories)
 	// check groupRatio contains usableGroup
 	for group := range ratio_setting.GetGroupRatioCopy() {
 		if _, ok := usableGroup[group]; !ok {
@@ -80,7 +84,7 @@ func GetPricing(c *gin.Context) {
 		"success":            true,
 		"data":               pricing,
 		"vendors":            model.GetVendors(),
-		"categories":         publicPricingCategories(pricing),
+		"categories":         publicPricingCategories(pricing, categories),
 		"group_ratio":        groupRatio,
 		"usable_group":       usableGroup,
 		"supported_endpoint": model.GetSupportedEndpointMap(),

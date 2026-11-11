@@ -22,6 +22,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth-store'
+import { usePricingPreferencesStore } from '@/stores/pricing-preferences-store'
 
 import { PricingCategoriesSection } from '../components/pricing-categories-section'
 
@@ -76,6 +78,7 @@ function savedCategories(put: ReturnType<typeof mockApi>) {
 }
 
 afterEach(() => {
+  useAuthStore.getState().auth.setUser(null)
   vi.restoreAllMocks()
 })
 
@@ -163,5 +166,98 @@ describe('pricing categories management', () => {
       models: ['seedance-2.0', 'sd-2.0-line-1'],
       badges: { 'seedance-2.0': ['recommended', 'hot'] },
     })
+  })
+})
+
+describe('category official price', () => {
+  const VIDEO_SCHEMA = {
+    seconds: { type: 'number', unit: 'second' },
+    resolution: { enum: ['480p', '720p'] },
+  }
+
+  function mockPricing(
+    schemas: Record<string, typeof VIDEO_SCHEMA | undefined>
+  ) {
+    const put = mockApi()
+    const get = vi.mocked(api.get).getMockImplementation()
+    vi.mocked(api.get).mockImplementation(async (url: string, config) => {
+      if (url === '/api/option/model_pricing') {
+        return {
+          data: {
+            success: true,
+            data: {
+              entries: Object.entries(schemas).map(([name, schema]) => ({
+                model_name: name,
+                version: 'v1',
+                configured: {},
+                effective: {},
+                ...(schema ? { usage_schema: schema } : {}),
+              })),
+              options: {},
+              empty_version: 'empty',
+            },
+          },
+        }
+      }
+      return get?.(url, config)
+    })
+    return put
+  }
+
+  async function openSeedanceCategory(
+    user: ReturnType<typeof userEvent.setup>
+  ) {
+    useAuthStore.getState().auth.setUser({ id: 1, username: 'root', role: 100 })
+    usePricingPreferencesStore.setState({ currency: 'USD' })
+    renderSection()
+    const item = (
+      await screen.findByRole('heading', { name: 'Seedance 2.0' })
+    ).closest('li') as HTMLElement
+    await user.click(within(item).getByRole('button', { name: 'Edit' }))
+    return screen.findByRole('dialog')
+  }
+
+  it('saves per-second prices entered for each resolution as the category official price', async () => {
+    const user = userEvent.setup()
+    const put = mockPricing({ 'sd-2.0-line-1': VIDEO_SCHEMA })
+    const dialog = await openSeedanceCategory(user)
+
+    await user.type(
+      await within(dialog).findByLabelText(
+        '480p Price per second (USD /second)'
+      ),
+      '0.5'
+    )
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled()
+    await user.type(
+      within(dialog).getByLabelText('720p Price per second (USD /second)'),
+      '1.2'
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(put).toHaveBeenCalledOnce())
+    expect(savedCategories(put)[0]).toEqual({
+      ...stored[0],
+      official_price_expr:
+        'u("resolution") == "480p" ? tier("480p", u("seconds") * 0.5) : tier("720p", u("seconds") * 1.2)',
+    })
+  })
+
+  it('names the models priced another way instead of offering one official price', async () => {
+    const user = userEvent.setup()
+    mockPricing({ 'sd-2.0-line-1': VIDEO_SCHEMA, 'seedance-2.0': undefined })
+    const dialog = await openSeedanceCategory(user)
+    await user.click(within(dialog).getByRole('combobox'))
+    await user.click(
+      await screen.findByRole('option', { name: /seedance-2\.0/ })
+    )
+    await user.keyboard('{Escape}')
+
+    expect(
+      await within(dialog).findByText(/Models that differ: seedance-2\.0/)
+    ).toBeVisible()
+    expect(
+      within(dialog).queryByLabelText('480p Price per second (USD /second)')
+    ).toBeNull()
   })
 })

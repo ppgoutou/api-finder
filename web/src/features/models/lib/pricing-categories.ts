@@ -41,6 +41,7 @@ export const pricingCategoryFormSchema = z.object({
   description: z.string().max(PRICING_CATEGORY_DESCRIPTION_MAX),
   models: z.array(z.string()),
   badges: z.record(z.string(), z.array(z.enum(PRICING_MODEL_BADGES))),
+  officialPriceExpr: z.string(),
 })
 
 export type PricingCategoryFormValues = z.infer<
@@ -73,6 +74,10 @@ export function parsePricingCategories(
               )
             : [],
           badges: parseModelBadges(record.badges),
+          ...(typeof record.official_price_expr === 'string' &&
+          record.official_price_expr.trim()
+            ? { official_price_expr: record.official_price_expr }
+            : {}),
         },
       ]
     })

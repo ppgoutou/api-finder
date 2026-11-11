@@ -6303,7 +6303,6 @@
     "Shown": "顯示",
     "Shown {{count}} models in model square": "已在模型廣場顯示 {{count}} 個模型",
     "Shown on the order page": "訂單頁直接顯示",
-    "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.": "在分組定價上方展示給使用者，不參與計費。使用與計費表達式相同的用量欄位，單位為美元；留空則不顯示該欄目。",
     "Sidebar": "側邊欄",
     "Sidebar collapsed by default for new users": "預設情況下為新用戶摺疊側邊欄",
     "Sidebar modules": "側邊欄模組",
@@ -8164,6 +8163,20 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "只有表達式價格可以加價。請先確認上游價格。",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分組倍率已儲存，但以下模型的加價未能更新：{{models}}",
     "Also in the series: {{models}}": "同系列還有：{{models}}",
-    "/ second": "/ 秒"
+    "/ second": "/ 秒",
+    "{{label}} ({{currency}} / 1M tokens)": "{{label}}（{{currency}} / 1M tokens）",
+    "{{label}} ({{currency}} {{suffix}})": "{{label}}（{{currency}} {{suffix}}）",
+    "Free input images": "免費輸入圖片數",
+    "Enter the price per second for every resolution.": "請為每個解析度填寫每秒價格。",
+    "Enter the reference video price for every resolution, or for none.": "參考影片價格要麼每個解析度都填，要麼都不填。",
+    "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.": "顯示在分組價格上方，不參與計費。按定價頁的顯示方式填寫；全部留空則不顯示。",
+    "Inherited from category {{name}}. Saving here gives this model its own official price.": "繼承自類目 {{name}}。在這裡儲存後，該模型將使用自己的官方價。",
+    "This model's own official price takes precedence over category {{name}}.": "該模型自己的官方價優先於類目 {{name}} 的官方價。",
+    "Official prices are only shown for models priced per second or per token.": "只有按秒或按 token 計價的模型才會顯示官方價。",
+    "The saved official price cannot be shown in this form. Saving replaces it.": "已儲存的官方價無法在此表單中顯示，儲存後將被取代。",
+    "Use category price": "改用類目價",
+    "Models of this category show it when they have no official price of their own. It is never charged.": "類目內沒有單獨設定官方價的模型會顯示這個價格，不參與計費。",
+    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "只有類目內所有模型計價方式相同（都按秒且解析度一致，或都按 token）時，才能設定統一的官方價。計價方式不同的模型：{{models}}",
+    "The category official price does not fit model {{model}}": "類目官方價不適用於模型 {{model}}"
   }
 }

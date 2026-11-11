@@ -6303,7 +6303,6 @@
     "Shown": "Показано",
     "Shown {{count}} models in model square": "Показано моделей в каталоге: {{count}}",
     "Shown on the order page": "Показан на странице заказа",
-    "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.": "Показывается пользователям над ценами групп и никогда не списывается. Используйте те же поля использования, что и в выражении тарификации, в USD; оставьте пустым, чтобы скрыть раздел.",
     "Sidebar": "Боковая панель",
     "Sidebar collapsed by default for new users": "Боковая панель свернута по умолчанию для новых пользователей",
     "Sidebar modules": "Модули боковой панели",
@@ -8164,6 +8163,20 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению. Сначала подтвердите цену поставщика.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Коэффициенты групп сохранены, но наценки этих моделей не удалось обновить: {{models}}",
     "Also in the series: {{models}}": "Также в серии: {{models}}",
-    "/ second": "/ сек"
+    "/ second": "/ сек",
+    "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M токенов)",
+    "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
+    "Free input images": "Бесплатные входные изображения",
+    "Enter the price per second for every resolution.": "Укажите цену за секунду для каждого разрешения.",
+    "Enter the reference video price for every resolution, or for none.": "Укажите цену с референсным видео для всех разрешений или ни для одного.",
+    "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.": "Показывается над ценами групп и никогда не списывается. Вводите так, как цена показана на странице тарифов; оставьте все поля пустыми, чтобы скрыть раздел.",
+    "Inherited from category {{name}}. Saving here gives this model its own official price.": "Унаследовано от категории {{name}}. Сохранение здесь задаст модели собственную официальную цену.",
+    "This model's own official price takes precedence over category {{name}}.": "Собственная официальная цена модели имеет приоритет над ценой категории {{name}}.",
+    "Official prices are only shown for models priced per second or per token.": "Официальные цены показываются только для моделей с оплатой за секунду или за токены.",
+    "The saved official price cannot be shown in this form. Saving replaces it.": "Сохранённую официальную цену нельзя показать в этой форме. Сохранение заменит её.",
+    "Use category price": "Использовать цену категории",
+    "Models of this category show it when they have no official price of their own. It is never charged.": "Модели категории без собственной официальной цены показывают эту. Она никогда не списывается.",
+    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "Единую официальную цену можно задать, только если все модели тарифицируются одинаково: за секунду с одинаковыми разрешениями или за токены. Отличаются: {{models}}",
+    "The category official price does not fit model {{model}}": "Официальная цена категории не подходит для модели {{model}}"
   }
 }

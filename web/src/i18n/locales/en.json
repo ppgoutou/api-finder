@@ -6303,7 +6303,6 @@
     "Shown": "Shown",
     "Shown {{count}} models in model square": "Shown {{count}} models in model square",
     "Shown on the order page": "Shown on the order page",
-    "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.": "Shown to users above the group prices. It is never charged. Use the same usage fields as the billing expression, in USD; leave it empty to hide the section.",
     "Sidebar": "Sidebar",
     "Sidebar collapsed by default for new users": "Sidebar collapsed by default for new users",
     "Sidebar modules": "Sidebar modules",
@@ -8164,6 +8163,20 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Only expression prices can take a markup. Confirm the upstream price first.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}",
     "Also in the series: {{models}}": "Also in the series: {{models}}",
-    "/ second": "/ second"
+    "/ second": "/ second",
+    "{{label}} ({{currency}} / 1M tokens)": "{{label}} ({{currency}} / 1M tokens)",
+    "{{label}} ({{currency}} {{suffix}})": "{{label}} ({{currency}} {{suffix}})",
+    "Free input images": "Free input images",
+    "Enter the price per second for every resolution.": "Enter the price per second for every resolution.",
+    "Enter the reference video price for every resolution, or for none.": "Enter the reference video price for every resolution, or for none.",
+    "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.": "Shown to users above the group prices. It is never charged. Enter it the way the pricing page shows it; leave every price empty to hide the section.",
+    "Inherited from category {{name}}. Saving here gives this model its own official price.": "Inherited from category {{name}}. Saving here gives this model its own official price.",
+    "This model's own official price takes precedence over category {{name}}.": "This model's own official price takes precedence over category {{name}}.",
+    "Official prices are only shown for models priced per second or per token.": "Official prices are only shown for models priced per second or per token.",
+    "The saved official price cannot be shown in this form. Saving replaces it.": "The saved official price cannot be shown in this form. Saving replaces it.",
+    "Use category price": "Use category price",
+    "Models of this category show it when they have no official price of their own. It is never charged.": "Models of this category show it when they have no official price of their own. It is never charged.",
+    "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}": "One official price can only be set when every model is priced the same way: per second with the same resolutions, or per token. Models that differ: {{models}}",
+    "The category official price does not fit model {{model}}": "The category official price does not fit model {{model}}"
   }
 }
