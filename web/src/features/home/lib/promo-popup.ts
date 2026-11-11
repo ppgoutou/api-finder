@@ -291,28 +291,39 @@ export function selectPromoCards(
 }
 
 /** Reads the number out of display text such as `¥0.12` or `$1,200`. */
-function readAmount(text: string): number | null {
+export function readPromoAmount(text: string): number | null {
   const match = text.replaceAll(',', '').match(/\d+(?:\.\d+)?/)
   if (!match) return null
   const amount = Number(match[0])
   return amount > 0 ? amount : null
 }
 
-/** Sale price as a share of the original; null when it is not a real saving. */
+/** The currency mark written before the number, such as `¥` in `¥0.12`. */
+export function readPromoCurrencyMark(text: string): string {
+  return (text.split(/\d/, 1)[0] ?? '').trim()
+}
+
+/**
+ * Sale price as a share of the original; null when it is not a real saving
+ * or the two prices are written in different currencies.
+ */
 export function getPromoPriceRatio(
   salePrice: string,
   originalPrice: string
 ): number | null {
-  const sale = readAmount(salePrice)
-  const original = readAmount(originalPrice)
+  const saleMark = readPromoCurrencyMark(salePrice)
+  const originalMark = readPromoCurrencyMark(originalPrice)
+  if (saleMark && originalMark && saleMark !== originalMark) return null
+  const sale = readPromoAmount(salePrice)
+  const original = readPromoAmount(originalPrice)
   if (sale === null || original === null || sale >= original) return null
   return sale / original
 }
 
 /** Bonus as a share of pay plus bonus; null when the text has no numbers. */
 export function getPromoBonusShare(tier: PromoTier): number | null {
-  const pay = readAmount(tier.pay)
-  const bonus = readAmount(tier.bonus)
+  const pay = readPromoAmount(tier.pay)
+  const bonus = readPromoAmount(tier.bonus)
   if (pay === null || bonus === null) return null
   return bonus / (pay + bonus)
 }

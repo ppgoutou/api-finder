@@ -78,6 +78,15 @@ describe('live promo prices', () => {
     expect(card.deals[0].originalPrice).toBe('entered')
   })
 
+  it('restates an original price typed in yuan in the shown currency', () => {
+    const [card] = applyLivePromoPrices(
+      [listCard({ originalPrice: '¥68' })],
+      [VIDEO_MODEL],
+      { ...CONTEXT, usdExchangeRate: 6.8 }
+    )
+    expect(card.deals[0].originalPrice).toBe('$10')
+  })
+
   it('leaves a line that does not follow its model unchanged', () => {
     const [card] = applyLivePromoPrices(
       [listCard({ autoPrice: false })],

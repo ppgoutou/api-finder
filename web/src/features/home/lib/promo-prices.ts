@@ -33,7 +33,12 @@ import {
 } from '@/features/pricing/lib/video-pricing'
 import type { PricingModel } from '@/features/pricing/types'
 
-import type { PromoCard, PromoPriceLine } from './promo-popup'
+import {
+  type PromoCard,
+  type PromoPriceLine,
+  readPromoAmount,
+  readPromoCurrencyMark,
+} from './promo-popup'
 
 export type PromoModelPrice = {
   /** Shown in the price picker, such as `720p`. */
@@ -132,6 +137,35 @@ export function getPromoModelPrices(
   ]
 }
 
+const CNY_MARKS = new Set(['¥', '￥'])
+
+/**
+ * An original price the admin typed in yuan or dollars, restated in the
+ * currency the sale price is shown in so the two can be compared. Text in
+ * any other form is kept as typed.
+ */
+function restateOriginalPrice(text: string, context: PriceContext): string {
+  const amount = readPromoAmount(text)
+  if (amount === null) return text
+  const mark = readPromoCurrencyMark(text)
+  let amountUSD: number
+  if (CNY_MARKS.has(mark)) {
+    if (!(context.usdExchangeRate > 0)) return text
+    amountUSD = amount / context.usdExchangeRate
+  } else if (mark === '$') {
+    amountUSD = amount
+  } else {
+    return text
+  }
+  return formatTaskUsageUnitPrice(amountUSD, {
+    tokenUnit: 'M',
+    showRechargePrice: false,
+    priceRate: context.priceRate,
+    usdExchangeRate: context.usdExchangeRate,
+    fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
+  })
+}
+
 /** A followed line at the model's current price; stored text when it can't be read. */
 function withLivePrice<T extends PromoPriceLine>(
   line: T,
@@ -148,7 +182,8 @@ function withLivePrice<T extends PromoPriceLine>(
   return {
     ...line,
     salePrice: price.salePrice,
-    originalPrice: price.originalPrice || line.originalPrice,
+    originalPrice:
+      price.originalPrice || restateOriginalPrice(line.originalPrice, context),
     unit: price.unit,
   }
 }

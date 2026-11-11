@@ -169,4 +169,12 @@ describe('promo price ratio', () => {
   ])('reports no saving for %s against %s', (sale, original) => {
     expect(getPromoPriceRatio(sale, original)).toBeNull()
   })
+
+  it('reports no saving when the prices are written in different currencies', () => {
+    expect(getPromoPriceRatio('$0.06', '¥0.99')).toBeNull()
+  })
+
+  it('compares an unmarked original price with a marked sale price', () => {
+    expect(getPromoPriceRatio('$0.10', '0.20')).toBe(0.5)
+  })
 })
