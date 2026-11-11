@@ -4209,6 +4209,7 @@
     "Move up": "Di chuyển lên",
     "Moves to your balance daily at {{time}}": "Tự động chuyển vào số dư lúc {{time}} hằng ngày",
     "ms": "ms",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "Nhóm đa kênh, tính phí theo giây, theo token hoặc theo lượt, chọn theo nhu cầu; liên hệ bộ phận hỗ trợ để dùng mô hình cho phép nội dung không giới hạn.",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "Nhóm đa kênh, tính phí theo giây, theo token hoặc theo lượt, chọn theo nhu cầu; mô hình có hậu tố {{suffix}} cho phép nội dung không giới hạn.",
     "Multi-key channel: Keys will be": "Kênh đa khóa: Các khóa sẽ là",
     "Multi-key channels do not support balance queries": "Kênh đa khóa không hỗ trợ truy vấn số dư",

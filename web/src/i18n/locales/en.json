@@ -4209,6 +4209,7 @@
     "Move up": "Move up",
     "Moves to your balance daily at {{time}}": "Moves to your balance daily at {{time}}",
     "ms": "ms",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.",
     "Multi-key channel: Keys will be": "Multi-key channel: Keys will be",
     "Multi-key channels do not support balance queries": "Multi-key channels do not support balance queries",

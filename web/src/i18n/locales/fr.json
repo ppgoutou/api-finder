@@ -4209,6 +4209,7 @@
     "Move up": "Monter",
     "Moves to your balance daily at {{time}}": "Versé sur votre solde chaque jour à {{time}}",
     "ms": "ms",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "Groupes multicanaux facturés à la seconde, au token ou à la requête, choisissez selon vos besoins ; contactez le support pour accéder aux modèles à contenu sans restriction.",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "Groupes multicanaux facturés à la seconde, au token ou à la requête, choisissez selon vos besoins ; les modèles finissant par {{suffix}} proposent du contenu sans restriction.",
     "Multi-key channel: Keys will be": "Canal multi-clés : Les clés seront",
     "Multi-key channels do not support balance queries": "Les canaux multi-clés ne prennent pas en charge la consultation du solde",

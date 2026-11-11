@@ -4209,6 +4209,7 @@
     "Move up": "上移",
     "Moves to your balance daily at {{time}}": "每天 {{time}} 自動轉入餘額",
     "ms": "毫秒",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "多渠道聚合，支援按秒、按 Token、按次計費，按需選擇；如需無限制內容模型，請聯絡客服。",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "多渠道聚合，支援按秒、按 Token、按次計費，按需選擇；模型名帶 {{suffix}} 為無限制內容。",
     "Multi-key channel: Keys will be": "多金鑰渠道：金鑰將",
     "Multi-key channels do not support balance queries": "多金鑰渠道不支援餘額查詢",
