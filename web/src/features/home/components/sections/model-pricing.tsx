@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -26,6 +27,14 @@ import {
   type StaticDataTableColumn,
 } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  useCarousel,
+} from '@/components/ui/carousel'
 import { cn } from '@/lib/utils'
 
 import {
@@ -42,9 +51,29 @@ const formatPrice = (row: SeriesPriceRow) =>
 const HEADER_CELL =
   'text-muted-foreground h-auto px-1 py-2 align-bottom text-[11px] leading-tight font-medium whitespace-normal [overflow-wrap:anywhere]'
 
+/** The deepest discount of any resolution, for the card headline. */
+function getBestDiscount(series: VideoSeriesPricing) {
+  return series.rows.reduce<SeriesPriceRow['discount']>(
+    (best, row) =>
+      row.discount && (!best || row.discount.percentOff > best.percentOff)
+        ? row.discount
+        : best,
+    null
+  )
+}
+
 export function ModelPricing() {
   const { t } = useTranslation()
   const seriesList = useVideoSeriesPricing()
+  // Cards share one height and one layout: a slot one card fills is kept
+  // open on the others, so their tables start at the same height.
+  const showOfficialPrice = seriesList.some((series) =>
+    series.rows.some((row) => row.officialPrice)
+  )
+  const reserveDiscount = seriesList.some((series) => getBestDiscount(series))
+  const reserveVariants = seriesList.some(
+    (series) => series.variants.length > 0
+  )
 
   return (
     <section
@@ -79,27 +108,94 @@ export function ModelPricing() {
         </div>
 
         {seriesList.length > 0 && (
-          <div
-            data-testid='series-grid'
-            className={cn(
-              'mt-8 grid gap-5 md:grid-cols-2',
-              // Three cards fill one row; any other count pairs up in two
-              // columns so no card is left alone on the last row.
-              seriesList.length === 3 && 'lg:grid-cols-3'
-            )}
+          <Carousel
+            className='mt-8'
+            opts={{ align: 'start', containScroll: 'trimSnaps' }}
+            aria-label={t('Models and pricing')}
           >
-            {seriesList.map((series) => (
-              <SeriesCard key={series.name} series={series} />
-            ))}
-          </div>
+            <CarouselContent className='-ml-5'>
+              {seriesList.map((series) => (
+                <CarouselItem
+                  key={series.name}
+                  // One card per screen on phones with the next one peeking,
+                  // two on tablets, three on desktops; the rest slide in.
+                  className='flex basis-[85%] pl-5 sm:basis-1/2 lg:basis-1/3'
+                >
+                  <SeriesCard
+                    series={series}
+                    showOfficialPrice={showOfficialPrice}
+                    reserveDiscount={reserveDiscount}
+                    reserveVariants={reserveVariants}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <SeriesCarouselControls />
+          </Carousel>
         )}
       </div>
     </section>
   )
 }
 
+/**
+ * Arrows and position dots under the cards, shown only when some cards are
+ * off screen.
+ */
+function SeriesCarouselControls() {
+  const carousel = useCarousel()
+  const api = carousel.api
+  const [snaps, setSnaps] = useState<number[]>([])
+  const [selected, setSelected] = useState(0)
+
+  useEffect(() => {
+    if (!api) return
+    const sync = () => {
+      setSnaps(api.scrollSnapList())
+      setSelected(api.selectedScrollSnap())
+    }
+    sync()
+    // Resizing changes how many cards fit, and with it the snap count.
+    api.on('select', sync).on('reInit', sync).on('resize', sync)
+    return () => {
+      api.off('select', sync).off('reInit', sync).off('resize', sync)
+    }
+  }, [api])
+
+  if (snaps.length < 2) return null
+  return (
+    <div className='mt-6 flex items-center justify-center gap-3'>
+      <CarouselPrevious className='static translate-y-0' />
+      <div className='flex items-center gap-1.5'>
+        {snaps.map((snap, index) => (
+          <button
+            key={snap}
+            type='button'
+            aria-label={`${index + 1} / ${snaps.length}`}
+            aria-current={index === selected}
+            onClick={() => api?.scrollTo(index)}
+            className={cn(
+              'h-1.5 rounded-full transition-all duration-200',
+              index === selected
+                ? 'bg-foreground w-5'
+                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5'
+            )}
+          />
+        ))}
+      </div>
+      <CarouselNext className='static translate-y-0' />
+    </div>
+  )
+}
+
 type SeriesCardProps = {
   series: VideoSeriesPricing
+  /** Show the official price and discount columns. */
+  showOfficialPrice: boolean
+  /** Keep room for the headline discount even when this card has none. */
+  reserveDiscount: boolean
+  /** Keep room for the variants line even when this card has none. */
+  reserveVariants: boolean
 }
 
 function SeriesCard(props: SeriesCardProps) {
@@ -108,14 +204,7 @@ function SeriesCard(props: SeriesCardProps) {
   const first = series.rows[0]
   const last = series.rows.at(-1)
   const lowest = series.lowest
-  // The deepest discount of any resolution, for the headline.
-  const bestDiscount = series.rows.reduce<SeriesPriceRow['discount']>(
-    (best, row) =>
-      row.discount && (!best || row.discount.percentOff > best.percentOff)
-        ? row.discount
-        : best,
-    null
-  )
+  const bestDiscount = getBestDiscount(series)
 
   const specs = [
     first && last && first !== last
@@ -178,28 +267,29 @@ function SeriesCard(props: SeriesCardProps) {
     },
   ]
   // Without any configured official price the two comparison columns would
-  // only hold dashes, so the table keeps resolution and price alone.
-  const hasOfficialPrice = series.rows.some((row) => row.officialPrice)
-  const columns = hasOfficialPrice
+  // only hold dashes, so the tables keep resolution and price alone.
+  const columns = props.showOfficialPrice
     ? allColumns
     : allColumns.filter(
         (column) => column.id !== 'official' && column.id !== 'discount'
       )
 
   return (
-    <article className='bg-card border-border/60 flex flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
+    <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
       <div className='flex flex-wrap items-center gap-2'>
         <h3 className='text-lg font-semibold tracking-tight sm:text-xl'>
           {series.name}
         </h3>
         {series.isNew && <Badge>{t('New')}</Badge>}
       </div>
-      {series.variants.length > 0 && (
-        <p className='text-muted-foreground mt-1 text-xs'>
+      {series.variants.length > 0 ? (
+        <p className='text-muted-foreground mt-1 min-h-4 text-xs'>
           {t('Also in the series: {{models}}', {
             models: series.variants.join(' · '),
           })}
         </p>
+      ) : (
+        props.reserveVariants && <div aria-hidden='true' className='mt-1 h-4' />
       )}
 
       {lowest && (
@@ -211,8 +301,11 @@ function SeriesCard(props: SeriesCardProps) {
           <span className='text-muted-foreground text-sm'>{t('/ second')}</span>
         </p>
       )}
+      {!bestDiscount && props.reserveDiscount && (
+        <div aria-hidden='true' className='mt-2 h-7' />
+      )}
       {bestDiscount && (
-        <p className='mt-2 w-fit max-w-full rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm leading-snug font-bold text-white shadow-sm shadow-red-500/30'>
+        <p className='mt-2 min-h-7 w-fit max-w-full rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm leading-snug font-bold text-white shadow-sm shadow-red-500/30'>
           {t('{{percentOff}}% off official prices', {
             percentOff: bestDiscount.percentOff,
             zhe: bestDiscount.zhe,
