@@ -64,7 +64,7 @@ describe('pricing hero note', () => {
     expect(screen.getByRole('button', CONTACT_BUTTON)).toBeInTheDocument()
   })
 
-  it('shows the QQ and Telegram contacts when the contact button is clicked', async () => {
+  it('shows only the Telegram support link when the contact button is clicked', async () => {
     const user = userEvent.setup()
     render(<PricingHeroNote models={[]} />)
 
@@ -73,9 +73,9 @@ describe('pricing hero note', () => {
     await user.click(button)
 
     expect(button).toHaveAttribute('aria-expanded', 'true')
-    expect(await screen.findByText('QQ:')).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /@APIFinder_Support/ })
-    ).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
+    const link = await screen.findByRole('link', { name: /Open Telegram/ })
+    expect(link).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(screen.queryByText(/QQ/)).not.toBeInTheDocument()
   })
 })
