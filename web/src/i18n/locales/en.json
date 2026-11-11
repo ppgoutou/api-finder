@@ -8164,6 +8164,8 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Only expression prices can take a markup. Confirm the upstream price first.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}",
     "Also in the series: {{models}}": "Also in the series: {{models}}",
-    "/ second": "/ second"
+    "/ second": "/ second",
+    "Price / s": "Price / s",
+    "List price": "List price"
   }
 }

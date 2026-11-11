@@ -8164,6 +8164,8 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "只有表达式价格可以加价。请先确认上游价格。",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分组倍率已保存，但以下模型的加价未能更新：{{models}}",
     "Also in the series: {{models}}": "同系列还有：{{models}}",
-    "/ second": "/ 秒"
+    "/ second": "/ 秒",
+    "Price / s": "每秒低至",
+    "List price": "官方价"
   }
 }

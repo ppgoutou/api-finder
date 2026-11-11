@@ -46,10 +46,9 @@ import {
 const formatResolution = (option: string) => option.replace(/k$/i, 'K')
 const formatPrice = (row: SeriesPriceRow) =>
   row.approximate ? `≈${row.price}` : row.price
-// Headers wrap so longer languages (Russian, French, Vietnamese) never
-// overlap or push the table into a horizontal scroll.
+// Short header words keep every language on one line in the narrowest card.
 const HEADER_CELL =
-  'text-muted-foreground h-auto px-1 py-2 align-bottom text-[11px] leading-tight font-medium whitespace-normal [overflow-wrap:anywhere]'
+  'text-muted-foreground h-auto px-1 py-2 text-[11px]! leading-tight font-medium whitespace-nowrap'
 
 /** The deepest discount of any resolution, for the card headline. */
 function getBestDiscount(series: VideoSeriesPricing) {
@@ -113,13 +112,13 @@ export function ModelPricing() {
             opts={{ align: 'start', containScroll: 'trimSnaps' }}
             aria-label={t('Models and pricing')}
           >
-            <CarouselContent className='-ml-5'>
+            <CarouselContent className='-ml-4 sm:-ml-5'>
               {seriesList.map((series) => (
                 <CarouselItem
                   key={series.name}
                   // One card per screen on phones with the next one peeking,
                   // two on tablets, three on desktops; the rest slide in.
-                  className='flex basis-[85%] pl-5 sm:basis-1/2 lg:basis-1/3'
+                  className='flex basis-[92%] pl-4 sm:basis-1/2 sm:pl-5 lg:basis-1/3'
                 >
                   <SeriesCard
                     series={series}
@@ -229,7 +228,7 @@ function SeriesCard(props: SeriesCardProps) {
     },
     {
       id: 'price',
-      header: t('Lowest per second'),
+      header: t('Price / s'),
       className: HEADER_CELL,
       cellClassName:
         'px-1 py-2 font-mono font-semibold whitespace-nowrap tabular-nums',
@@ -237,7 +236,7 @@ function SeriesCard(props: SeriesCardProps) {
     },
     {
       id: 'official',
-      header: t('Official price'),
+      header: t('List price'),
       className: HEADER_CELL,
       cellClassName:
         'text-muted-foreground px-1 py-2 font-mono whitespace-nowrap tabular-nums',
@@ -255,7 +254,7 @@ function SeriesCard(props: SeriesCardProps) {
       cellClassName: 'px-1 py-2 whitespace-nowrap',
       cell: (row) =>
         row.discount ? (
-          <Badge className='bg-red-600 font-bold text-white dark:bg-red-500'>
+          <Badge className='bg-red-600 px-1.5 text-[11px] font-bold text-white dark:bg-red-500'>
             {t('{{percentOff}}% off', {
               percentOff: row.discount.percentOff,
               zhe: row.discount.zhe,
@@ -275,7 +274,7 @@ function SeriesCard(props: SeriesCardProps) {
       )
 
   return (
-    <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
+    <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
       <div className='flex flex-wrap items-center gap-2'>
         <h3 className='text-lg font-semibold tracking-tight sm:text-xl'>
           {series.name}

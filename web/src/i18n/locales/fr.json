@@ -8164,6 +8164,8 @@
     "Only expression prices can take a markup. Confirm the upstream price first.": "Seuls les prix par expression acceptent une majoration. Confirmez d'abord le prix amont.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Ratios de groupe enregistrés, mais la majoration de ces modèles n'a pas pu être mise à jour : {{models}}",
     "Also in the series: {{models}}": "Aussi dans la série : {{models}}",
-    "/ second": "/ seconde"
+    "/ second": "/ seconde",
+    "Price / s": "Prix / s",
+    "List price": "Officiel"
   }
 }
