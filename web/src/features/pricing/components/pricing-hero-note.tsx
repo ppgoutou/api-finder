@@ -16,7 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import {
+  ArrowDown01Icon,
+  CustomerSupportIcon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
+
+import { Button } from '@/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { SupportContacts } from '@/features/home/components/support-contacts'
 
 import type { PricingModel } from '../types'
 
@@ -30,8 +43,9 @@ type PricingHeroNoteProps = {
 
 /**
  * The note under the model plaza title. Viewers whose groups include
- * unrestricted models learn how to spot them; everyone else is told to ask
- * support for access, since those models are hidden from them.
+ * unrestricted models learn how to spot them; everyone else gets a
+ * highlighted button that opens the support contacts, since those models
+ * are hidden from them.
  */
 export function PricingHeroNote(props: PricingHeroNoteProps) {
   const { t } = useTranslation()
@@ -39,16 +53,49 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
     model.model_name.endsWith(UNRESTRICTED_SUFFIX)
   )
 
+  if (offersUnrestricted) {
+    return (
+      <p className='text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm'>
+        {t(
+          'Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.',
+          { suffix: UNRESTRICTED_SUFFIX }
+        )}
+      </p>
+    )
+  }
+
   return (
-    <p className='text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm'>
-      {offersUnrestricted
-        ? t(
-            'Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.',
-            { suffix: UNRESTRICTED_SUFFIX }
-          )
-        : t(
-            'Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.'
-          )}
-    </p>
+    <div className='mx-auto mt-3 flex max-w-3xl flex-col items-center gap-2.5'>
+      <p className='text-muted-foreground/60 text-xs leading-relaxed sm:text-sm'>
+        {t(
+          'Multi-channel groups billed per second, per token or per request, pick what fits.'
+        )}
+      </p>
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              variant='ghost'
+              className='bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary dark:bg-primary/20 dark:hover:bg-primary/25 h-auto rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-normal sm:text-sm dark:text-blue-300 dark:hover:text-blue-300 dark:aria-expanded:text-blue-300'
+            />
+          }
+        >
+          <HugeiconsIcon
+            icon={CustomerSupportIcon}
+            className='size-4 shrink-0'
+            aria-hidden
+          />
+          {t('Get unrestricted content models: contact support')}
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className='size-3.5 shrink-0'
+            aria-hidden
+          />
+        </PopoverTrigger>
+        <PopoverContent className='text-muted-foreground w-72 max-w-[calc(100vw-2rem)] text-sm'>
+          <SupportContacts />
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
