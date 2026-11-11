@@ -61,33 +61,6 @@ export const HOME_VIDEO_MODELS = [
   },
 ] as const
 
-/**
- * Model series priced on the home page, in display order. A series gathers
- * every model square category whose name starts with its prefix (for example
- * Seedance 2.0, Seedance 2.0 fast and Seedance 2.0 -NSFW); `variants` names
- * them for the "supports" line.
- */
-export const HOME_VIDEO_SERIES = [
-  {
-    name: 'Seedance 2.0',
-    categoryPrefix: 'Seedance 2.0',
-    variants: ['2.0', '2.0 fast', '2.0 mini', '2.0 NSFW'],
-    isNew: false,
-  },
-  {
-    name: 'Seedance 2.5',
-    categoryPrefix: 'Seedance 2.5',
-    variants: ['2.5', '2.5 NSFW'],
-    isNew: true,
-  },
-  {
-    name: 'Wan 3.0',
-    categoryPrefix: 'Wan 3.0',
-    variants: ['Wan 3.0'],
-    isNew: false,
-  },
-] as const
-
 export type ShowcaseCategory =
   | 'product'
   | 'anime'

@@ -8151,6 +8151,8 @@
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "価格は上流に連動します。顧客は倍率価格と追加上乗せの合計を支払います。",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "トークン価格は解像度ごとの動画1秒あたりで表示します。参照動画がある場合、上乗せは出力秒と参照秒の両方に課金されます。顧客は最終価格を支払い、グループ倍率を変えても上乗せは変わりません。",
     "Only expression prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格のみです。先に上流価格を確定してください。",
-    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "グループ倍率は保存しましたが、次のモデルの上乗せを更新できませんでした：{{models}}"
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "グループ倍率は保存しましたが、次のモデルの上乗せを更新できませんでした：{{models}}",
+    "Also in the series: {{models}}": "同シリーズ：{{models}}",
+    "/ second": "/ 秒"
   }
 }

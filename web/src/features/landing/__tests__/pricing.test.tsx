@@ -144,7 +144,7 @@ afterEach(() => {
 })
 
 describe('LandingPricing', () => {
-  it('shows the cheapest live price of each series per resolution', async () => {
+  it('shows the cheapest live price of each series per resolution, without its variant categories', async () => {
     renderPricing(
       [
         secondModel('E-seedance-2.0', { '480p': 0.2, '720p': 0.4 }),
@@ -159,8 +159,8 @@ describe('LandingPricing', () => {
     )
 
     expect(await tableRows()).toEqual([
-      ['Resolution', 'Seedance 2.0', 'Seedance 2.5New'],
-      ['480p', '$0.05', '≈$0.05'],
+      ['Resolution', 'Seedance 2.0', 'Seedance 2.5'],
+      ['480p', '$0.1', '≈$0.05'],
       ['720p', '$0.2', '—'],
     ])
   })

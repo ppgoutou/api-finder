@@ -8151,6 +8151,8 @@
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.",
     "Only expression prices can take a markup. Confirm the upstream price first.": "Only expression prices can take a markup. Confirm the upstream price first.",
-    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}"
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}",
+    "Also in the series: {{models}}": "Also in the series: {{models}}",
+    "/ second": "/ second"
   }
 }

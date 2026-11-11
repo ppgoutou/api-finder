@@ -8151,6 +8151,8 @@
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "价格跟随上游。客户支付倍率价加上额外加价。",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Token 价格按各分辨率每秒视频换算显示。有参考视频时，加价按输出秒和参考秒一起收取。客户支付最终价；修改分组倍率后加价保持不变。",
     "Only expression prices can take a markup. Confirm the upstream price first.": "只有表达式价格可以加价。请先确认上游价格。",
-    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分组倍率已保存，但以下模型的加价未能更新：{{models}}"
+    "Group ratios saved, but the markups of these models could not be updated: {{models}}": "分组倍率已保存，但以下模型的加价未能更新：{{models}}",
+    "Also in the series: {{models}}": "同系列还有：{{models}}",
+    "/ second": "/ 秒"
   }
 }

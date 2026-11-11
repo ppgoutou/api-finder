@@ -168,7 +168,7 @@ afterEach(() => {
 })
 
 describe('home model pricing', () => {
-  it('shows the cheapest model per resolution across every category of a series', async () => {
+  it('prices a series only from its own category, listing variant categories by name', async () => {
     mockPricingApi(
       [
         secondModel(
@@ -177,29 +177,66 @@ describe('home model pricing', () => {
           { minDuration: 4, maxDuration: 15, ratios: ['16:9', '9:16'] }
         ),
         secondModel(
-          'G-seedance-2.0-fast',
-          { '480p': 0.1, '720p': 0.5 },
+          'G-seedance-2.0',
+          { '480p': 0.3, '720p': 0.3 },
           { minDuration: 5, maxDuration: 12, ratios: ['16:9', '1:1'] }
         ),
+        secondModel('G-seedance-2.0-fast', { '480p': 0.1, '720p': 0.1 }),
+        secondModel('E-seedance-2.0-mini', { '480p': 0.05 }),
       ],
       [
-        { name: 'Seedance 2.0', models: ['E-seedance-2.0'] },
+        { name: 'Seedance 2.0', models: ['E-seedance-2.0', 'G-seedance-2.0'] },
         { name: 'Seedance 2.0 fast', models: ['G-seedance-2.0-fast'] },
+        { name: 'Seedance 2.0 Mini', models: ['E-seedance-2.0-mini'] },
+        { name: 'Seedance 2.0 -NSFW', models: [] },
       ]
     )
     renderPricing()
 
     expect(await seriesRows('Seedance 2.0')).toEqual([
-      ['480p', '$0.05', 'G-seedance-2.0-fast'],
-      ['720p', '$0.2', 'E-seedance-2.0'],
+      ['480p', '$0.1', 'E-seedance-2.0'],
+      ['720p', '$0.15', 'G-seedance-2.0'],
       ['4K', '$0.5', 'E-seedance-2.0'],
     ])
     const card = screen
       .getByRole('heading', { level: 3, name: 'Seedance 2.0' })
       .closest('article') as HTMLElement
+    expect(
+      within(card).getByText('Also in the series: fast · Mini')
+    ).toBeVisible()
     expect(within(card).getByText('480p–4K')).toBeVisible()
     expect(within(card).getByText('4–15 seconds')).toBeVisible()
     expect(within(card).getByText('3 ratios')).toBeVisible()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
+  })
+
+  it('shows every priced video category as its own card in category order, merging resolutions spelled in either case', async () => {
+    mockPricingApi(
+      [
+        secondModel('E-MiniMax-H3', { '2K': 0.4, '768P': 0.2 }),
+        secondModel('H-MiniMax-H3-Fast', { '768p': 0.3, '1080p': 0.3 }),
+        secondModel('G-seedance-2.5', { '480p': 0.2 }),
+        secondModel('flux', { '1k': 1 }),
+      ],
+      [
+        { name: 'MiniMax-H3', models: ['E-MiniMax-H3', 'H-MiniMax-H3-Fast'] },
+        { name: 'Seedance 2.5', models: ['G-seedance-2.5'] },
+        { name: 'Wan 3.0', models: [] },
+        { name: 'Seedream', models: ['missing-model'] },
+      ]
+    )
+    renderPricing()
+
+    expect(await seriesRows('MiniMax-H3')).toEqual([
+      ['768p', '$0.1', 'E-MiniMax-H3'],
+      ['1080p', '$0.15', 'H-MiniMax-H3-Fast'],
+      ['2K', '$0.2', 'E-MiniMax-H3'],
+    ])
+    expect(
+      screen
+        .getAllByRole('heading', { level: 3 })
+        .map((heading) => heading.textContent)
+    ).toEqual(['MiniMax-H3', 'Seedance 2.5'])
   })
 
   it('keeps the exact price when a token-billed model displays the same price', async () => {
@@ -209,13 +246,15 @@ describe('home model pricing', () => {
         TOKEN_MINI,
       ],
       [
-        { name: 'Seedance 2.0 Mini', models: ['E-seedance-2.0-mini'] },
-        { name: 'Seedance 2.0 -NSFW', models: ['A-seedance-2.0-mini-P'] },
+        {
+          name: 'Seedance 2.0 Mini',
+          models: ['E-seedance-2.0-mini', 'A-seedance-2.0-mini-P'],
+        },
       ]
     )
     renderPricing()
 
-    expect(await seriesRows('Seedance 2.0')).toEqual([
+    expect(await seriesRows('Seedance 2.0 Mini')).toEqual([
       ['480p', '$0.05', 'E-seedance-2.0-mini'],
       ['720p', '≈$0.03', 'A-seedance-2.0-mini-P'],
     ])
