@@ -33,6 +33,7 @@ import {
   PricingToolbar,
   ModelCardGrid,
   ModelDistribution,
+  PricingHeroNote,
 } from './components'
 import { VIEW_MODES } from './constants'
 import { useFilters } from './hooks/use-filters'
@@ -252,12 +253,7 @@ export function Pricing() {
               })}
             </p>
             <ModelDistribution sections={distributionSections} />
-            <p className='text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm'>
-              {t(
-                'Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.',
-                { suffix: '-P' }
-              )}
-            </p>
+            <PricingHeroNote models={models || []} />
             <SearchBar
               value={searchInput}
               onChange={setSearchInput}

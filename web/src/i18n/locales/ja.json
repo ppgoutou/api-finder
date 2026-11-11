@@ -4209,6 +4209,7 @@
     "Move up": "上へ移動",
     "Moves to your balance daily at {{time}}": "毎日 {{time}} に残高へ自動振替",
     "ms": "ms",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "複数チャネルを集約し、秒・トークン・回数で課金。用途に合わせて選べます。制限なしのコンテンツに対応したモデルをご希望の場合は、サポートまでお問い合わせください。",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "複数チャネルを集約し、秒・トークン・回数で課金。用途に合わせて選べます。末尾が {{suffix}} のモデルは制限なしのコンテンツに対応しています。",
     "Multi-key channel: Keys will be": "マルチキーチャネル: キーは",
     "Multi-key channels do not support balance queries": "マルチキーチャネルは残高照会に対応していません",

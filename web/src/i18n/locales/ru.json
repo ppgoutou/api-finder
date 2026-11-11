@@ -4209,6 +4209,7 @@
     "Move up": "Переместить вверх",
     "Moves to your balance daily at {{time}}": "Ежедневно в {{time}} переводится на баланс",
     "ms": "мс",
+    "Multi-channel groups billed per second, per token or per request, pick what fits; contact support for unrestricted content models.": "Многоканальные группы с оплатой за секунду, токен или запрос, выбирайте по задаче; для доступа к моделям с контентом без ограничений обратитесь в поддержку.",
     "Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.": "Многоканальные группы с оплатой за секунду, токен или запрос, выбирайте по задаче; модели с окончанием {{suffix}} — контент без ограничений.",
     "Multi-key channel: Keys will be": "Многоключевой канал: Ключи будут",
     "Multi-key channels do not support balance queries": "Каналы с несколькими ключами не поддерживают запрос баланса",
