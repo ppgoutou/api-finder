@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import { PricingHeroNote } from '../components/pricing-hero-note'
@@ -34,10 +35,10 @@ function model(name: string): PricingModel {
 }
 
 const SUFFIX_NOTE = /models ending in .* offer unrestricted content/
-const CONTACT_NOTE = /contact support for unrestricted content models/
+const CONTACT_BUTTON = { name: /unrestricted content models: contact support/ }
 
 describe('pricing hero note', () => {
-  it('explains the -P suffix when the viewer can use an unrestricted model', () => {
+  it('explains the -P suffix without a contact button when the viewer can use an unrestricted model', () => {
     render(
       <PricingHeroNote
         models={['C-seedance-2.0', 'A-seedance-2.0-P'].map(model)}
@@ -45,21 +46,36 @@ describe('pricing hero note', () => {
     )
 
     expect(screen.getByText(SUFFIX_NOTE)).toBeInTheDocument()
-    expect(screen.queryByText(CONTACT_NOTE)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', CONTACT_BUTTON)).not.toBeInTheDocument()
   })
 
-  it('points to support when none of the viewer models is unrestricted', () => {
+  it('offers a contact button instead of the suffix note when none of the viewer models is unrestricted', () => {
     render(
       <PricingHeroNote models={['C-seedance-2.0', 'E-MiniMax-H3'].map(model)} />
     )
 
-    expect(screen.getByText(CONTACT_NOTE)).toBeInTheDocument()
+    expect(screen.getByRole('button', CONTACT_BUTTON)).toBeInTheDocument()
     expect(screen.queryByText(SUFFIX_NOTE)).not.toBeInTheDocument()
   })
 
-  it('points to support while no models are loaded', () => {
+  it('offers the contact button while no models are loaded', () => {
     render(<PricingHeroNote models={[]} />)
 
-    expect(screen.getByText(CONTACT_NOTE)).toBeInTheDocument()
+    expect(screen.getByRole('button', CONTACT_BUTTON)).toBeInTheDocument()
+  })
+
+  it('shows the QQ and Telegram contacts when the contact button is clicked', async () => {
+    const user = userEvent.setup()
+    render(<PricingHeroNote models={[]} />)
+
+    const button = screen.getByRole('button', CONTACT_BUTTON)
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    await user.click(button)
+
+    expect(button).toHaveAttribute('aria-expanded', 'true')
+    expect(await screen.findByText('QQ:')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /@APIFinder_Support/ })
+    ).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
   })
 })
