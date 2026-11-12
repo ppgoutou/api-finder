@@ -28,6 +28,7 @@ import type { PricingCategory, PricingModel } from '@/features/pricing/types'
 
 import {
   DEFAULT_STUDIO_DURATION,
+  DEFAULT_STUDIO_RATIOS,
   REFERENCE_LIMITS,
   REFERENCE_TOKEN_NAMES,
   STUDIO_RATIOS,
@@ -70,7 +71,7 @@ export function studioModelsFromPricing(
           ? STUDIO_RATIOS.filter(
               (ratio) => ratio === 'auto' || declaredRatios.includes(ratio)
             )
-          : STUDIO_RATIOS,
+          : DEFAULT_STUDIO_RATIOS,
       },
     ]
   })

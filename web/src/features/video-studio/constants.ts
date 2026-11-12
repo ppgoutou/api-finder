@@ -54,7 +54,15 @@ export const STUDIO_RATIOS: readonly StudioRatio[] = [
   '1:1',
   '3:4',
   '9:16',
+  '9:21',
 ]
+
+/**
+ * Ratios of a video model that declares none: the Seedance set, without the
+ * 9:21 that only some gateways take.
+ */
+export const DEFAULT_STUDIO_RATIOS: readonly StudioRatio[] =
+  STUDIO_RATIOS.filter((ratio) => ratio !== '9:21')
 
 export const STUDIO_MAX_COUNT = 4
 
