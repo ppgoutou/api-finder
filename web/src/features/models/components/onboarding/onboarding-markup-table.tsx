@@ -70,7 +70,9 @@ export function OnboardingMarkupTable(props: {
   const baseExpr =
     props.markup?.base_expr ??
     (typeof configured === 'string' ? configured : undefined)
-  const examples = props.entry.plugin_variants?.[0]?.usage_examples
+  const examples =
+    props.entry.usage_examples ??
+    props.entry.plugin_variants?.[0]?.usage_examples
   const rows = useMemo(
     () => markupRows(baseExpr, props.entry.usage_schema, examples),
     [baseExpr, props.entry.usage_schema, examples]
@@ -123,9 +125,23 @@ export function OnboardingMarkupTable(props: {
     {
       id: 'condition',
       header: t('Conditions'),
-      cell: (row) =>
-        taskTierConditions(row.source, props.entry.usage_schema, language, t) ||
-        row.tier,
+      cell: (row) => (
+        <div className='space-y-0.5'>
+          <div>
+            {taskTierConditions(
+              row.source,
+              props.entry.usage_schema,
+              language,
+              t
+            ) || row.tier}
+          </div>
+          {row.reference && (
+            <div className='text-muted-foreground text-xs'>
+              {t('Per second of output plus reference video')}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       id: 'supply',

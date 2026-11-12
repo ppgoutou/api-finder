@@ -228,6 +228,7 @@ export function parseTaskResult(){return {};}
 			assert.Equal(t, expected, pricing[tc.name].BillingUsageSchema)
 			assert.Equal(t, expected, entries[tc.name].UsageSchema)
 			assert.Len(t, pricing[tc.name].BillingUsageExamples, tc.wantExamples)
+			assert.Len(t, entries[tc.name].UsageExamples, tc.wantExamples)
 			require.NoError(t, ValidateModelPricing(tc.name, PricingValues{"billing_setting.billing_expr": `u("` + tc.field + `")`}))
 			require.ErrorContains(t, ValidateModelPricing(tc.name, PricingValues{"billing_setting.billing_expr": `u("missing")`}), "not declared")
 		})
