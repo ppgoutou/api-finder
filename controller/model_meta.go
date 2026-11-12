@@ -120,6 +120,11 @@ func CreateModelMeta(c *gin.Context) {
 		common.ApiErrorMsg(c, "unavailable reason is too long")
 		return
 	}
+	m.DisplayName = strings.TrimSpace(m.DisplayName)
+	if utf8.RuneCountInString(m.DisplayName) > 128 {
+		common.ApiErrorMsg(c, "display name is too long")
+		return
+	}
 	if err := model.ValidateMetadataValues(model.MetadataValues{Endpoints: m.Endpoints, Status: m.Status, NameRule: m.NameRule}); err != nil {
 		common.ApiError(c, err)
 		return
@@ -159,6 +164,11 @@ func UpdateModelMeta(c *gin.Context) {
 	m.UnavailableReason = strings.TrimSpace(m.UnavailableReason)
 	if utf8.RuneCountInString(m.UnavailableReason) > 255 {
 		common.ApiErrorMsg(c, "unavailable reason is too long")
+		return
+	}
+	m.DisplayName = strings.TrimSpace(m.DisplayName)
+	if utf8.RuneCountInString(m.DisplayName) > 128 {
+		common.ApiErrorMsg(c, "display name is too long")
 		return
 	}
 	if statusOnly {

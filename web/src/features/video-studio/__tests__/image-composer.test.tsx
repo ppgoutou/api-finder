@@ -37,6 +37,10 @@ vi.mock('../api', () => ({
   generateImages: vi.fn(),
 }))
 
+// The public pricing list names models; these tests show model IDs as-is.
+vi.mock('@/features/pricing/hooks', () => ({
+  useModelDisplayName: () => (name: string) => name,
+}))
 vi.mock('../hooks/use-studio-models', () => ({
   useStudioImageModels: () => [
     { name: 'seedream-5-0-flash', group: 'Seedream' },

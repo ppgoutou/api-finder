@@ -29,6 +29,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { formatTimestamp } from '@/lib/format'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
@@ -44,6 +45,7 @@ export function ImageWorksList(props: {
   onEdit?: (draft: Partial<StudioDraft>, size: string) => void
 }) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const works = useStudioImageWorks((state) => state.works)
   const removeWork = useStudioImageWorks((state) => state.remove)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -101,7 +103,7 @@ export function ImageWorksList(props: {
               <p className='line-clamp-2 min-h-10 text-sm'>{work.prompt}</p>
               <div className='flex items-center gap-2'>
                 <p className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
-                  {work.model} · {work.size.replace('x', '×')} ·{' '}
+                  {displayName(work.model)} · {work.size.replace('x', '×')} ·{' '}
                   {formatTimestamp(work.createdAt)}
                 </p>
                 {props.onEdit && (

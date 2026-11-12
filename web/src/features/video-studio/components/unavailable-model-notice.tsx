@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 
 interface UnavailableModelNoticeProps {
   reason?: string
@@ -30,6 +31,7 @@ interface UnavailableModelNoticeProps {
 /** Why the picked model can't run now, with a switch to one that can. */
 export function UnavailableModelNotice(props: UnavailableModelNoticeProps) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const replacement = props.replacement
   return (
     <p
@@ -51,7 +53,9 @@ export function UnavailableModelNotice(props: UnavailableModelNoticeProps) {
           className='h-auto p-0 text-xs'
           onClick={() => props.onSwitch(replacement)}
         >
-          {t('Switch to {{model}}', { model: replacement })}
+          {t('Switch to {{model}}', {
+            model: displayName(replacement),
+          })}
         </Button>
       )}
     </p>

@@ -27,6 +27,8 @@ export interface StudioModelAvailability {
 
 export interface StudioModel extends StudioModelAvailability {
   name: string
+  /** Name shown in menus; requests still send `name`. */
+  label?: string
   /** Category name from the model plaza; empty for uncategorized models. */
   group?: string
   resolutions: readonly string[]
@@ -103,6 +105,8 @@ export const DEFAULT_DRAFT: StudioDraft = {
 
 export interface StudioImageModel extends StudioModelAvailability {
   name: string
+  /** Name shown in menus; requests still send `name`. */
+  label?: string
   /** Category name from the model plaza; empty for uncategorized models. */
   group?: string
 }

@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { evaluateBillingExpression } from '@/features/pricing/lib/billing-expression/runtime'
+import { modelDisplayName } from '@/features/pricing/lib/model-helpers'
 import type { PricingModel } from '@/features/pricing/types'
 
 import { REFERENCE_LIMITS, type StudioImageModel } from '../constants'
@@ -40,7 +41,13 @@ export function studioImageModelsFromPricing(
 ): StudioImageModel[] {
   return models.flatMap((model) =>
     model.supported_endpoint_types?.includes('image-generation')
-      ? [{ name: model.model_name, ...studioModelAvailability(model) }]
+      ? [
+          {
+            name: model.model_name,
+            label: modelDisplayName(model),
+            ...studioModelAvailability(model),
+          },
+        ]
       : []
   )
 }

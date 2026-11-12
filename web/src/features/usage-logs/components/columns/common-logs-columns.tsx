@@ -35,6 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useModelDisplayName } from '@/features/pricing/hooks/use-model-display-name'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import {
   normalizeTierLabel,
@@ -703,6 +704,7 @@ export function useCommonLogsColumns(
         accessorKey: 'model_name',
         header: t('Model'),
         cell: function ModelCell({ row }) {
+          const displayName = useModelDisplayName()
           const log = row.original
           if (!isDisplayableLogType(log.type)) return null
 
@@ -712,6 +714,7 @@ export function useCommonLogsColumns(
             <div className='flex w-fit flex-col gap-0.5'>
               <ModelBadge
                 modelName={modelInfo.name}
+                displayName={displayName(modelInfo.name)}
                 actualModel={modelInfo.actualModel}
                 responseModel={modelInfo.responseModel}
               />

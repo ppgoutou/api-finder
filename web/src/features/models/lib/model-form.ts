@@ -31,6 +31,11 @@ import { parseModelTags as parseTagsFromUtils } from './model-utils'
 export const modelFormSchema = z.object({
   id: z.number().optional(),
   model_name: z.string().min(1, 'Model name is required'),
+  display_name: z
+    .string()
+    .trim()
+    .max(128, 'Display name must not exceed 128 characters')
+    .default(''),
   description: z.string().default(''),
   icon: z.string().default(''),
   tags: z.array(z.string()).default([]),
@@ -80,6 +85,7 @@ export function transformModelToFormDefaults(model: Model): ModelFormValues {
   return {
     id: model.id,
     model_name: model.model_name,
+    display_name: model.display_name || '',
     description: model.description || '',
     icon: model.icon || '',
     tags: parseTagsFromUtils(model.tags),
@@ -109,6 +115,7 @@ export function transformFormDataToModelPayload(
   return {
     id: formData.id,
     model_name: formData.model_name,
+    display_name: formData.display_name || '',
     description: formData.description || '',
     icon: formData.icon || '',
     tags: formatTagsArray(formData.tags),

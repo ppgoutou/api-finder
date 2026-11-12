@@ -96,6 +96,8 @@ export type PricingModel = {
   billing_plugin_variants?: BillingPluginVariant[]
   id: number
   model_name: string
+  /** Name shown to visitors; API calls use model_name. */
+  display_name?: string
   description?: string
   /** The description with every language, before `description` is localized. */
   description_blocks?: string

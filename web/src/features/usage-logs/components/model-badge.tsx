@@ -42,10 +42,13 @@ interface ModelBadgeProps {
   className?: string
   wrapText?: boolean
   onInspect?: () => void
+  /** Name visitors know the model by; copying still gives the model ID. */
+  displayName?: string
 }
 
 function ModelBadgeContent(props: ModelBadgeProps & { copyable: boolean }) {
   const provider = resolveModelProvider(props.modelName)
+  const displayName = props.displayName || props.modelName
 
   return (
     <StatusBadge
@@ -82,8 +85,9 @@ function ModelBadgeContent(props: ModelBadgeProps & { copyable: boolean }) {
               ? 'line-clamp-2 leading-5 [overflow-wrap:anywhere]'
               : 'whitespace-nowrap'
           }
+          title={displayName === props.modelName ? undefined : props.modelName}
         >
-          {props.modelName}
+          {displayName}
         </span>
       </span>
     </StatusBadge>

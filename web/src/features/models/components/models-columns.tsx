@@ -131,6 +131,14 @@ export function useModelsColumns(
                     className='size-6 shrink-0'
                   />
                 </div>
+                {model.display_name && (
+                  <p
+                    className='truncate text-xs font-medium'
+                    title={t('Display name')}
+                  >
+                    {model.display_name}
+                  </p>
+                )}
                 <div className='text-muted-foreground mt-1 flex min-w-0 items-center gap-2 text-xs'>
                   <span className='truncate' title={vendor?.name}>
                     {model.id > 0

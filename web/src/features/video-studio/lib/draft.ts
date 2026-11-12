@@ -1,4 +1,5 @@
 import { groupModelsByCategory } from '@/features/pricing/lib/categories'
+import { modelDisplayName } from '@/features/pricing/lib/model-helpers'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -60,6 +61,7 @@ export function studioModelsFromPricing(
     return [
       {
         name: model.model_name,
+        label: modelDisplayName(model),
         ...studioModelAvailability(model),
         resolutions: pricing.rows.map((row) => row.option),
         duration: pricing.durationRange ?? DEFAULT_STUDIO_DURATION,

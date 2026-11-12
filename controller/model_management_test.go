@@ -928,10 +928,15 @@ export function parseTaskResult() { return {}; }
 				require.NoError(t, model.UpdateModelPricing([]model.ModelPricingChange{{ModelName: exact.ModelName, ExpectedVersion: priceBefore.Entries[0].Version, Pricing: model.PricingValues{"ModelPrice": float64(0)}}}))
 				exact.ModelName = "matrix-renamed"
 				exact.Endpoints = `{"openai":{"path":"/v1/chat/completions","method":"POST"}}`
+				exact.DisplayName = strings.Repeat("名", 129)
 				response := modelManagementRequest(t, UpdateModelMeta, http.MethodPut, "/api/models/", exact, nil)
+				assert.Contains(t, response.Body.String(), `"success":false`)
+				exact.DisplayName = "  Matrix 展示名  "
+				response = modelManagementRequest(t, UpdateModelMeta, http.MethodPut, "/api/models/", exact, nil)
 				assert.Contains(t, response.Body.String(), `"success":true`)
 				var reloaded model.Model
 				require.NoError(t, db.First(&reloaded, exact.Id).Error)
+				assert.Equal(t, "Matrix 展示名", reloaded.DisplayName)
 				enrichModels([]*model.Model{&reloaded})
 				assert.Equal(t, exact.Endpoints, reloaded.Endpoints)
 				assert.Empty(t, reloaded.BoundChannels)

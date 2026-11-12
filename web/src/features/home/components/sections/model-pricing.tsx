@@ -35,6 +35,7 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { cn } from '@/lib/utils'
 
 import {
@@ -199,6 +200,7 @@ type SeriesCardProps = {
 
 function SeriesCard(props: SeriesCardProps) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const series = props.series
   const first = series.rows[0]
   const last = series.rows.at(-1)
@@ -340,7 +342,7 @@ function SeriesCard(props: SeriesCardProps) {
           <span className='text-foreground font-mono font-semibold'>
             {t('{{price}} / video', { price: series.perVideo.price })}
           </span>{' '}
-          · {series.perVideo.modelName}
+          · {displayName(series.perVideo.modelName)}
         </p>
       )}
     </article>

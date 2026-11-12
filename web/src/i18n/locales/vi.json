@@ -8180,6 +8180,9 @@
     "Models of this category show it when they have no official price of their own. It is never charged.": "Các mô hình trong danh mục chưa có giá chính thức riêng sẽ hiển thị giá này. Không bao giờ bị tính phí.",
     "The category official price does not fit model {{model}}": "Giá chính thức của danh mục không phù hợp với mô hình {{model}}",
     "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Mỗi mô hình chỉ hiển thị các độ phân giải nó hỗ trợ. Để trống một độ phân giải để ẩn nó.",
-    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Một giá chính thức chung yêu cầu mọi mô hình hiển thị giống nhau: tất cả theo giây hoặc tất cả theo token. Mô hình hiển thị khác: {{models}}"
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Một giá chính thức chung yêu cầu mọi mô hình hiển thị giống nhau: tất cả theo giây hoặc tất cả theo token. Mô hình hiển thị khác: {{models}}",
+    "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Hiển thị cho khách thay cho ID mô hình. Lệnh gọi API vẫn dùng ID mô hình. Để trống để hiển thị ID mô hình.",
+    "Model ID for API calls": "ID mô hình cho lệnh gọi API",
+    "Display name must not exceed 128 characters": "Tên hiển thị không được vượt quá 128 ký tự"
   }
 }

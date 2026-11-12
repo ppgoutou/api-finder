@@ -8180,6 +8180,9 @@
     "Models of this category show it when they have no official price of their own. It is never charged.": "Модели категории без собственной официальной цены показывают эту. Она никогда не списывается.",
     "The category official price does not fit model {{model}}": "Официальная цена категории не подходит для модели {{model}}",
     "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Каждая модель показывает только поддерживаемые разрешения. Оставьте разрешение пустым, чтобы скрыть его.",
-    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Единая официальная цена требует одинакового отображения всех моделей: все за секунду или все за токены. Отображаются иначе: {{models}}"
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Единая официальная цена требует одинакового отображения всех моделей: все за секунду или все за токены. Отображаются иначе: {{models}}",
+    "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Показывается посетителям вместо ID модели. В вызовах API по-прежнему используется ID модели. Оставьте пустым, чтобы показывать ID модели.",
+    "Model ID for API calls": "ID модели для вызовов API",
+    "Display name must not exceed 128 characters": "Отображаемое имя не должно превышать 128 символов"
   }
 }

@@ -8180,6 +8180,9 @@
     "Models of this category show it when they have no official price of their own. It is never charged.": "類目內沒有單獨設定官方價的模型會顯示這個價格，不參與計費。",
     "The category official price does not fit model {{model}}": "類目官方價不適用於模型 {{model}}",
     "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "每個模型只顯示自己支援的解析度；某個解析度留空則不顯示。",
-    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "類目內所有模型的對外顯示方式必須相同（都按秒，或都按 token）才能設定統一的官方價。顯示方式不同的模型：{{models}}"
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "類目內所有模型的對外顯示方式必須相同（都按秒，或都按 token）才能設定統一的官方價。顯示方式不同的模型：{{models}}",
+    "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "訪客看到的是這個名稱，而不是模型 ID。API 呼叫仍然使用模型 ID。留空則顯示模型 ID。",
+    "Model ID for API calls": "API 呼叫使用的模型 ID",
+    "Display name must not exceed 128 characters": "顯示名稱不能超過 128 個字元"
   }
 }
