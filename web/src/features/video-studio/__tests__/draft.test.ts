@@ -20,7 +20,12 @@ import { describe, expect, it } from 'vitest'
 
 import type { PricingModel } from '@/features/pricing/types'
 
-import { DEFAULT_DRAFT, STUDIO_RATIOS, type StudioModel } from '../constants'
+import {
+  DEFAULT_DRAFT,
+  DEFAULT_STUDIO_RATIOS,
+  STUDIO_RATIOS,
+  type StudioModel,
+} from '../constants'
 import {
   buildVideoRequest,
   estimateDraftCostUSD,
@@ -156,14 +161,14 @@ describe('studioModelsFromPricing', () => {
         label: 'seedance-2.5',
         resolutions: ['480p', '720p', '1080p'],
         duration: [4, 30],
-        ratios: STUDIO_RATIOS,
+        ratios: DEFAULT_STUDIO_RATIOS,
       },
       {
         name: 'seedance2.0-720p-P',
         label: 'seedance2.0-720p-P',
         resolutions: ['720p'],
         duration: [5, 15],
-        ratios: STUDIO_RATIOS,
+        ratios: DEFAULT_STUDIO_RATIOS,
       },
     ])
   })
@@ -186,7 +191,7 @@ describe('studioModelsFromPricing', () => {
         label: 'seedance-2.5-G2-V',
         resolutions: ['720p'],
         duration: [4, 30],
-        ratios: STUDIO_RATIOS,
+        ratios: DEFAULT_STUDIO_RATIOS,
       },
     ])
   })
@@ -213,7 +218,7 @@ describe('studioModelsFromPricing', () => {
         label: 'seedance-2-0-pro-NSFW',
         resolutions: ['720p', '1080p'],
         duration: [4, 15],
-        ratios: STUDIO_RATIOS,
+        ratios: DEFAULT_STUDIO_RATIOS,
       },
     ])
   })
@@ -234,12 +239,34 @@ describe('studioModelsFromPricing', () => {
     expect(model.ratios).toEqual(['auto', '16:9', '9:16'])
   })
 
-  it('uses 4 to 15 seconds and every ratio for a video model without declared limits', () => {
+  it('uses 4 to 15 seconds and every Seedance ratio but 9:21 for a video model without declared limits', () => {
     const [model] = studioModelsFromPricing([
       videoModel('seedance-2-0-fast-NSFW', ['480p', '720p']),
     ])
     expect(model.duration).toEqual([4, 15])
     expect(model.durations).toBeUndefined()
+    expect(model.ratios).toEqual([
+      'auto',
+      '21:9',
+      '16:9',
+      '4:3',
+      '1:1',
+      '3:4',
+      '9:16',
+    ])
+  })
+
+  it('offers 9:21 only to a video model whose limits declare it', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance2.5-T', ['480p', '720p'], {
+        model_limits: {
+          minDuration: 4,
+          maxDuration: 30,
+          ratios: ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9', '9:21'],
+        },
+      }),
+    ])
+    expect(model.duration).toEqual([4, 30])
     expect(model.ratios).toEqual(STUDIO_RATIOS)
   })
 

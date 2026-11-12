@@ -45,6 +45,7 @@ export type StudioRatio =
   | '1:1'
   | '3:4'
   | '9:16'
+  | '9:21'
 
 export interface StudioDraft {
   mode: StudioMode
