@@ -8203,6 +8203,27 @@
     "Clear selected": "選択行をクリア",
     "Select all tiers": "すべて選択",
     "Select {{tier}}": "{{tier}} を選択",
-    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "トークン価格は解像度ごとの動画1秒あたりで表示します。参照動画がある場合、調整は出力秒と参照秒の両方に適用されます。負の値は値下げです。顧客は最終価格を支払い、グループ倍率を変えても調整額は変わりません。"
+    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "トークン価格は解像度ごとの動画1秒あたりで表示します。参照動画がある場合、調整は出力秒と参照秒の両方に適用されます。負の値は値下げです。顧客は最終価格を支払い、グループ倍率を変えても調整額は変わりません。",
+    "Access key ID": "アクセスキー ID",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "オブジェクトを endpoint/bucket ではなく bucket.endpoint 形式で指定します。Tencent COS では必須です。",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "下記の国の視聴者向けに、動画を 2 つ目のバケットにもコピーします。",
+    "Bucket": "バケット",
+    "CDN or custom domain that serves this bucket.": "このバケットを配信する CDN またはカスタムドメイン。",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "中国本土のコピーを使う国コード（Cloudflare 提供）をカンマ区切りで指定します。",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "完成した動画を Cloudflare R2 や Tencent COS などの S3 互換ストレージにコピーします。上流のリンクが期限切れになっても利用でき、視聴者に近い CDN から読み込まれます。",
+    "Copy each finished video to the buckets below.": "完成した動画を下記のバケットにコピーします。",
+    "Mainland China storage": "中国本土ストレージ",
+    "Mainland viewer countries": "中国本土コピーを使う国",
+    "Media storage": "メディアストレージ",
+    "Object prefix": "オブジェクトプレフィックス",
+    "Overseas storage": "海外ストレージ",
+    "Public URL": "公開 URL",
+    "Region": "リージョン",
+    "S3 endpoint": "S3 エンドポイント",
+    "Secret access key": "シークレットアクセスキー",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "これより古いコピーは配信しません。バケットのライフサイクルルールにも同じ日数を設定してください。0 は無期限に保持します。",
+    "Store generated videos": "生成した動画を保存",
+    "The saved key is never shown; leave blank to keep it.": "保存済みのキーは表示されません。空欄のままにすると変更されません。",
+    "Virtual-hosted addressing": "仮想ホスト形式"
   }
 }

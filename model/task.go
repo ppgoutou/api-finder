@@ -136,6 +136,25 @@ type TaskPrivateData struct {
 	// and every retrieval surface treats the task as not found. The zero
 	// value keeps historical rows retained and retrievable.
 	ResultDiscarded bool `json:"result_discarded,omitempty"`
+	// StoredMedia is this site's own copy of the task's video, written after
+	// the task succeeds. Nil until a copy has been attempted.
+	StoredMedia *TaskStoredMedia `json:"stored_media,omitempty"`
+}
+
+// TaskStoredMedia records where a task's video was copied in this site's
+// object storage, or why copying stopped.
+type TaskStoredMedia struct {
+	ArtifactKey string   `json:"artifact_key,omitempty"`
+	ObjectKey   string   `json:"object_key,omitempty"`
+	MimeType    string   `json:"mime_type,omitempty"`
+	Size        int64    `json:"size,omitempty"`
+	Targets     []string `json:"targets,omitempty"`
+	StoredAt    int64    `json:"stored_at,omitempty"`
+	Attempts    int      `json:"attempts,omitempty"`
+	LastTryAt   int64    `json:"last_try_at,omitempty"`
+	// GaveUp is set when the video cannot be copied (gone upstream, not a
+	// video, or too many failed attempts); the task keeps upstream serving.
+	GaveUp bool `json:"gave_up,omitempty"`
 }
 
 type TaskExecutionSnapshot struct {
@@ -214,7 +233,7 @@ func (p TaskPrivateData) Value() (driver.Value, error) {
 		p.Execution == nil && p.BillingSource == "" && p.SubscriptionId == 0 &&
 		p.TokenId == 0 && p.NodeName == "" && p.BillingContext == nil &&
 		!p.ResponsesBackground && len(p.PluginState) == 0 && p.PollFailures == 0 &&
-		!p.ResultDiscarded {
+		!p.ResultDiscarded && p.StoredMedia == nil {
 		return nil, nil
 	}
 	// 同 Properties.Value:string 避免 PG simple protocol 的 bytea 编码。
@@ -375,6 +394,38 @@ func GetTimedOutUnfinishedTasks(cutoffUnix int64, limit int) []*Task {
 		return nil
 	}
 	return tasks
+}
+
+// GetSucceededTasksFinishedSince lists the lightweight fields of successful
+// tasks finished at or after sinceUnix, newest first, for the media copy job.
+func GetSucceededTasksFinishedSince(sinceUnix int64, limit int) []*Task {
+	var tasks []*Task
+	err := DB.Select("id", "task_id", "platform", "action", "status", "finish_time", "private_data").
+		Where("status = ?", TaskStatusSuccess).
+		Where("finish_time >= ?", sinceUnix).
+		Order("finish_time desc").
+		Limit(limit).
+		Find(&tasks).Error
+	if err != nil {
+		return nil
+	}
+	return tasks
+}
+
+// GetTaskByID loads a task by primary key.
+func GetTaskByID(id int64) (*Task, error) {
+	var task Task
+	if err := DB.First(&task, id).Error; err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+// UpdateStoredMedia writes only the private data of a successful task, so the
+// media copy job never rewrites status, quota or result fields.
+func (t *Task) UpdateStoredMedia() error {
+	return DB.Model(&Task{}).Where("id = ? AND status = ?", t.ID, TaskStatusSuccess).
+		Update("private_data", t.PrivateData).Error
 }
 
 func GetAllUnFinishSyncTasks(limit int) []*Task {

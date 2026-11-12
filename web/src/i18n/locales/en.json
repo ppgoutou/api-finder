@@ -8203,6 +8203,27 @@
     "Clear selected": "Clear selected",
     "Select all tiers": "Select all tiers",
     "Select {{tier}}": "Select {{tier}}",
-    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged."
+    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.",
+    "Access key ID": "Access key ID",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "Also copy videos to a second bucket for viewers in the countries listed below.",
+    "Bucket": "Bucket",
+    "CDN or custom domain that serves this bucket.": "CDN or custom domain that serves this bucket.",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "Comma-separated country codes from Cloudflare that get the mainland copy.",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.",
+    "Copy each finished video to the buckets below.": "Copy each finished video to the buckets below.",
+    "Mainland China storage": "Mainland China storage",
+    "Mainland viewer countries": "Mainland viewer countries",
+    "Media storage": "Media storage",
+    "Object prefix": "Object prefix",
+    "Overseas storage": "Overseas storage",
+    "Public URL": "Public URL",
+    "Region": "Region",
+    "S3 endpoint": "S3 endpoint",
+    "Secret access key": "Secret access key",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.",
+    "Store generated videos": "Store generated videos",
+    "The saved key is never shown; leave blank to keep it.": "The saved key is never shown; leave blank to keep it.",
+    "Virtual-hosted addressing": "Virtual-hosted addressing"
   }
 }

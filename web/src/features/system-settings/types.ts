@@ -406,6 +406,25 @@ export type OperationsSettings = {
   'perf_metrics_setting.flush_interval': number
   'perf_metrics_setting.bucket_time': 'hour' | 'minute' | '5min'
   'perf_metrics_setting.retention_days': number
+  'media_storage.enabled': boolean
+  'media_storage.overseas_endpoint': string
+  'media_storage.overseas_region': string
+  'media_storage.overseas_bucket': string
+  'media_storage.overseas_access_key_id': string
+  'media_storage.overseas_access_secret': string
+  'media_storage.overseas_virtual_host': boolean
+  'media_storage.overseas_public_url': string
+  'media_storage.mainland_enabled': boolean
+  'media_storage.mainland_endpoint': string
+  'media_storage.mainland_region': string
+  'media_storage.mainland_bucket': string
+  'media_storage.mainland_access_key_id': string
+  'media_storage.mainland_access_secret': string
+  'media_storage.mainland_virtual_host': boolean
+  'media_storage.mainland_public_url': string
+  'media_storage.mainland_countries': string
+  'media_storage.object_prefix': string
+  'media_storage.retention_days': number
 }
 
 export type SecuritySettings = {

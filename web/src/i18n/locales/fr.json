@@ -8203,6 +8203,27 @@
     "Clear selected": "Effacer la sélection",
     "Select all tiers": "Tout sélectionner",
     "Select {{tier}}": "Sélectionner {{tier}}",
-    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Les prix au token sont affichés par seconde de vidéo à chaque résolution. Avec des vidéos de référence, l'ajustement s'applique aussi bien aux secondes produites qu'aux secondes de référence. Un ajustement négatif baisse le prix. Les clients paient le prix final ; un nouveau ratio de groupe ne change pas l'ajustement."
+    "Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Les prix au token sont affichés par seconde de vidéo à chaque résolution. Avec des vidéos de référence, l'ajustement s'applique aussi bien aux secondes produites qu'aux secondes de référence. Un ajustement négatif baisse le prix. Les clients paient le prix final ; un nouveau ratio de groupe ne change pas l'ajustement.",
+    "Access key ID": "ID de clé d'accès",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "Adresser les objets en bucket.endpoint au lieu de endpoint/bucket. Requis par Tencent COS.",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "Copier aussi les vidéos dans un second bucket pour les spectateurs des pays listés ci-dessous.",
+    "Bucket": "Bucket",
+    "CDN or custom domain that serves this bucket.": "CDN ou domaine personnalisé qui sert ce bucket.",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "Codes pays Cloudflare, séparés par des virgules, qui reçoivent la copie Chine continentale.",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "Copie les vidéos terminées dans votre propre stockage compatible S3, comme Cloudflare R2 ou Tencent COS, pour qu'elles restent disponibles après l'expiration des liens amont et se chargent depuis un CDN proche de chaque spectateur.",
+    "Copy each finished video to the buckets below.": "Copier chaque vidéo terminée dans les buckets ci-dessous.",
+    "Mainland China storage": "Stockage Chine continentale",
+    "Mainland viewer countries": "Pays servis par la copie continentale",
+    "Media storage": "Stockage des médias",
+    "Object prefix": "Préfixe d'objet",
+    "Overseas storage": "Stockage international",
+    "Public URL": "URL publique",
+    "Region": "Région",
+    "S3 endpoint": "Point de terminaison S3",
+    "Secret access key": "Clé d'accès secrète",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Cesser de servir les copies plus anciennes. Définissez le même âge dans la règle de cycle de vie du bucket. 0 les conserve indéfiniment.",
+    "Store generated videos": "Stocker les vidéos générées",
+    "The saved key is never shown; leave blank to keep it.": "La clé enregistrée n'est jamais affichée ; laissez vide pour la conserver.",
+    "Virtual-hosted addressing": "Adressage virtual-hosted"
   }
 }
