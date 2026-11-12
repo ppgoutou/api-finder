@@ -335,6 +335,9 @@ func TaskArtifactContent(c *gin.Context) {
 		writeTaskArtifactError(c, http.StatusConflict, "artifact_not_ready", "Task artifacts are not ready")
 		return
 	}
+	if serveStoredTaskVideo(c, task, artifactKey) {
+		return
+	}
 	if !taskHasPluginExecution(task) {
 		if artifactKey != "video" || !legacyVideoAvailable(task) {
 			writeTaskArtifactError(c, http.StatusNotFound, "artifact_not_found", "Task or artifact not found")
@@ -366,12 +369,6 @@ func TaskArtifactContent(c *gin.Context) {
 		writeTaskArtifactError(c, http.StatusNotFound, "artifact_not_found", "Task or artifact not found")
 		return
 	}
-	artifactStore := service.GetTaskArtifactStore()
-	if ref, resolveErr := artifactStore.Resolve(task, artifactKey); resolveErr == nil && ref != nil {
-		_ = artifactStore.Serve(c, task, ref)
-		return
-	}
-
 	adaptor, err := initTaskArtifactAdaptor(task)
 	if err != nil {
 		writeTaskArtifactProjectionError(c, err)

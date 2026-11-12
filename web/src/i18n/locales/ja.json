@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "モデル ID の代わりに訪問者に表示されます。API 呼び出しでは引き続きモデル ID を使います。空欄の場合はモデル ID を表示します。",
     "Model ID for API calls": "API 呼び出し用のモデル ID",
     "Display name must not exceed 128 characters": "表示名は 128 文字以内にしてください",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中国語の画面では人民元の価格が設定されていればそれを表示し、他の言語では米ドルの価格を表示します。"
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中国語の画面では人民元の価格が設定されていればそれを表示し、他の言語では米ドルの価格を表示します。",
+    "Access key ID": "アクセスキー ID",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "オブジェクトを endpoint/bucket ではなく bucket.endpoint 形式で指定します。Tencent COS では必須です。",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "下記の国の視聴者向けに、動画を 2 つ目のバケットにもコピーします。",
+    "Bucket": "バケット",
+    "CDN or custom domain that serves this bucket.": "このバケットを配信する CDN またはカスタムドメイン。",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "中国本土のコピーを使う国コード（Cloudflare 提供）をカンマ区切りで指定します。",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "完成した動画を Cloudflare R2 や Tencent COS などの S3 互換ストレージにコピーします。上流のリンクが期限切れになっても利用でき、視聴者に近い CDN から読み込まれます。",
+    "Copy each finished video to the buckets below.": "完成した動画を下記のバケットにコピーします。",
+    "Mainland China storage": "中国本土ストレージ",
+    "Mainland viewer countries": "中国本土コピーを使う国",
+    "Media storage": "メディアストレージ",
+    "Object prefix": "オブジェクトプレフィックス",
+    "Overseas storage": "海外ストレージ",
+    "Public URL": "公開 URL",
+    "Region": "リージョン",
+    "S3 endpoint": "S3 エンドポイント",
+    "Secret access key": "シークレットアクセスキー",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "これより古いコピーは配信しません。バケットのライフサイクルルールにも同じ日数を設定してください。0 は無期限に保持します。",
+    "Store generated videos": "生成した動画を保存",
+    "The saved key is never shown; leave blank to keep it.": "保存済みのキーは表示されません。空欄のままにすると変更されません。",
+    "Virtual-hosted addressing": "仮想ホスト形式"
   }
 }

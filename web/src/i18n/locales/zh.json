@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "访客看到的是这个名称，而不是模型 ID。API 调用仍然使用模型 ID。留空则显示模型 ID。",
     "Model ID for API calls": "API 调用使用的模型 ID",
     "Display name must not exceed 128 characters": "显示名称不能超过 128 个字符",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中文界面在填了人民币价格时显示人民币价，其他语言显示美元价。"
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中文界面在填了人民币价格时显示人民币价，其他语言显示美元价。",
+    "Access key ID": "Access Key ID",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "以 bucket.endpoint 而非 endpoint/bucket 的形式访问对象。腾讯云 COS 必须开启。",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "同时把视频复制到第二个存储桶，供下方所列国家的用户访问。",
+    "Bucket": "存储桶",
+    "CDN or custom domain that serves this bucket.": "为该存储桶提供访问的 CDN 或自定义域名。",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "使用大陆副本的国家代码（取自 Cloudflare），用逗号分隔。",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "把生成完成的视频复制到你自己的 S3 兼容存储（如 Cloudflare R2、腾讯云 COS），上游链接过期后依然可用，并从离用户最近的 CDN 加载。",
+    "Copy each finished video to the buckets below.": "把每个生成完成的视频复制到下方的存储桶。",
+    "Mainland China storage": "中国大陆存储",
+    "Mainland viewer countries": "使用大陆副本的国家",
+    "Media storage": "素材存储",
+    "Object prefix": "对象前缀",
+    "Overseas storage": "海外存储",
+    "Public URL": "公开访问地址",
+    "Region": "地域",
+    "S3 endpoint": "S3 端点",
+    "Secret access key": "Secret Access Key",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "超过该天数的副本不再提供访问。请在存储桶生命周期规则中设置相同天数。0 表示永久保留。",
+    "Store generated videos": "存储生成的视频",
+    "The saved key is never shown; leave blank to keep it.": "已保存的密钥不会显示；留空则保持不变。",
+    "Virtual-hosted addressing": "虚拟主机样式访问"
   }
 }

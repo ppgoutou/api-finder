@@ -82,6 +82,10 @@ func VideoProxy(c *gin.Context) {
 			fmt.Sprintf("Task is not completed yet, current status: %s", task.Status))
 		return
 	}
+	if stored := task.PrivateData.StoredMedia; stored != nil && task.ResultRetrievable() &&
+		serveStoredTaskVideo(c, task, stored.ArtifactKey) {
+		return
+	}
 
 	var descriptor *relaychannel.TaskContentRequest
 	if taskHasPluginExecution(task) {

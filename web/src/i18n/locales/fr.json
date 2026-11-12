@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Affiché aux visiteurs à la place de l'ID du modèle. Les appels API utilisent toujours l'ID du modèle. Laissez vide pour afficher l'ID du modèle.",
     "Model ID for API calls": "ID du modèle pour les appels API",
     "Display name must not exceed 128 characters": "Le nom affiché ne doit pas dépasser 128 caractères",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Les interfaces en chinois affichent le prix en CNY s’il est renseigné ; les autres langues affichent le prix en USD."
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Les interfaces en chinois affichent le prix en CNY s’il est renseigné ; les autres langues affichent le prix en USD.",
+    "Access key ID": "ID de clé d'accès",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "Adresser les objets en bucket.endpoint au lieu de endpoint/bucket. Requis par Tencent COS.",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "Copier aussi les vidéos dans un second bucket pour les spectateurs des pays listés ci-dessous.",
+    "Bucket": "Bucket",
+    "CDN or custom domain that serves this bucket.": "CDN ou domaine personnalisé qui sert ce bucket.",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "Codes pays Cloudflare, séparés par des virgules, qui reçoivent la copie Chine continentale.",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "Copie les vidéos terminées dans votre propre stockage compatible S3, comme Cloudflare R2 ou Tencent COS, pour qu'elles restent disponibles après l'expiration des liens amont et se chargent depuis un CDN proche de chaque spectateur.",
+    "Copy each finished video to the buckets below.": "Copier chaque vidéo terminée dans les buckets ci-dessous.",
+    "Mainland China storage": "Stockage Chine continentale",
+    "Mainland viewer countries": "Pays servis par la copie continentale",
+    "Media storage": "Stockage des médias",
+    "Object prefix": "Préfixe d'objet",
+    "Overseas storage": "Stockage international",
+    "Public URL": "URL publique",
+    "Region": "Région",
+    "S3 endpoint": "Point de terminaison S3",
+    "Secret access key": "Clé d'accès secrète",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Cesser de servir les copies plus anciennes. Définissez le même âge dans la règle de cycle de vie du bucket. 0 les conserve indéfiniment.",
+    "Store generated videos": "Stocker les vidéos générées",
+    "The saved key is never shown; leave blank to keep it.": "La clé enregistrée n'est jamais affichée ; laissez vide pour la conserver.",
+    "Virtual-hosted addressing": "Adressage virtual-hosted"
   }
 }

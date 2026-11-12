@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Показывается посетителям вместо ID модели. В вызовах API по-прежнему используется ID модели. Оставьте пустым, чтобы показывать ID модели.",
     "Model ID for API calls": "ID модели для вызовов API",
     "Display name must not exceed 128 characters": "Отображаемое имя не должно превышать 128 символов",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Китайский интерфейс показывает цену в CNY, если она задана; другие языки показывают цену в USD."
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Китайский интерфейс показывает цену в CNY, если она задана; другие языки показывают цену в USD.",
+    "Access key ID": "ID ключа доступа",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "Обращаться к объектам как bucket.endpoint вместо endpoint/bucket. Требуется для Tencent COS.",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "Также копировать видео во второй бакет для зрителей из стран, указанных ниже.",
+    "Bucket": "Бакет",
+    "CDN or custom domain that serves this bucket.": "CDN или собственный домен, через который отдаётся этот бакет.",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "Коды стран из Cloudflare через запятую, которым отдаётся копия для материкового Китая.",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "Копирует готовые видео в ваше S3-совместимое хранилище, например Cloudflare R2 или Tencent COS, чтобы они оставались доступны после истечения ссылок поставщика и загружались с ближайшего к зрителю CDN.",
+    "Copy each finished video to the buckets below.": "Копировать каждое готовое видео в бакеты ниже.",
+    "Mainland China storage": "Хранилище для материкового Китая",
+    "Mainland viewer countries": "Страны для копии материкового Китая",
+    "Media storage": "Хранилище медиа",
+    "Object prefix": "Префикс объектов",
+    "Overseas storage": "Зарубежное хранилище",
+    "Public URL": "Публичный URL",
+    "Region": "Регион",
+    "S3 endpoint": "Эндпоинт S3",
+    "Secret access key": "Секретный ключ доступа",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Не отдавать копии старше этого срока. Укажите тот же срок в правиле жизненного цикла бакета. 0 — хранить всегда.",
+    "Store generated videos": "Хранить созданные видео",
+    "The saved key is never shown; leave blank to keep it.": "Сохранённый ключ не показывается; оставьте поле пустым, чтобы сохранить его.",
+    "Virtual-hosted addressing": "Адресация virtual-hosted"
   }
 }

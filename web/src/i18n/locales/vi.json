@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Hiển thị cho khách thay cho ID mô hình. Lệnh gọi API vẫn dùng ID mô hình. Để trống để hiển thị ID mô hình.",
     "Model ID for API calls": "ID mô hình cho lệnh gọi API",
     "Display name must not exceed 128 characters": "Tên hiển thị không được vượt quá 128 ký tự",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Giao diện tiếng Trung hiển thị giá CNY nếu đã nhập; các ngôn ngữ khác hiển thị giá USD."
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Giao diện tiếng Trung hiển thị giá CNY nếu đã nhập; các ngôn ngữ khác hiển thị giá USD.",
+    "Access key ID": "ID khóa truy cập",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "Truy cập đối tượng theo dạng bucket.endpoint thay vì endpoint/bucket. Bắt buộc với Tencent COS.",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "Sao chép video sang bucket thứ hai cho người xem ở các quốc gia liệt kê bên dưới.",
+    "Bucket": "Bucket",
+    "CDN or custom domain that serves this bucket.": "CDN hoặc tên miền tùy chỉnh phục vụ bucket này.",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "Mã quốc gia từ Cloudflare, phân tách bằng dấu phẩy, sẽ nhận bản sao Trung Quốc đại lục.",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "Sao chép video đã hoàn tất vào bộ lưu trữ tương thích S3 của bạn, như Cloudflare R2 hoặc Tencent COS, để video vẫn dùng được sau khi liên kết nguồn hết hạn và tải từ CDN gần người xem.",
+    "Copy each finished video to the buckets below.": "Sao chép mỗi video đã hoàn tất vào các bucket bên dưới.",
+    "Mainland China storage": "Lưu trữ Trung Quốc đại lục",
+    "Mainland viewer countries": "Quốc gia dùng bản sao đại lục",
+    "Media storage": "Lưu trữ nội dung",
+    "Object prefix": "Tiền tố đối tượng",
+    "Overseas storage": "Lưu trữ quốc tế",
+    "Public URL": "URL công khai",
+    "Region": "Khu vực",
+    "S3 endpoint": "Endpoint S3",
+    "Secret access key": "Khóa truy cập bí mật",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Ngừng phục vụ bản sao cũ hơn số ngày này. Đặt cùng thời hạn trong quy tắc vòng đời của bucket. 0 là giữ vĩnh viễn.",
+    "Store generated videos": "Lưu video đã tạo",
+    "The saved key is never shown; leave blank to keep it.": "Khóa đã lưu không bao giờ hiển thị; để trống để giữ nguyên.",
+    "Virtual-hosted addressing": "Định địa chỉ virtual-hosted"
   }
 }

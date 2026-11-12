@@ -11,14 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// StoredArtifactRef describes a persisted artifact object. No reference is
-// produced until a concrete storage backend is implemented.
+// StoredArtifactRef describes a persisted artifact object.
 type StoredArtifactRef struct {
 	Backend   string
 	Bucket    string
 	ObjectKey string
 	MimeType  string
 	Size      int64
+	// Targets names the media storage copies that hold the object.
+	Targets []string
 }
 
 // TaskArtifactStore is the persistence boundary for generated artifact bytes.
@@ -50,14 +51,15 @@ func (disabledArtifactStore) Serve(*gin.Context, *model.Task, *StoredArtifactRef
 	return ErrTaskArtifactStoreDisabled
 }
 
-var taskArtifactStore TaskArtifactStore = &disabledArtifactStore{}
+// taskArtifactStore is the media storage configured in the admin settings. It
+// behaves as the disabled store until a target is configured and enabled.
+var taskArtifactStore TaskArtifactStore = &mediaArtifactStore{}
 
 func init() {
 	_ = system_setting.LoadTaskArtifactStoreConfig()
 }
 
-// GetTaskArtifactStore returns the process-wide artifact storage backend. This
-// release always returns the disabled implementation.
+// GetTaskArtifactStore returns the process-wide artifact storage backend.
 func GetTaskArtifactStore() TaskArtifactStore {
 	return taskArtifactStore
 }

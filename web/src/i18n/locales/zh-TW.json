@@ -8189,6 +8189,27 @@
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "訪客看到的是這個名稱，而不是模型 ID。API 呼叫仍然使用模型 ID。留空則顯示模型 ID。",
     "Model ID for API calls": "API 呼叫使用的模型 ID",
     "Display name must not exceed 128 characters": "顯示名稱不能超過 128 個字元",
-    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中文介面在填了人民幣價格時顯示人民幣價，其他語言顯示美元價。"
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中文介面在填了人民幣價格時顯示人民幣價，其他語言顯示美元價。",
+    "Access key ID": "Access Key ID",
+    "Address objects as bucket.endpoint instead of endpoint/bucket. Required by Tencent COS.": "以 bucket.endpoint 而非 endpoint/bucket 的形式存取物件。騰訊雲 COS 必須開啟。",
+    "Also copy videos to a second bucket for viewers in the countries listed below.": "同時把影片複製到第二個儲存桶，供下方所列國家的使用者存取。",
+    "Bucket": "儲存桶",
+    "CDN or custom domain that serves this bucket.": "為該儲存桶提供存取的 CDN 或自訂網域。",
+    "Comma-separated country codes from Cloudflare that get the mainland copy.": "使用大陸副本的國家代碼（取自 Cloudflare），以逗號分隔。",
+    "Copies finished videos into your own S3-compatible storage, such as Cloudflare R2 or Tencent COS, so they stay available after upstream links expire and load from a CDN near each viewer.": "把生成完成的影片複製到你自己的 S3 相容儲存（如 Cloudflare R2、騰訊雲 COS），上游連結過期後依然可用，並從離使用者最近的 CDN 載入。",
+    "Copy each finished video to the buckets below.": "把每個生成完成的影片複製到下方的儲存桶。",
+    "Mainland China storage": "中國大陸儲存",
+    "Mainland viewer countries": "使用大陸副本的國家",
+    "Media storage": "素材儲存",
+    "Object prefix": "物件前綴",
+    "Overseas storage": "海外儲存",
+    "Public URL": "公開存取網址",
+    "Region": "地域",
+    "S3 endpoint": "S3 端點",
+    "Secret access key": "Secret Access Key",
+    "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "超過該天數的副本不再提供存取。請在儲存桶生命週期規則中設定相同天數。0 表示永久保留。",
+    "Store generated videos": "儲存生成的影片",
+    "The saved key is never shown; leave blank to keep it.": "已儲存的金鑰不會顯示；留空則保持不變。",
+    "Virtual-hosted addressing": "虛擬主機樣式存取"
   }
 }
