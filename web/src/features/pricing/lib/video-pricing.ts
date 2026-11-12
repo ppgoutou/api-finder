@@ -290,6 +290,17 @@ function videoPricingFromExpr(
     const isReferenceTier =
       switchValue !== undefined && !isPlainOrderSwitchValue(switchValue)
     const seenPrices = isReferenceTier ? referenceSecondPrices : rowsByOption
+    // A supplier expression copied verbatim can price options the model never
+    // accepts, such as a 1080p tier on a 480p/720p line; nobody can order them.
+    // Its closing else then tests no option once every accepted one is priced.
+    if (option !== undefined && !options.includes(option)) continue
+    if (
+      option === undefined &&
+      options.length > 1 &&
+      options.every((value) => rowsByOption.has(value))
+    ) {
+      continue
+    }
     if (
       option === undefined ||
       tier.conditions.some(
