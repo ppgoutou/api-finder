@@ -672,3 +672,28 @@ func TestNextGeneratedUsernameAvoidsNameHeldBySoftDeletedUser(t *testing.T) {
 	require.NoError(t, DB.Unscoped().Model(&User{}).Where("username = ?", username).Count(&count).Error)
 	assert.Zero(t, count)
 }
+
+func TestUsernameFromClaim(t *testing.T) {
+	setupUserUpdateTestState(t)
+	holder := User{Id: 7, Username: "johnmike", Password: "unused-password-hash", Status: common.UserStatusEnabled, Group: "default", AffCode: "claim-aff-code"}
+	require.NoError(t, DB.Create(&holder).Error)
+	require.NoError(t, DB.Delete(&holder).Error)
+
+	free, err := UsernameFromClaim("anthony")
+	require.NoError(t, err)
+	assert.Equal(t, "anthony", free)
+
+	empty, err := UsernameFromClaim("  ")
+	require.NoError(t, err)
+	assert.Empty(t, empty)
+
+	// A soft-deleted account still holds the name, so the claim gets a suffix.
+	taken, err := UsernameFromClaim("johnmike")
+	require.NoError(t, err)
+	assert.Equal(t, "johnmike_8", taken)
+
+	long, err := UsernameFromClaim("averyveryverylongemailname")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(long, "averyveryvery_"))
+	assert.LessOrEqual(t, len(long), UserNameMaxLength)
+}
