@@ -774,7 +774,7 @@ func TestOnboardingPriceMarkupChargesAFixedAmountAfterTheGroupRatio(t *testing.T
 		require.NoError(t, err)
 		return cost * ratio_setting.PublicPriceFactor()
 	}
-	setMarkup := func(body string) map[string]any {
+	postMarkup := func(body string) (bool, map[string]any) {
 		t.Helper()
 		recorder := httptest.NewRecorder()
 		context, _ := gin.CreateTestContext(recorder)
@@ -786,13 +786,26 @@ func TestOnboardingPriceMarkupChargesAFixedAmountAfterTheGroupRatio(t *testing.T
 			Data    map[string]any `json:"data"`
 		}
 		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
-		require.True(t, response.Success, response.Message)
-		return response.Data
+		return response.Success, response.Data
+	}
+	setMarkup := func(body string) map[string]any {
+		t.Helper()
+		ok, data := postMarkup(body)
+		require.True(t, ok)
+		return data
 	}
 
-	report := setMarkup(`{"model_name":"video","tiers":{"480p·none":{"field":"tokens","per_second":0.1,"tokens_per_second":10000}}}`)
+	// 10 seconds of 480p·video cost $1.6 × 1.2 = $1.92 at the ratio price.
+	ok, _ := postMarkup(`{"model_name":"video","tiers":{"480p·video":{"field":"tokens","per_second":-0.192,"tokens_per_second":10000}}}`)
+	assert.False(t, ok, "a discount down to a free tier is rejected")
+
+	report := setMarkup(`{"model_name":"video","tiers":{"480p·none":{"field":"tokens","per_second":0.1,"tokens_per_second":10000},"480p·video":{"field":"tokens","per_second":-0.05,"tokens_per_second":10000}}}`)
 
 	assert.InDelta(t, 2.8*1.2+1, customerCost(expression(), "none"), 1e-6, "10 seconds at $0.1/s on top of the ratio price")
+	assert.InDelta(t, 1.6*1.2-0.5, customerCost(expression(), "video"), 1e-6, "10 seconds at $0.05/s off the ratio price")
+
+	setMarkup(`{"model_name":"video","tiers":{"480p·none":{"field":"tokens","per_second":0.1,"tokens_per_second":10000}}}`)
+
 	assert.InDelta(t, 1.6*1.2, customerCost(expression(), "video"), 1e-6, "a tier without a markup keeps the ratio price")
 	assert.Equal(t, 1.2, report["price_factor"])
 	assert.Equal(t, supplier, report["markups"].(map[string]any)["video"].(map[string]any)["base_expr"])

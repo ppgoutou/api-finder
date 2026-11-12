@@ -15,7 +15,8 @@ const markupDigits = 12
 
 var oneMillion = decimal.NewFromInt(1_000_000)
 
-// UnitPriceAdd raises the unit price of one usage field in one tier.
+// UnitPriceAdd raises, or with a negative delta lowers, the unit price of one
+// usage field in one tier.
 type UnitPriceAdd struct {
 	Field string
 	// Delta is added to the term's effective coefficient: dollars per unit,
@@ -112,8 +113,8 @@ func raisedUnitPrice(body ast.Node, add UnitPriceAdd) (priceLiteral, error) {
 	// The literal is coefficient / rest, so raising the coefficient by delta
 	// raises the literal by delta / rest = delta * literal / coefficient.
 	raised := literal.value.Add(delta.Mul(literal.value).DivRound(term.coefficient, markupDigits))
-	if raised.IsNegative() {
-		return priceLiteral{}, errors.New("unit price would be negative")
+	if !raised.IsPositive() {
+		return priceLiteral{}, errors.New("unit price would not be above 0")
 	}
 	literal.value = raised
 	return literal, nil

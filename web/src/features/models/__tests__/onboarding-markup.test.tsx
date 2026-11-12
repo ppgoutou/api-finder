@@ -26,7 +26,11 @@ import type { BillingUsageSchema } from '@/features/pricing/types'
 import { api } from '@/lib/api'
 
 import { OnboardingMarkupTable } from '../components/onboarding/onboarding-markup-table'
-import { markupRows, tierMarkups } from '../lib/onboarding-markup'
+import {
+  batchAdjustment,
+  markupRows,
+  tierMarkups,
+} from '../lib/onboarding-markup'
 import type { OnboardingMarkup } from '../types'
 
 const schema: BillingUsageSchema = {
@@ -80,6 +84,18 @@ function markupInput(tier: string): HTMLInputElement {
   })
 }
 
+function saveButton(): HTMLButtonElement {
+  return screen.getByRole<HTMLButtonElement>('button', {
+    name: 'Save price adjustments',
+  })
+}
+
+function batchValue(): HTMLInputElement {
+  return screen.getByRole<HTMLInputElement>('textbox', {
+    name: 'Batch adjustment value',
+  })
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
 })
@@ -122,17 +138,42 @@ describe('markupRows', () => {
     ).toEqual([])
   })
 
-  it('sends only positive markups, with the token rate of token tiers', () => {
+  it('sends only non-zero markups, discounts included, with the token rate of token tiers', () => {
     const rows = markupRows(tokenExpr, schema, undefined)
 
-    expect(tierMarkups(rows, { '480p·none': 0.1, '720p·none': 0 })).toEqual({
+    expect(
+      tierMarkups(rows, {
+        '480p·none': 0.1,
+        '480p·video': -0.05,
+        '720p·none': 0,
+      })
+    ).toEqual({
       '480p·none': {
         field: 'tokens',
         per_second: 0.1,
         tokens_per_second: 10044,
       },
+      '480p·video': {
+        field: 'tokens',
+        per_second: -0.05,
+        tokens_per_second: 10044,
+      },
     })
   })
+})
+
+describe('batchAdjustment', () => {
+  it.each([
+    ['add', 0.1, 0.1],
+    ['subtract', 0.1, -0.1],
+    ['add_percent', 20, 0.1251],
+    ['subtract_percent', 20, -0.1251],
+  ] as const)(
+    'turns %s %s into an adjustment of %s on a 0.6256 ratio price',
+    (operation, value, expected) => {
+      expect(batchAdjustment(operation, value, 0.6256)).toBe(expected)
+    }
+  )
 })
 
 describe('OnboardingMarkupTable', () => {
@@ -188,7 +229,9 @@ describe('OnboardingMarkupTable', () => {
     renderTable()
 
     await userEvent.type(markupInput('720p·video'), '0.2')
-    await userEvent.click(screen.getByRole('button', { name: 'Save markup' }))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Save price adjustments' })
+    )
 
     await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
     expect(put).toHaveBeenCalledWith(
@@ -219,21 +262,98 @@ describe('OnboardingMarkupTable', () => {
     })
 
     expect(markupInput('480p·none').value).toBe('0.1')
-    expect(screen.getByRole('button', { name: 'Save markup' })).toHaveProperty(
-      'disabled',
-      true
-    )
+    expect(saveButton()).toHaveProperty('disabled', true)
   })
 
-  it('blocks saving a negative markup', async () => {
+  it('blocks saving a discount that takes the final price to 0 or below', async () => {
     renderTable()
 
     await userEvent.type(markupInput('480p·none'), '-1')
 
     expect(screen.getByRole('alert')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Save markup' })).toHaveProperty(
-      'disabled',
-      true
+    expect(markupInput('480p·none').getAttribute('aria-invalid')).toBe('true')
+    expect(saveButton()).toHaveProperty('disabled', true)
+  })
+
+  it('flags a discount below the supply price but still allows saving it', async () => {
+    renderTable()
+    const input = markupInput('480p·none')
+    const row = input.closest('tr') as HTMLElement
+
+    await userEvent.type(input, '-0.1')
+
+    expect(within(row).getByText('Below supply price')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(saveButton()).toHaveProperty('disabled', false)
+  })
+
+  it('applies a percentage discount of the ratio price to every tier', async () => {
+    renderTable()
+
+    await userEvent.click(screen.getByRole('button', { name: '− Percent' }))
+    await userEvent.type(batchValue(), '10')
+    await userEvent.click(screen.getByRole('button', { name: 'Apply to all' }))
+
+    const ratio480 = ((28 * 10044) / 1_000_000) * 1.2
+    const ratio720 = ((16 * 21600) / 1_000_000) * 1.2
+    expect(markupInput('480p·none').value).toBe(
+      String(Number((-ratio480 * 0.1).toFixed(4)))
     )
+    expect(markupInput('720p·video').value).toBe(
+      String(Number((-ratio720 * 0.1).toFixed(4)))
+    )
+  })
+
+  it('applies a fixed amount only to the selected tiers', async () => {
+    renderTable()
+
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'Select 720p·none' })
+    )
+    await userEvent.type(batchValue(), '0.2')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Apply to selected (1)' })
+    )
+
+    expect(markupInput('720p·none').value).toBe('0.2')
+    expect(markupInput('480p·none').value).toBe('')
+  })
+
+  it('keeps apply to selected disabled until a tier is selected', async () => {
+    renderTable()
+
+    await userEvent.type(batchValue(), '0.2')
+
+    expect(
+      screen.getByRole('button', { name: 'Apply to selected (0)' })
+    ).toHaveProperty('disabled', true)
+  })
+
+  it('clears only the selected tiers once some are selected', async () => {
+    renderTable({
+      base_expr: tokenExpr,
+      tiers: {
+        '480p·none': {
+          field: 'tokens',
+          per_second: 0.1,
+          tokens_per_second: 10044,
+        },
+        '720p·none': {
+          field: 'tokens',
+          per_second: 0.2,
+          tokens_per_second: 21600,
+        },
+      },
+    })
+
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'Select 480p·none' })
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Clear selected' })
+    )
+
+    expect(markupInput('480p·none').value).toBe('')
+    expect(markupInput('720p·none').value).toBe('0.2')
   })
 })

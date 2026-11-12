@@ -26,6 +26,7 @@ import {
   type StaticDataTableColumn,
 } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   InputGroup,
   InputGroupAddon,
@@ -40,18 +41,25 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { setPriceMarkup } from '../../api'
 import {
+  batchAdjustment,
   markupRows,
   tierMarkups,
+  type BatchOperation,
   type MarkupRow,
 } from '../../lib/onboarding-markup'
 import { modelsQueryKeys } from '../../lib/query-keys'
 import type { OnboardingMarkup } from '../../types'
+import { OnboardingMarkupBatch } from './onboarding-markup-batch'
+
+// The server bounds one tier's adjustment, in USD per second, either way.
+const MAX_ADJUSTMENT = 1000
 
 /**
- * Supplier, group-ratio, markup and final price per second of each tier. The
- * markup is a fixed amount customers pay on top of the group-ratio price; the
- * server folds it into the charged expression. Admin only: it shows supply
- * prices.
+ * Supplier, group-ratio, adjustment and final price per second of each tier.
+ * The adjustment is a fixed amount customers pay on top of the group-ratio
+ * price, or below it when negative; the server folds it into the charged
+ * expression. A final price under the supply price is flagged but allowed.
+ * Admin only: it shows supply prices.
  */
 export function OnboardingMarkupTable(props: {
   entry: ModelPricingEntry
@@ -88,16 +96,23 @@ export function OnboardingMarkupTable(props: {
   }, [props.markup, rate])
   const [draft, setDraft] = useState(savedText)
   useEffect(() => setDraft(savedText), [savedText])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const amounts: Record<string, number> = {}
-  let invalid = false
+  const badInput = new Set<string>()
+  const notPositive = new Set<string>()
   for (const row of rows) {
     const text = draft[row.tier]?.trim() ?? ''
     if (!text) continue
-    const value = Number(text)
-    if (!Number.isFinite(value) || value < 0) invalid = true
-    else amounts[row.tier] = value / rate
+    const value = Number(text) / rate
+    if (!Number.isFinite(value) || Math.abs(value) > MAX_ADJUSTMENT) {
+      badInput.add(row.tier)
+      continue
+    }
+    amounts[row.tier] = value
+    if (row.supply * props.priceFactor + value <= 0) notPositive.add(row.tier)
   }
+  const invalid = badInput.size > 0 || notPositive.size > 0
   const dirty = rows.some(
     (row) => (draft[row.tier]?.trim() ?? '') !== (savedText[row.tier] ?? '')
   )
@@ -115,13 +130,63 @@ export function OnboardingMarkupTable(props: {
       await queryClient.invalidateQueries({
         queryKey: ['model-pricing-config'],
       })
-      toast.success(t('Markup saved'))
+      toast.success(t('Price adjustments saved'))
     },
   })
 
   if (rows.length === 0) return null
   const price = (usd: number) => `${symbol}${(usd * rate).toFixed(4)}/${t('s')}`
+  const inScope = (onlySelected: boolean) =>
+    rows.filter((row) => !onlySelected || selected.has(row.tier))
+  const applyBatch = (
+    operation: BatchOperation,
+    value: number,
+    onlySelected: boolean
+  ) => {
+    const next = { ...draft }
+    for (const row of inScope(onlySelected)) {
+      const ratioPrice = row.supply * props.priceFactor * rate
+      const amount = batchAdjustment(operation, value, ratioPrice)
+      next[row.tier] = amount === 0 ? '' : String(amount)
+    }
+    setDraft(next)
+  }
+  const clearBatch = (onlySelected: boolean) => {
+    const next = { ...draft }
+    for (const row of inScope(onlySelected)) next[row.tier] = ''
+    setDraft(next)
+  }
+  const toggleRow = (tier: string, checked: boolean) =>
+    setSelected((current) => {
+      const next = new Set(current)
+      if (checked) next.add(tier)
+      else next.delete(tier)
+      return next
+    })
+  const allSelected = rows.every((row) => selected.has(row.tier))
   const columns: StaticDataTableColumn<MarkupRow>[] = [
+    {
+      id: 'select',
+      header: (
+        <Checkbox
+          aria-label={t('Select all tiers')}
+          checked={allSelected}
+          indeterminate={selected.size > 0 && !allSelected}
+          onCheckedChange={(checked) =>
+            setSelected(
+              checked ? new Set(rows.map((row) => row.tier)) : new Set()
+            )
+          }
+        />
+      ),
+      cell: (row) => (
+        <Checkbox
+          aria-label={t('Select {{tier}}', { tier: row.tier })}
+          checked={selected.has(row.tier)}
+          onCheckedChange={(checked) => toggleRow(row.tier, checked)}
+        />
+      ),
+    },
     {
       id: 'condition',
       header: t('Conditions'),
@@ -157,7 +222,7 @@ export function OnboardingMarkupTable(props: {
     },
     {
       id: 'markup',
-      header: t('Extra markup'),
+      header: t('Price adjustment'),
       cell: (row) => (
         <InputGroup className='w-36'>
           <InputGroupAddon>
@@ -165,9 +230,15 @@ export function OnboardingMarkupTable(props: {
           </InputGroupAddon>
           <InputGroupInput
             inputMode='decimal'
-            aria-label={t('Extra markup per second for {{tier}}', {
+            aria-label={t('Price adjustment per second for {{tier}}', {
               tier: row.tier,
             })}
+            aria-invalid={badInput.has(row.tier) || notPositive.has(row.tier)}
+            className={
+              (amounts[row.tier] ?? 0) < 0
+                ? 'text-green-600 dark:text-green-500'
+                : undefined
+            }
             placeholder='0'
             value={draft[row.tier] ?? ''}
             onChange={(event) =>
@@ -187,14 +258,30 @@ export function OnboardingMarkupTable(props: {
       id: 'final',
       header: t('Final price'),
       cellClassName: 'font-mono font-medium',
-      cell: (row) =>
-        price(row.supply * props.priceFactor + (amounts[row.tier] ?? 0)),
+      cell: (row) => {
+        const final = row.supply * props.priceFactor + (amounts[row.tier] ?? 0)
+        if (final >= row.supply) return price(final)
+        return (
+          <div className='text-destructive space-y-0.5'>
+            <div>{price(final)}</div>
+            <div className='font-sans text-xs font-normal'>
+              {final > 0 ? t('Below supply price') : t('Must be above 0')}
+            </div>
+          </div>
+        )
+      },
     },
   ]
 
   return (
     <section className='space-y-2'>
       <h4 className='text-sm font-medium'>{t('Price per second')}</h4>
+      <OnboardingMarkupBatch
+        symbol={symbol}
+        selectedCount={selected.size}
+        onApply={applyBatch}
+        onClear={clearBatch}
+      />
       <StaticDataTable
         tableClassName='text-sm'
         headerRowClassName='hover:bg-transparent'
@@ -204,12 +291,17 @@ export function OnboardingMarkupTable(props: {
       />
       <p className='text-muted-foreground text-xs'>
         {t(
-          'Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.'
+          'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
         )}
       </p>
-      {invalid && (
+      {badInput.size > 0 && (
         <p role='alert' className='text-destructive text-sm'>
-          {t('Enter a markup of 0 or more')}
+          {t('Enter a valid adjustment amount')}
+        </p>
+      )}
+      {notPositive.size > 0 && (
+        <p role='alert' className='text-destructive text-sm'>
+          {t('The final price must stay above 0')}
         </p>
       )}
       <div className='flex justify-end'>
@@ -218,7 +310,7 @@ export function OnboardingMarkupTable(props: {
           disabled={!dirty || invalid || save.isPending}
           onClick={() => save.mutate()}
         >
-          {save.isPending ? t('Saving...') : t('Save markup')}
+          {save.isPending ? t('Saving...') : t('Save price adjustments')}
         </Button>
       </div>
     </section>
