@@ -149,9 +149,17 @@ func (p *OIDCProvider) GetUserInfo(ctx context.Context, token *OAuthToken) (*OAu
 
 	logger.LogDebug(ctx, "[OAuth-OIDC] GetUserInfo success: sub=%s, username=%s, name=%s, email=%s", oidcUser.OpenID, oidcUser.PreferredUsername, oidcUser.Name, oidcUser.Email)
 
+	// The email local part names the account; providers fronting Google and
+	// similar logins often send an opaque preferred_username instead.
+	username, _, _ := strings.Cut(oidcUser.Email, "@")
+	username = strings.ToLower(strings.TrimSpace(username))
+	if username == "" {
+		username = oidcUser.PreferredUsername
+	}
+
 	return &OAuthUser{
 		ProviderUserID: oidcUser.OpenID,
-		Username:       oidcUser.PreferredUsername,
+		Username:       username,
 		DisplayName:    oidcUser.Name,
 		Email:          oidcUser.Email,
 	}, nil

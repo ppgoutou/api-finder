@@ -410,6 +410,36 @@ func GetMaxUserId() int {
 	return user.Id
 }
 
+// claimedUsernameBaseMaxLength leaves room for "_" plus a next-ID or random
+// suffix after a name an identity provider suggested.
+const claimedUsernameBaseMaxLength = 13
+
+// UsernameFromClaim turns a name suggested by an identity provider (OIDC
+// preferred username, email local part) into a free username: the name itself
+// when it fits and nobody, soft-deleted users included, holds it; otherwise the
+// name shortened and suffixed through NextGeneratedUsername. An empty claim
+// returns "" so the caller keeps its own fallback.
+func UsernameFromClaim(claim string) (string, error) {
+	claim = strings.TrimSpace(claim)
+	if claim == "" {
+		return "", nil
+	}
+	if len(claim) <= UserNameMaxLength {
+		exists, err := CheckUserExistOrDeleted(claim, "")
+		if err != nil {
+			return "", err
+		}
+		if !exists {
+			return claim, nil
+		}
+	}
+	base := []rune(claim)
+	for len(string(base)) > claimedUsernameBaseMaxLength {
+		base = base[:len(base)-1]
+	}
+	return NextGeneratedUsername(string(base) + "_")
+}
+
 // generatedUsernameAttempts bounds the random-suffix retries; a collision on
 // an 8-character alphanumeric suffix is already vanishingly rare.
 const generatedUsernameAttempts = 5
