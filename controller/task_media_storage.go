@@ -192,8 +192,10 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 	if service.MediaStorageExtension(mimeType) == "" {
 		return true, errors.New("upstream content is not a video")
 	}
+	downloadTime := time.Since(downloadStart)
+	stored.DownloadMs = downloadTime.Milliseconds()
 	common.SysLog(common.LogText("media copy for task %s downloaded %d bytes from upstream in %s",
-		task.TaskID, writer.written, time.Since(downloadStart).Round(time.Millisecond)))
+		task.TaskID, writer.written, downloadTime.Round(time.Millisecond)))
 	ref, err := store.Persist(ctx, task, types.TaskArtifact{Key: artifactKey, Type: "video", MimeType: mimeType}, file)
 	if err != nil {
 		return false, err
@@ -202,6 +204,7 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 	stored.MimeType = ref.MimeType
 	stored.Size = ref.Size
 	stored.Targets = ref.Targets
+	stored.UploadMs = ref.UploadMs
 	stored.StoredAt = time.Now().Unix()
 	stored.GaveUp = false
 	return false, nil

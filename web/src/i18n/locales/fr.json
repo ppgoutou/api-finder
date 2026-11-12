@@ -8225,6 +8225,15 @@
     "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Cesser de servir les copies plus anciennes. Définissez le même âge dans la règle de cycle de vie du bucket. 0 les conserve indéfiniment.",
     "Store generated videos": "Stocker les vidéos générées",
     "The saved key is never shown; leave blank to keep it.": "La clé enregistrée n'est jamais affichée ; laissez vide pour la conserver.",
-    "Virtual-hosted addressing": "Adressage virtual-hosted"
+    "Virtual-hosted addressing": "Adressage virtual-hosted",
+    "Stored": "Stockée",
+    "File size": "Taille du fichier",
+    "Gave up": "Abandonnée",
+    "Stored at": "Stockée le",
+    "Upstream download": "Téléchargement depuis la source",
+    "{{value}} s": "{{value}} s",
+    "{{value}} MB": "{{value}} Mo",
+    "Copy status": "État de la copie",
+    "Retrying, attempt {{count}}": "Nouvelle tentative, essai {{count}}"
   }
 }

@@ -8225,6 +8225,15 @@
     "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.",
     "Store generated videos": "Store generated videos",
     "The saved key is never shown; leave blank to keep it.": "The saved key is never shown; leave blank to keep it.",
-    "Virtual-hosted addressing": "Virtual-hosted addressing"
+    "Virtual-hosted addressing": "Virtual-hosted addressing",
+    "Stored": "Stored",
+    "File size": "File size",
+    "Gave up": "Gave up",
+    "Stored at": "Stored at",
+    "Upstream download": "Upstream download",
+    "{{value}} s": "{{value}} s",
+    "{{value}} MB": "{{value}} MB",
+    "Copy status": "Copy status",
+    "Retrying, attempt {{count}}": "Retrying, attempt {{count}}"
   }
 }

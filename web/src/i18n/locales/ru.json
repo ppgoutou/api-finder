@@ -8225,6 +8225,15 @@
     "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "Не отдавать копии старше этого срока. Укажите тот же срок в правиле жизненного цикла бакета. 0 — хранить всегда.",
     "Store generated videos": "Хранить созданные видео",
     "The saved key is never shown; leave blank to keep it.": "Сохранённый ключ не показывается; оставьте поле пустым, чтобы сохранить его.",
-    "Virtual-hosted addressing": "Адресация virtual-hosted"
+    "Virtual-hosted addressing": "Адресация virtual-hosted",
+    "Stored": "Сохранено",
+    "File size": "Размер файла",
+    "Gave up": "Прекращено",
+    "Stored at": "Время сохранения",
+    "Upstream download": "Загрузка от поставщика",
+    "{{value}} s": "{{value}} с",
+    "{{value}} MB": "{{value}} МБ",
+    "Copy status": "Статус копирования",
+    "Retrying, attempt {{count}}": "Повтор, попытка {{count}}"
   }
 }

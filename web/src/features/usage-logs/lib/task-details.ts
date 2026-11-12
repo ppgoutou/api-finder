@@ -16,10 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { TaskLog, TaskPluginInfo, TaskPluginRuntimeInfo } from '../types'
+import type {
+  TaskLog,
+  TaskMediaCopyInfo,
+  TaskPluginInfo,
+  TaskPluginRuntimeInfo,
+} from '../types'
 
 export interface TaskDetailAccess {
   plugin?: TaskPluginInfo
+  mediaCopy?: TaskMediaCopyInfo
   runtime?: TaskPluginRuntimeInfo
   upstreamTaskId?: string
   nodeName?: string
@@ -35,6 +41,7 @@ export function resolveTaskDetailAccess(
   const access: TaskDetailAccess = {
     plugin: log.admin_info?.task_plugin,
   }
+  if (log.admin_info?.media_copy) access.mediaCopy = log.admin_info.media_copy
   if (!isRoot) return access
 
   access.runtime = log.root_info?.task_plugin

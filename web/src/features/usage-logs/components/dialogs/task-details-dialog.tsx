@@ -16,7 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Shield01Icon, Wrench01Icon } from '@hugeicons/core-free-icons'
+import {
+  CloudUploadIcon,
+  Shield01Icon,
+  Wrench01Icon,
+} from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
 
@@ -27,6 +31,7 @@ import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
+import { useTaskMediaCopyRows } from '../../hooks/use-task-media-copy-rows'
 import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
 import { resolveTaskDetailAccess } from '../../lib/task-details'
 import type { TaskLog } from '../../types'
@@ -88,6 +93,7 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
   const plugin = access.plugin
   const runtime = access.runtime
   const properties = props.log.properties
+  const mediaCopyRows = useTaskMediaCopyRows(access.mediaCopy)
 
   return (
     <Dialog
@@ -236,6 +242,23 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
                 ) : null}
               </>
             ) : null}
+          </DetailSection>
+        ) : null}
+
+        {mediaCopyRows.length > 0 ? (
+          <DetailSection
+            label={t('Media storage')}
+            icon={
+              <HugeiconsIcon
+                icon={CloudUploadIcon}
+                className='size-3.5 text-blue-500'
+                strokeWidth={2}
+              />
+            }
+          >
+            {mediaCopyRows.map((row) => (
+              <DetailRow key={row.label} label={row.label} value={row.value} />
+            ))}
           </DetailSection>
         ) : null}
 

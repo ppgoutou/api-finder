@@ -115,7 +115,7 @@ func (mediaArtifactStore) Persist(ctx context.Context, task *model.Task, artifac
 		objectKey = prefix + "/" + objectKey
 	}
 
-	ref := &StoredArtifactRef{Backend: "s3", ObjectKey: objectKey, MimeType: artifact.MimeType, Size: size}
+	ref := &StoredArtifactRef{Backend: "s3", ObjectKey: objectKey, MimeType: artifact.MimeType, Size: size, UploadMs: map[string]int64{}}
 	var uploadErrs []error
 	for _, target := range targets {
 		if _, err := file.Seek(0, io.SeekStart); err != nil {
@@ -126,8 +126,10 @@ func (mediaArtifactStore) Persist(ctx context.Context, task *model.Task, artifac
 			uploadErrs = append(uploadErrs, fmt.Errorf("%s: %w", target, err))
 			continue
 		}
+		uploadTime := time.Since(uploadStart)
+		ref.UploadMs[target] = uploadTime.Milliseconds()
 		common.SysLog(common.LogText("media storage upload for task %s to %s: %d bytes in %s",
-			task.TaskID, target, size, time.Since(uploadStart).Round(time.Millisecond)))
+			task.TaskID, target, size, uploadTime.Round(time.Millisecond)))
 		ref.Targets = append(ref.Targets, target)
 	}
 	if len(ref.Targets) == 0 {

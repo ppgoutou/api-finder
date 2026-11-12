@@ -357,6 +357,7 @@ export interface TaskLog {
     request_id?: string
     request_path?: string
     task_plugin?: TaskPluginInfo
+    media_copy?: TaskMediaCopyInfo
   }
   root_info?: {
     task_plugin?: TaskPluginRuntimeInfo
@@ -365,6 +366,18 @@ export interface TaskLog {
   }
   created_at?: number
   updated_at?: number
+}
+
+/** Copy of the task's video in the site's media storage (admin only). */
+export interface TaskMediaCopyInfo {
+  stored: boolean
+  gave_up?: boolean
+  attempts?: number
+  size?: number
+  stored_at?: number
+  download_ms?: number
+  // Keyed by storage target: "overseas" or "mainland".
+  upload_ms?: Record<string, number>
 }
 
 export interface TaskPluginInfo {

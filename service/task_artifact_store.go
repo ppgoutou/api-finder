@@ -20,6 +20,8 @@ type StoredArtifactRef struct {
 	Size      int64
 	// Targets names the media storage copies that hold the object.
 	Targets []string
+	// UploadMs is how long each target took to accept the object.
+	UploadMs map[string]int64
 }
 
 // TaskArtifactStore is the persistence boundary for generated artifact bytes.

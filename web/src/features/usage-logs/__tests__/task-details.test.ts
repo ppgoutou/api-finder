@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import assert from 'node:assert/strict'
+
 import { describe, test } from 'vitest'
 
 import { resolveTaskDetailAccess } from '../lib/task-details'
@@ -65,6 +66,25 @@ describe('task detail access', () => {
     assert.deepEqual(resolveTaskDetailAccess(task, true, false), {
       plugin: task.admin_info?.task_plugin,
     })
+  })
+
+  test('gives admins the media copy timings but not the task owner', () => {
+    const copied: TaskLog = {
+      ...task,
+      admin_info: {
+        media_copy: {
+          stored: true,
+          size: 2100657,
+          download_ms: 4200,
+          upload_ms: { overseas: 1100, mainland: 2000 },
+        },
+      },
+    }
+    assert.deepEqual(resolveTaskDetailAccess(copied, true, false), {
+      plugin: undefined,
+      mediaCopy: copied.admin_info?.media_copy,
+    })
+    assert.deepEqual(resolveTaskDetailAccess(copied, false, false), {})
   })
 
   test('adds runtime and upstream diagnostics for root', () => {

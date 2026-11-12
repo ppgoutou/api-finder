@@ -152,6 +152,10 @@ type TaskStoredMedia struct {
 	StoredAt    int64    `json:"stored_at,omitempty"`
 	Attempts    int      `json:"attempts,omitempty"`
 	LastTryAt   int64    `json:"last_try_at,omitempty"`
+	// DownloadMs is how long the last attempt took to fetch the video from
+	// upstream; UploadMs is how long each target took to accept it.
+	DownloadMs int64            `json:"download_ms,omitempty"`
+	UploadMs   map[string]int64 `json:"upload_ms,omitempty"`
 	// GaveUp is set when the video cannot be copied (gone upstream, not a
 	// video, or too many failed attempts); the task keeps upstream serving.
 	GaveUp bool `json:"gave_up,omitempty"`
