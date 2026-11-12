@@ -16,7 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ChevronRight, CirclePause, Play, ThumbsUp } from 'lucide-react'
+import {
+  BadgeCheck,
+  ChevronRight,
+  CirclePause,
+  Play,
+  ShieldCheck,
+  ThumbsUp,
+} from 'lucide-react'
 import { memo, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -435,6 +442,14 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           )}
         >
           {modelIcon || <span className='text-sm font-bold'>{initial}</span>}
+          {stable && (
+            <span
+              data-stable-shield='true'
+              className='bg-success text-success-foreground border-card absolute -right-1.5 -bottom-1.5 z-10 flex size-5 items-center justify-center rounded-full border-2'
+            >
+              <ShieldCheck className='size-3' />
+            </span>
+          )}
         </div>
         <div className='min-w-0 flex-1'>
           <h3
@@ -445,6 +460,15 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             title={props.model.model_name}
           >
             {modelDisplayName(props.model)}
+            {stable && (
+              <BadgeCheck
+                role='img'
+                aria-label={t('Stable')}
+                className='text-success ml-1.5 inline-block size-[1.1em] -translate-y-px align-middle'
+              >
+                <title>{t('Stable')}</title>
+              </BadgeCheck>
+            )}
           </h3>
           {props.model.vendor_name && (
             <p

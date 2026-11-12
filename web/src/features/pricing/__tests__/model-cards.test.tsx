@@ -121,7 +121,20 @@ describe('model cards', () => {
     )
     expect(container.querySelector('[data-stable-flow-border]')).not.toBeNull()
     expect(screen.queryByRole('list', { name: 'Highlights' })).toBeNull()
-    expect(screen.queryByText('Stable')).toBeNull()
+    expect(screen.queryByText('Stable', { ignore: 'title' })).toBeNull()
+  })
+
+  it('marks a stable card with a verified badge after the name and a shield on its icon', () => {
+    const { container } = render(
+      <ModelCard
+        model={pricingModel({})}
+        badges={['stable']}
+        onClick={vi.fn()}
+      />
+    )
+    const heading = screen.getByRole('heading', { name: /example-model/ })
+    expect(within(heading).getByRole('img', { name: 'Stable' })).toBeVisible()
+    expect(container.querySelector('[data-stable-shield]')).not.toBeNull()
   })
 
   it('keeps the other badges in the header of a stable card', () => {
@@ -143,6 +156,8 @@ describe('model cards', () => {
       <ModelCard model={pricingModel({})} badges={['hot']} onClick={vi.fn()} />
     )
     expect(container.querySelector('[data-stable-flow-border]')).toBeNull()
+    expect(container.querySelector('[data-stable-shield]')).toBeNull()
+    expect(screen.queryByRole('img', { name: 'Stable' })).toBeNull()
   })
 
   it('shows no badge list when the model has no badges', () => {
