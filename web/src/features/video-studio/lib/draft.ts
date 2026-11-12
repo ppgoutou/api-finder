@@ -1,5 +1,3 @@
-import { groupModelsByCategory } from '@/features/pricing/lib/categories'
-import { modelDisplayName } from '@/features/pricing/lib/model-helpers'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -18,13 +16,23 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { evaluateBillingExpression } from '@/features/pricing/lib/billing-expression/runtime'
+import { groupModelsByCategory } from '@/features/pricing/lib/categories'
+import { modelDisplayName } from '@/features/pricing/lib/model-helpers'
 import {
   RESERVED_REFERENCE_VIDEO_SECONDS,
+  VIDEO_TOKENS_PER_SECOND,
+  getModelDurationRange,
   getPerVideoPricing,
   getTokenVideoPricing,
   getVideoPricing,
 } from '@/features/pricing/lib/video-pricing'
-import type { PricingCategory, PricingModel } from '@/features/pricing/types'
+import type {
+  BillingUsageFieldSchema,
+  BillingUsageSchema,
+  PricingCategory,
+  PricingModel,
+} from '@/features/pricing/types'
 
 import {
   DEFAULT_STUDIO_DURATION,
@@ -56,7 +64,11 @@ export function studioModelsFromPricing(
       getVideoPricing(model) ??
       getPerVideoPricing(model) ??
       getTokenVideoPricing(model)
-    if (!pricing || pricing.optionField !== 'resolution') return []
+    const resolutions =
+      pricing?.optionField === 'resolution'
+        ? pricing.rows.map((row) => row.option)
+        : expressionPricedResolutions(model)
+    if (resolutions.length === 0) return []
     const declaredRatios = model.model_limits?.ratios ?? []
     const limits = model.model_limits
     const durations = limits?.durations
@@ -70,8 +82,11 @@ export function studioModelsFromPricing(
         name: model.model_name,
         label: modelDisplayName(model),
         ...studioModelAvailability(model),
-        resolutions: pricing.rows.map((row) => row.option),
-        duration: pricing.durationRange ?? DEFAULT_STUDIO_DURATION,
+        resolutions,
+        duration:
+          pricing?.durationRange ??
+          getModelDurationRange(model) ??
+          DEFAULT_STUDIO_DURATION,
         ...(durations?.length ? { durations } : {}),
         ratios: declaredRatios.length
           ? STUDIO_RATIOS.filter(
@@ -411,4 +426,115 @@ export function estimateDraftCostUSD(
     (row.inputImagePrice ?? 0) *
     Math.max(inputImages - (row.freeInputImages ?? 0), 0)
   return (row.secondPrice * seconds + referenceCost + imageCost) * count
+}
+
+/** What a studio request asks for, as far as its price depends on it. */
+export interface VideoCostInput {
+  resolution: string
+  seconds: number
+  count: number
+  hasReferenceVideo: boolean
+  inputImages: number
+}
+
+/** Usage fields that meter what a video request generates. */
+const VIDEO_QUANTITY_FIELDS = ['seconds', 'videos', 'tokens']
+
+/**
+ * The usage facts the task plugin reports for the request, field by field as
+ * the model's usage schema declares them. Null when the schema has a field the
+ * studio cannot fill, so no price is guessed.
+ */
+function videoUsageFacts(
+  schema: BillingUsageSchema,
+  input: VideoCostInput
+): Record<string, string | number | boolean> | null {
+  const facts: Record<string, string | number | boolean> = {}
+  for (const [field, definition] of Object.entries(schema)) {
+    const value = videoUsageFact(field, definition, input)
+    if (value === null) return null
+    facts[field] = value
+  }
+  return facts
+}
+
+function videoUsageFact(
+  field: string,
+  definition: BillingUsageFieldSchema,
+  input: VideoCostInput
+): string | number | boolean | null {
+  if (field === 'resolution') return input.resolution
+  if (field === 'video_input') {
+    if (definition.type === 'boolean') return input.hasReferenceVideo
+    const withVideo = definition.enum?.find((value) => value !== 'none')
+    return input.hasReferenceVideo && withVideo ? withVideo : 'none'
+  }
+  if (definition.type !== 'number') return null
+  switch (field) {
+    case 'seconds':
+      return input.seconds
+    case 'videos':
+      return 1
+    case 'input_images':
+      return input.inputImages
+    case 'input_video_seconds':
+      return input.hasReferenceVideo ? RESERVED_REFERENCE_VIDEO_SECONDS : 0
+    case 'tokens': {
+      // Reference orders are billed on output plus at least 2/3 of it.
+      const billedSeconds = input.hasReferenceVideo
+        ? input.seconds + Math.ceil((input.seconds * 2) / 3)
+        : input.seconds
+      const perSecond = VIDEO_TOKENS_PER_SECOND[input.resolution]
+      return perSecond ? billedSeconds * perSecond : null
+    }
+  }
+  return null
+}
+
+/**
+ * Estimated charge in USD before the group discount, from the model's billing
+ * expression run on the usage facts of the request. Null when the model has
+ * no expression, its schema has a field the studio cannot fill, or the
+ * expression cannot be evaluated.
+ */
+export function estimateVideoCostByExpressionUSD(
+  model: PricingModel,
+  input: VideoCostInput
+): number | null {
+  const schema = model.billing_usage_schema
+  if (model.billing_mode !== 'tiered_expr' || !model.billing_expr || !schema) {
+    return null
+  }
+  const usage = videoUsageFacts(schema, input)
+  if (!usage) return null
+  const result = evaluateBillingExpression(model.billing_expr, { usage })
+  if (result.status !== 'success') return null
+  // Task usage prices are per unit, so the cost is already in USD.
+  return result.cost * input.count
+}
+
+/**
+ * Resolutions of a video model whose price the pricing page cannot lay out as
+ * a table, such as one with an unusual reference video condition: every
+ * declared resolution whose plain request the expression can price. Empty for
+ * models that do not generate video.
+ */
+function expressionPricedResolutions(model: PricingModel): string[] {
+  const schema = model.billing_usage_schema
+  const quantities = VIDEO_QUANTITY_FIELDS.filter(
+    (field) => schema?.[field]?.type === 'number'
+  )
+  if (!schema || quantities.length === 0) return []
+  const seconds =
+    getModelDurationRange(model)?.[0] ?? DEFAULT_STUDIO_DURATION[0]
+  return (schema.resolution?.enum ?? []).filter(
+    (resolution) =>
+      estimateVideoCostByExpressionUSD(model, {
+        resolution,
+        seconds,
+        count: 1,
+        hasReferenceVideo: false,
+        inputImages: 0,
+      }) !== null
+  )
 }

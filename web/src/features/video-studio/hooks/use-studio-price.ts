@@ -27,7 +27,10 @@ import {
 } from '@/features/pricing/lib/video-pricing'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import { estimateDraftCostUSD } from '../lib/draft'
+import {
+  estimateDraftCostUSD,
+  estimateVideoCostByExpressionUSD,
+} from '../lib/draft'
 import { estimateImageCostUSD } from '../lib/image-draft'
 import type { StudioDraft } from '../types'
 
@@ -59,7 +62,7 @@ export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
   const row = videoPricing?.rows.find(
     (candidate) => candidate.option === draft.resolution
   )
-  if (!model || !row) return null
+  if (!model) return null
 
   const hasReferenceVideo =
     draft.mode === 'reference' &&
@@ -68,13 +71,23 @@ export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
     draft.mode === 'reference'
       ? draft.references.filter((asset) => asset.kind === 'image').length
       : [draft.firstFrame, draft.lastFrame].filter(Boolean).length
-  const costUSD = estimateDraftCostUSD(
-    row,
-    draft.seconds,
-    draft.count,
-    hasReferenceVideo,
-    inputImages
-  )
+  // A price the pricing page cannot lay out as a table is run as an expression.
+  const costUSD = row
+    ? estimateDraftCostUSD(
+        row,
+        draft.seconds,
+        draft.count,
+        hasReferenceVideo,
+        inputImages
+      )
+    : estimateVideoCostByExpressionUSD(model, {
+        resolution: draft.resolution,
+        seconds: draft.seconds,
+        count: draft.count,
+        hasReferenceVideo,
+        inputImages,
+      })
+  if (costUSD === null) return null
   const groupRatio = getDisplayGroupRatio(model)
   return {
     label: formatTaskUsageUnitPrice(costUSD, {

@@ -105,8 +105,16 @@ export const INPUT_IMAGES_FIELD = 'input_images'
 /** Seconds reserved for reference videos while their real length is unknown. */
 export const RESERVED_REFERENCE_VIDEO_SECONDS = 15
 
-/** Usage enum whose non-`none` value marks an order with a reference video. */
+/**
+ * Usage fact that marks an order with a reference video: an enum whose
+ * non-`none` value is set, or a boolean that is true.
+ */
 const REFERENCE_SWITCH_FIELD = 'video_input'
+
+/** Whether a tier condition value of the reference switch means "no reference video". */
+function isPlainOrderSwitchValue(value: string): boolean {
+  return value === 'none' || value === 'false'
+}
 
 export type VideoSchemaFields = {
   secondsField: string
@@ -140,11 +148,14 @@ export function getVideoSchemaFields(
       : []
   const optionFields = enumFields.filter((entry) => !switches.includes(entry))
   if (optionFields.length !== 1 || switches.length > 1) return null
-  if (switches.length > 0 && tokens.length > 0) return null
+  const booleanSwitch = schema?.[REFERENCE_SWITCH_FIELD]?.type === 'boolean'
+  const referenceSwitchField =
+    switches[0]?.[0] ?? (booleanSwitch ? REFERENCE_SWITCH_FIELD : undefined)
+  if (referenceSwitchField && tokens.length > 0) return null
   return {
     secondsField: seconds[0][0],
     referenceField: tokens[0]?.[0],
-    referenceSwitchField: switches[0]?.[0],
+    referenceSwitchField,
     optionField: optionFields[0][0],
   }
 }
@@ -276,7 +287,8 @@ function videoPricingFromExpr(
     const switchValue = tier.conditions.find(
       (condition) => condition.field === fields.referenceSwitchField
     )?.value
-    const isReferenceTier = switchValue !== undefined && switchValue !== 'none'
+    const isReferenceTier =
+      switchValue !== undefined && !isPlainOrderSwitchValue(switchValue)
     const seenPrices = isReferenceTier ? referenceSecondPrices : rowsByOption
     if (
       option === undefined ||

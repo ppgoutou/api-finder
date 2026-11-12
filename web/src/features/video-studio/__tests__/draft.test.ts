@@ -29,6 +29,7 @@ import {
 import {
   buildVideoRequest,
   estimateDraftCostUSD,
+  estimateVideoCostByExpressionUSD,
   fitDraftToModel,
   inPlazaOrder,
   labelReferences,
@@ -125,6 +126,18 @@ function videoModel(
     },
     ...patch,
   })
+}
+
+/** A supplier-style price whose reference video switch is a boolean. */
+const BOOLEAN_SWITCH_EXPR =
+  'u("resolution") == "480p" && u("video_input") == true ? tier("480p_video", u("seconds") * 0.13) : ' +
+  'u("resolution") == "480p" ? tier("480p", u("seconds") * 0.1) : ' +
+  'u("resolution") == "720p" && u("video_input") == true ? tier("720p_video", u("seconds") * 0.26) : ' +
+  'tier("720p", u("seconds") * 0.2)'
+const BOOLEAN_SWITCH_SCHEMA = {
+  resolution: { enum: ['480p', '720p'] },
+  seconds: { type: 'number' as const, unit: 'second' as const },
+  video_input: { type: 'boolean' as const },
 }
 
 describe('studioModelsFromPricing', () => {
@@ -286,6 +299,46 @@ describe('studioModelsFromPricing', () => {
     ])
     expect(model.duration).toEqual([4, 30])
     expect(model.ratios).toEqual(STUDIO_RATIOS)
+  })
+
+  it('offers a per-second model whose reference video switch is a boolean', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance-2.0-dfyb', ['480p', '720p'], {
+        billing_expr: BOOLEAN_SWITCH_EXPR,
+        billing_usage_schema: BOOLEAN_SWITCH_SCHEMA,
+      }),
+    ])
+    expect(model?.resolutions).toEqual(['480p', '720p'])
+  })
+
+  it('offers a video model whose price is no table, with the resolutions its expression prices', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance-min-charge', ['480p', '720p'], {
+        billing_expr:
+          'u("resolution") == "480p" ? tier("480p", max(u("seconds") * 0.1, 0.5)) : tier("720p", u("seconds") * 0.2)',
+        model_limits: { minDuration: 4, maxDuration: 12 },
+      }),
+    ])
+    expect(model).toMatchObject({
+      name: 'seedance-min-charge',
+      resolutions: ['480p', '720p'],
+      duration: [4, 12],
+    })
+  })
+
+  it('leaves out a video model whose usage has a field the studio cannot fill', () => {
+    const models = studioModelsFromPricing([
+      videoModel('seedance-quality', ['720p'], {
+        billing_expr:
+          'u("quality") == "hd" ? tier("hd", u("seconds") * 0.3) : tier("std", u("seconds") * 0.2)',
+        billing_usage_schema: {
+          resolution: { enum: ['720p'] },
+          quality: { enum: ['std', 'hd'] },
+          seconds: { type: 'number', unit: 'second' },
+        },
+      }),
+    ])
+    expect(models).toEqual([])
   })
 
   it('leaves out text, image and non-resolution priced models', () => {
@@ -591,6 +644,56 @@ describe('estimateDraftCostUSD', () => {
     expect(estimateDraftCostUSD(row, 5, 1, true)).toBeCloseTo(
       (9 * 21600 * 4) / 1_000_000
     )
+  })
+})
+
+describe('estimateVideoCostByExpressionUSD', () => {
+  const plainRequest = {
+    resolution: '720p',
+    seconds: 5,
+    count: 2,
+    hasReferenceVideo: false,
+    inputImages: 0,
+  }
+
+  it('prices a boolean reference switch from the matching tier', () => {
+    const model = videoModel('seedance-2.0-dfyb', ['480p', '720p'], {
+      billing_expr: BOOLEAN_SWITCH_EXPR,
+      billing_usage_schema: BOOLEAN_SWITCH_SCHEMA,
+    })
+    expect(estimateVideoCostByExpressionUSD(model, plainRequest)).toBeCloseTo(2)
+    expect(
+      estimateVideoCostByExpressionUSD(model, {
+        ...plainRequest,
+        hasReferenceVideo: true,
+      })
+    ).toBeCloseTo(2.6)
+  })
+
+  it('applies a minimum charge the pricing table cannot show', () => {
+    const model = videoModel('seedance-min-charge', ['480p'], {
+      billing_expr: 'tier("480p", max(u("seconds") * 0.1, 0.5))',
+    })
+    expect(
+      estimateVideoCostByExpressionUSD(model, {
+        ...plainRequest,
+        resolution: '480p',
+        seconds: 4,
+        count: 1,
+      })
+    ).toBeCloseTo(0.5)
+  })
+
+  it('returns null rather than guess a usage field the studio cannot fill', () => {
+    const model = videoModel('seedance-quality', ['720p'], {
+      billing_expr: 'tier("std", u("seconds") * 0.2)',
+      billing_usage_schema: {
+        resolution: { enum: ['720p'] },
+        quality: { enum: ['std', 'hd'] },
+        seconds: { type: 'number', unit: 'second' },
+      },
+    })
+    expect(estimateVideoCostByExpressionUSD(model, plainRequest)).toBeNull()
   })
 })
 

@@ -237,6 +237,36 @@ describe('per-second video pricing with a reference video switch', () => {
     expect(pricing?.rows[0].referencePricePerMillion).toBeUndefined()
   })
 
+  test('reads a boolean video_input switch tested only on reference tiers', () => {
+    const pricing = getVideoPricing(
+      videoModel(
+        'u("resolution") == "480p" && u("video_input") == true ? tier("480p_video", u("seconds") * 0.65) : ' +
+          'u("resolution") == "480p" ? tier("480p", u("seconds") * 0.5) : ' +
+          'u("resolution") == "720p" && u("video_input") == true ? tier("720p_video", u("seconds") * 1.05) : ' +
+          'tier("720p", u("seconds") * 0.8)',
+        {
+          billing_usage_schema: {
+            seconds: { type: 'number', unit: 'second' },
+            video_input: { type: 'boolean' },
+            resolution: { enum: ['480p', '720p'] },
+          },
+        }
+      )
+    )
+
+    expect(pricing?.hasReferencePricing).toBe(true)
+    expect(
+      pricing?.rows.map((row) => [
+        row.option,
+        row.secondPrice,
+        row.referenceSecondPrice,
+      ])
+    ).toEqual([
+      ['480p', 0.5, 0.65],
+      ['720p', 0.8, 1.05],
+    ])
+  })
+
   test('recognizes the switch only when its values are none and one other', () => {
     expect(isVideoPricingSchema(SWITCH_SCHEMA)).toBe(true)
     expect(
