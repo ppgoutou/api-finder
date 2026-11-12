@@ -23,11 +23,13 @@ import (
 // the fixed amounts added on top of the group-ratio price.
 const onboardingMarkupOption = "OnboardingPriceMarkup"
 
-// maxMarkupPerSecond bounds one tier's markup in USD per second of video.
+// maxMarkupPerSecond bounds one tier's markup or discount in USD per second
+// of video.
 const maxMarkupPerSecond = 1000
 
 // tierMarkup is a fixed amount a customer pays per second of video on top of
-// the group-ratio price of one tier.
+// the group-ratio price of one tier. A negative amount is a discount; the
+// tier's unit price must stay above 0.
 type tierMarkup struct {
 	Field     string  `json:"field"`
 	PerSecond float64 `json:"per_second"`
@@ -52,8 +54,8 @@ func validateTierMarkup(name string, markup tierMarkup) error {
 	if strings.TrimSpace(markup.Field) == "" {
 		return fmt.Errorf("tier %q: usage field is required", name)
 	}
-	if math.IsNaN(markup.PerSecond) || markup.PerSecond <= 0 || markup.PerSecond > maxMarkupPerSecond {
-		return fmt.Errorf("tier %q: markup must be above 0 and at most %d per second", name, maxMarkupPerSecond)
+	if math.IsNaN(markup.PerSecond) || markup.PerSecond == 0 || math.Abs(markup.PerSecond) > maxMarkupPerSecond {
+		return fmt.Errorf("tier %q: markup must not be 0 and at most %d per second either way", name, maxMarkupPerSecond)
 	}
 	if math.IsNaN(markup.TokensPerSecond) || math.IsInf(markup.TokensPerSecond, 0) || markup.TokensPerSecond < 0 {
 		return fmt.Errorf("tier %q: tokens per second must be finite and not negative", name)
