@@ -39,6 +39,11 @@ export type MarkupRow = {
   tokensPerSecond?: number
   /** Supplier price per second, before the group ratio. */
   supply: number
+  /**
+   * A reference-video token tier: its tokens cover the reference video as
+   * well as the output, so its per-second price applies to both.
+   */
+  reference: boolean
 }
 
 /**
@@ -64,7 +69,13 @@ export function markupRows(
     const price = tier.unitPrices[field]
     const unit = schema[field]?.unit
     if (unit === 'second') {
-      rows.push({ tier: tier.label, source: tier, field, supply: price })
+      rows.push({
+        tier: tier.label,
+        source: tier,
+        field,
+        supply: price,
+        reference: false,
+      })
       continue
     }
     const resolution = tier.conditions.find(
@@ -83,6 +94,12 @@ export function markupRows(
       field,
       tokensPerSecond,
       supply: (price * tokensPerSecond) / 1_000_000,
+      reference: tier.conditions.some(
+        (condition) =>
+          condition.field === 'video_input' &&
+          condition.value !== 'none' &&
+          condition.value !== 'false'
+      ),
     })
   }
   return rows

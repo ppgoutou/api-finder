@@ -39,6 +39,7 @@ type ModelPricingEntry struct {
 	Version        string                               `json:"version"`
 	Configured     PricingValues                        `json:"configured"`
 	UsageSchema    map[string]jsplugin.UsageFieldSchema `json:"usage_schema,omitempty"`
+	UsageExamples  []jsplugin.UsageExample              `json:"usage_examples,omitempty"`
 }
 
 type ModelPricingPluginVariant struct {
@@ -278,10 +279,10 @@ func GetModelPricingSnapshot(names []string) (*ModelPricingSnapshot, error) {
 		entry.CacheWriteMode = ResolveCacheWriteMode(name, configured)
 		entry.BillingDetails = ResolveLegacyBillingDetails(name, entry.Effective, configured)
 		if plugin, ok := generation.GetByModel(name); ok {
-			entry.UsageSchema, _ = plugin.Meta.UsageForModel(name)
+			entry.UsageSchema, entry.UsageExamples = plugin.Meta.UsageForModel(name)
 		} else if target, ok := ResolveTaskModelAlias(generation, name); ok {
 			if plugin, ok := generation.Get(target.PluginKey); ok {
-				entry.UsageSchema, _ = plugin.Meta.UsageForModel(target.Declared)
+				entry.UsageSchema, entry.UsageExamples = plugin.Meta.UsageForModel(target.Declared)
 			}
 		}
 		plugins := generation.PluginsByModel(name)

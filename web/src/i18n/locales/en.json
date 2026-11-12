@@ -8162,6 +8162,7 @@
     "Enter a markup of 0 or more": "Enter a markup of 0 or more",
     "Save markup": "Save markup",
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.",
+    "Per second of output plus reference video": "Per second of output plus reference video",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.",
     "Only expression prices can take a markup. Confirm the upstream price first.": "Only expression prices can take a markup. Confirm the upstream price first.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Group ratios saved, but the markups of these models could not be updated: {{models}}",

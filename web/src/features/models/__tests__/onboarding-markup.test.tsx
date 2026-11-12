@@ -41,7 +41,10 @@ const tokenExpr =
   'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("tokens") * 28 / 1000000) : ' +
   'tier("720p·video", u("tokens") * 16 / 1000000)'
 
-function pricingEntry(expression: string): ModelPricingEntry {
+function pricingEntry(
+  expression: string,
+  extra?: Partial<ModelPricingEntry>
+): ModelPricingEntry {
   return {
     model_name: 'video',
     version: 'v1',
@@ -51,15 +54,19 @@ function pricingEntry(expression: string): ModelPricingEntry {
     },
     effective: {},
     usage_schema: schema,
+    ...extra,
   }
 }
 
-function renderTable(markup?: OnboardingMarkup) {
+function renderTable(
+  markup?: OnboardingMarkup,
+  extra?: Partial<ModelPricingEntry>
+) {
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
       <OnboardingMarkupTable
-        entry={pricingEntry(markup?.base_expr ?? tokenExpr)}
+        entry={pricingEntry(markup?.base_expr ?? tokenExpr, extra)}
         markup={markup}
         priceFactor={1.2}
       />
@@ -103,6 +110,12 @@ describe('markupRows', () => {
     expect(rows[0].tokensPerSecond).toBe(10000)
   })
 
+  it('marks only reference-video tiers as priced per output plus reference second', () => {
+    const rows = markupRows(tokenExpr, schema, undefined)
+
+    expect(rows.map((row) => row.reference)).toEqual([false, true, false, true])
+  })
+
   it('returns no rows for an expression a markup cannot raise', () => {
     expect(
       markupRows('tier("base", 0.1 + u("tokens") * 2 / 1000000)', schema, [])
@@ -138,6 +151,34 @@ describe('OnboardingMarkupTable', () => {
     expect(
       within(row).getByText(`$${(supply * 1.2 + 0.1).toFixed(4)}/s`)
     ).toBeTruthy()
+  })
+
+  it('uses the model plugin example rate when the entry has no plugin variants', () => {
+    renderTable(undefined, {
+      usage_examples: [
+        {
+          label: '480p · 5s',
+          facts: { tokens: 48038, resolution: '480p', video_input: 'none' },
+        },
+      ],
+    })
+    const row = markupInput('480p·none').closest('tr') as HTMLElement
+
+    const supply = (28 * 9607.6) / 1_000_000
+    expect(within(row).getByText(`$${supply.toFixed(4)}/s`)).toBeTruthy()
+  })
+
+  it('labels reference-video rows as priced per output plus reference second', () => {
+    renderTable()
+    const plain = markupInput('480p·none').closest('tr') as HTMLElement
+    const reference = markupInput('480p·video').closest('tr') as HTMLElement
+
+    expect(
+      within(reference).getByText('Per second of output plus reference video')
+    ).toBeTruthy()
+    expect(
+      within(plain).queryByText('Per second of output plus reference video')
+    ).toBeNull()
   })
 
   it('saves the typed markups for the model', async () => {

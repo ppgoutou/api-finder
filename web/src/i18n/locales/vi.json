@@ -8162,6 +8162,7 @@
     "Enter a markup of 0 or more": "Nhập phần cộng thêm từ 0 trở lên",
     "Save markup": "Lưu phần cộng thêm",
     "Prices follow the upstream. Customers pay the group ratio price plus any extra markup.": "Giá theo nhà cung cấp. Khách hàng trả giá theo hệ số cộng phần cộng thêm.",
+    "Per second of output plus reference video": "Theo tổng số giây đầu ra và video tham chiếu",
     "Token prices are shown per second of video at each resolution. With reference videos, the markup is charged on output and reference seconds alike. Customers pay the final price; a new group ratio keeps the markup unchanged.": "Giá theo token được hiển thị theo mỗi giây video ở từng độ phân giải. Khi có video tham chiếu, phần cộng thêm tính cho cả giây đầu ra lẫn giây tham chiếu. Khách hàng trả giá cuối; đổi hệ số nhóm không làm thay đổi phần cộng thêm.",
     "Only expression prices can take a markup. Confirm the upstream price first.": "Chỉ giá dạng biểu thức mới cộng thêm được. Hãy xác nhận giá nhà cung cấp trước.",
     "Group ratios saved, but the markups of these models could not be updated: {{models}}": "Đã lưu hệ số nhóm, nhưng không cập nhật được phần cộng thêm của các mô hình: {{models}}",
