@@ -38,6 +38,8 @@ export interface StudioModel extends StudioModelAvailability {
   durations?: readonly number[]
   /** Selectable aspect ratios, 'auto' first. */
   ratios: readonly StudioRatio[]
+  /** Most reference files of each kind, when the plugin declares them. */
+  referenceLimits?: Readonly<Record<AssetKind, number>>
 }
 
 /**
@@ -66,7 +68,10 @@ export const DEFAULT_STUDIO_RATIOS: readonly StudioRatio[] =
 
 export const STUDIO_MAX_COUNT = 4
 
-/** Most reference files of each kind one request can carry. */
+/**
+ * Most reference files of each kind one request can carry, for a model whose
+ * plugin declares no reference counts.
+ */
 export const REFERENCE_LIMITS: Readonly<Record<AssetKind, number>> = {
   image: 9,
   video: 3,

@@ -58,7 +58,13 @@ export function studioModelsFromPricing(
       getTokenVideoPricing(model)
     if (!pricing || pricing.optionField !== 'resolution') return []
     const declaredRatios = model.model_limits?.ratios ?? []
-    const durations = model.model_limits?.durations
+    const limits = model.model_limits
+    const durations = limits?.durations
+    const declaresReferences = Boolean(
+      limits?.maxReferenceImages ||
+      limits?.maxReferenceVideos ||
+      limits?.maxReferenceAudios
+    )
     return [
       {
         name: model.model_name,
@@ -72,6 +78,15 @@ export function studioModelsFromPricing(
               (ratio) => ratio === 'auto' || declaredRatios.includes(ratio)
             )
           : DEFAULT_STUDIO_RATIOS,
+        ...(declaresReferences
+          ? {
+              referenceLimits: {
+                image: limits?.maxReferenceImages || REFERENCE_LIMITS.image,
+                video: limits?.maxReferenceVideos || REFERENCE_LIMITS.video,
+                audio: limits?.maxReferenceAudios || REFERENCE_LIMITS.audio,
+              },
+            }
+          : {}),
       },
     ]
   })
@@ -282,7 +297,10 @@ export function countReferences(
 }
 
 /** i18n key of the reason the draft cannot be submitted, or null. */
-export function validateDraft(draft: StudioDraft): string | null {
+export function validateDraft(
+  draft: StudioDraft,
+  model?: Pick<StudioModel, 'referenceLimits'>
+): string | null {
   if (!draft.prompt.trim()) return 'Describe the video you want'
   const assets =
     draft.mode === 'frames'
@@ -301,7 +319,8 @@ export function validateDraft(draft: StudioDraft): string | null {
   }
   const counts = countReferences(draft.references)
   for (const kind of Object.keys(counts) as AssetKind[]) {
-    if (counts[kind] > REFERENCE_LIMITS[kind]) {
+    const limit = model?.referenceLimits?.[kind] ?? REFERENCE_LIMITS[kind]
+    if (counts[kind] > limit) {
       return 'Too many reference files'
     }
   }

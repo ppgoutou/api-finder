@@ -75,7 +75,9 @@ export function Composer(props: ComposerProps) {
   const insufficient = balance.shortfallUSD !== null
   const [submitting, setSubmitting] = useState(false)
   const unavailable = model?.unavailable === true
-  let problem = model ? validateDraft(draft) : 'No video model is available'
+  let problem = model
+    ? validateDraft(draft, model)
+    : 'No video model is available'
   if (unavailable) {
     problem = 'This model is temporarily unavailable. Pick another model.'
   }
