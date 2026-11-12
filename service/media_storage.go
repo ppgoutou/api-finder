@@ -121,10 +121,13 @@ func (mediaArtifactStore) Persist(ctx context.Context, task *model.Task, artifac
 		if _, err := file.Seek(0, io.SeekStart); err != nil {
 			return nil, err
 		}
+		uploadStart := time.Now()
 		if err := putMediaObject(ctx, settings.Target(target), objectKey, artifact.MimeType, size, payloadHash, file); err != nil {
 			uploadErrs = append(uploadErrs, fmt.Errorf("%s: %w", target, err))
 			continue
 		}
+		common.SysLog(common.LogText("media storage upload for task %s to %s: %d bytes in %s",
+			task.TaskID, target, size, time.Since(uploadStart).Round(time.Millisecond)))
 		ref.Targets = append(ref.Targets, target)
 	}
 	if len(ref.Targets) == 0 {

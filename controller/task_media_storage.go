@@ -167,6 +167,7 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 	if err != nil {
 		return false, err
 	}
+	downloadStart := time.Now()
 	if proxyErr := proxyTaskMedia(c, task, descriptor); proxyErr != nil {
 		var mediaErr *taskMediaProxyError
 		if errors.As(proxyErr, &mediaErr) {
@@ -191,6 +192,8 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 	if service.MediaStorageExtension(mimeType) == "" {
 		return true, errors.New("upstream content is not a video")
 	}
+	common.SysLog(common.LogText("media copy for task %s downloaded %d bytes from upstream in %s",
+		task.TaskID, writer.written, time.Since(downloadStart).Round(time.Millisecond)))
 	ref, err := store.Persist(ctx, task, types.TaskArtifact{Key: artifactKey, Type: "video", MimeType: mimeType}, file)
 	if err != nil {
 		return false, err
