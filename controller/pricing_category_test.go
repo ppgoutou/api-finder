@@ -38,6 +38,8 @@ func TestValidatePricingCategories(t *testing.T) {
 		{name: "token official price table", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":2,"output":8,"cache_read":0.5}}]`, valid: true},
 		{name: "video row without a per-second price", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":0}]}}]`},
 		{name: "video rows with a repeated option", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":1},{"option":"480p","second":2}]}}]`},
+		{name: "video official price with CNY", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"720p","second":0.15,"reference_second":0.09,"second_cny":0.99,"reference_second_cny":0.6}]}}]`, valid: true},
+		{name: "negative CNY price", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"720p","second":0.15,"second_cny":-1}]}}]`},
 		{name: "negative reference price", value: `[{"id":"a","name":"A","models":["sd"],"official_price":{"kind":"video","rows":[{"option":"480p","second":1,"reference_second":-1}]}}]`},
 		{name: "token price without output", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":2}}]`},
 		{name: "token price of zero", value: `[{"id":"a","name":"A","models":["gpt-x"],"official_price":{"kind":"token","input":0,"output":0}}]`},

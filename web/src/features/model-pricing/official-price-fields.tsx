@@ -110,10 +110,15 @@ function TokenFields(
 type VideoColumn = {
   key: keyof VideoOfficialDraftRow
   label: string
+  /** Entered as the vendor's CNY list price, not converted to USD. */
+  cny?: boolean
 }
 
 function VideoFields(
-  props: FieldsProps<VideoOfficialDraft> & { layout: VideoOfficialLayout }
+  props: FieldsProps<VideoOfficialDraft> & {
+    layout: VideoOfficialLayout
+    cny?: boolean
+  }
 ) {
   const { t, i18n } = useTranslation()
   const unit = (label: string, suffix: string) =>
@@ -132,6 +137,27 @@ function VideoFields(
       key: 'referenceSecond',
       label: unit(t('Reference video order price'), t('/second')),
     })
+  }
+  if (props.cny) {
+    const cnyUnit = (label: string) =>
+      t('{{label}} ({{currency}} {{suffix}})', {
+        label,
+        currency: 'CNY',
+        suffix: t('/second'),
+        interpolation: { escapeValue: false },
+      })
+    columns.push({
+      key: 'secondCny',
+      label: cnyUnit(t('Price per second')),
+      cny: true,
+    })
+    if (props.layout.referenceSwitchValue) {
+      columns.push({
+        key: 'referenceSecondCny',
+        label: cnyUnit(t('Reference video order price')),
+        cny: true,
+      })
+    }
   }
   if (props.layout.fields.referenceField) {
     columns.push({
@@ -204,18 +230,18 @@ function VideoFields(
                   const label = `${optionLabel} ${column.label}`
                   return (
                     <td key={column.key} className='px-2 py-1.5'>
-                      {column.key === 'freeImages' ? (
+                      {column.cny || column.key === 'freeImages' ? (
                         <Input
                           aria-label={label}
                           type='number'
                           min={0}
-                          step={1}
-                          inputMode='numeric'
-                          value={row?.freeImages ?? ''}
+                          step={column.cny ? 'any' : 1}
+                          inputMode={column.cny ? 'decimal' : 'numeric'}
+                          value={row?.[column.key] ?? ''}
                           disabled={props.disabled}
                           placeholder='0'
                           onChange={(event) =>
-                            update(option, 'freeImages', event.target.value)
+                            update(option, column.key, event.target.value)
                           }
                         />
                       ) : (
@@ -253,6 +279,8 @@ export function OfficialPriceFields(props: {
   idPrefix: string
   /** A category table may leave options out; a model price needs them all. */
   allowBlankRows?: boolean
+  /** Also take the vendor's CNY list price, which Chinese interfaces show. */
+  cny?: boolean
 }) {
   const { t } = useTranslation()
   const currency = useOfficialPriceCurrency()
@@ -280,6 +308,7 @@ export function OfficialPriceFields(props: {
           currency={currency}
           disabled={props.disabled}
           idPrefix={props.idPrefix}
+          cny={props.cny}
         />
       )}
       {error && (

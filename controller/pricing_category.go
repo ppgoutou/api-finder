@@ -158,7 +158,8 @@ func validOfficialPriceTable(table *model.OfficialPriceTable) bool {
 			}
 			seen[option] = struct{}{}
 			second := row.Second
-			if second <= 0 || !validOfficialPriceAmount(&second, true) || !validOfficialPriceAmount(row.ReferenceSecond, false) {
+			if second <= 0 || !validOfficialPriceAmount(&second, true) || !validOfficialPriceAmount(row.ReferenceSecond, false) ||
+				!validOfficialPriceAmount(row.SecondCNY, false) || !validOfficialPriceAmount(row.ReferenceSecondCNY, false) {
 				return false
 			}
 		}

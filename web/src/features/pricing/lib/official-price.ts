@@ -76,6 +76,9 @@ export type TokenOfficialDraft = {
 export type VideoOfficialDraftRow = {
   second: string
   referenceSecond: string
+  /** The vendor's CNY list prices; only category tables store them. */
+  secondCny: string
+  referenceSecondCny: string
   referenceMillion: string
   inputVideoSecond: string
   inputImage: string
@@ -213,6 +216,8 @@ export function emptyOfficialDraft(
         {
           second: '',
           referenceSecond: '',
+          secondCny: '',
+          referenceSecondCny: '',
           referenceMillion: '',
           inputVideoSecond: '',
           inputImage: '',
@@ -274,6 +279,8 @@ export function officialDraftFromExpr(
     draft.rows[row.option] = {
       second: amountText(row.secondPrice),
       referenceSecond: amountText(row.referenceSecondPrice),
+      secondCny: '',
+      referenceSecondCny: '',
       referenceMillion: amountText(row.referencePricePerMillion),
       inputVideoSecond: amountText(row.inputVideoSecondPrice),
       inputImage: amountText(row.inputImagePrice),
@@ -348,6 +355,8 @@ export function officialDraftFromTable(
       ...current,
       second: amountText(row.second),
       referenceSecond: amountText(row.reference_second),
+      secondCny: amountText(row.second_cny),
+      referenceSecondCny: amountText(row.reference_second_cny),
     }
   }
   return draft
@@ -380,6 +389,12 @@ export function officialTableFromDraft(
             second: Number(row.second),
             ...(filled(row.referenceSecond)
               ? { reference_second: Number(row.referenceSecond) }
+              : {}),
+            ...(filled(row.secondCny)
+              ? { second_cny: Number(row.secondCny) }
+              : {}),
+            ...(filled(row.referenceSecondCny)
+              ? { reference_second_cny: Number(row.referenceSecondCny) }
               : {}),
           },
         ]

@@ -16,7 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { describe, expect, test } from 'vitest'
+import i18next from 'i18next'
+import { afterEach, describe, expect, test } from 'vitest'
+
+import {
+  DEFAULT_CURRENCY_CONFIG,
+  useSystemConfigStore,
+} from '@/stores/system-config-store'
 
 import {
   categoryOfficialLayout,
@@ -65,6 +71,8 @@ function videoRow(
   return {
     second,
     referenceSecond: '',
+    secondCny: '',
+    referenceSecondCny: '',
     referenceMillion: '',
     inputVideoSecond: '',
     inputImage: '',
@@ -267,6 +275,13 @@ describe('official price expressions', () => {
   })
 })
 
+afterEach(async () => {
+  await i18next.changeLanguage('en')
+  useSystemConfigStore
+    .getState()
+    .setConfig({ currency: { ...DEFAULT_CURRENCY_CONFIG } })
+})
+
 describe('category official price table', () => {
   const TOKEN_VIDEO_SCHEMA: BillingUsageSchema = {
     tokens: { type: 'number', unit: 'token' },
@@ -347,6 +362,71 @@ describe('category official price table', () => {
     ).toEqual([
       ['720p', 1, undefined],
       ['4k', 3, 3.5],
+    ])
+  })
+
+  test('the CNY list price round-trips and shows in place of the USD price only in Chinese', async () => {
+    const layout = categoryOfficialLayout([
+      model({ billing_usage_schema: TOKEN_VIDEO_SCHEMA }),
+    ]).layout
+    if (!layout) throw new Error('expected a layout')
+    const draft: VideoOfficialDraft = {
+      kind: 'video',
+      rows: {
+        '720p': videoRow('0.15', {
+          referenceSecond: '0.09',
+          secondCny: '0.99',
+          referenceSecondCny: '0.6',
+        }),
+        '4k': videoRow('0.78'),
+      },
+    }
+    const table = officialTableFromDraft(draft)
+    expect(table).toEqual({
+      kind: 'video',
+      rows: [
+        {
+          option: '720p',
+          second: 0.15,
+          reference_second: 0.09,
+          second_cny: 0.99,
+          reference_second_cny: 0.6,
+        },
+        { option: '4k', second: 0.78 },
+      ],
+    })
+    if (!table) throw new Error('expected a table')
+    expect(officialDraftFromTable(layout, table)).toEqual(draft)
+
+    const shown = model({
+      billing_usage_schema: TOKEN_VIDEO_SCHEMA,
+      official_price: table,
+    })
+    useSystemConfigStore.getState().setConfig({
+      currency: {
+        ...DEFAULT_CURRENCY_CONFIG,
+        quotaDisplayType: 'USD',
+        usdExchangeRate: 7,
+      },
+    })
+    const prices = () =>
+      getOfficialVideoPricing(shown)?.rows.map((row) => [
+        row.option,
+        Number(row.secondPrice.toFixed(6)),
+        row.referenceSecondPrice && Number(row.referenceSecondPrice.toFixed(6)),
+      ])
+
+    await i18next.changeLanguage('en')
+    expect(prices()).toEqual([
+      ['720p', 0.15, 0.09],
+      ['4k', 0.78, undefined],
+    ])
+    // A Chinese interface shows CNY: 0.99 / 7 USD displays as ¥0.99, and a
+    // row without a CNY price falls back to its USD price.
+    await i18next.changeLanguage('zhCN')
+    expect(prices()).toEqual([
+      ['720p', Number((0.99 / 7).toFixed(6)), Number((0.6 / 7).toFixed(6))],
+      ['4k', 0.78, undefined],
     ])
   })
 

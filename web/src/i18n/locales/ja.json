@@ -8183,6 +8183,7 @@
     "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "統一の公式価格を設定するには、すべてのモデルの表示方法が同じ（すべて秒単位、またはすべてトークン単位）である必要があります。表示方法が異なるモデル：{{models}}",
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "モデル ID の代わりに訪問者に表示されます。API 呼び出しでは引き続きモデル ID を使います。空欄の場合はモデル ID を表示します。",
     "Model ID for API calls": "API 呼び出し用のモデル ID",
-    "Display name must not exceed 128 characters": "表示名は 128 文字以内にしてください"
+    "Display name must not exceed 128 characters": "表示名は 128 文字以内にしてください",
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中国語の画面では人民元の価格が設定されていればそれを表示し、他の言語では米ドルの価格を表示します。"
   }
 }

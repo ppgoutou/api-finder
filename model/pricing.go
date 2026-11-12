@@ -101,7 +101,9 @@ func pricingCacheStale() bool {
 // OfficialPriceTable is a display-only official price entered the way the
 // pricing page shows it: per output second by option, such as resolution, for
 // video models, or per 1M tokens for token models. Amounts are USD before any
-// group ratio. A model shows only the rows of the options it supports.
+// group ratio; a video row may also carry the vendor's CNY price, which
+// Chinese interfaces show instead. A model shows only the rows of the options
+// it supports.
 type OfficialPriceTable struct {
 	Kind       string                  `json:"kind"`
 	Rows       []OfficialPriceVideoRow `json:"rows,omitempty"`
@@ -113,10 +115,13 @@ type OfficialPriceTable struct {
 
 // OfficialPriceVideoRow is the official price of one video option, with the
 // per-second price of orders that carry a reference video when it differs.
+// The CNY amounts are the vendor's own CNY list price, not a conversion.
 type OfficialPriceVideoRow struct {
-	Option          string   `json:"option"`
-	Second          float64  `json:"second"`
-	ReferenceSecond *float64 `json:"reference_second,omitempty"`
+	Option             string   `json:"option"`
+	Second             float64  `json:"second"`
+	ReferenceSecond    *float64 `json:"reference_second,omitempty"`
+	SecondCNY          *float64 `json:"second_cny,omitempty"`
+	ReferenceSecondCNY *float64 `json:"reference_second_cny,omitempty"`
 }
 
 func GetPricing() []Pricing {
