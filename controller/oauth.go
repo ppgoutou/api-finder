@@ -485,13 +485,8 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	}
 	user.Username = generatedUsername
 
-	if oauthUser.Username != "" {
-		if exists, err := model.CheckUserExistOrDeleted(oauthUser.Username, ""); err == nil && !exists {
-			// 防止索引退化
-			if len(oauthUser.Username) <= model.UserNameMaxLength {
-				user.Username = oauthUser.Username
-			}
-		}
+	if claimedUsername, err := model.UsernameFromClaim(oauthUser.Username); err == nil && claimedUsername != "" {
+		user.Username = claimedUsername
 	}
 
 	if oauthUser.DisplayName != "" {
