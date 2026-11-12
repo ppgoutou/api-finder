@@ -58,6 +58,9 @@ jobs:
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: go.mod
+          # Runners ship different 1.26.x patch releases; resolving the latest
+          # one keeps the Go build cache key stable between runs.
+          check-latest: true
           cache-dependency-path: |
             go.sum
             relaykit/go.sum
