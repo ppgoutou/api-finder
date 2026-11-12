@@ -505,7 +505,18 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 					}
 				}
 			}
-			if adminInfo.RequestID != "" || adminInfo.RequestPath != "" || adminInfo.TaskPlugin != nil {
+			if stored := task.PrivateData.StoredMedia; stored != nil {
+				adminInfo.MediaCopy = &dto.TaskMediaCopyInfo{
+					Stored:     stored.StoredAt > 0,
+					GaveUp:     stored.GaveUp,
+					Attempts:   stored.Attempts,
+					Size:       stored.Size,
+					StoredAt:   stored.StoredAt,
+					DownloadMs: stored.DownloadMs,
+					UploadMs:   stored.UploadMs,
+				}
+			}
+			if adminInfo.RequestID != "" || adminInfo.RequestPath != "" || adminInfo.TaskPlugin != nil || adminInfo.MediaCopy != nil {
 				item.AdminInfo = adminInfo
 			}
 		}

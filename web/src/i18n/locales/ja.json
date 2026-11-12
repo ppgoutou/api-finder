@@ -8225,6 +8225,15 @@
     "Stop serving copies older than this. Set the same age in the bucket lifecycle rule. 0 keeps them forever.": "これより古いコピーは配信しません。バケットのライフサイクルルールにも同じ日数を設定してください。0 は無期限に保持します。",
     "Store generated videos": "生成した動画を保存",
     "The saved key is never shown; leave blank to keep it.": "保存済みのキーは表示されません。空欄のままにすると変更されません。",
-    "Virtual-hosted addressing": "仮想ホスト形式"
+    "Virtual-hosted addressing": "仮想ホスト形式",
+    "Stored": "保存済み",
+    "File size": "ファイルサイズ",
+    "Gave up": "中止",
+    "Stored at": "保存日時",
+    "Upstream download": "上流からのダウンロード",
+    "{{value}} s": "{{value}} 秒",
+    "{{value}} MB": "{{value}} MB",
+    "Copy status": "コピー状態",
+    "Retrying, attempt {{count}}": "再試行中（{{count}} 回目）"
   }
 }

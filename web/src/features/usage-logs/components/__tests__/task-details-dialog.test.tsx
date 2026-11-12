@@ -65,3 +65,47 @@ describe('task details platform row', () => {
     expect(screen.getByText('suno')).toBeVisible()
   })
 })
+
+describe('task details media storage section', () => {
+  const copied: TaskLog = {
+    ...makeTask('suno'),
+    admin_info: {
+      media_copy: {
+        stored: true,
+        size: 2 * 1024 * 1024,
+        download_ms: 4200,
+        upload_ms: { overseas: 1100, mainland: 2000 },
+      },
+    },
+  }
+
+  function renderCopied(isAdmin: boolean): void {
+    render(
+      <TaskDetailsDialog
+        log={copied}
+        isAdmin={isAdmin}
+        isRoot={false}
+        open
+        onOpenChange={() => undefined}
+      />
+    )
+  }
+
+  test('shows admins the download and per-bucket upload times', () => {
+    renderCopied(true)
+
+    expect(screen.getByText('Media storage')).toBeVisible()
+    expect(screen.getByText('Stored')).toBeVisible()
+    expect(screen.getByText('4.2 s')).toBeVisible()
+    expect(screen.getByText('Overseas storage')).toBeVisible()
+    expect(screen.getByText('1.1 s')).toBeVisible()
+    expect(screen.getByText('Mainland China storage')).toBeVisible()
+    expect(screen.getByText('2 s')).toBeVisible()
+  })
+
+  test('hides the section from the task owner', () => {
+    renderCopied(false)
+
+    expect(screen.queryByText('Media storage')).toBeNull()
+  })
+})

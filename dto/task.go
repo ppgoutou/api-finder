@@ -86,9 +86,22 @@ type TaskPluginRuntimeInfo struct {
 }
 
 type TaskAdminInfo struct {
-	RequestID   string          `json:"request_id,omitempty"`
-	RequestPath string          `json:"request_path,omitempty"`
-	TaskPlugin  *TaskPluginInfo `json:"task_plugin,omitempty"`
+	RequestID   string             `json:"request_id,omitempty"`
+	RequestPath string             `json:"request_path,omitempty"`
+	TaskPlugin  *TaskPluginInfo    `json:"task_plugin,omitempty"`
+	MediaCopy   *TaskMediaCopyInfo `json:"media_copy,omitempty"`
+}
+
+// TaskMediaCopyInfo is the outcome of copying the task's video into this
+// site's media storage, with how long each step took.
+type TaskMediaCopyInfo struct {
+	Stored     bool             `json:"stored"`
+	GaveUp     bool             `json:"gave_up,omitempty"`
+	Attempts   int              `json:"attempts,omitempty"`
+	Size       int64            `json:"size,omitempty"`
+	StoredAt   int64            `json:"stored_at,omitempty"`
+	DownloadMs int64            `json:"download_ms,omitempty"`
+	UploadMs   map[string]int64 `json:"upload_ms,omitempty"`
 }
 
 type TaskRootInfo struct {

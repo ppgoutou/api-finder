@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
@@ -119,6 +120,17 @@ func TestTaskMediaCopyStoresVideoAndRedirectsByCountry(t *testing.T) {
 	assert.Equal(t, "video/mp4", overseas.types["/global-media/"+stored.ObjectKey])
 	assert.Equal(t, video, mainland.objects["/cn-media/"+stored.ObjectKey])
 	assert.False(t, taskMediaCopyDue(stored, time.Now().Unix()+3600))
+	assert.Contains(t, stored.UploadMs, "overseas")
+	assert.Contains(t, stored.UploadMs, "mainland")
+
+	// Copy timings reach administrators only.
+	adminView := tasksToDto([]*model.Task{saved}, false, common.RoleAdminUser)[0]
+	require.NotNil(t, adminView.AdminInfo)
+	require.NotNil(t, adminView.AdminInfo.MediaCopy)
+	assert.True(t, adminView.AdminInfo.MediaCopy.Stored)
+	assert.Equal(t, int64(len(video)), adminView.AdminInfo.MediaCopy.Size)
+	assert.Equal(t, stored.UploadMs, adminView.AdminInfo.MediaCopy.UploadMs)
+	assert.Nil(t, tasksToDto([]*model.Task{saved}, false, common.RoleCommonUser)[0].AdminInfo)
 
 	recorder := requestStoredArtifact(t, saved, "CN")
 	assert.Equal(t, http.StatusFound, recorder.Code)
