@@ -71,6 +71,7 @@ jobs:
           GOWORK: 'off'
           GOEXPERIMENT: greenteagc
         run: |
+          go mod download
           go build -pgo="$(go list -m -f '{{.Dir}}' github.com/Calcium-Ion/moejs)/default.pgo" \
             -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
 
