@@ -771,3 +771,48 @@ For commercial licensing, please contact support@quantumnous.com
     display: none;
   }
 }
+
+/* ── Stable model card ── */
+/* A slow, even sweep of the success color around the card, and a ring that
+ * breathes around its icon: steady motion that never stops or jumps. With
+ * reduced motion both go away and the static success border remains. */
+.stable-card-flow-border {
+  padding: 2px;
+  background: conic-gradient(
+    from var(--auto-group-flow-angle),
+    transparent 0deg 140deg,
+    color-mix(in oklch, var(--success) 40%, transparent) 250deg,
+    var(--success) 335deg,
+    transparent 360deg
+  );
+  animation-duration: 9s;
+}
+
+@keyframes stable-card-icon-breath {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+.stable-card-icon-breath::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--success);
+  pointer-events: none;
+  animation: stable-card-icon-breath 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stable-card-icon-breath::after {
+    animation: none;
+    opacity: 0;
+  }
+}

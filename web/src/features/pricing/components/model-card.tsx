@@ -62,8 +62,11 @@ import type {
 } from '../types'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 
-// Brand color shared by the cheapest tier and the details action.
+// Brand color shared by the cheapest tier and the details action; a stable
+// card takes its success color instead.
 const CARD_ACCENT_CLASS = 'border-brand bg-brand text-white'
+const STABLE_CARD_ACCENT_CLASS =
+  'border-success bg-success text-success-foreground'
 
 export interface ModelCardProps {
   model: PricingModel
@@ -78,7 +81,9 @@ export interface ModelCardProps {
   badges?: PricingModelBadge[]
 }
 
-const MODEL_BADGE_CLASSES: Record<PricingModelBadge, string> = {
+type HeaderBadge = Exclude<PricingModelBadge, 'stable'>
+
+const MODEL_BADGE_CLASSES: Record<HeaderBadge, string> = {
   recommended: 'bg-brand text-white',
   hot: 'bg-destructive text-destructive-foreground',
   new: 'bg-success text-success-foreground',
@@ -146,6 +151,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   }, [props.model])
   const showTry = tryKind !== null && props.onTry !== undefined
   const unavailable = props.model.unavailable === true
+  // A stable card says so through its look alone: no label in the header.
+  const stable = props.badges?.includes('stable') === true
+  const headerBadges = (props.badges ?? []).filter(
+    (badge): badge is HeaderBadge => badge !== 'stable'
+  )
+  const accentClass = stable ? STABLE_CARD_ACCENT_CLASS : CARD_ACCENT_CLASS
   const unavailableNote =
     props.model.unavailable_reason?.trim() ||
     t('Temporarily unavailable. Try another model for now.')
@@ -181,7 +192,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
               key={row.option}
               className={cn(
                 'border-border flex min-w-0 items-baseline gap-1 rounded-full border-[1.5px] px-2.5 py-0.5',
-                row === lowestRow && CARD_ACCENT_CLASS
+                row === lowestRow && accentClass
               )}
             >
               <dt className='shrink-0 text-xs'>
@@ -398,12 +409,28 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   }
 
   return (
-    <Card className='hover:border-brand/40 h-full min-w-0 gap-3'>
+    <Card
+      data-stable={stable || undefined}
+      className={cn(
+        'hover:border-brand/40 h-full min-w-0 gap-3',
+        stable && 'border-success/40 hover:border-success/60 relative'
+      )}
+    >
+      {stable && (
+        <span
+          aria-hidden
+          data-stable-flow-border='true'
+          className='auto-group-flow-border stable-card-flow-border pointer-events-none absolute inset-0 z-10'
+        />
+      )}
       <CardHeader className='flex flex-row items-center gap-3'>
         <div
           aria-hidden
           className={cn(
-            'bg-brand-soft text-brand-hover dark:text-brand-on-dark flex size-11 shrink-0 items-center justify-center rounded-lg',
+            'flex size-11 shrink-0 items-center justify-center rounded-lg',
+            stable
+              ? 'bg-success/10 text-success stable-card-icon-breath relative'
+              : 'bg-brand-soft text-brand-hover dark:text-brand-on-dark',
             unavailable && 'opacity-50 grayscale'
           )}
         >
@@ -434,12 +461,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             {t('Temporarily unavailable')}
           </span>
         )}
-        {!unavailable && props.badges && props.badges.length > 0 && (
+        {!unavailable && headerBadges.length > 0 && (
           <ul
             aria-label={t('Highlights')}
             className='flex shrink-0 flex-wrap justify-end gap-1 self-start'
           >
-            {props.badges.map((badge) =>
+            {headerBadges.map((badge) =>
               badge === 'recommended' ? (
                 // An icon reads the same in every language; the label stays
                 // available to screen readers and as a tooltip.
@@ -599,9 +626,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             variant='ghost'
             onClick={() => props.onClick(props.model.model_name || '')}
             className={cn(
-              'h-auto min-h-11 flex-1 rounded-none px-5 font-bold hover:bg-brand-hover hover:text-white',
+              'h-auto min-h-11 flex-1 rounded-none px-5 font-bold',
+              stable
+                ? 'hover:bg-success/90 hover:text-success-foreground'
+                : 'hover:bg-brand-hover hover:text-white',
               showTry && 'border-border border-l-[1.5px]',
-              CARD_ACCENT_CLASS
+              accentClass
             )}
           >
             {t('Details')}
