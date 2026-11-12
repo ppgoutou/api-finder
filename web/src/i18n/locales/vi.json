@@ -6822,6 +6822,7 @@
     "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.": "Nhà cung cấp đã đổi mô hình này từ lần đánh dấu trước. Hãy chỉnh giá bên dưới rồi đánh dấu đã xử lý.",
     "The supplier has not priced this model yet": "Nhà cung cấp chưa định giá mô hình này",
     "The supplier price list has no usable price for this model": "Bảng giá nhà cung cấp không có giá dùng được cho mô hình này",
+    "The supplier group of this channel's key is not known yet. Check upstream prices again.": "Chưa biết nhóm nhà cung cấp của khóa kênh này. Hãy kiểm tra lại giá thượng nguồn.",
     "The supplier's currency is not known yet. Check upstream prices again.": "Chưa biết đơn vị tiền tệ của nhà cung cấp. Hãy kiểm tra lại giá nguồn.",
     "The supplier's display currency cannot be converted. Set this price by hand.": "Không thể quy đổi đơn vị tiền tệ hiển thị của nhà cung cấp. Hãy đặt giá này thủ công.",
     "This supplier expression cannot be converted to this site's currency. Set this price by hand.": "Không thể quy đổi biểu thức này của nhà cung cấp sang đơn vị tiền tệ của trang. Hãy đặt giá này thủ công.",

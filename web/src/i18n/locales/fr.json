@@ -6822,6 +6822,7 @@
     "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.": "Le fournisseur a modifié ce modèle depuis votre dernier marquage. Ajustez le prix ci-dessous, puis marquez-le traité.",
     "The supplier has not priced this model yet": "Le fournisseur n’a pas encore fixé le prix de ce modèle",
     "The supplier price list has no usable price for this model": "La liste de prix du fournisseur n’a pas de prix utilisable pour ce modèle",
+    "The supplier group of this channel's key is not known yet. Check upstream prices again.": "Le groupe fournisseur de la clé de ce canal n'est pas encore connu. Vérifiez à nouveau les prix amont.",
     "The supplier's currency is not known yet. Check upstream prices again.": "La devise du fournisseur n’est pas encore connue. Vérifiez à nouveau les prix amont.",
     "The supplier's display currency cannot be converted. Set this price by hand.": "La devise d’affichage du fournisseur ne peut pas être convertie. Définissez ce prix manuellement.",
     "This supplier expression cannot be converted to this site's currency. Set this price by hand.": "Cette expression du fournisseur ne peut pas être convertie dans la devise de ce site. Définissez ce prix manuellement.",

@@ -6822,6 +6822,7 @@
     "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.": "自上次標記已處理後，供應商調整了該模型。請在下方調整價格，再標記已處理。",
     "The supplier has not priced this model yet": "供應商還沒為這個模型定價",
     "The supplier price list has no usable price for this model": "上游價格表裡沒有這個模型可用的價格",
+    "The supplier group of this channel's key is not known yet. Check upstream prices again.": "還不知道這個渠道金鑰在供應商的分組，請再檢查一次上游價格。",
     "The supplier's currency is not known yet. Check upstream prices again.": "還不知道上游的計價幣種，請再檢查一次上游價格。",
     "The supplier's display currency cannot be converted. Set this price by hand.": "上游的顯示幣種無法換算，請手動設定這個價格。",
     "This supplier expression cannot be converted to this site's currency. Set this price by hand.": "這條上游運算式無法換算成本站幣種，請手動設定這個價格。",

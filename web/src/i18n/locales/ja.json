@@ -6822,6 +6822,7 @@
     "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.": "前回対応済みにして以降、仕入先がこのモデルを変更しました。下で価格を調整してから対応済みにしてください。",
     "The supplier has not priced this model yet": "供給元がまだこのモデルの価格を設定していません",
     "The supplier price list has no usable price for this model": "上流の価格表にこのモデルの使える価格がありません",
+    "The supplier group of this channel's key is not known yet. Check upstream prices again.": "このチャネルのキーが属する仕入れ先グループがまだ分かりません。上流価格をもう一度確認してください。",
     "The supplier's currency is not known yet. Check upstream prices again.": "上流の通貨がまだ分かりません。上流価格をもう一度確認してください。",
     "The supplier's display currency cannot be converted. Set this price by hand.": "上流の表示通貨は換算できません。この価格は手動で設定してください。",
     "This supplier expression cannot be converted to this site's currency. Set this price by hand.": "この上流の式は本サイトの通貨に換算できません。この価格は手動で設定してください。",
