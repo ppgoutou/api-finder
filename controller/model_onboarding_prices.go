@@ -16,12 +16,15 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 // Option keys. The token key ends in "Token" so GET /api/option masks it.
@@ -51,6 +54,38 @@ type upstreamPriceSnapshot struct {
 	// LatestDescriptions keeps the supplier's model descriptions as material
 	// for onboarding drafts; they never take part in price comparisons.
 	LatestDescriptions map[string]string `json:"latest_descriptions,omitempty"`
+	// LatestCurrency is how the supplier displays its prices. Nil for a
+	// snapshot taken before the currency was read: its drafts wait for the
+	// next check instead of guessing.
+	LatestCurrency *upstreamCurrency `json:"latest_currency,omitempty"`
+}
+
+// upstreamCurrency is the supplier's /api/status display currency. new-api
+// stores every price in one internal unit and shows it multiplied by the
+// display rate, so a supplier displaying CNY at rate 1 means yuan where this
+// site means dollars.
+type upstreamCurrency struct {
+	DisplayType string  `json:"display_type"`
+	Rate        float64 `json:"usd_exchange_rate"`
+}
+
+// priceScale is the factor that turns one supplier price unit into the local
+// internal unit (USD). A CNY supplier unit is worth its rate in yuan; a USD or
+// token-display supplier already prices in dollars.
+func (currency *upstreamCurrency) priceScale() (decimal.Decimal, error) {
+	if currency == nil {
+		return decimal.Zero, errors.New(upstreamPriceCurrencyUnknown)
+	}
+	switch currency.DisplayType {
+	case operation_setting.QuotaDisplayTypeCNY:
+		if currency.Rate <= 0 || operation_setting.USDExchangeRate <= 0 {
+			return decimal.Zero, errors.New(upstreamPriceCurrencyUnsupported)
+		}
+		return decimal.NewFromFloat(currency.Rate).DivRound(decimal.NewFromFloat(operation_setting.USDExchangeRate), 16), nil
+	case operation_setting.QuotaDisplayTypeCustom:
+		return decimal.Zero, errors.New(upstreamPriceCurrencyUnsupported)
+	}
+	return decimal.NewFromInt(1), nil
 }
 
 type upstreamPriceField struct {
@@ -100,6 +135,10 @@ type upstreamModelPrice struct {
 const (
 	upstreamPriceVariantsDiffer = "The supplier prices this model differently per plugin"
 	upstreamPriceUnusable       = "The supplier price list has no usable price for this model"
+	// The currency keys block a draft whose price would be read in the wrong unit.
+	upstreamPriceCurrencyUnknown     = "The supplier's currency is not known yet. Check upstream prices again."
+	upstreamPriceCurrencyUnsupported = "The supplier's display currency cannot be converted. Set this price by hand."
+	upstreamPriceUnconvertible       = "This supplier expression cannot be converted to this site's currency. Set this price by hand."
 )
 
 // upstreamRatioFields maps supplier per-token ratio fields to local options.
@@ -231,8 +270,33 @@ func parseUpstreamPricing(body []byte) (map[string]map[string]any, map[string]an
 }
 
 // upstreamModelPricing turns one supplier /api/pricing row into the local
-// pricing draft that charges the same: its expression, fixed price or ratios.
-func upstreamModelPricing(fields map[string]any) (model.PricingValues, error) {
+// pricing draft that charges the same: its expression, fixed price or ratios,
+// with every money amount multiplied by scale (see priceScale). Completion,
+// cache, image and audio ratios are relative to the model ratio and stay.
+func upstreamModelPricing(fields map[string]any, scale decimal.Decimal) (model.PricingValues, error) {
+	pricing, err := supplierModelPricing(fields)
+	if err != nil || scale.Equal(decimal.NewFromInt(1)) {
+		return pricing, err
+	}
+	if expression, ok := pricing["billing_setting.billing_expr"].(string); ok {
+		scaled, err := billingexpr.ScalePrices(expression, scale)
+		if err != nil {
+			return nil, errors.New(upstreamPriceUnconvertible)
+		}
+		pricing["billing_setting.billing_expr"] = scaled
+		return pricing, nil
+	}
+	for _, option := range []string{"ModelPrice", "ModelRatio"} {
+		if value, ok := pricing[option].(float64); ok {
+			pricing[option] = decimal.NewFromFloat(value).Mul(scale).InexactFloat64()
+		}
+	}
+	return pricing, nil
+}
+
+// supplierModelPricing reads one supplier /api/pricing row as a pricing draft
+// in the supplier's own price unit.
+func supplierModelPricing(fields map[string]any) (model.PricingValues, error) {
 	expression, _ := fields["billing_expr"].(string)
 	if fields["billing_mode"] != billing_setting.BillingModeTieredExpr || strings.TrimSpace(expression) == "" {
 		expression = ""
@@ -290,7 +354,9 @@ func upstreamModelPrices(rows []upstreamPriceChannel, snapshots map[string]upstr
 	prices := make(map[string]upstreamModelPrice)
 	for _, pending := range []bool{false, true} {
 		for _, row := range rows {
-			latest := snapshots[strconv.Itoa(row.ID)].Latest
+			snapshot := snapshots[strconv.Itoa(row.ID)]
+			latest := snapshot.Latest
+			scale, scaleErr := snapshot.LatestCurrency.priceScale()
 			names := row.models
 			if pending {
 				names = row.pendingModels
@@ -302,7 +368,10 @@ func upstreamModelPrices(rows []upstreamPriceChannel, snapshots map[string]upstr
 					continue
 				}
 				price := upstreamModelPrice{ChannelID: row.ID, ChannelName: row.Name, pending: pending}
-				pricing, err := upstreamModelPricing(fields)
+				pricing, err := upstreamModelPricing(fields, scale)
+				if scaleErr != nil {
+					err = scaleErr
+				}
 				if err != nil {
 					price.Error = err.Error()
 				} else {
@@ -380,6 +449,35 @@ func fetchUpstreamPricing(ctx context.Context, baseURL, token string) (map[strin
 		return nil, nil, nil, err
 	}
 	return parseUpstreamPricing(body)
+}
+
+// fetchUpstreamCurrency reads the supplier's public /api/status. A status
+// without quota_display_type comes from a new-api that only displays dollars.
+func fetchUpstreamCurrency(ctx context.Context, baseURL string) (*upstreamCurrency, error) {
+	ctx, cancel := context.WithTimeout(ctx, onboardingPriceFetchTimeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+"/api/status", nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := service.GetHttpClient().Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status request returned HTTP %d", response.StatusCode)
+	}
+	var status struct {
+		Data struct {
+			QuotaDisplayType string  `json:"quota_display_type"`
+			USDExchangeRate  float64 `json:"usd_exchange_rate"`
+		} `json:"data"`
+	}
+	if err := common.DecodeJson(io.LimitReader(response.Body, onboardingPriceMaxResponseBytes), &status); err != nil {
+		return nil, fmt.Errorf("invalid status response: %w", err)
+	}
+	return &upstreamCurrency{DisplayType: status.Data.QuotaDisplayType, Rate: status.Data.USDExchangeRate}, nil
 }
 
 func upstreamPriceChannels() ([]*model.Channel, error) {
@@ -577,6 +675,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		models       map[string]map[string]any
 		group        map[string]any
 		descriptions map[string]string
+		currency     *upstreamCurrency
 		err          error
 	}
 	results := make([]fetched, len(rows))
@@ -588,7 +687,11 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		}
 		wg.Go(func() {
 			models, group, descriptions, err := fetchUpstreamPricing(ctx, row.BaseURL, token)
-			results[i] = fetched{models: models, group: group, descriptions: descriptions, err: err}
+			var currency *upstreamCurrency
+			if err == nil {
+				currency, err = fetchUpstreamCurrency(ctx, row.BaseURL)
+			}
+			results[i] = fetched{models: models, group: group, descriptions: descriptions, currency: currency, err: err}
 		})
 	}
 	wg.Wait()
@@ -611,6 +714,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		snapshot := snapshots[key]
 		snapshot.Latest, snapshot.LatestGroup, snapshot.LatestTime = results[i].models, results[i].group, now
 		snapshot.LatestDescriptions = results[i].descriptions
+		snapshot.LatestCurrency = results[i].currency
 		if snapshot.BaselineTime == 0 {
 			snapshot.Baseline, snapshot.BaselineGroup, snapshot.BaselineTime = results[i].models, results[i].group, now
 			rows[i].Status = "baseline"

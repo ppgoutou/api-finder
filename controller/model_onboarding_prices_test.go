@@ -14,8 +14,10 @@ import (
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -97,6 +99,7 @@ func TestUpstreamModelPricing(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  map[string]any
+		scale   string
 		want    model.PricingValues
 		wantErr string
 	}{
@@ -135,10 +138,38 @@ func TestUpstreamModelPricing(t *testing.T) {
 			fields:  map[string]any{"quota_type": float64(1)},
 			wantErr: upstreamPriceUnusable,
 		},
+		{
+			name:   "scaled expression keeps its shape",
+			fields: map[string]any{"billing_mode": "tiered_expr", "billing_expr": expr},
+			scale:  "0.5",
+			want:   model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": "tier(\"base\", p * 1 + c * 4)"},
+		},
+		{
+			name:   "scaled fixed price",
+			fields: map[string]any{"quota_type": float64(1), "model_price": 0.25},
+			scale:  "0.5",
+			want:   model.PricingValues{"ModelPrice": 0.125},
+		},
+		{
+			name:   "scaled ratios keep relative ratios",
+			fields: map[string]any{"quota_type": float64(0), "model_ratio": 1.5, "completion_ratio": float64(4), "cache_ratio": 0.1},
+			scale:  "0.5",
+			want:   model.PricingValues{"ModelRatio": 0.75, "CompletionRatio": float64(4), "CacheRatio": 0.1},
+		},
+		{
+			name:    "expression without a price literal is not guessed",
+			fields:  map[string]any{"billing_mode": "tiered_expr", "billing_expr": "tier(\"base\", p)"},
+			scale:   "0.5",
+			wantErr: upstreamPriceUnconvertible,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := upstreamModelPricing(test.fields)
+			scale := decimal.NewFromInt(1)
+			if test.scale != "" {
+				scale = decimal.RequireFromString(test.scale)
+			}
+			got, err := upstreamModelPricing(test.fields, scale)
 			if test.wantErr != "" {
 				require.EqualError(t, err, test.wantErr)
 				return
@@ -149,12 +180,99 @@ func TestUpstreamModelPricing(t *testing.T) {
 	}
 }
 
+func TestUpstreamCurrencyPriceScale(t *testing.T) {
+	previous := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 8
+	t.Cleanup(func() { operation_setting.USDExchangeRate = previous })
+	tests := []struct {
+		name     string
+		currency *upstreamCurrency
+		want     string
+		wantErr  string
+	}{
+		{name: "not read yet", currency: nil, wantErr: upstreamPriceCurrencyUnknown},
+		{name: "CNY at rate 1 means yuan", currency: &upstreamCurrency{DisplayType: "CNY", Rate: 1}, want: "0.125"},
+		{name: "CNY at the local rate means dollars", currency: &upstreamCurrency{DisplayType: "CNY", Rate: 8}, want: "1"},
+		{name: "CNY without a rate", currency: &upstreamCurrency{DisplayType: "CNY"}, wantErr: upstreamPriceCurrencyUnsupported},
+		{name: "USD", currency: &upstreamCurrency{DisplayType: "USD", Rate: 7.3}, want: "1"},
+		{name: "old new-api without display type", currency: &upstreamCurrency{}, want: "1"},
+		{name: "custom currency", currency: &upstreamCurrency{DisplayType: "CUSTOM", Rate: 1}, wantErr: upstreamPriceCurrencyUnsupported},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.currency.priceScale()
+			if test.wantErr != "" {
+				require.EqualError(t, err, test.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.want, got.String())
+		})
+	}
+}
+
+// A supplier displaying CNY at rate 1 writes yuan in its expressions; the
+// check must not charge them as dollars.
+func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	previous := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 8
+	t.Cleanup(func() { operation_setting.USDExchangeRate = previous })
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/status" {
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"CNY","usd_exchange_rate":1}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
+			{"model_name":"cny-expr","quota_type":0,"model_ratio":37.5,"billing_mode":"tiered_expr","billing_expr":"tier(\"base\", p * 0.8 + c * 1.6)"},
+			{"model_name":"cny-fixed","quota_type":1,"model_price":4}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+	baseURL := upstream.URL
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: 1, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "cny-supplier",
+		Group: "default", Models: "cny-expr,cny-fixed", BaseURL: &baseURL,
+	}).Error)
+	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token"}))
+	pricing := func(name string) model.PricingValues {
+		t.Helper()
+		snapshot, err := model.GetModelPricingSnapshot([]string{name})
+		require.NoError(t, err)
+		return snapshot.Entries[0].Configured
+	}
+
+	result, err := checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []string{"cny-expr", "cny-fixed"}, result.Applied)
+	assert.Equal(t, model.PricingValues{
+		"billing_setting.billing_mode": "tiered_expr",
+		"billing_setting.billing_expr": "tier(\"base\", p * 0.1 + c * 0.2)",
+	}, pricing("cny-expr"), "0.8 yuan is 0.1 dollars at rate 8")
+	assert.Equal(t, model.PricingValues{"ModelPrice": 0.5}, pricing("cny-fixed"))
+
+	snapshots := readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)
+	snapshot := snapshots["1"]
+	assert.Equal(t, "tier(\"base\", p * 0.8 + c * 1.6)", snapshot.Latest["cny-expr"]["billing_expr"], "snapshots keep the supplier's own text")
+	snapshot.LatestCurrency = nil
+	snapshots["1"] = snapshot
+	prices := upstreamModelPrices(upstreamPriceChannelRows([]*model.Channel{{Id: 1, Name: "cny-supplier", Models: "cny-expr", BaseURL: &baseURL}}), snapshots)
+	assert.Equal(t, upstreamPriceCurrencyUnknown, prices["cny-expr"].Error, "a snapshot without a currency offers no price to apply")
+	assert.Nil(t, prices["cny-expr"].Pricing)
+}
+
 func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T) {
 	modelManagementDB(t, "sqlite", "")
 	service.InitHttpClient()
 	expr := "tier(\"base\", p * 2 + c * 8)"
 	supplierPrice := "0.3"
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/status" {
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7.3}}`))
+			return
+		}
 		assert.Equal(t, "Bearer supplier-token", r.Header.Get("Authorization"))
 		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
 			{"model_name":"new-model","quota_type":0,"model_ratio":1,"billing_mode":"tiered_expr","billing_expr":"tier(\"base\", p * 2 + c * 8)"},
@@ -304,6 +422,10 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 	require.NoError(t, model.DB.AutoMigrate(&model.TaskPlugin{}))
 	service.InitHttpClient()
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/status" {
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD"}}`))
+			return
+		}
 		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{},"data":[
 			{"model_name":"old-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"tier(\"720p\", u(\"seconds\") * 0.1)"},
 			{"model_name":"new-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"u(\"resolution\") == \"480p\" ? tier(\"480p\", u(\"seconds\") * 0.1) : tier(\"720p\", u(\"seconds\") * 0.2)"},
