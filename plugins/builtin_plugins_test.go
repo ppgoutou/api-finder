@@ -385,3 +385,29 @@ func TestBuiltInPluginsAddressNewAPIUpstreamOnNativeRoutes(t *testing.T) {
 		}
 	})
 }
+
+// The video creation page offers each Seedance model the lengths published here;
+// without them it falls back to 4-15 seconds and hides Seedance 2.5's longer clips.
+func TestDoubaoPublishesSeedanceDurationLimits(t *testing.T) {
+	plugin, found := jsplugin.DefaultRegistry.Generation().Get("doubao")
+	require.True(t, found)
+
+	cases := []struct {
+		model    string
+		min, max int
+	}{
+		{"doubao-seedance-1-0-pro-250528", 2, 12},
+		{"doubao-seedance-1-5-pro-251215", 4, 12},
+		{"doubao-seedance-2-0-261111", 4, 15},
+		{"doubao-seedance-2-0-mini-261111", 4, 15},
+		{"doubao-seedance-2-5-260628", 4, 30},
+		{"doubao-seedance-2-5-261111", 4, 30},
+	}
+	for _, tc := range cases {
+		limits, declared := plugin.Meta.LimitsForModel(tc.model)
+		require.True(t, declared, tc.model)
+		assert.Equal(t, [2]int{tc.min, tc.max}, [2]int{limits.MinDuration, limits.MaxDuration}, tc.model)
+	}
+	_, declared := plugin.Meta.LimitsForModel("doubao-seedream-5-0-pro-260628")
+	assert.False(t, declared, "image models have no video limits")
+}

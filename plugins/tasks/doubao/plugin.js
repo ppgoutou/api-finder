@@ -1,24 +1,24 @@
 // Seedance capabilities from the Ark model list, not prices: the output
-// resolutions each model offers, the longest output duration in seconds
-// (duration -1 lets Seedance 1.5 pro and 2.x pick a length up to it), whether
+// resolutions each model offers, the shortest and longest output duration in
+// seconds (duration -1 lets Seedance 1.5 pro and 2.x pick a length up to it), whether
 // it accepts reference video input (Seedance 2.x prices video-to-video tokens
 // separately) and whether audio output is priced separately (Seedance 1.5 pro;
 // generate_audio defaults to true). Seedance 1.0 lite is no longer listed and
 // keeps the 1.0 pro tiers.
 const VIDEO_MODELS = {
-  "doubao-seedance-1-0-pro-250528": { resolutions: ["480p", "720p", "1080p"], maxDuration: 12 },
-  "doubao-seedance-1-0-lite-t2v": { resolutions: ["480p", "720p", "1080p"], maxDuration: 12 },
-  "doubao-seedance-1-0-lite-i2v": { resolutions: ["480p", "720p", "1080p"], maxDuration: 12 },
-  "doubao-seedance-1-5-pro-251215": { resolutions: ["480p", "720p", "1080p"], maxDuration: 12, audio: true },
-  "doubao-seedance-2-0-260128": { resolutions: ["480p", "720p", "1080p", "4k"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-fast-260128": { resolutions: ["480p", "720p"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-mini-260615": { resolutions: ["480p", "720p"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-5-260628": { resolutions: ["480p", "720p", "1080p"], maxDuration: 30, videoInput: true },
+  "doubao-seedance-1-0-pro-250528": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
+  "doubao-seedance-1-0-lite-t2v": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
+  "doubao-seedance-1-0-lite-i2v": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
+  "doubao-seedance-1-5-pro-251215": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 12, audio: true },
+  "doubao-seedance-2-0-260128": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-fast-260128": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-mini-260615": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-5-260628": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
   // Ark-compatible relays (PxRouter) serve the same models under 261111 names.
-  "doubao-seedance-2-0-261111": { resolutions: ["480p", "720p", "1080p", "4k"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], maxDuration: 30, videoInput: true },
+  "doubao-seedance-2-0-261111": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
 };
 // Every Ark resolution tier; an endpoint ID reached through channel mapping
 // without a declared profile keeps them all and the longest Seedance duration.
@@ -308,13 +308,17 @@ export const meta = {
     en: "Volcengine Doubao Seedance video generation and Seedream image generation",
     zh: "火山引擎豆包 Seedance 视频生成与 Seedream 图片生成",
   },
-  version: "1.4.0",
+  version: "1.5.0",
   author: { name: "QuantumNous" },
   channelTypes: [54, 45], // VolcEngine-type channels serve Ark video models with the same wire format
   models: Object.keys(VIDEO_MODELS).concat(Object.keys(IMAGE_MODELS)),
   fetchMode: "per_task",
   upstreams: ["vendor", "new_api"],
   requiredCapabilities: ["duration-auto@1"],
+  // Video creation pages read these as the lengths to offer for each model.
+  modelLimits: Object.fromEntries(
+    Object.entries(VIDEO_MODELS).map(([model, profile]) => [model, { minDuration: profile.minDuration, maxDuration: profile.maxDuration }])
+  ),
   usageSchema: seedanceUsageSchema(DEFAULT_VIDEO_PROFILE),
   usageExamples: seedanceUsageExamples(DEFAULT_VIDEO_PROFILE),
   usageProfiles: capabilityUsageProfiles(VIDEO_MODELS, seedanceUsageSchema, seedanceUsageExamples).concat(
