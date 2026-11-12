@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { getTaskArtifacts, getUserTaskLogs } from '@/features/usage-logs/api'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
@@ -100,6 +101,13 @@ function WorkCard(props: {
   const task = props.task
   const remembered = recallTaskPrompt(task.task_id)
   const modelName = task.properties?.origin_model_name
+  const displayName = useModelDisplayName()
+  // The remembered spec starts with the model ID it was submitted with.
+  const specModel = remembered?.request?.model ?? modelName
+  let specText = remembered?.spec || (modelName && displayName(modelName))
+  if (specModel && remembered?.spec.startsWith(specModel)) {
+    specText = displayName(specModel) + remembered.spec.slice(specModel.length)
+  }
   // Tasks submitted before the full request was kept bring back what is
   // known: the prompt and the model.
   let editDraft: Partial<StudioDraft> = {}
@@ -151,7 +159,7 @@ function WorkCard(props: {
               props.compact ? 'text-[11px]' : 'text-xs'
             )}
           >
-            {remembered?.spec || modelName || task.task_id}
+            {specText || task.task_id}
             {' · '}
             {formatTimestamp(task.submit_time)}
           </p>

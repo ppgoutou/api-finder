@@ -300,7 +300,7 @@ func TestPricingListsUnavailableModelAndHidesDisabledModel(t *testing.T) {
 	for _, name := range []string{"model-live", "model-out-of-stock", "model-disabled"} {
 		insertPricingEndpointAbility(t, 120, name)
 	}
-	require.NoError(t, DB.Create(&Model{ModelName: "model-out-of-stock", Status: ModelStatusUnavailable, UnavailableReason: "supplier out of stock", NameRule: NameRuleExact}).Error)
+	require.NoError(t, DB.Create(&Model{ModelName: "model-out-of-stock", DisplayName: "Out Of Stock", Status: ModelStatusUnavailable, UnavailableReason: "supplier out of stock", NameRule: NameRuleExact}).Error)
 	disabled := &Model{ModelName: "model-disabled", Status: ModelStatusEnabled, NameRule: NameRuleExact}
 	require.NoError(t, DB.Create(disabled).Error)
 	require.NoError(t, DB.Model(disabled).Update("status", ModelStatusDisabled).Error)
@@ -314,7 +314,9 @@ func TestPricingListsUnavailableModelAndHidesDisabledModel(t *testing.T) {
 	require.Contains(t, byModel, "model-out-of-stock")
 	assert.True(t, byModel["model-out-of-stock"].Unavailable)
 	assert.Equal(t, "supplier out of stock", byModel["model-out-of-stock"].UnavailableReason)
+	assert.Equal(t, "Out Of Stock", byModel["model-out-of-stock"].DisplayName)
 	assert.False(t, byModel["model-live"].Unavailable)
+	assert.Empty(t, byModel["model-live"].DisplayName)
 	assert.NotContains(t, byModel, "model-disabled")
 
 	reason, unavailable := GetModelUnavailability("model-out-of-stock")

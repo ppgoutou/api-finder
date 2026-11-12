@@ -165,7 +165,7 @@ export function ImageComposer(props: ImageComposerProps) {
             value={model.name}
             options={models.map((option) => ({
               value: option.name,
-              label: option.name,
+              label: option.label ?? option.name,
               group: option.group,
               icon: <ImageIcon className='size-3.5' aria-hidden />,
               unavailableLabel: option.unavailable

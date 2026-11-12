@@ -43,6 +43,8 @@ export interface Model {
   configured_channel_count?: number
   id: number
   model_name: string
+  /** Name shown to visitors; API calls still use model_name. */
+  display_name?: string
   description?: string
   icon?: string
   tags?: string

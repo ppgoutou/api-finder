@@ -42,7 +42,7 @@ import {
   isUnconfiguredTaskUsageModel,
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
-import { isTokenBasedModel } from '../lib/model-helpers'
+import { isTokenBasedModel, modelDisplayName } from '../lib/model-helpers'
 import { formatPrice, formatRequestPrice } from '../lib/price'
 import {
   taskEnumLabel,
@@ -417,7 +417,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             )}
             title={props.model.model_name}
           >
-            {props.model.model_name}
+            {modelDisplayName(props.model)}
           </h3>
           {props.model.vendor_name && (
             <p

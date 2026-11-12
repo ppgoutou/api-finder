@@ -78,7 +78,11 @@ import {
   type DynamicPriceEntry,
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
-import { getAvailableGroups, isTokenBasedModel } from '../lib/model-helpers'
+import {
+  getAvailableGroups,
+  isTokenBasedModel,
+  modelDisplayName,
+} from '../lib/model-helpers'
 import { getOfficialTokenPricing } from '../lib/official-price'
 import { withPluginPricing } from '../lib/plugin-pricing'
 import { formatFixedPrice, formatGroupPrice } from '../lib/price'
@@ -606,13 +610,14 @@ function ModelHeader(props: { model: PricingModel }) {
   const modelIconKey = model.icon || model.vendor_icon
   const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 20) : null
   const description = model.description || model.vendor_description || null
+  const displayName = modelDisplayName(model)
 
   return (
     <header className='pb-4'>
       <div className='flex items-center gap-2.5'>
         {modelIcon}
         <h1 className='font-mono text-xl font-bold tracking-tight sm:text-2xl'>
-          {model.model_name}
+          {displayName}
         </h1>
         <CopyButton
           value={model.model_name || ''}
@@ -623,6 +628,12 @@ function ModelHeader(props: { model: PricingModel }) {
           aria-label={t('Copy model name')}
         />
       </div>
+      {displayName !== model.model_name && (
+        <p className='text-muted-foreground mt-1 text-xs'>
+          {t('Model ID for API calls')}:{' '}
+          <code className='text-foreground font-mono'>{model.model_name}</code>
+        </p>
+      )}
       <div className='mt-1 flex flex-wrap items-center gap-1.5 text-xs'>
         {model.vendor_name && (
           <span className='text-muted-foreground'>{model.vendor_name}</span>
@@ -1397,7 +1408,7 @@ export function ModelDetailsDrawer(props: ModelDetailsDrawerProps) {
         )}
       >
         <SheetHeader className='sr-only'>
-          <SheetTitle>{props.model.model_name}</SheetTitle>
+          <SheetTitle>{modelDisplayName(props.model)}</SheetTitle>
           <SheetDescription>{t('Model details')}</SheetDescription>
         </SheetHeader>
         <div className='flex-1 overflow-y-auto px-4 pt-11 pb-5 sm:px-6 sm:pt-12 sm:pb-6'>

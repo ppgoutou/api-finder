@@ -22,6 +22,7 @@ import {
   filterAndSortModels,
   filterByModelType,
   filterByQuotaType,
+  filterBySearch,
 } from '../lib/filters'
 import type { PricingModel } from '../types'
 
@@ -125,5 +126,20 @@ describe('model type filter', () => {
       sortBy: 'name',
     })
     expect(names(result)).toEqual(['a'])
+  })
+})
+
+describe('pricing search', () => {
+  it('finds a model by its display name or by its model ID', () => {
+    const named = pricingModel({
+      model_name: 'seedance2.0-T',
+      display_name: 'Seedance 2.0',
+    })
+    expect(names(filterBySearch([named, perVideo], 'seedance 2.0'))).toEqual([
+      'seedance2.0-T',
+    ])
+    expect(names(filterBySearch([named, perVideo], '2.0-t'))).toEqual([
+      'seedance2.0-T',
+    ])
   })
 })

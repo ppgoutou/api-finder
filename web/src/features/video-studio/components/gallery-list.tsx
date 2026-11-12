@@ -30,6 +30,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { useStatus } from '@/hooks/use-status'
 import { cn } from '@/lib/utils'
 
@@ -132,6 +133,7 @@ function GalleryTile(props: { card: GalleryCard; onOpen: () => void }) {
 
 function GalleryWorkCard(props: { card: GalleryCard; onOpen: () => void }) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const card = props.card
   const model = parseGallerySpec(card.spec).model
 
@@ -141,7 +143,7 @@ function GalleryWorkCard(props: { card: GalleryCard; onOpen: () => void }) {
         <GalleryTile card={card} onOpen={props.onOpen} />
         {model && (
           <span className='pointer-events-none absolute top-1.5 right-1.5 max-w-[calc(100%-0.75rem)] truncate rounded bg-black/60 px-1.5 py-0.5 text-[11px] leading-4 text-white'>
-            {model}
+            {displayName(model)}
           </span>
         )}
       </div>
@@ -325,6 +327,7 @@ export function GalleryList(props: {
   const [category, setCategory] = useState(ALL_FILTER)
   const [model, setModel] = useState(ALL_FILTER)
   const [openCard, setOpenCard] = useState<GalleryCard | null>(null)
+  const displayName = useModelDisplayName()
   const cards: GalleryCard[] = useStudioGallery()
     .items.filter((item) => item.video || item.prompt || item.poster)
     .map((item, index) => ({
@@ -347,7 +350,7 @@ export function GalleryList(props: {
   )
   const groups = groupByModel(cards).map((group) => ({
     value: group.model || OTHER_MODELS_FILTER,
-    label: group.model || t('Other models'),
+    label: group.model ? displayName(group.model) : t('Other models'),
     cards: group.works.filter((card) => categoryCards.includes(card)),
   }))
   const activeModel = groups.some((group) => group.value === model)

@@ -106,6 +106,17 @@ export function getDisplayGroupRatio(
 /**
  * Replace model placeholder in endpoint path
  */
+/**
+ * Name shown to visitors: the administrator's display name, or the model ID
+ * when none is set. API calls always use the model ID.
+ */
+export function modelDisplayName(model: {
+  model_name: string
+  display_name?: string
+}): string {
+  return model.display_name?.trim() || model.model_name
+}
+
 export function replaceModelInPath(path: string, modelName: string): string {
   return path.replaceAll('{model}', modelName)
 }

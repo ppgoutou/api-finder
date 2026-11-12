@@ -62,7 +62,7 @@ describe('studioImageModelsFromPricing', () => {
         imageModel('seedream-5.0'),
         { ...imageModel('seedance-2.0'), supported_endpoint_types: ['openai'] },
       ])
-    ).toEqual([{ name: 'seedream-5.0' }])
+    ).toEqual([{ name: 'seedream-5.0', label: 'seedream-5.0' }])
   })
 })
 

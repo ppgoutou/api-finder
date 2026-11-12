@@ -47,8 +47,10 @@ type BoundChannel struct {
 }
 
 type Model struct {
-	Id                 int            `json:"id"`
-	ModelName          string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
+	Id        int    `json:"id"`
+	ModelName string `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
+	// DisplayName is the name shown to visitors; callers still send ModelName.
+	DisplayName        string         `json:"display_name,omitempty" gorm:"type:varchar(128);default:''"`
 	Description        string         `json:"description,omitempty" gorm:"type:text"`
 	Icon               string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
 	Tags               string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
@@ -280,7 +282,7 @@ func (mi *Model) Update() error {
 		}
 		mi.UpdatedTime = common.GetTimestamp()
 		return tx.Model(&Model{}).Where("id = ?", mi.Id).
-			Select("model_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "unavailable_reason", "sync_official", "name_rule", "updated_time").Updates(mi).Error
+			Select("model_name", "display_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "unavailable_reason", "sync_official", "name_rule", "updated_time").Updates(mi).Error
 	})
 }
 

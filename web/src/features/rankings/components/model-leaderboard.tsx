@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { getLobeIcon } from '@/lib/lobe-icon'
 
 import { formatTokens } from '../lib/format'
@@ -67,6 +68,7 @@ function ModelList(props: {
   variant: 'default' | 'compact'
 }) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const compact = props.variant === 'compact'
   return (
     <ul>
@@ -94,7 +96,7 @@ function ModelList(props: {
                   : 'text-foreground block truncate font-mono text-sm font-medium'
               }
             >
-              {row.model_name}
+              {displayName(row.model_name)}
             </ModelLink>
             <p
               className={

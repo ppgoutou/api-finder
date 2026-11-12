@@ -331,6 +331,7 @@ describe('metadata editing', () => {
       )
       const user = userEvent.setup()
       await user.type(screen.getByLabelText('Model Name *'), 'duplicate-model')
+      await user.type(screen.getByLabelText('Display name'), '  Unique 2.0 ')
       await user.type(screen.getByLabelText('Description'), 'Keep this draft')
       await user.click(screen.getByRole('button', { name: 'Save metadata' }))
       expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -353,6 +354,7 @@ describe('metadata editing', () => {
         '/api/models/',
         expect.objectContaining({
           model_name: 'unique-model',
+          display_name: 'Unique 2.0',
           description: '<!-- lang:zh -->\nKeep this draft',
         }),
         { skipBusinessError: true, skipErrorHandler: true }

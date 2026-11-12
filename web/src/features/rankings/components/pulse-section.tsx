@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
@@ -109,6 +110,7 @@ function PulseEmpty(props: { label: string }) {
 }
 
 function MoverRow(props: { row: RankingMover; intent: 'up' | 'down' }) {
+  const displayName = useModelDisplayName()
   return (
     <li className='flex items-center gap-3 px-4 py-2'>
       <span className='shrink-0'>{getLobeIcon(props.row.vendor_icon, 20)}</span>
@@ -117,7 +119,7 @@ function MoverRow(props: { row: RankingMover; intent: 'up' | 'down' }) {
           modelName={props.row.model_name}
           className='text-foreground block truncate font-mono text-xs font-medium'
         >
-          {props.row.model_name}
+          {displayName(props.row.model_name)}
         </ModelLink>
         <p className='text-muted-foreground/80 truncate text-[11px]'>
           #{props.row.current_rank} ·{' '}

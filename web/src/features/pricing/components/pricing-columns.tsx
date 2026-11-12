@@ -30,6 +30,7 @@ import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
 import { parseTags } from '../lib/filters'
+import { modelDisplayName } from '../lib/model-helpers'
 import type { PricingModel } from '../types'
 import { CachedPriceCell } from './cached-price-cell'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
@@ -67,8 +68,9 @@ export function usePricingColumns(
                 'truncate font-mono text-sm font-medium',
                 model.unavailable && 'text-muted-foreground'
               )}
+              title={model.model_name}
             >
-              {model.model_name}
+              {modelDisplayName(model)}
             </span>
             {model.unavailable && (
               <span

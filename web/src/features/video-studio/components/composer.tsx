@@ -194,7 +194,7 @@ export function Composer(props: ComposerProps) {
               value={draft.model}
               options={models.map((option) => ({
                 value: option.name,
-                label: option.name,
+                label: option.label ?? option.name,
                 group: option.group,
                 icon: <Film className='size-3.5' aria-hidden />,
                 unavailableLabel: option.unavailable

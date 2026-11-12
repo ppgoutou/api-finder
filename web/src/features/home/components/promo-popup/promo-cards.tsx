@@ -20,6 +20,7 @@ import type { MouseEventHandler, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { buttonVariants } from '@/components/ui/button'
+import { useModelDisplayName } from '@/features/pricing/hooks'
 import { toIntlLocale } from '@/i18n/languages'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
@@ -99,6 +100,7 @@ function PromoCopy(props: { card: PromoCard }) {
 
 function ModelPromoCard(props: PromoCardProps) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const card = props.card
   const endLabel = useEndDateLabel(card.endsAt)
   const ratio = getPromoPriceRatio(card.salePrice, card.originalPrice)
@@ -118,7 +120,7 @@ function ModelPromoCard(props: PromoCardProps) {
             </span>
           )}
           <p className='min-w-0 truncate font-mono text-[40px] leading-12 font-semibold tracking-tight max-sm:text-[28px] max-sm:leading-9'>
-            {card.modelName}
+            {displayName(card.modelName)}
           </p>
         </div>
         {ratio === null ? (
@@ -245,6 +247,7 @@ function RechargePromoCard(props: PromoCardProps) {
 
 function ListPromoCard(props: PromoCardProps) {
   const { t } = useTranslation()
+  const displayName = useModelDisplayName()
   const card = props.card
   const endLabel = useEndDateLabel(card.endsAt)
   const href = card.href || PROMO_DEFAULT_HREF.list
@@ -297,7 +300,7 @@ function ListPromoCard(props: PromoCardProps) {
                         roomy ? 'text-base max-sm:text-sm' : 'text-sm'
                       )}
                     >
-                      {deal.modelName}
+                      {displayName(deal.modelName)}
                     </span>
                     {(discount || ratio !== null) && (
                       <span

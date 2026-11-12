@@ -184,6 +184,25 @@ describe('model cards', () => {
     expect(onClick).toHaveBeenCalledWith(name)
   })
 
+  it('shows the display name while details still open by the model ID', async () => {
+    const user = userEvent.setup()
+    const onClick = vi.fn()
+    render(
+      <ModelCard
+        model={pricingModel({
+          model_name: 'seedance2.0-T',
+          display_name: 'Seedance 2.0',
+        })}
+        onClick={onClick}
+      />
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Seedance 2.0' })
+    ).toHaveAttribute('title', 'seedance2.0-T')
+    await user.click(screen.getByRole('button', { name: 'Details' }))
+    expect(onClick).toHaveBeenCalledWith('seedance2.0-T')
+  })
+
   it('opens the video studio with a video model when its try button is clicked', async () => {
     const user = userEvent.setup()
     const onClick = vi.fn()

@@ -34,6 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { LANGUAGE_BLOCKS_HINT } from '@/lib/language-blocks'
 
 import type { ModelFormInput, ModelFormValues } from '../lib/model-form'
@@ -69,6 +70,29 @@ export function ModelMetadataFields(props: {
 
   return (
     <>
+      <FormField
+        control={props.form.control}
+        name='display_name'
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t('Display name')}</FormLabel>
+            <FormControl>
+              <Input
+                placeholder={props.form.watch('model_name')}
+                maxLength={128}
+                {...field}
+              />
+            </FormControl>
+            <FormDescription>
+              {t(
+                'Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.'
+              )}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={props.form.control}
         name='description'

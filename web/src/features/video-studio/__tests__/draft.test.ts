@@ -153,12 +153,14 @@ describe('studioModelsFromPricing', () => {
     expect(models).toEqual([
       {
         name: 'seedance-2.5',
+        label: 'seedance-2.5',
         resolutions: ['480p', '720p', '1080p'],
         duration: [4, 30],
         ratios: STUDIO_RATIOS,
       },
       {
         name: 'seedance2.0-720p-P',
+        label: 'seedance2.0-720p-P',
         resolutions: ['720p'],
         duration: [5, 15],
         ratios: STUDIO_RATIOS,
@@ -181,6 +183,7 @@ describe('studioModelsFromPricing', () => {
     expect(models).toEqual([
       {
         name: 'seedance-2.5-G2-V',
+        label: 'seedance-2.5-G2-V',
         resolutions: ['720p'],
         duration: [4, 30],
         ratios: STUDIO_RATIOS,
@@ -207,6 +210,7 @@ describe('studioModelsFromPricing', () => {
     expect(models).toEqual([
       {
         name: 'seedance-2-0-pro-NSFW',
+        label: 'seedance-2-0-pro-NSFW',
         resolutions: ['720p', '1080p'],
         duration: [4, 15],
         ratios: STUDIO_RATIOS,

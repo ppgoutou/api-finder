@@ -8180,6 +8180,9 @@
     "Models of this category show it when they have no official price of their own. It is never charged.": "Models of this category show it when they have no official price of their own. It is never charged.",
     "The category official price does not fit model {{model}}": "The category official price does not fit model {{model}}",
     "Each model shows the resolutions it supports. Leave a resolution empty to hide it.": "Each model shows the resolutions it supports. Leave a resolution empty to hide it.",
-    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}"
+    "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}",
+    "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.",
+    "Model ID for API calls": "Model ID for API calls",
+    "Display name must not exceed 128 characters": "Display name must not exceed 128 characters"
   }
 }
