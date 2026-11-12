@@ -374,7 +374,8 @@ it('combines creation and last login into one column with full dates visible dir
   const row = screen.getByRole('row', {
     name: /long-user-name-for-table-layout/,
   })
-  expect(within(row).getByText('—')).toBeInTheDocument()
+  // No email and no last login: each empty cell shows a dash.
+  expect(within(row).getAllByText('—')).toHaveLength(2)
   const times = within(row).getAllByRole('time')
   expect(times).toHaveLength(2)
   expect(times[0]).toHaveTextContent(
