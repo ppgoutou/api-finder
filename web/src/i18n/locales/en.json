@@ -6822,6 +6822,7 @@
     "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.": "The supplier changed this model since you last marked it handled. Adjust the price below, then mark it handled.",
     "The supplier has not priced this model yet": "The supplier has not priced this model yet",
     "The supplier price list has no usable price for this model": "The supplier price list has no usable price for this model",
+    "The supplier group of this channel's key is not known yet. Check upstream prices again.": "The supplier group of this channel's key is not known yet. Check upstream prices again.",
     "The supplier's currency is not known yet. Check upstream prices again.": "The supplier's currency is not known yet. Check upstream prices again.",
     "The supplier's display currency cannot be converted. Set this price by hand.": "The supplier's display currency cannot be converted. Set this price by hand.",
     "This supplier expression cannot be converted to this site's currency. Set this price by hand.": "This supplier expression cannot be converted to this site's currency. Set this price by hand.",

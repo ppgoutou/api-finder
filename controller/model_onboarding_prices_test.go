@@ -220,11 +220,19 @@ func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
 	operation_setting.USDExchangeRate = 8
 	t.Cleanup(func() { operation_setting.USDExchangeRate = previous })
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/status" {
+		switch r.URL.Path {
+		case "/api/status":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"CNY","usd_exchange_rate":1}}`))
 			return
+		case "/api/token/search":
+			assert.Equal(t, "key-1", r.URL.Query().Get("token"))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"group":""}]}}`))
+			return
+		case "/api/user/self":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"group":"vip"}}`))
+			return
 		}
-		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
+		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1,"vip":0.5},"data":[
 			{"model_name":"cny-expr","quota_type":0,"model_ratio":37.5,"billing_mode":"tiered_expr","billing_expr":"tier(\"base\", p * 0.8 + c * 1.6)"},
 			{"model_name":"cny-fixed","quota_type":1,"model_price":4}
 		]}`))
@@ -249,13 +257,19 @@ func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
 	assert.ElementsMatch(t, []string{"cny-expr", "cny-fixed"}, result.Applied)
 	assert.Equal(t, model.PricingValues{
 		"billing_setting.billing_mode": "tiered_expr",
-		"billing_setting.billing_expr": "tier(\"base\", p * 0.1 + c * 0.2)",
-	}, pricing("cny-expr"), "0.8 yuan is 0.1 dollars at rate 8")
-	assert.Equal(t, model.PricingValues{"ModelPrice": 0.5}, pricing("cny-fixed"))
+		"billing_setting.billing_expr": "tier(\"base\", p * 0.05 + c * 0.1)",
+	}, pricing("cny-expr"), "0.8 yuan is 0.1 dollars at rate 8, and the key's group pays half")
+	assert.Equal(t, model.PricingValues{"ModelPrice": 0.25}, pricing("cny-fixed"))
 
 	snapshots := readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)
 	snapshot := snapshots["1"]
 	assert.Equal(t, "tier(\"base\", p * 0.8 + c * 1.6)", snapshot.Latest["cny-expr"]["billing_expr"], "snapshots keep the supplier's own text")
+	assert.Equal(t, &upstreamKeyGroup{Name: "vip", Ratio: 0.5}, snapshot.LatestKeyGroup)
+	withoutGroup := snapshot
+	withoutGroup.LatestKeyGroup = nil
+	groupless := upstreamModelPrices(upstreamPriceChannelRows([]*model.Channel{{Id: 1, Name: "cny-supplier", Models: "cny-expr", BaseURL: &baseURL}}),
+		map[string]upstreamPriceSnapshot{"1": withoutGroup})
+	assert.Equal(t, upstreamPriceKeyGroupUnknown, groupless["cny-expr"].Error, "a snapshot without the key's group offers no price to apply")
 	snapshot.LatestCurrency = nil
 	snapshots["1"] = snapshot
 	prices := upstreamModelPrices(upstreamPriceChannelRows([]*model.Channel{{Id: 1, Name: "cny-supplier", Models: "cny-expr", BaseURL: &baseURL}}), snapshots)
@@ -271,6 +285,10 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/status" {
 			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7.3}}`))
+			return
+		}
+		if r.URL.Path == "/api/token/search" {
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"group":"default"}]}}`))
 			return
 		}
 		assert.Equal(t, "Bearer supplier-token", r.Header.Get("Authorization"))
@@ -426,7 +444,11 @@ func TestUpstreamPriceCheckAdaptsTaskPluginToSupplierModels(t *testing.T) {
 			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD"}}`))
 			return
 		}
-		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{},"data":[
+		if r.URL.Path == "/api/token/search" {
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"group":"default"}]}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
 			{"model_name":"old-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"tier(\"720p\", u(\"seconds\") * 0.1)"},
 			{"model_name":"new-video","quota_type":0,"billing_mode":"tiered_expr","billing_expr":"u(\"resolution\") == \"480p\" ? tier(\"480p\", u(\"seconds\") * 0.1) : tier(\"720p\", u(\"seconds\") * 0.2)"},
 			{"model_name":"unpriced-video","quota_type":0,"model_ratio":37.5},

@@ -2,11 +2,13 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"maps"
 	"net/http"
+	"net/url"
 	"reflect"
 	"slices"
 	"strconv"
@@ -58,6 +60,29 @@ type upstreamPriceSnapshot struct {
 	// snapshot taken before the currency was read: its drafts wait for the
 	// next check instead of guessing.
 	LatestCurrency *upstreamCurrency `json:"latest_currency,omitempty"`
+	// LatestKeyGroup is the supplier group of the channel key and its ratio:
+	// the supplier charges its listed price times that ratio. Nil for a
+	// snapshot taken before the group was read.
+	LatestKeyGroup *upstreamKeyGroup `json:"latest_key_group,omitempty"`
+}
+
+type upstreamKeyGroup struct {
+	Name  string  `json:"name"`
+	Ratio float64 `json:"ratio"`
+}
+
+// supplyScale turns one listed supplier price unit into what the channel key
+// actually pays, in the local internal unit: currency conversion times the
+// key's group ratio.
+func (snapshot upstreamPriceSnapshot) supplyScale() (decimal.Decimal, error) {
+	scale, err := snapshot.LatestCurrency.priceScale()
+	if err != nil {
+		return decimal.Zero, err
+	}
+	if snapshot.LatestKeyGroup == nil || snapshot.LatestKeyGroup.Ratio <= 0 {
+		return decimal.Zero, errors.New(upstreamPriceKeyGroupUnknown)
+	}
+	return scale.Mul(decimal.NewFromFloat(snapshot.LatestKeyGroup.Ratio)), nil
 }
 
 // upstreamCurrency is the supplier's /api/status display currency. new-api
@@ -139,6 +164,7 @@ const (
 	upstreamPriceCurrencyUnknown     = "The supplier's currency is not known yet. Check upstream prices again."
 	upstreamPriceCurrencyUnsupported = "The supplier's display currency cannot be converted. Set this price by hand."
 	upstreamPriceUnconvertible       = "This supplier expression cannot be converted to this site's currency. Set this price by hand."
+	upstreamPriceKeyGroupUnknown     = "The supplier group of this channel's key is not known yet. Check upstream prices again."
 )
 
 // upstreamRatioFields maps supplier per-token ratio fields to local options.
@@ -356,7 +382,7 @@ func upstreamModelPrices(rows []upstreamPriceChannel, snapshots map[string]upstr
 		for _, row := range rows {
 			snapshot := snapshots[strconv.Itoa(row.ID)]
 			latest := snapshot.Latest
-			scale, scaleErr := snapshot.LatestCurrency.priceScale()
+			scale, scaleErr := snapshot.supplyScale()
 			names := row.models
 			if pending {
 				names = row.pendingModels
@@ -478,6 +504,75 @@ func fetchUpstreamCurrency(ctx context.Context, baseURL string) (*upstreamCurren
 		return nil, fmt.Errorf("invalid status response: %w", err)
 	}
 	return &upstreamCurrency{DisplayType: status.Data.QuotaDisplayType, Rate: status.Data.USDExchangeRate}, nil
+}
+
+// getSupplierDashboard reads one supplier dashboard route with the stored
+// supplier token and decodes its `data`.
+func getSupplierDashboard(ctx context.Context, baseURL, path, token string, data any) error {
+	ctx, cancel := context.WithTimeout(ctx, onboardingPriceFetchTimeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+path, nil)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	response, err := service.GetHttpClient().Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("supplier %s returned HTTP %d", path, response.StatusCode)
+	}
+	var body struct {
+		Success bool            `json:"success"`
+		Message string          `json:"message"`
+		Data    json.RawMessage `json:"data"`
+	}
+	if err := common.DecodeJson(io.LimitReader(response.Body, onboardingPriceMaxResponseBytes), &body); err != nil {
+		return fmt.Errorf("invalid supplier %s response: %w", path, err)
+	}
+	if !body.Success {
+		return fmt.Errorf("supplier %s failed: %s", path, body.Message)
+	}
+	return common.Unmarshal(body.Data, data)
+}
+
+// fetchUpstreamKeyGroup finds the supplier group the channel key bills in:
+// the key's own group, or its owner's group when the key has none, with the
+// ratio the supplier lists for it.
+func fetchUpstreamKeyGroup(ctx context.Context, baseURL, token, channelKey string, groupRatio map[string]any) (*upstreamKeyGroup, error) {
+	key := strings.TrimPrefix(strings.TrimSpace(channelKey), "sk-")
+	if key == "" {
+		return nil, errors.New("the channel has no key to look up on the supplier")
+	}
+	type supplierToken struct {
+		Group string `json:"group"`
+	}
+	var page struct {
+		Items []supplierToken `json:"items"`
+	}
+	if err := getSupplierDashboard(ctx, baseURL, "/api/token/search?p=1&page_size=10&token="+url.QueryEscape(key), token, &page); err != nil {
+		return nil, err
+	}
+	if len(page.Items) != 1 {
+		return nil, fmt.Errorf("the channel key matches %d supplier tokens", len(page.Items))
+	}
+	group := page.Items[0].Group
+	if group == "" {
+		var user struct {
+			Group string `json:"group"`
+		}
+		if err := getSupplierDashboard(ctx, baseURL, "/api/user/self", token, &user); err != nil {
+			return nil, err
+		}
+		group = user.Group
+	}
+	ratio, _ := groupRatio[group].(float64)
+	if ratio <= 0 {
+		return nil, fmt.Errorf("the supplier lists no ratio for the channel key's group %q", group)
+	}
+	return &upstreamKeyGroup{Name: group, Ratio: ratio}, nil
 }
 
 func upstreamPriceChannels() ([]*model.Channel, error) {
@@ -676,6 +771,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		group        map[string]any
 		descriptions map[string]string
 		currency     *upstreamCurrency
+		keyGroup     *upstreamKeyGroup
 		err          error
 	}
 	results := make([]fetched, len(rows))
@@ -691,7 +787,20 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 			if err == nil {
 				currency, err = fetchUpstreamCurrency(ctx, row.BaseURL)
 			}
-			results[i] = fetched{models: models, group: group, descriptions: descriptions, currency: currency, err: err}
+			var keyGroup *upstreamKeyGroup
+			if err == nil {
+				var channel *model.Channel
+				channel, err = model.GetChannelById(row.ID, true)
+				if err == nil {
+					keys := channel.GetKeys()
+					channelKey := ""
+					if len(keys) > 0 {
+						channelKey = keys[0]
+					}
+					keyGroup, err = fetchUpstreamKeyGroup(ctx, row.BaseURL, token, channelKey, group)
+				}
+			}
+			results[i] = fetched{models: models, group: group, descriptions: descriptions, currency: currency, keyGroup: keyGroup, err: err}
 		})
 	}
 	wg.Wait()
@@ -715,6 +824,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		snapshot.Latest, snapshot.LatestGroup, snapshot.LatestTime = results[i].models, results[i].group, now
 		snapshot.LatestDescriptions = results[i].descriptions
 		snapshot.LatestCurrency = results[i].currency
+		snapshot.LatestKeyGroup = results[i].keyGroup
 		if snapshot.BaselineTime == 0 {
 			snapshot.Baseline, snapshot.BaselineGroup, snapshot.BaselineTime = results[i].models, results[i].group, now
 			rows[i].Status = "baseline"
