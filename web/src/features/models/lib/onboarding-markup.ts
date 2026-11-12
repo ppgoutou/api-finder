@@ -105,7 +105,10 @@ export function markupRows(
   return rows
 }
 
-/** The markups to send for the rows with a positive amount, in USD. */
+/**
+ * The markups to send for the rows with a non-zero amount, in USD. A negative
+ * amount is a discount.
+ */
 export function tierMarkups(
   rows: MarkupRow[],
   amounts: Record<string, number>
@@ -113,7 +116,7 @@ export function tierMarkups(
   const markups: Record<string, TierMarkup> = {}
   for (const row of rows) {
     const perSecond = amounts[row.tier]
-    if (!(perSecond > 0)) continue
+    if (!perSecond || !Number.isFinite(perSecond)) continue
     markups[row.tier] = {
       field: row.field,
       per_second: perSecond,
@@ -123,4 +126,28 @@ export function tierMarkups(
     }
   }
   return markups
+}
+
+/** A batch price adjustment: a fixed amount or a percentage, up or down. */
+export type BatchOperation =
+  | 'add'
+  | 'subtract'
+  | 'add_percent'
+  | 'subtract_percent'
+
+/**
+ * The per-second adjustment a batch operation sets on a tier, rounded to 4
+ * decimals. A percentage is of the tier's group-ratio price; the value and the
+ * price are in the same currency.
+ */
+export function batchAdjustment(
+  operation: BatchOperation,
+  value: number,
+  ratioPrice: number
+): number {
+  const amount = operation.endsWith('_percent')
+    ? (ratioPrice * value) / 100
+    : value
+  const signed = operation.startsWith('subtract') ? -amount : amount
+  return Number(signed.toFixed(4)) || 0
 }
