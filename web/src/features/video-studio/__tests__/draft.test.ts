@@ -256,6 +256,24 @@ describe('studioModelsFromPricing', () => {
     ])
   })
 
+  it('takes declared reference counts and the default for a kind left out', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance2.5-T', ['720p'], {
+        model_limits: { maxReferenceImages: 30, maxReferenceVideos: 10 },
+      }),
+    ])
+    expect(model.referenceLimits).toEqual({ image: 30, video: 10, audio: 3 })
+  })
+
+  it('leaves reference limits to the defaults when none are declared', () => {
+    const [model] = studioModelsFromPricing([
+      videoModel('seedance2.0-T', ['720p'], {
+        model_limits: { minDuration: 4, maxDuration: 15 },
+      }),
+    ])
+    expect(model.referenceLimits).toBeUndefined()
+  })
+
   it('offers 9:21 only to a video model whose limits declare it', () => {
     const [model] = studioModelsFromPricing([
       videoModel('seedance2.5-T', ['480p', '720p'], {
@@ -454,6 +472,25 @@ describe('validateDraft', () => {
 
   it('accepts a text-only prompt', () => {
     expect(validateDraft(draft({}))).toBeNull()
+  })
+
+  it('accepts ten reference videos when the model declares ten', () => {
+    const tenVideos = draft({
+      references: Array.from({ length: 10 }, (_, index) =>
+        asset(`v${index}`, 'video')
+      ),
+    })
+    const model = { referenceLimits: { image: 30, video: 10, audio: 10 } }
+    expect(validateDraft(tenVideos, model)).toBeNull()
+    expect(validateDraft(tenVideos)).toBe('Too many reference files')
+  })
+
+  it('rejects one file over the limit the model declares', () => {
+    const fiveImages = draft({
+      references: ['a', 'b', 'c', 'd', 'e'].map((id) => asset(id, 'image')),
+    })
+    const model = { referenceLimits: { image: 4, video: 3, audio: 3 } }
+    expect(validateDraft(fiveImages, model)).toBe('Too many reference files')
   })
 })
 

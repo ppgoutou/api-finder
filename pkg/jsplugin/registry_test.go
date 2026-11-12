@@ -1214,7 +1214,7 @@ func TestRegistryModelLimits(t *testing.T) {
 	plugin, err := CompilePlugin(routingTestPluginSource("model-limits", 0, `["short", "long"]`, `
 modelLimits: {
   short: {minDuration: 4, maxDuration: 15, ratios: ["16:9", "9:16", "1:1"]},
-  long: {minDuration: 4, maxDuration: 30, durations: [4, 15, 20, 30]}
+  long: {minDuration: 4, maxDuration: 30, durations: [4, 15, 20, 30], maxReferenceImages: 30, maxReferenceVideos: 10, maxReferenceAudios: 10}
 },`, ""), Options{})
 	require.NoError(t, err)
 
@@ -1225,8 +1225,16 @@ modelLimits: {
 	limits, declared = plugin.Meta.LimitsForModel("ep-endpoint", "long")
 	require.True(t, declared)
 	assert.Equal(t, []int{4, 15, 20, 30}, limits.Durations)
+	assert.Equal(t, [3]int{30, 10, 10}, [3]int{limits.MaxReferenceImages, limits.MaxReferenceVideos, limits.MaxReferenceAudios})
 	_, declared = plugin.Meta.LimitsForModel("unknown")
 	assert.False(t, declared)
+
+	// Reference counts alone are a valid declaration.
+	referencesOnly, err := CompilePlugin(routingTestPluginSource("reference-limits", 0, `["short"]`, `modelLimits: {short: {maxReferenceImages: 4}},`, ""), Options{})
+	require.NoError(t, err)
+	limits, declared = referencesOnly.Meta.LimitsForModel("short")
+	require.True(t, declared)
+	assert.Equal(t, ModelLimits{MaxReferenceImages: 4}, limits)
 
 	for _, tc := range []struct {
 		name, limits, errorText string
@@ -1234,7 +1242,10 @@ modelLimits: {
 		{"not an object", `[]`, "modelLimits must be an object"},
 		{"unknown model", `{other: {ratios: ["1:1"]}}`, "not declared"},
 		{"unknown field", `{short: {fps: 24}}`, "unknown field"},
-		{"empty", `{short: {}}`, "durations or ratios"},
+		{"empty", `{short: {}}`, "durations, ratios or reference counts"},
+		{"zero references", `{short: {maxReferenceVideos: 0}}`, "maxReferenceVideos must be at least 1"},
+		{"too many references", `{short: {maxReferenceImages: 101}}`, "reference counts must lie between 1 and 100"},
+		{"fractional references", `{short: {maxReferenceAudios: 2.5}}`, "must be an integer"},
 		{"half range", `{short: {maxDuration: 15}}`, "declared together"},
 		{"inverted range", `{short: {minDuration: 15, maxDuration: 4}}`, "duration range"},
 		{"over host cap", `{short: {minDuration: 1, maxDuration: 3601}}`, "duration range"},
