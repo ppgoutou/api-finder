@@ -8183,6 +8183,7 @@
     "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "Một giá chính thức chung yêu cầu mọi mô hình hiển thị giống nhau: tất cả theo giây hoặc tất cả theo token. Mô hình hiển thị khác: {{models}}",
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Hiển thị cho khách thay cho ID mô hình. Lệnh gọi API vẫn dùng ID mô hình. Để trống để hiển thị ID mô hình.",
     "Model ID for API calls": "ID mô hình cho lệnh gọi API",
-    "Display name must not exceed 128 characters": "Tên hiển thị không được vượt quá 128 ký tự"
+    "Display name must not exceed 128 characters": "Tên hiển thị không được vượt quá 128 ký tự",
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Giao diện tiếng Trung hiển thị giá CNY nếu đã nhập; các ngôn ngữ khác hiển thị giá USD."
   }
 }

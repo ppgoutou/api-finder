@@ -8183,6 +8183,7 @@
     "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "类目内所有模型的对外展示方式必须相同（都按秒，或都按 token）才能设置统一的官方价。展示方式不同的模型：{{models}}",
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "访客看到的是这个名称，而不是模型 ID。API 调用仍然使用模型 ID。留空则显示模型 ID。",
     "Model ID for API calls": "API 调用使用的模型 ID",
-    "Display name must not exceed 128 characters": "显示名称不能超过 128 个字符"
+    "Display name must not exceed 128 characters": "显示名称不能超过 128 个字符",
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "中文界面在填了人民币价格时显示人民币价，其他语言显示美元价。"
   }
 }

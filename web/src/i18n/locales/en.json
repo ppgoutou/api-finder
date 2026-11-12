@@ -8183,6 +8183,7 @@
     "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}": "One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}",
     "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.": "Shown to visitors instead of the model ID. API calls still use the model ID. Leave empty to show the model ID.",
     "Model ID for API calls": "Model ID for API calls",
-    "Display name must not exceed 128 characters": "Display name must not exceed 128 characters"
+    "Display name must not exceed 128 characters": "Display name must not exceed 128 characters",
+    "Chinese interfaces show the CNY price where one is set; other languages show the USD price.": "Chinese interfaces show the CNY price where one is set; other languages show the USD price."
   }
 }

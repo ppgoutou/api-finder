@@ -49,12 +49,20 @@ export type PricingCategory = {
 
 /**
  * A display-only official price entered the way the pricing page shows it, in
- * USD before any group ratio. A video model shows the rows of its options.
+ * USD before any group ratio. A video model shows the rows of its options. A
+ * video row may also carry the vendor's own CNY list price, which interfaces
+ * showing CNY display instead of converting the USD price.
  */
 export type OfficialPriceTable =
   | {
       kind: 'video'
-      rows: { option: string; second: number; reference_second?: number }[]
+      rows: {
+        option: string
+        second: number
+        reference_second?: number
+        second_cny?: number
+        reference_second_cny?: number
+      }[]
     }
   | {
       kind: 'token'

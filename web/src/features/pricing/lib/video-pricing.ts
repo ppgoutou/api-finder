@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { getCurrencyDisplay } from '@/lib/currency'
+
 import type { BillingUsageSchema, PricingModel } from '../types'
 import { splitBillingExprAndRequestRules } from './billing-expr'
 import { getTaskEnumFields, getTaskNumberFields } from './task-expr'
@@ -182,6 +184,17 @@ export function getOfficialVideoPricing(
   const schema = model.billing_usage_schema
   const optionField = getVideoOptionField(schema)
   if (table?.kind !== 'video' || !schema || !optionField) return null
+  // Interfaces showing CNY show the vendor's CNY list price where one is set,
+  // as the USD amount that displays as it.
+  const { meta } = getCurrencyDisplay()
+  const cnyRate =
+    meta.kind === 'currency' &&
+    meta.currencyCode === 'CNY' &&
+    meta.exchangeRate > 0
+      ? meta.exchangeRate
+      : 0
+  const amount = (usd: number, cny: number | undefined) =>
+    cnyRate && cny ? cny / cnyRate : usd
   // A category table lists every option of its models; each model shows the
   // rows of the options it supports, in its own order.
   const rows = (schema[optionField]?.enum ?? []).flatMap(
@@ -191,9 +204,14 @@ export function getOfficialVideoPricing(
       return [
         {
           option,
-          secondPrice: row.second,
+          secondPrice: amount(row.second, row.second_cny),
           ...(row.reference_second
-            ? { referenceSecondPrice: row.reference_second }
+            ? {
+                referenceSecondPrice: amount(
+                  row.reference_second,
+                  row.reference_second_cny
+                ),
+              }
             : {}),
         },
       ]

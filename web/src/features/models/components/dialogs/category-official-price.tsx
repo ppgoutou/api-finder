@@ -146,6 +146,13 @@ export function CategoryOfficialPrice(props: {
             )}
           </p>
         )}
+        {layout?.kind === 'video' && (
+          <p className='text-muted-foreground text-xs'>
+            {t(
+              'Chinese interfaces show the CNY price where one is set; other languages show the USD price.'
+            )}
+          </p>
+        )}
       </div>
       {query.isLoading && <LoadingState />}
       {!query.isLoading && !layout && (
@@ -170,6 +177,7 @@ export function CategoryOfficialPrice(props: {
           disabled={props.disabled}
           idPrefix='category-official-price'
           allowBlankRows
+          cny
           onChange={(next) => {
             setDraft(next)
             setReadable(true)
