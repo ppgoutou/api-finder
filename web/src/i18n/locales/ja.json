@@ -8234,6 +8234,8 @@
     "{{value}} s": "{{value}} 秒",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "コピー状態",
-    "Retrying, attempt {{count}}": "再試行中（{{count}} 回目）"
+    "Retrying, attempt {{count}}": "再試行中（{{count}} 回目）",
+    "Hide changes": "変更を隠す",
+    "Show {{count}} changes": "{{count}} 件の変更を表示"
   }
 }

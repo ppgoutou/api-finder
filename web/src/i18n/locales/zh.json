@@ -8234,6 +8234,8 @@
     "{{value}} s": "{{value}} 秒",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "转存状态",
-    "Retrying, attempt {{count}}": "重试中，第 {{count}} 次"
+    "Retrying, attempt {{count}}": "重试中，第 {{count}} 次",
+    "Hide changes": "收起变动",
+    "Show {{count}} changes": "查看 {{count}} 项变动"
   }
 }

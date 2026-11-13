@@ -8234,6 +8234,8 @@
     "{{value}} s": "{{value}} s",
     "{{value}} MB": "{{value}} Mo",
     "Copy status": "État de la copie",
-    "Retrying, attempt {{count}}": "Nouvelle tentative, essai {{count}}"
+    "Retrying, attempt {{count}}": "Nouvelle tentative, essai {{count}}",
+    "Hide changes": "Masquer les changements",
+    "Show {{count}} changes": "Afficher {{count}} changements"
   }
 }
