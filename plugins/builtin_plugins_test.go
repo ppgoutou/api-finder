@@ -411,3 +411,68 @@ func TestDoubaoPublishesSeedanceDurationLimits(t *testing.T) {
 	_, declared := plugin.Meta.LimitsForModel("doubao-seedream-5-0-pro-260628")
 	assert.False(t, declared, "image models have no video limits")
 }
+
+// Ark rejects first-and-last-frame and reference media without a role, and
+// PxRouter rejects every image without one ("role must be specified for image
+// contents"), so the plugin fills each missing role and keeps given ones.
+func TestDoubaoSeedanceContentCarriesRoles(t *testing.T) {
+	plugin, found := jsplugin.DefaultRegistry.Generation().Get("doubao")
+	require.True(t, found)
+
+	image := func(url string, role ...string) map[string]any {
+		item := map[string]any{"type": "image_url", "image_url": map[string]any{"url": url}}
+		if len(role) > 0 {
+			item["role"] = role[0]
+		}
+		return item
+	}
+	cases := []struct {
+		name     string
+		images   []any
+		content  []any
+		wantRole []string
+	}{
+		{"one image is the first frame", []any{"a"}, nil, []string{"first_frame"}},
+		{"two images are first and last frame", []any{"a", "b"}, nil, []string{"first_frame", "last_frame"}},
+		{"three images are references", []any{"a", "b", "c"}, nil, []string{"reference_image", "reference_image", "reference_image"}},
+		{
+			"video and audio make every image a reference",
+			[]any{"a"},
+			[]any{map[string]any{"type": "video_url", "video_url": map[string]any{"url": "v"}}, map[string]any{"type": "audio_url", "audio_url": map[string]any{"url": "s"}}},
+			[]string{"reference_image", "reference_video", "reference_audio"},
+		},
+		{"a given first frame leaves the last frame", nil, []any{image("a", "first_frame"), image("b")}, []string{"first_frame", "last_frame"}},
+		{"a given reference role makes the rest references", nil, []any{image("a"), image("b", "reference_image")}, []string{"reference_image", "reference_image"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody := map[string]any{"model": "doubao-seedance-2-0-261111", "prompt": "a cat", "metadata": map[string]any{"content": tc.content}}
+			if tc.images != nil {
+				requestBody["images"] = tc.images
+			}
+			value, err := plugin.Engine.Call(t.Context(), "buildSubmitRequest", map[string]any{
+				"baseUrl": "https://ark.example", "apiKey": "key", "authHeader": "Bearer key",
+				"model": "doubao-seedance-2-0-261111", "upstreamModel": "doubao-seedance-2-0-261111", "requestBody": requestBody,
+			})
+			require.NoError(t, err)
+			encoded, err := common.Marshal(value)
+			require.NoError(t, err)
+			var descriptor struct {
+				Body struct {
+					Content []struct {
+						Type string `json:"type"`
+						Role string `json:"role"`
+					} `json:"content"`
+				} `json:"body"`
+			}
+			require.NoError(t, common.Unmarshal(encoded, &descriptor))
+			var roles []string
+			for _, item := range descriptor.Body.Content {
+				if item.Type != "text" {
+					roles = append(roles, item.Role)
+				}
+			}
+			assert.Equal(t, tc.wantRole, roles)
+		})
+	}
+}
