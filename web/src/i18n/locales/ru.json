@@ -8254,6 +8254,7 @@
     "Profit": "Прибыль",
     "Profit margin": "Маржа",
     "Hide changes": "Скрыть изменения",
-    "Show {{count}} changes": "Показать изменения: {{count}}"
+    "Show {{count}} changes": "Показать изменения: {{count}}",
+    "Key group ratio": "Коэффициент группы ключа"
   }
 }

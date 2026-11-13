@@ -8254,6 +8254,7 @@
     "Profit": "利益",
     "Profit margin": "利益率",
     "Hide changes": "変更を隠す",
-    "Show {{count}} changes": "{{count}} 件の変更を表示"
+    "Show {{count}} changes": "{{count}} 件の変更を表示",
+    "Key group ratio": "キーのグループ倍率"
   }
 }

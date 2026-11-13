@@ -63,6 +63,7 @@ function upstreamFieldLabel(field: string, t: TFunction): string {
     billing_mode: t('Billing mode'),
     billing_expr: t('Billing expression'),
     billing_plugin_variants: t('Plugin billing'),
+    key_group_ratio: t('Key group ratio'),
   }
   return labels[field] ?? field
 }

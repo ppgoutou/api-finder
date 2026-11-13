@@ -8254,6 +8254,7 @@
     "Profit": "Bénéfice",
     "Profit margin": "Marge",
     "Hide changes": "Masquer les changements",
-    "Show {{count}} changes": "Afficher {{count}} changements"
+    "Show {{count}} changes": "Afficher {{count}} changements",
+    "Key group ratio": "Ratio du groupe de la clé"
   }
 }

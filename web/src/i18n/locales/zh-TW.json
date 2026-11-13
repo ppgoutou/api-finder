@@ -8254,6 +8254,7 @@
     "Profit": "利潤",
     "Profit margin": "利潤率",
     "Hide changes": "收起變動",
-    "Show {{count}} changes": "查看 {{count}} 項變動"
+    "Show {{count}} changes": "查看 {{count}} 項變動",
+    "Key group ratio": "令牌分組倍率"
   }
 }
