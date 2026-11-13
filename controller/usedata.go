@@ -71,6 +71,7 @@ func GetOpsDashboard(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	applySupplierCosts(c.Request.Context(), dashboard.Upstream, startTimestamp, endTimestamp, now)
 	common.ApiSuccess(c, dashboard)
 }
 

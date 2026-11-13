@@ -8,7 +8,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
-	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -160,10 +159,14 @@ type OpsFailReason struct {
 }
 
 type OpsUpstream struct {
-	ChannelId          int     `json:"channel_id"`
-	Name               string  `json:"name"`
-	Quota              int64   `json:"quota"`
+	ChannelId int    `json:"channel_id"`
+	Name      string `json:"name"`
+	Quota     int64  `json:"quota"`
+	// CostQuota is what the supplier charged for the period, filled in by the
+	// controller from the supplier's own logs when CostStatus is "ok".
 	CostQuota          int64   `json:"cost_quota"`
+	CostStatus         string  `json:"cost_status"`
+	CostError          string  `json:"cost_error,omitempty"`
 	Count              int64   `json:"count"`
 	Balance            float64 `json:"balance"`
 	BalanceUpdatedTime int64   `json:"balance_updated_time"`
@@ -881,48 +884,33 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 		target.Count = row.Count
 	}
 
-	// Model prices are what the supplier charges and the group ratio is the
-	// markup, so a call cost its charge divided by the ratio of the group it
-	// was billed in. A refunded charge was not paid upstream either.
-	//
 	// quota_data is flushed in batches while logs are written per call, so
-	// the latest calls reach the cost before the revenue. Each source can only
-	// miss charges (late batches, or consume logging turned off), so revenue
-	// is the larger of the two.
+	// the latest calls would reach the supplier's charges before the revenue.
+	// Each source can only miss charges (late batches, or consume logging
+	// turned off), so revenue is the larger of the two.
 	var billed []struct {
-		ChannelId   int
-		BilledGroup string
-		Type        int
-		Quota       int64
+		ChannelId int
+		Type      int
+		Quota     int64
 	}
 	billedQuery := LOG_DB.Table("logs").
-		Select("channel_id, "+logGroupCol+" as billed_group, type, coalesce(sum(quota), 0) as quota").
+		Select("channel_id, type, coalesce(sum(quota), 0) as quota").
 		Where("type IN ? AND created_at >= ? AND created_at <= ? AND channel_id > 0", []int{LogTypeConsume, LogTypeRefund}, query.Start, query.End).
-		Group("channel_id, " + logGroupCol + ", type")
+		Group("channel_id, type")
 	if err = scope.excludeUsers(billedQuery, "user_id").Scan(&billed).Error; err != nil {
 		return err
 	}
-	groupRatios := ratio_setting.GetGroupRatioCopy()
-	costByChannel := make(map[int]decimal.Decimal)
 	revenueByChannel := make(map[int]int64)
 	for _, row := range billed {
-		ratio := groupRatios[row.BilledGroup]
-		if ratio <= 0 {
-			ratio = 1
-		}
-		cost := decimal.NewFromInt(row.Quota).Div(decimal.NewFromFloat(ratio))
-		revenue := row.Quota
 		if row.Type == LogTypeRefund {
-			cost = cost.Neg()
-			revenue = -revenue
+			revenueByChannel[row.ChannelId] -= row.Quota
+		} else {
+			revenueByChannel[row.ChannelId] += row.Quota
 		}
-		revenueByChannel[row.ChannelId] += revenue
-		costByChannel[row.ChannelId] = costByChannel[row.ChannelId].Add(cost)
 	}
-	for channelId, cost := range costByChannel {
+	for channelId, revenue := range revenueByChannel {
 		target := upstream(channelId)
-		target.CostQuota = max(cost.Round(0).IntPart(), 0)
-		target.Quota = max(target.Quota, revenueByChannel[channelId])
+		target.Quota = max(target.Quota, revenue)
 	}
 
 	var taskCounts []struct {

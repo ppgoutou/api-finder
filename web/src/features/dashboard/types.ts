@@ -353,6 +353,9 @@ export interface OpsUpstream {
   name: string
   quota: number
   cost_quota: number
+  /** Whether the supplier's charges were read: ok, no_token or error. */
+  cost_status: 'ok' | 'no_token' | 'error' | ''
+  cost_error?: string
   count: number
   balance: number
   balance_updated_time: number

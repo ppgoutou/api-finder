@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "Paid at least twice in this period",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "Figures cover the selected period. Unused amount, negative balances and runway are current.",
     "Top-up amount of all time, all channels": "Top-up amount of all time, all channels",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.",
     "Upstream cost": "Upstream cost",
     "Profit": "Profit",
     "Profit margin": "Profit margin",
     "Hide changes": "Hide changes",
     "Show {{count}} changes": "Show {{count}} changes",
-    "Key group ratio": "Key group ratio"
+    "Key group ratio": "Key group ratio",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.",
+    "Failed to fetch": "Failed to fetch",
+    "Total of channels with a cost": "Total of channels with a cost",
+    "Set a supplier token in model onboarding to read its charges": "Set a supplier token in model onboarding to read its charges"
   }
 }

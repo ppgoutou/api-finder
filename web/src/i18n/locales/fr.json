@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "Ont payé au moins deux fois sur la période",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "Les chiffres couvrent la période choisie. Le solde inutilisé, les soldes négatifs et l'autonomie sont actuels.",
     "Top-up amount of all time, all channels": "Montant des recharges depuis le début, tous canaux",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Le revenu est ce que les utilisateurs ont dépensé sur le canal. Le coût amont est ce montant sans la majoration du groupe, car les prix des modèles sont ceux du fournisseur. Le taux de réussite ne couvre que les tâches asynchrones ; un tiret signifie qu'aucun solde n'a été récupéré.",
     "Upstream cost": "Coût amont",
     "Profit": "Bénéfice",
     "Profit margin": "Marge",
     "Hide changes": "Masquer les changements",
     "Show {{count}} changes": "Afficher {{count}} changements",
-    "Key group ratio": "Ratio du groupe de la clé"
+    "Key group ratio": "Ratio du groupe de la clé",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Le revenu est ce que les utilisateurs ont payé sur le canal. Le coût amont est ce que le fournisseur a facturé à la clé du canal, lu chez le fournisseur avec son jeton, appels administrateur compris. Le taux de réussite ne couvre que les tâches asynchrones ; un tiret signifie qu'aucun solde n'a été récupéré.",
+    "Failed to fetch": "Échec de la récupération",
+    "Total of channels with a cost": "Total des canaux avec coût",
+    "Set a supplier token in model onboarding to read its charges": "Définissez un jeton fournisseur dans l'intégration des modèles pour lire ses frais"
   }
 }

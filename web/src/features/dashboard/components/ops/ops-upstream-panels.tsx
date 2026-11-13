@@ -45,14 +45,16 @@ export function OpsUpstreamPanel(props: {
   loading: boolean
 }) {
   const { t } = useTranslation()
-  const revenue = props.upstream.reduce((sum, row) => sum + row.quota, 0)
-  const cost = props.upstream.reduce((sum, row) => sum + row.cost_quota, 0)
+  // Profit only adds up over channels whose supplier charges are known.
+  const costed = props.upstream.filter((row) => row.cost_status === 'ok')
+  const revenue = costed.reduce((sum, row) => sum + row.quota, 0)
+  const cost = costed.reduce((sum, row) => sum + row.cost_quota, 0)
 
   return (
     <PanelWrapper
       title={t('Upstream channels')}
       description={t(
-        'Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.'
+        'Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.'
       )}
       loading={props.loading}
       empty={props.upstream.length === 0}
@@ -83,10 +85,7 @@ export function OpsUpstreamPanel(props: {
               <TableCell className={CELL}>
                 {formatOpsMoney(row.quota)}
               </TableCell>
-              <TableCell className={CELL}>
-                {formatOpsMoney(row.cost_quota)}
-              </TableCell>
-              <OpsProfitCells revenue={row.quota} cost={row.cost_quota} />
+              <OpsCostCells row={row} />
               <TableCell className={CELL}>
                 {formatPercent(
                   percentOf(
@@ -112,7 +111,9 @@ export function OpsUpstreamPanel(props: {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell className='font-medium'>{t('Total')}</TableCell>
+            <TableCell className='font-medium'>
+              {t('Total of channels with a cost')}
+            </TableCell>
             <TableCell className={CELL}>{formatOpsMoney(revenue)}</TableCell>
             <TableCell className={CELL}>{formatOpsMoney(cost)}</TableCell>
             <OpsProfitCells revenue={revenue} cost={cost} />
@@ -122,6 +123,37 @@ export function OpsUpstreamPanel(props: {
         </TableFooter>
       </Table>
     </PanelWrapper>
+  )
+}
+
+function OpsCostCells(props: { row: OpsUpstream }) {
+  const { t } = useTranslation()
+  if (props.row.cost_status === 'ok') {
+    return (
+      <>
+        <TableCell className={CELL}>
+          {formatOpsMoney(props.row.cost_quota)}
+        </TableCell>
+        <OpsProfitCells revenue={props.row.quota} cost={props.row.cost_quota} />
+      </>
+    )
+  }
+  const failed = props.row.cost_status === 'error'
+  return (
+    <>
+      <TableCell
+        className={cn(CELL, failed && 'text-warning')}
+        title={
+          failed
+            ? props.row.cost_error
+            : t('Set a supplier token in model onboarding to read its charges')
+        }
+      >
+        {failed ? t('Failed to fetch') : '—'}
+      </TableCell>
+      <TableCell className={CELL}>—</TableCell>
+      <TableCell className={CELL}>—</TableCell>
+    </>
   )
 }
 

@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "Nạp từ 2 lần trở lên trong kỳ",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "Số liệu trong khoảng thời gian đã chọn. Số dư chưa dùng, số dư âm và số ngày còn lại là giá trị hiện tại.",
     "Top-up amount of all time, all channels": "Số tiền nạp toàn bộ thời gian, mọi kênh",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng chi trên kênh. Chi phí thượng nguồn là số đó sau khi bỏ hệ số nhóm, vì giá mô hình là giá nhà cung cấp. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa lấy được số dư.",
     "Upstream cost": "Chi phí thượng nguồn",
     "Profit": "Lợi nhuận",
     "Profit margin": "Tỷ suất lợi nhuận",
     "Hide changes": "Ẩn thay đổi",
     "Show {{count}} changes": "Xem {{count}} thay đổi",
-    "Key group ratio": "Hệ số nhóm của khóa"
+    "Key group ratio": "Hệ số nhóm của khóa",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí thượng nguồn là số nhà cung cấp đã trừ cho khóa của kênh, đọc từ nhà cung cấp bằng token, gồm cả lệnh gọi của quản trị viên. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa lấy được số dư.",
+    "Failed to fetch": "Lấy thất bại",
+    "Total of channels with a cost": "Tổng các kênh có chi phí",
+    "Set a supplier token in model onboarding to read its charges": "Đặt token nhà cung cấp trong mục thêm mô hình để đọc khoản trừ"
   }
 }
