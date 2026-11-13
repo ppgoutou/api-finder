@@ -101,6 +101,60 @@ func TestUploadVideoAssetReturnsAbsoluteURLAndServesFile(t *testing.T) {
 	assert.Equal(t, "nosniff", served.Header().Get("X-Content-Type-Options"))
 }
 
+func TestUploadVideoAssetReturnsObjectStorageURL(t *testing.T) {
+	jpeg := append([]byte{0xFF, 0xD8, 0xFF, 0xE0}, []byte("jpeg-payload")...)
+	failing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer failing.Close()
+
+	cases := []struct {
+		name           string
+		mainlandFails  bool
+		overseasFails  bool
+		wantURLPrefix  string
+		wantBucketPath string
+	}{
+		{name: "mainland bucket first", wantURLPrefix: "https://cn-media.example.com/video-assets/", wantBucketPath: "/cn-media/video-assets/"},
+		{name: "overseas when mainland fails", mainlandFails: true, wantURLPrefix: "https://media.example.com/video-assets/", wantBucketPath: "/global-media/video-assets/"},
+		{name: "local when both fail", mainlandFails: true, overseasFails: true, wantURLPrefix: "https://api.example.com/video-assets/"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir, userID := setupVideoAssetTest(t, 1000)
+			bucket, bucketServer := newFakeMediaBucket(t)
+			mainland, overseas := bucketServer.URL, bucketServer.URL
+			if tc.mainlandFails {
+				mainland = failing.URL
+			}
+			if tc.overseasFails {
+				overseas = failing.URL
+			}
+			configureMediaStorageTest(t, overseas, mainland)
+
+			response := uploadVideoAsset(t, userID, "photo.jpg", jpeg)
+
+			require.True(t, response.Success, response.Message)
+			require.True(t, strings.HasPrefix(response.Data.URL, tc.wantURLPrefix), response.Data.URL)
+			name := filepath.Base(response.Data.URL)
+			assert.Regexp(t, `^[a-f0-9]{32}\.jpg$`, name)
+			_, err := os.Stat(filepath.Join(dir, name))
+			require.NoError(t, err, "the local copy stays as the fallback")
+			if tc.wantBucketPath == "" {
+				assert.Empty(t, bucket.objects)
+				return
+			}
+			require.Len(t, bucket.objects, 1)
+			for path, body := range bucket.objects {
+				assert.True(t, strings.HasPrefix(path, tc.wantBucketPath), path)
+				assert.True(t, strings.HasSuffix(path, "/"+name), path)
+				assert.Equal(t, string(jpeg), body)
+				assert.Equal(t, "image/jpeg", bucket.types[path])
+			}
+		})
+	}
+}
+
 func TestUploadVideoAssetRequiresPositiveBalance(t *testing.T) {
 	dir, userID := setupVideoAssetTest(t, 0)
 

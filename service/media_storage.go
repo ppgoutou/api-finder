@@ -221,3 +221,47 @@ func putMediaObject(ctx context.Context, target system_setting.MediaStorageTarge
 	}
 	return nil
 }
+
+// videoAssetObjectDir holds reference files users upload for video models,
+// apart from the generated videos under ObjectPrefix.
+const videoAssetObjectDir = "video-assets"
+
+// StoreVideoAsset copies a reference file a user uploaded into object storage
+// and returns its public URL, so upstream video services fetch it from the
+// CDN instead of this server. The Bangkok COS bucket (mainland target) is
+// tried first because it shares the server's region and uploads over the
+// internal network; the overseas bucket is the fallback. It returns "" with
+// no error when media storage is off.
+func StoreVideoAsset(ctx context.Context, content io.ReadSeeker, name, mimeType string, size int64) (string, error) {
+	settings := system_setting.GetMediaStorageSettings()
+	targets := settings.UploadTargets()
+	if len(targets) == 0 {
+		return "", nil
+	}
+	if _, err := content.Seek(0, io.SeekStart); err != nil {
+		return "", err
+	}
+	hash := sha256.New()
+	if _, err := io.Copy(hash, content); err != nil {
+		return "", err
+	}
+	payloadHash := hex.EncodeToString(hash.Sum(nil))
+	objectKey := videoAssetObjectDir + "/" + time.Now().UTC().Format("2006/01") + "/" + name
+
+	var uploadErrs []error
+	for i := len(targets) - 1; i >= 0; i-- {
+		target := settings.Target(targets[i])
+		if _, err := content.Seek(0, io.SeekStart); err != nil {
+			return "", err
+		}
+		uploadStart := time.Now()
+		if err := putMediaObject(ctx, target, objectKey, mimeType, size, payloadHash, content); err != nil {
+			uploadErrs = append(uploadErrs, fmt.Errorf("%s: %w", targets[i], err))
+			continue
+		}
+		common.SysLog(common.LogText("video asset upload to %s: %d bytes in %s",
+			targets[i], size, time.Since(uploadStart).Round(time.Millisecond)))
+		return strings.TrimRight(strings.TrimSpace(target.PublicURL), "/") + "/" + objectKey, nil
+	}
+	return "", errors.Join(uploadErrs...)
+}
