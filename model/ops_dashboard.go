@@ -884,6 +884,11 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 	// Model prices are what the supplier charges and the group ratio is the
 	// markup, so a call cost its charge divided by the ratio of the group it
 	// was billed in. A refunded charge was not paid upstream either.
+	//
+	// quota_data is flushed in batches while logs are written per call, so
+	// the latest calls reach the cost before the revenue. Each source can only
+	// miss charges (late batches, or consume logging turned off), so revenue
+	// is the larger of the two.
 	var billed []struct {
 		ChannelId   int
 		BilledGroup string
@@ -899,19 +904,25 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 	}
 	groupRatios := ratio_setting.GetGroupRatioCopy()
 	costByChannel := make(map[int]decimal.Decimal)
+	revenueByChannel := make(map[int]int64)
 	for _, row := range billed {
 		ratio := groupRatios[row.BilledGroup]
 		if ratio <= 0 {
 			ratio = 1
 		}
 		cost := decimal.NewFromInt(row.Quota).Div(decimal.NewFromFloat(ratio))
+		revenue := row.Quota
 		if row.Type == LogTypeRefund {
 			cost = cost.Neg()
+			revenue = -revenue
 		}
+		revenueByChannel[row.ChannelId] += revenue
 		costByChannel[row.ChannelId] = costByChannel[row.ChannelId].Add(cost)
 	}
 	for channelId, cost := range costByChannel {
-		upstream(channelId).CostQuota = max(cost.Round(0).IntPart(), 0)
+		target := upstream(channelId)
+		target.CostQuota = max(cost.Round(0).IntPart(), 0)
+		target.Quota = max(target.Quota, revenueByChannel[channelId])
 	}
 
 	var taskCounts []struct {

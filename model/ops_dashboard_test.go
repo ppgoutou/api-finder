@@ -337,11 +337,17 @@ func TestGetOpsDashboardUpstreamCostRemovesGroupMarkup(t *testing.T) {
 	require.NoError(t, err)
 
 	costs := make(map[int]int64)
+	revenue := make(map[int]int64)
 	for _, row := range got.Upstream {
 		costs[row.ChannelId] = row.CostQuota
+		revenue[row.ChannelId] = row.Quota
 	}
 	// 1000/1.25 + (400-100)/2 - the seeded refund of 10 at no group's ratio.
 	assert.Equal(t, map[int]int64{1: 0, 2: 940, 4: 60}, costs)
+	// Logs run ahead of the batched quota_data on channels 2 and 4
+	// (1000 + 400 - 100 - the seeded refund of 10); channel 1 keeps its
+	// quota_data figure, which its logs do not fully cover.
+	assert.Equal(t, map[int]int64{1: 70, 2: 1290, 4: 60}, revenue)
 }
 
 func TestOpsCreditedQuotaMirrorsProviderSettlement(t *testing.T) {
