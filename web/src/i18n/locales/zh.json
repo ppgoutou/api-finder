@@ -5687,7 +5687,7 @@
     "Replicate": "Replicate",
     "Report an issue": "反馈问题",
     "Reports sign-ups and top-ups to the X Conversion API from the server. Fields left empty use the X_PIXEL_* environment variables.": "在服务端向 X Conversion API 回传注册和充值。留空的字段使用服务器上的 X_PIXEL_* 环境变量。",
-    "request": "请求",
+    "request": "次",
     "Request": "请求",
     "Request & Response": "请求与响应",
     "Request Body Disk Cache": "请求体磁盘缓存",
