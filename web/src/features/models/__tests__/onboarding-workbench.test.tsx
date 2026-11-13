@@ -554,6 +554,38 @@ describe('model onboarding workbench', () => {
     expect(screen.queryByText('Latest upstream price')).toBeNull()
   })
 
+  it('keeps supplier-level changes folded until the admin opens them', async () => {
+    signInAsRoot()
+    const user = userEvent.setup()
+    const { post } = mockApi()
+    renderSection()
+
+    const toggle = await screen.findByRole('button', {
+      name: /Show 1 changes/,
+    })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Group ratio changed')).toBeNull()
+    expect(
+      await screen.findByRole('tab', { name: /Upstream repriced/ })
+    ).toBeVisible()
+
+    await user.click(toggle)
+    expect(
+      screen.getByRole('button', { name: 'Hide changes' })
+    ).toHaveAttribute('aria-expanded', 'true')
+    const row = screen
+      .getByText('Group ratio changed')
+      .closest('li') as HTMLElement
+    await user.click(within(row).getByRole('button', { name: 'Mark handled' }))
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith(
+        '/api/models/onboarding/upstream_prices/acknowledge',
+        { channel_id: 1, group_ratio: true }
+      )
+    )
+  })
+
   it('marks a supplier price change handled on every channel without copying it', async () => {
     signInAsRoot()
     const user = userEvent.setup()

@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Le revenu est ce que les utilisateurs ont dépensé sur le canal. Le coût amont est ce montant sans la majoration du groupe, car les prix des modèles sont ceux du fournisseur. Le taux de réussite ne couvre que les tâches asynchrones ; un tiret signifie qu'aucun solde n'a été récupéré.",
     "Upstream cost": "Coût amont",
     "Profit": "Bénéfice",
-    "Profit margin": "Marge"
+    "Profit margin": "Marge",
+    "Hide changes": "Masquer les changements",
+    "Show {{count}} changes": "Afficher {{count}} changements"
   }
 }

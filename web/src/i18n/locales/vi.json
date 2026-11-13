@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng chi trên kênh. Chi phí thượng nguồn là số đó sau khi bỏ hệ số nhóm, vì giá mô hình là giá nhà cung cấp. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa lấy được số dư.",
     "Upstream cost": "Chi phí thượng nguồn",
     "Profit": "Lợi nhuận",
-    "Profit margin": "Tỷ suất lợi nhuận"
+    "Profit margin": "Tỷ suất lợi nhuận",
+    "Hide changes": "Ẩn thay đổi",
+    "Show {{count}} changes": "Xem {{count}} thay đổi"
   }
 }

@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { KeyRound, TrendingUp } from 'lucide-react'
+import { ChevronDown, KeyRound, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -25,9 +25,15 @@ import { Dialog } from '@/components/dialog'
 import { StatusBadge } from '@/components/status-badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { TitledCard } from '@/components/ui/titled-card'
 import { formatTimestamp } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 import { formatUpstreamPriceValue } from '../../lib/onboarding'
 import type {
@@ -100,7 +106,11 @@ function ChangeFields(props: { change: UpstreamPriceChange }) {
   )
 }
 
-/** Supplier price watch: tokens and the changes no workbench model shows. Checks run from Sync upstream. */
+/**
+ * Supplier price watch: tokens and the changes no workbench model shows.
+ * Checks run from Sync upstream. The change list starts folded so a long
+ * supplier list never pushes the workbench below it off screen.
+ */
 export function UpstreamPricePanel(props: {
   report: UpstreamPriceReport | undefined
   workbenchModels: Set<string>
@@ -110,6 +120,7 @@ export function UpstreamPricePanel(props: {
 }) {
   const { t } = useTranslation()
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false)
+  const [changesOpen, setChangesOpen] = useState(false)
   const channels = props.report?.channels ?? []
   const watched = channels.filter((channel) => channel.has_token)
   const lastCheck = Math.max(
@@ -124,113 +135,143 @@ export function UpstreamPricePanel(props: {
       !props.workbenchModels.has(change.model_name)
   )
 
+  // Errors and the baseline note stay visible; only the change list folds.
+  const hasBody =
+    failed.length > 0 ||
+    baselines.length > 0 ||
+    (changesOpen && outside.length > 0)
+
   return (
-    <TitledCard
+    <Collapsible
+      open={changesOpen}
+      onOpenChange={setChangesOpen}
       className='shrink-0'
-      title={t('Supplier price watch')}
-      description={
-        watched.length === 0
-          ? t(
-              'Add a supplier access token to a channel to compare its upstream prices.'
-            )
-          : t('{{count}} channels watched. Last check: {{time}}', {
-              count: watched.length,
-              time: lastCheck ? formatTimestamp(lastCheck) : t('Never'),
-            })
-      }
-      icon={<TrendingUp aria-hidden className='size-4' />}
-      action={
-        <div className='flex flex-wrap gap-2'>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => setTokenDialogOpen(true)}
-          >
-            <KeyRound aria-hidden className='size-4' />
-            {t('Supplier tokens')}
-          </Button>
-        </div>
-      }
     >
-      <div className='space-y-3'>
-        {failed.map((channel) => (
-          <Alert key={channel.id} variant='destructive'>
-            <AlertTitle>{channel.name}</AlertTitle>
-            <AlertDescription className='break-all'>
-              {channel.error}
-            </AlertDescription>
-          </Alert>
-        ))}
-        {baselines.length > 0 && (
-          <p className='text-muted-foreground text-sm'>
-            {t(
-              'Recorded the current upstream prices of {{names}} as the baseline. Later checks report changes against it.',
-              { names: baselines.map((channel) => channel.name).join(', ') }
-            )}
-          </p>
-        )}
-        {outside.length === 0 ? (
-          watched.length > 0 && (
-            <p className='text-muted-foreground text-sm'>
-              {t('No supplier-level changes outside the list below.')}
-            </p>
-          )
-        ) : (
-          <ul className='divide-y rounded-md border'>
-            {outside.map((change) => (
-              <li
-                key={`${change.channel_id}:${change.kind}:${change.model_name}`}
-                className='flex flex-wrap items-start justify-between gap-2 p-3'
+      <TitledCard
+        headerClassName={cn('sm:p-4 sm:!pb-4', !hasBody && 'border-b-0')}
+        contentClassName={hasBody ? undefined : 'hidden'}
+        title={t('Supplier price watch')}
+        description={
+          watched.length === 0
+            ? t(
+                'Add a supplier access token to a channel to compare its upstream prices.'
+              )
+            : t('{{count}} channels watched. Last check: {{time}}', {
+                count: watched.length,
+                time: lastCheck ? formatTimestamp(lastCheck) : t('Never'),
+              })
+        }
+        icon={<TrendingUp aria-hidden className='size-4' />}
+        action={
+          <div className='flex flex-wrap gap-2'>
+            {outside.length > 0 && (
+              <CollapsibleTrigger
+                render={<Button size='sm' variant='outline' />}
               >
-                <div className='min-w-0 space-y-1'>
-                  <div className='flex flex-wrap items-center gap-1.5 text-sm'>
-                    <span className='text-muted-foreground'>
-                      {change.channel_name}
-                    </span>
-                    {change.kind === 'group_ratio' ? (
-                      <StatusBadge
-                        size='sm'
-                        variant='warning'
-                        label={t('Group ratio changed')}
-                      />
-                    ) : (
-                      <>
-                        <span className='font-mono'>{change.model_name}</span>
-                        <ChangeKindBadge kind={change.kind} />
-                      </>
-                    )}
-                  </div>
-                  <ChangeFields change={change} />
-                </div>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  disabled={props.acknowledging}
-                  onClick={() =>
-                    props.onAcknowledge(
-                      change.kind === 'group_ratio'
-                        ? { channel_id: change.channel_id, group_ratio: true }
-                        : {
-                            channel_id: change.channel_id,
-                            model_names: [change.model_name],
-                          }
-                    )
-                  }
-                >
-                  {t('Mark handled')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <UpstreamTokenDialog
-        open={tokenDialogOpen}
-        onOpenChange={setTokenDialogOpen}
-        channels={channels}
-        onSave={props.onSaveToken}
-      />
-    </TitledCard>
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    'size-4 transition-transform',
+                    changesOpen && 'rotate-180'
+                  )}
+                />
+                {changesOpen
+                  ? t('Hide changes')
+                  : t('Show {{count}} changes', { count: outside.length })}
+              </CollapsibleTrigger>
+            )}
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => setTokenDialogOpen(true)}
+            >
+              <KeyRound aria-hidden className='size-4' />
+              {t('Supplier tokens')}
+            </Button>
+          </div>
+        }
+      >
+        <div className='space-y-3'>
+          {failed.map((channel) => (
+            <Alert key={channel.id} variant='destructive'>
+              <AlertTitle>{channel.name}</AlertTitle>
+              <AlertDescription className='break-all'>
+                {channel.error}
+              </AlertDescription>
+            </Alert>
+          ))}
+          {baselines.length > 0 && (
+            <p className='text-muted-foreground text-sm'>
+              {t(
+                'Recorded the current upstream prices of {{names}} as the baseline. Later checks report changes against it.',
+                { names: baselines.map((channel) => channel.name).join(', ') }
+              )}
+            </p>
+          )}
+          {outside.length > 0 && (
+            <CollapsibleContent>
+              <ul className='max-h-80 divide-y overflow-y-auto rounded-md border'>
+                {outside.map((change) => (
+                  <li
+                    key={`${change.channel_id}:${change.kind}:${change.model_name}`}
+                    className='flex flex-wrap items-start justify-between gap-2 p-3'
+                  >
+                    <div className='min-w-0 space-y-1'>
+                      <div className='flex flex-wrap items-center gap-1.5 text-sm'>
+                        <span className='text-muted-foreground'>
+                          {change.channel_name}
+                        </span>
+                        {change.kind === 'group_ratio' ? (
+                          <StatusBadge
+                            size='sm'
+                            variant='warning'
+                            label={t('Group ratio changed')}
+                          />
+                        ) : (
+                          <>
+                            <span className='font-mono'>
+                              {change.model_name}
+                            </span>
+                            <ChangeKindBadge kind={change.kind} />
+                          </>
+                        )}
+                      </div>
+                      <ChangeFields change={change} />
+                    </div>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      disabled={props.acknowledging}
+                      onClick={() =>
+                        props.onAcknowledge(
+                          change.kind === 'group_ratio'
+                            ? {
+                                channel_id: change.channel_id,
+                                group_ratio: true,
+                              }
+                            : {
+                                channel_id: change.channel_id,
+                                model_names: [change.model_name],
+                              }
+                        )
+                      }
+                    >
+                      {t('Mark handled')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          )}
+        </div>
+        <UpstreamTokenDialog
+          open={tokenDialogOpen}
+          onOpenChange={setTokenDialogOpen}
+          channels={channels}
+          onSave={props.onSaveToken}
+        />
+      </TitledCard>
+    </Collapsible>
   )
 }
 

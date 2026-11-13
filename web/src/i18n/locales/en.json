@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.",
     "Upstream cost": "Upstream cost",
     "Profit": "Profit",
-    "Profit margin": "Profit margin"
+    "Profit margin": "Profit margin",
+    "Hide changes": "Hide changes",
+    "Show {{count}} changes": "Show {{count}} changes"
   }
 }

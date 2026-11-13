@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — расходы пользователей на канале. Затраты у поставщика — эта сумма без наценки группы, так как цены моделей равны цене поставщика. Успешность задач учитывает только асинхронные задачи; прочерк означает, что баланс не получен.",
     "Upstream cost": "Затраты у поставщика",
     "Profit": "Прибыль",
-    "Profit margin": "Маржа"
+    "Profit margin": "Маржа",
+    "Hide changes": "Скрыть изменения",
+    "Show {{count}} changes": "Показать изменения: {{count}}"
   }
 }

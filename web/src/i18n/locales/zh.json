@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入为用户在该渠道的消费；上游成本为扣除分组倍率后的金额（模型价即供应商价）。任务成功率仅统计异步任务；“—”表示未获取余额。",
     "Upstream cost": "上游成本",
     "Profit": "利润",
-    "Profit margin": "利润率"
+    "Profit margin": "利润率",
+    "Hide changes": "收起变动",
+    "Show {{count}} changes": "查看 {{count}} 项变动"
   }
 }

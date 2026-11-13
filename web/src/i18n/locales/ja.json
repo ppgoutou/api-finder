@@ -8252,6 +8252,8 @@
     "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "収入はユーザーがこのチャネルで消費した額です。上流コストはグループ倍率を除いた額です（モデル価格＝仕入れ価格）。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
     "Upstream cost": "上流コスト",
     "Profit": "利益",
-    "Profit margin": "利益率"
+    "Profit margin": "利益率",
+    "Hide changes": "変更を隠す",
+    "Show {{count}} changes": "{{count}} 件の変更を表示"
   }
 }
