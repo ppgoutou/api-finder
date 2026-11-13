@@ -34,6 +34,7 @@ export const OPS_LOW_SUCCESS_RATE = 95
 export const OPS_MIN_RATE_REQUESTS = 20
 
 export type OpsRangeKey =
+  | 'all'
   | 'today'
   | 'yesterday'
   | '7d'
@@ -54,7 +55,10 @@ export function opsCustomRangeIssue(custom: OpsCustomRange) {
   return null
 }
 
-/** The period to query, or null for a custom range that is not usable yet. */
+/**
+ * The period to query, or null for a custom range that is not usable yet. The
+ * all-time range starts at 0, which the request turns into `all_time`.
+ */
 export function resolveOpsRange(
   key: OpsRangeKey,
   now: Date,
@@ -68,6 +72,8 @@ export function resolveOpsRange(
   })
 
   switch (key) {
+    case 'all':
+      return { start: 0, end: current.unix() }
     case 'today':
       return untilNow(today)
     case 'yesterday':
@@ -131,6 +137,11 @@ export function reconcileWallet(wallet: OpsWallet) {
     outflow,
     difference: inflow - outflow,
   }
+}
+
+/** What the site kept of a charge after paying the upstream. */
+export function opsProfit(revenue: number, cost: number) {
+  return { profit: revenue - cost, margin: percentOf(revenue - cost, revenue) }
 }
 
 /** Days the current balances last at the recent daily usage. */

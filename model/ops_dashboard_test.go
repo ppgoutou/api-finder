@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -164,6 +165,8 @@ func assertOpsDashboardFigures(t *testing.T) {
 		UsedQuota:        100,
 		OtherCreditQuota: 1320,
 		TestCreditQuota:  240,
+		RegisteredPayers: 1,
+		RepeatPayers:     1,
 	}, got.Current)
 	assert.Equal(t, OpsPeriodStats{
 		TopupQuota:       7 * opsTestUnit,
@@ -175,6 +178,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 		UsedQuota:        5,
 		OtherCreditQuota: 500,
 		TestCreditQuota:  40,
+		RegisteredPayers: 2,
 	}, got.Previous)
 
 	assert.Equal(t, OpsWallet{
@@ -289,6 +293,55 @@ func TestGetOpsDashboardRefundsOfEarlierUsageStayAtZero(t *testing.T) {
 	assert.Equal(t, int64(0), got.Upstream[1].Quota)
 	require.Len(t, got.TopUsers, 1, "a user whose usage was fully refunded is not a top user")
 	assert.Equal(t, 2, got.TopUsers[0].UserId)
+}
+
+func TestGetOpsDashboardAllTimeCoversEverythingWithoutComparison(t *testing.T) {
+	seedOpsDashboard(t)
+
+	query := opsTestQuery(OpsChannelAll)
+	query.AllTime = true
+	got, err := GetOpsDashboard(query)
+	require.NoError(t, err)
+
+	assert.Equal(t, 25*opsTestUnit, got.Current.TopupQuota, "every paid order up to the end")
+	assert.Equal(t, int64(4), got.Current.TopupOrders)
+	assert.Equal(t, got.Users.Registered, got.Current.NewUsers)
+	assert.Equal(t, got.Users.TotalPayers, got.Current.RegisteredPayers)
+	assert.Equal(t, int64(105), got.Current.UsedQuota)
+	assert.Equal(t, OpsPeriodStats{}, got.Previous, "an all-time period has nothing to compare with")
+	require.Len(t, got.Trend, 4, "the trend starts on the day of the first usage, not at the epoch")
+	assert.Equal(t, "1970-01-20", got.Trend[0].Date)
+	assert.Equal(t, int64(5), got.Trend[0].UsedQuota, "net of the refund that day")
+}
+
+func TestGetOpsDashboardUpstreamCostRemovesGroupMarkup(t *testing.T) {
+	seedOpsDashboard(t)
+	original := ratio_setting.GroupRatio2JSONString()
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.25,"vip":2}`))
+	t.Cleanup(func() { require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(original)) })
+
+	logs := []Log{
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 1000, CreatedAt: opsTestStart + 10},
+		{UserId: 3, Type: LogTypeConsume, ChannelId: 2, Group: "vip", Quota: 400, CreatedAt: opsTestStart + 20},
+		// A refunded charge was not paid upstream.
+		{UserId: 3, Type: LogTypeRefund, ChannelId: 2, Group: "vip", Quota: 100, CreatedAt: opsTestStart + 30},
+		// A group without a ratio is billed at its charge.
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 4, Group: "gone", Quota: 60, CreatedAt: opsTestStart + 40},
+		// Administrators are left out, and so is usage outside the period.
+		{UserId: 1, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 5000, CreatedAt: opsTestStart + 50},
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 5000, CreatedAt: opsTestStart - 50},
+	}
+	require.NoError(t, DB.Create(&logs).Error)
+
+	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
+	require.NoError(t, err)
+
+	costs := make(map[int]int64)
+	for _, row := range got.Upstream {
+		costs[row.ChannelId] = row.CostQuota
+	}
+	// 1000/1.25 + (400-100)/2 - the seeded refund of 10 at no group's ratio.
+	assert.Equal(t, map[int]int64{1: 0, 2: 940, 4: 60}, costs)
 }
 
 func TestOpsCreditedQuotaMirrorsProviderSettlement(t *testing.T) {

@@ -24,6 +24,7 @@ import {
   channelTracksRefunds,
   isLowSuccessRate,
   opsCustomRangeIssue,
+  opsProfit,
   percentChange,
   percentOf,
   reconcileWallet,
@@ -68,6 +69,13 @@ describe('resolveOpsRange', () => {
       end: seconds(2026, 10, 6, 14, 30, 15),
     })
     expect(resolveOpsRange('month', now)?.start).toBe(seconds(2026, 10, 1))
+  })
+
+  test('all time reaches the present from the start', () => {
+    expect(resolveOpsRange('all', now)).toEqual({
+      start: 0,
+      end: seconds(2026, 10, 6, 14, 30, 15),
+    })
   })
 
   test('yesterday covers the whole previous local day', () => {
@@ -122,6 +130,20 @@ describe('period comparison', () => {
   test('an empty total has no percentage', () => {
     expect(percentOf(1, 0)).toBeNull()
     expect(percentOf(1, 4)).toBe(25)
+  })
+})
+
+describe('upstream profit', () => {
+  test('profit is revenue less cost, margin is its share of revenue', () => {
+    expect(opsProfit(1050, 1000)).toEqual({
+      profit: 50,
+      margin: (50 / 1050) * 100,
+    })
+  })
+
+  test('a loss stays negative and no revenue has no margin', () => {
+    expect(opsProfit(80, 100)).toEqual({ profit: -20, margin: -25 })
+    expect(opsProfit(0, 30).margin).toBeNull()
   })
 })
 

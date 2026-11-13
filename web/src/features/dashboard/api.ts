@@ -87,8 +87,9 @@ export async function getFlowQuotaDates(
 
 // Business dashboard figures for administrators
 export async function getOpsDashboard(params: {
-  start_timestamp: number
-  end_timestamp: number
+  all_time?: boolean
+  start_timestamp?: number
+  end_timestamp?: number
   channel: string
   exclude_internal: boolean
   tz_offset_minutes: number

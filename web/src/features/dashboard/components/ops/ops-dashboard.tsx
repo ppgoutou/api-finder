@@ -78,7 +78,7 @@ export function OpsDashboard() {
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const count = (value: number) => formatNumber(value, locale)
 
-  const [rangeKey, setRangeKey] = useState<OpsRangeKey>('7d')
+  const [rangeKey, setRangeKey] = useState<OpsRangeKey>('all')
   const [custom, setCustom] = useState<OpsCustomRange>({})
   const [channel, setChannel] = useState(OPS_CHANNEL_ALL)
   const [excludeInternal, setExcludeInternal] = useState(true)
@@ -102,10 +102,13 @@ export function OpsDashboard() {
       const now = new Date()
       const range = resolveOpsRange(rangeKey, now, custom)
       if (!range) throw new Error('Invalid time range')
+      const period =
+        rangeKey === 'all'
+          ? { all_time: true }
+          : { start_timestamp: range.start, end_timestamp: range.end }
       return requireServerSuccess(
         await getOpsDashboard({
-          start_timestamp: range.start,
-          end_timestamp: range.end,
+          ...period,
           channel,
           exclude_internal: excludeInternal,
           tz_offset_minutes: -now.getTimezoneOffset(),
@@ -135,23 +138,26 @@ export function OpsDashboard() {
   const money = (value: number | undefined) => formatOpsMoney(value ?? 0)
   const number = (value: number | undefined) => count(value ?? 0)
 
+  const allTime = rangeKey === 'all'
   const testCredit = data?.wallet.test_credit
+  // All time shows lifetime totals; a period shows only what happened in it.
+  // Balances, debts and runway are always the current state.
   const walletStats: OpsStat[] = [
     {
       key: 'topup',
       label: t('Total top-ups'),
-      value: money(data?.wallet.topup_quota),
-      hint: t('Lifetime, net of refunds'),
-      note: t('This period {{amount}}', {
-        amount: money(current?.topup_quota),
-      }),
+      value: money(allTime ? data?.wallet.topup_quota : current?.topup_quota),
+      hint: allTime
+        ? t('Lifetime, net of refunds')
+        : t('Paid in this period, net of refunds'),
     },
     {
       key: 'used',
       label: t('Amount used'),
-      value: money(data?.wallet.used_quota),
-      hint: t('Lifetime usage, including test credit'),
-      note: t('This period {{amount}}', { amount: money(current?.used_quota) }),
+      value: money(allTime ? data?.wallet.used_quota : current?.used_quota),
+      hint: allTime
+        ? t('Lifetime usage, including test credit')
+        : t('Usage in this period, including test credit'),
     },
     {
       key: 'balance',
@@ -162,37 +168,40 @@ export function OpsDashboard() {
     {
       key: 'other',
       label: t('Other credits'),
-      value: money(recon?.otherCredit),
+      value: money(allTime ? recon?.otherCredit : current?.other_credit_quota),
       hint: t('Redemption codes, rebates, check-ins'),
-      note: t('This period {{amount}}', {
-        amount: money(current?.other_credit_quota),
-      }),
     },
     {
       key: 'test-granted',
       label: t('Test credit granted'),
-      value: money(testCredit?.granted_quota),
-      hint: t('{{count}} users, promotional cost with no revenue', {
-        count: testCredit?.users ?? 0,
-      }),
-      note: t('This period {{amount}}', {
-        amount: money(current?.test_credit_quota),
-      }),
+      value: money(
+        allTime ? testCredit?.granted_quota : current?.test_credit_quota
+      ),
+      hint: allTime
+        ? t('{{count}} users, promotional cost with no revenue', {
+            count: testCredit?.users ?? 0,
+          })
+        : t('Promotional cost with no revenue'),
     },
-    {
-      key: 'test-used',
-      label: t('Test credit used'),
-      value: money(testCredit?.used_quota),
-      hint: t('Estimated, assuming test credit is spent first'),
-      note: t('Paid usage {{amount}}', {
-        amount: money(
-          Math.max(
-            (data?.wallet.used_quota ?? 0) - (testCredit?.used_quota ?? 0),
-            0
-          )
-        ),
-      }),
-    },
+    ...(allTime
+      ? [
+          {
+            key: 'test-used',
+            label: t('Test credit used'),
+            value: money(testCredit?.used_quota),
+            hint: t('Estimated, assuming test credit is spent first'),
+            note: t('Paid usage {{amount}}', {
+              amount: money(
+                Math.max(
+                  (data?.wallet.used_quota ?? 0) -
+                    (testCredit?.used_quota ?? 0),
+                  0
+                )
+              ),
+            }),
+          },
+        ]
+      : []),
     {
       key: 'negative',
       label: t('Negative balances'),
@@ -213,49 +222,63 @@ export function OpsDashboard() {
   const userStats: OpsStat[] = [
     {
       key: 'registered',
-      label: t('Registered users'),
-      value: number(data?.users.registered),
-      hint: t('{{count}} new in this period', {
-        count: current?.new_users ?? 0,
-      }),
+      label: allTime ? t('Registered users') : t('New users'),
+      value: number(current?.new_users),
+      hint: allTime ? undefined : t('Registered in this period'),
       ...changeNote(current?.new_users ?? 0, previous?.new_users ?? 0),
     },
     {
       key: 'payers',
       label: t('Paying users'),
       value: number(current?.payers),
-      hint: t('Paid in this period'),
+      hint: allTime ? t('Paid at least once') : t('Paid in this period'),
       ...changeNote(current?.payers ?? 0, previous?.payers ?? 0),
     },
-    {
-      key: 'new-payers',
-      label: t('New paying users'),
-      value: number(current?.new_payers),
-      hint: t('First payment in this period'),
-      ...changeNote(current?.new_payers ?? 0, previous?.new_payers ?? 0),
-    },
+    allTime
+      ? {
+          key: 'dormant',
+          label: t('Dormant payers'),
+          value: number(data?.users.dormant),
+          hint: t('Balance left, no calls in 30 days'),
+        }
+      : {
+          key: 'new-payers',
+          label: t('New paying users'),
+          value: number(current?.new_payers),
+          hint: t('First payment in this period'),
+          ...changeNote(current?.new_payers ?? 0, previous?.new_payers ?? 0),
+        },
     {
       key: 'conversion',
       label: t('Paid conversion'),
       value: formatPercent(
-        percentOf(data?.users.total_payers ?? 0, data?.users.registered ?? 0)
+        percentOf(current?.registered_payers ?? 0, current?.new_users ?? 0)
       ),
-      hint: `${number(data?.users.total_payers)} / ${number(data?.users.registered)}`,
+      hint: allTime
+        ? `${number(current?.registered_payers)} / ${number(current?.new_users)}`
+        : t('{{paid}} / {{registered}} registered in this period have paid', {
+            paid: number(current?.registered_payers),
+            registered: number(current?.new_users),
+          }),
     },
     {
       key: 'active',
       label: t('Active users'),
       value: number(current?.active_users),
-      hint: t('Made calls in this period'),
+      hint: allTime
+        ? t('Made at least one call')
+        : t('Made calls in this period'),
       ...changeNote(current?.active_users ?? 0, previous?.active_users ?? 0),
     },
     {
       key: 'repeat',
       label: t('Repeat payment rate'),
       value: formatPercent(
-        percentOf(data?.users.repeat_payers ?? 0, data?.users.total_payers ?? 0)
+        percentOf(current?.repeat_payers ?? 0, current?.payers ?? 0)
       ),
-      hint: t('Paid at least twice'),
+      hint: allTime
+        ? t('Paid at least twice')
+        : t('Paid at least twice in this period'),
     },
   ]
 
@@ -399,15 +422,22 @@ export function OpsDashboard() {
       <OpsSection
         id='ops-wallet'
         title={t('Wallet')}
-        description={t(
-          'Only total top-ups follow the order channel. Unused amount and negative balances are current.'
-        )}
+        description={
+          allTime
+            ? t(
+                'Only total top-ups follow the order channel. Unused amount and negative balances are current.'
+              )
+            : t(
+                'Figures cover the selected period. Unused amount, negative balances and runway are current.'
+              )
+        }
       >
         <OpsStatGrid
           stats={walletStats}
           loading={loading}
           fourColumns
           footer={
+            allTime &&
             recon && (
               <div className='bg-muted/50 flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t px-3 py-2.5 text-sm sm:px-5'>
                 <span className='font-medium'>
@@ -464,7 +494,11 @@ export function OpsDashboard() {
             topupQuota={current?.topup_quota ?? 0}
             usedQuota={current?.used_quota ?? 0}
           />
-          <OpsChannelPanel channels={data?.channels ?? []} loading={loading} />
+          <OpsChannelPanel
+            channels={data?.channels ?? []}
+            loading={loading}
+            allTime={allTime}
+          />
         </div>
         <OpsChannelTable channels={data?.channels ?? []} loading={loading} />
       </OpsSection>
@@ -488,15 +522,13 @@ export function OpsDashboard() {
         id='ops-upstream'
         title={t('Upstream channels and top users')}
       >
-        <div className='grid gap-3 lg:grid-cols-2'>
-          <OpsUpstreamPanel upstream={data?.upstream ?? []} loading={loading} />
-          <OpsTopUsersPanel
-            users={data?.top_users ?? []}
-            usedQuota={current?.used_quota ?? 0}
-            dormant={data?.users.dormant ?? 0}
-            loading={loading}
-          />
-        </div>
+        <OpsUpstreamPanel upstream={data?.upstream ?? []} loading={loading} />
+        <OpsTopUsersPanel
+          users={data?.top_users ?? []}
+          usedQuota={current?.used_quota ?? 0}
+          dormant={data?.users.dormant ?? 0}
+          loading={loading}
+        />
       </OpsSection>
     </div>
   )

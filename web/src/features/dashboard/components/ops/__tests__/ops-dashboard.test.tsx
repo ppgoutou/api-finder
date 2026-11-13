@@ -42,6 +42,8 @@ const emptyPeriod: OpsPeriodStats = {
   used_quota: 0,
   other_credit_quota: 0,
   test_credit_quota: 0,
+  registered_payers: 0,
+  repeat_payers: 0,
 }
 
 const emptyDashboard: OpsDashboardData = {
@@ -119,14 +121,44 @@ describe('OpsDashboard date range', () => {
     vi.useRealTimers()
   })
 
+  it('opens on all-time totals', async () => {
+    renderDashboard()
+    await waitForRequests(1)
+
+    expect(lastRequest()).toMatchObject({ all_time: true })
+    expect(lastRequest()?.start_timestamp).toBeUndefined()
+    expect(await screen.findByText('All-channel reconciliation')).toBeTruthy()
+  })
+
+  it('shows only the period figures once a period is picked', async () => {
+    vi.mocked(getOpsDashboard).mockResolvedValue({
+      success: true,
+      data: {
+        ...emptyDashboard,
+        current: { ...emptyPeriod, topup_quota: 500000 },
+        wallet: { ...emptyDashboard.wallet, topup_quota: 9 * 500000 },
+      },
+    })
+    renderDashboard()
+    await waitForRequests(1)
+    await userEvent.click(screen.getByRole('tab', { name: 'Last 7 days' }))
+    await waitForRequests(2)
+
+    await screen.findByText('Paid in this period, net of refunds')
+    expect(screen.queryByText('All-channel reconciliation')).toBeNull()
+    expect(screen.queryByText('Test credit used')).toBeNull()
+  })
+
   it('reaches the present when refreshed on a page that stayed open', async () => {
     renderDashboard()
     await waitForRequests(1)
+    await userEvent.click(screen.getByRole('tab', { name: 'Last 7 days' }))
+    await waitForRequests(2)
     await screen.findByText('Wallet')
 
     vi.setSystemTime(new Date(2026, 10, 6, 11, 0, 0))
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
-    await waitForRequests(2)
+    await waitForRequests(3)
 
     expect(lastRequest()?.end_timestamp).toBe(
       new Date(2026, 10, 6, 11, 0, 0).getTime() / 1000
