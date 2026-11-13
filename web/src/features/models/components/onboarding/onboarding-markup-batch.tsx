@@ -37,6 +37,8 @@ import type { BatchOperation } from '../../lib/onboarding-markup'
  */
 export function OnboardingMarkupBatch(props: {
   symbol: string
+  /** The price unit after the slash, such as second or image. */
+  unit: string
   selectedCount: number
   onApply: (
     operation: BatchOperation,
@@ -96,7 +98,7 @@ export function OnboardingMarkupBatch(props: {
           onChange={(event) => setText(event.target.value)}
         />
         <InputGroupAddon align='inline-end'>
-          <InputGroupText>{percent ? '%' : `/${t('s')}`}</InputGroupText>
+          <InputGroupText>{percent ? '%' : `/${props.unit}`}</InputGroupText>
         </InputGroupAddon>
       </InputGroup>
       <Button

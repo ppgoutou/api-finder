@@ -327,11 +327,14 @@ export async function applyUpstreamPrice(request: {
 }
 
 /**
- * Set or clear (no tiers) the per-second markups of one model
+ * Set or clear the markups of one model: per-second tiers of an expression
+ * price (no tiers clears), or one per-request amount of a fixed price (0
+ * clears)
  */
 export async function setPriceMarkup(request: {
   model_name: string
-  tiers: Record<string, TierMarkup>
+  tiers?: Record<string, TierMarkup>
+  per_request?: number
 }): Promise<UpstreamPriceReportResponse> {
   const res = await api.put(
     '/api/models/onboarding/upstream_prices/markup',

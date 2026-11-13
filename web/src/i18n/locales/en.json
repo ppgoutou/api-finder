@@ -8258,6 +8258,9 @@
     "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.",
     "Failed to fetch": "Failed to fetch",
     "Total of channels with a cost": "Total of channels with a cost",
-    "Set a supplier token in model onboarding to read its charges": "Set a supplier token in model onboarding to read its charges"
+    "Set a supplier token in model onboarding to read its charges": "Set a supplier token in model onboarding to read its charges",
+    "Price adjustment per image": "Price adjustment per image",
+    "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.",
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Only expression or fixed prices can take a markup. Confirm the upstream price first."
   }
 }

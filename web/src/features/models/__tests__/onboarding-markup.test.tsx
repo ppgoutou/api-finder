@@ -356,4 +356,68 @@ describe('OnboardingMarkupTable', () => {
     expect(markupInput('480p·none').value).toBe('')
     expect(markupInput('720p·none').value).toBe('0.2')
   })
+
+  it('shows a fixed-price model per image and saves its adjustment per request', async () => {
+    const put = vi.spyOn(api, 'put').mockResolvedValue({
+      data: { success: true, data: { channels: [], changes: [] } },
+    })
+    const queryClient = new QueryClient()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <OnboardingMarkupTable
+          entry={{
+            model_name: 'image',
+            version: 'v1',
+            configured: { ModelPrice: 0.3 },
+            effective: {},
+          }}
+          markup={undefined}
+          priceFactor={1.25}
+        />
+      </QueryClientProvider>
+    )
+    const input = screen.getByRole<HTMLInputElement>('textbox', {
+      name: 'Price adjustment per image',
+    })
+    const row = input.closest('tr') as HTMLElement
+
+    await userEvent.type(input, '-0.05')
+
+    expect(within(row).getByText('$0.3000/image')).toBeTruthy()
+    expect(within(row).getByText('$0.3750/image')).toBeTruthy()
+    expect(within(row).getByText('$0.3250/image')).toBeTruthy()
+    await userEvent.click(saveButton())
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
+    expect(put).toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/markup',
+      { model_name: 'image', per_request: -0.05 }
+    )
+  })
+
+  it('reads a marked-up fixed price from the stored supplier price', () => {
+    const queryClient = new QueryClient()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <OnboardingMarkupTable
+          entry={{
+            model_name: 'image',
+            version: 'v1',
+            configured: { ModelPrice: 0.34 },
+            effective: {},
+          }}
+          markup={{ tiers: null, base_price: 0.3, per_request: 0.05 }}
+          priceFactor={1.25}
+        />
+      </QueryClientProvider>
+    )
+    const input = screen.getByRole<HTMLInputElement>('textbox', {
+      name: 'Price adjustment per image',
+    })
+
+    expect(input.value).toBe('0.05')
+    expect(
+      within(input.closest('tr') as HTMLElement).getByText('$0.3000/image')
+    ).toBeTruthy()
+    expect(saveButton()).toHaveProperty('disabled', true)
+  })
 })
