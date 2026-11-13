@@ -308,7 +308,7 @@ export const meta = {
     en: "Volcengine Doubao Seedance video generation and Seedream image generation",
     zh: "火山引擎豆包 Seedance 视频生成与 Seedream 图片生成",
   },
-  version: "1.5.0",
+  version: "1.5.1",
   author: { name: "QuantumNous" },
   channelTypes: [54, 45], // VolcEngine-type channels serve Ark video models with the same wire format
   models: Object.keys(VIDEO_MODELS).concat(Object.keys(IMAGE_MODELS)),
@@ -820,6 +820,23 @@ export function buildSubmitRequest(ctx) {
   for (const url of images) imageContent.push({ type: "image_url", image_url: { url: url } });
   const metadataContent = Array.isArray(body.content) ? body.content : [];
   body.content = imageContent.concat(metadataContent).filter((item) => item && item.type !== "text");
+  // Ark requires a role on first-and-last-frame and reference media, and
+  // relays such as PxRouter require it on every image. Fill only missing
+  // roles: any video, audio or reference role makes all images references,
+  // otherwise one image is the first frame and two are first and last frame.
+  const imageCount = body.content.filter((item) => item.type === "image_url").length;
+  const asReference =
+    imageCount > 2 || body.content.some((item) => ["video_url", "audio_url"].includes(item.type) || trimmed(item.role).startsWith("reference_"));
+  const takenFrames = body.content.map((item) => trimmed(item.role));
+  body.content = body.content.map((item) => {
+    if (trimmed(item.role) || !["image_url", "video_url", "audio_url"].includes(item.type)) return item;
+    let role = item.type === "video_url" ? "reference_video" : item.type === "audio_url" ? "reference_audio" : "reference_image";
+    if (item.type === "image_url" && !asReference) {
+      role = takenFrames.includes("first_frame") ? "last_frame" : "first_frame";
+      takenFrames.push(role);
+    }
+    return Object.assign({}, item, { role: role });
+  });
   const hasReference = body.content.length > 0;
   if (trimmed(req.prompt) || !hasReference) body.content.push({ type: "text", text: req.prompt || "" });
   if (Array.isArray(body.content)) body.content = rewriteDraftTaskContent(body.content, ctx.originTasks);
