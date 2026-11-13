@@ -8258,6 +8258,9 @@
     "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — сколько списано с пользователей на канале. Затраты у поставщика — сколько поставщик списал за ключ канала, по данным поставщика через его токен, включая вызовы администраторов. Успешность задач учитывает только асинхронные задачи; прочерк означает, что баланс не получен.",
     "Failed to fetch": "Не удалось получить",
     "Total of channels with a cost": "Итого по каналам с затратами",
-    "Set a supplier token in model onboarding to read its charges": "Укажите токен поставщика в подключении моделей, чтобы читать его списания"
+    "Set a supplier token in model onboarding to read its charges": "Укажите токен поставщика в подключении моделей, чтобы читать его списания",
+    "Price adjustment per image": "Корректировка цены за изображение",
+    "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Клиенты платят итоговую цену за каждое изображение. Отрицательная корректировка снижает цену; при новом коэффициенте группы корректировка сохраняется.",
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению или фиксированной цене. Сначала подтвердите цену поставщика."
   }
 }

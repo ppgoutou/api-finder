@@ -384,9 +384,13 @@ export type TierMarkup = {
 }
 
 export type OnboardingMarkup = {
-  /** The supplier expression the markups are added to. */
-  base_expr: string
-  tiers: Record<string, TierMarkup>
+  /** The supplier expression the tier markups are added to. */
+  base_expr?: string
+  tiers: Record<string, TierMarkup> | null
+  /** The supplier fixed price, in USD per request (per image). */
+  base_price?: number
+  /** A fixed amount, in USD per request (per image), added after the ratio. */
+  per_request?: number
 }
 
 export type UpstreamPriceReport = {

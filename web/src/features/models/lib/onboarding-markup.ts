@@ -29,11 +29,15 @@ import type {
 
 import type { TierMarkup } from '../types'
 
-/** One price tier of a video model, in USD per second of video. */
+/**
+ * One price tier of a video model, in USD per second of video, or the fixed
+ * price of a model, in USD per request (per image).
+ */
 export type MarkupRow = {
   /** The tier name in the expression, which keys its markup. */
   tier: string
-  source: ParsedTaskTier
+  /** Absent for a fixed price. */
+  source?: ParsedTaskTier
   field: string
   /** Set for a token-priced tier; its per-second prices assume this rate. */
   tokensPerSecond?: number
@@ -103,6 +107,27 @@ export function markupRows(
     })
   }
   return rows
+}
+
+/** The row key of a fixed price. */
+export const FIXED_PRICE_ROW = 'fixed'
+
+/**
+ * The single row of a model charged a fixed price per request (per image):
+ * the stored supplier price of a marked-up model, else its configured
+ * ModelPrice. Expression prices return no row.
+ */
+export function fixedPriceRows(
+  configured: Record<string, unknown>,
+  basePrice: number | undefined
+): MarkupRow[] {
+  let supply = basePrice
+  if (!supply && configured['billing_setting.billing_mode'] !== 'tiered_expr') {
+    const price = configured.ModelPrice
+    supply = typeof price === 'number' ? price : undefined
+  }
+  if (!supply || !Number.isFinite(supply) || supply <= 0) return []
+  return [{ tier: FIXED_PRICE_ROW, field: '', supply, reference: false }]
 }
 
 /**

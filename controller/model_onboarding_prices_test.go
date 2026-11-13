@@ -917,6 +917,60 @@ func TestOnboardingPriceMarkupChargesAFixedAmountAfterTheGroupRatio(t *testing.T
 	assert.NotContains(t, readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption), "video")
 }
 
+func TestOnboardingPriceMarkupAddsAFixedAmountPerImage(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	previousRatios := ratio_setting.GroupRatio2JSONString()
+	t.Cleanup(func() { require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(previousRatios)) })
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.25}`))
+	require.NoError(t, model.UpdateModelPricing([]model.ModelPricingChange{{
+		ModelName: "image", ExpectedVersion: model.ModelPricingVersion(model.PricingValues{}),
+		Pricing: model.PricingValues{"ModelPrice": 0.3},
+	}}))
+	modelPrice := func() float64 {
+		t.Helper()
+		snapshot, err := model.GetModelPricingSnapshot([]string{"image"})
+		require.NoError(t, err)
+		return snapshot.Entries[0].Configured["ModelPrice"].(float64)
+	}
+	postMarkup := func(body string) bool {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		context, _ := gin.CreateTestContext(recorder)
+		context.Request = httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
+		SetOnboardingPriceMarkup(context)
+		var response struct {
+			Success bool `json:"success"`
+		}
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		return response.Success
+	}
+	customerCost := func() float64 { return modelPrice() * ratio_setting.PublicPriceFactor() }
+
+	// One image costs $0.3 × 1.25 = $0.375 at the ratio price.
+	assert.False(t, postMarkup(`{"model_name":"image","per_request":-0.375}`), "a discount down to a free image is rejected")
+	assert.False(t, postMarkup(`{"model_name":"image","tiers":{"x":{"field":"n","per_second":1}}}`), "a fixed price takes no tier markup")
+	assert.InDelta(t, 0.3, modelPrice(), 1e-9, "a rejected markup leaves the price alone")
+
+	require.True(t, postMarkup(`{"model_name":"image","per_request":0.05}`))
+	assert.InDelta(t, 0.375+0.05, customerCost(), 1e-9, "$0.05 per image on top of the ratio price")
+
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.5}`))
+	assert.Empty(t, recomposeOnboardingMarkups())
+	assert.InDelta(t, 0.45+0.05, customerCost(), 1e-9, "a new ratio keeps the fixed markup")
+
+	pricing, markup, err := markedUpPricing("image", model.PricingValues{"ModelPrice": 0.4})
+	require.NoError(t, err)
+	require.NotNil(t, markup)
+	assert.Equal(t, 0.4, markup.BasePrice)
+	assert.InDelta(t, 0.4*1.5+0.05, pricing["ModelPrice"].(float64)*1.5, 1e-9, "a new supplier price keeps the markup")
+	_, _, err = markedUpPricing("image", model.PricingValues{"billing_setting.billing_mode": "tiered_expr", "billing_setting.billing_expr": `tier("base", 1)`})
+	assert.Error(t, err, "a supplier expression does not silently drop a fixed markup")
+
+	require.True(t, postMarkup(`{"model_name":"image","per_request":0}`))
+	assert.InDelta(t, 0.3, modelPrice(), 1e-9, "clearing the markup restores the supplier price")
+	assert.NotContains(t, readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption), "image")
+}
+
 func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 	modelManagementDB(t, "sqlite", "")
 	service.InitHttpClient()

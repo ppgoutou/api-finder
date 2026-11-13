@@ -8258,6 +8258,9 @@
     "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入为用户在该渠道被扣的钱；上游成本为供应商对该渠道密钥的实际扣费（用供应商令牌读取，含管理员调用）。任务成功率仅统计异步任务；“—”表示未获取余额。",
     "Failed to fetch": "获取失败",
     "Total of channels with a cost": "合计（有成本数据的渠道）",
-    "Set a supplier token in model onboarding to read its charges": "在模型上新中设置供应商令牌后才能读取扣费"
+    "Set a supplier token in model onboarding to read its charges": "在模型上新中设置供应商令牌后才能读取扣费",
+    "Price adjustment per image": "每张图片的价格调整",
+    "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "客户按最终价为每张图片付费。负数表示降价；修改分组倍率后调整金额保持不变。",
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "只有表达式价格或固定价格可以加价。请先确认上游价格。"
   }
 }

@@ -42,6 +42,8 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { setPriceMarkup } from '../../api'
 import {
   batchAdjustment,
+  FIXED_PRICE_ROW,
+  fixedPriceRows,
   markupRows,
   tierMarkups,
   type BatchOperation,
@@ -51,11 +53,13 @@ import { modelsQueryKeys } from '../../lib/query-keys'
 import type { OnboardingMarkup } from '../../types'
 import { OnboardingMarkupBatch } from './onboarding-markup-batch'
 
-// The server bounds one tier's adjustment, in USD per second, either way.
+// The server bounds one adjustment, in USD per second or per request, either
+// way.
 const MAX_ADJUSTMENT = 1000
 
 /**
- * Supplier, group-ratio, adjustment and final price per second of each tier.
+ * Supplier, group-ratio, adjustment and final price per second of each tier,
+ * or per image of a fixed-price model.
  * The adjustment is a fixed amount customers pay on top of the group-ratio
  * price, or below it when negative; the server folds it into the charged
  * expression. A final price under the supply price is flagged but allowed.
@@ -81,16 +85,29 @@ export function OnboardingMarkupTable(props: {
   const examples =
     props.entry.usage_examples ??
     props.entry.plugin_variants?.[0]?.usage_examples
-  const rows = useMemo(
-    () => markupRows(baseExpr, props.entry.usage_schema, examples),
-    [baseExpr, props.entry.usage_schema, examples]
-  )
+  const rows = useMemo(() => {
+    const tiers = markupRows(baseExpr, props.entry.usage_schema, examples)
+    if (tiers.length > 0) return tiers
+    return fixedPriceRows(props.entry.configured, props.markup?.base_price)
+  }, [
+    baseExpr,
+    props.entry.usage_schema,
+    examples,
+    props.entry.configured,
+    props.markup?.base_price,
+  ])
+  const perImage = rows.length === 1 && rows[0].tier === FIXED_PRICE_ROW
+  const unit = perImage ? t('image') : t('s')
 
   // Inputs hold display-currency text; saved markups are USD.
   const savedText = useMemo(() => {
     const text: Record<string, string> = {}
     for (const [tier, markup] of Object.entries(props.markup?.tiers ?? {})) {
       text[tier] = String(Number((markup.per_second * rate).toFixed(6)))
+    }
+    const perRequest = props.markup?.per_request
+    if (perRequest) {
+      text[FIXED_PRICE_ROW] = String(Number((perRequest * rate).toFixed(6)))
     }
     return text
   }, [props.markup, rate])
@@ -120,10 +137,17 @@ export function OnboardingMarkupTable(props: {
   const save = useMutation({
     mutationFn: async () =>
       requireServerSuccess(
-        await setPriceMarkup({
-          model_name: props.entry.model_name,
-          tiers: tierMarkups(rows, amounts),
-        })
+        await setPriceMarkup(
+          perImage
+            ? {
+                model_name: props.entry.model_name,
+                per_request: amounts[FIXED_PRICE_ROW] ?? 0,
+              }
+            : {
+                model_name: props.entry.model_name,
+                tiers: tierMarkups(rows, amounts),
+              }
+        )
       ).data,
     onSuccess: async (report) => {
       queryClient.setQueryData(modelsQueryKeys.upstreamPrices(), report)
@@ -135,7 +159,7 @@ export function OnboardingMarkupTable(props: {
   })
 
   if (rows.length === 0) return null
-  const price = (usd: number) => `${symbol}${(usd * rate).toFixed(4)}/${t('s')}`
+  const price = (usd: number) => `${symbol}${(usd * rate).toFixed(4)}/${unit}`
   const inScope = (onlySelected: boolean) =>
     rows.filter((row) => !onlySelected || selected.has(row.tier))
   const applyBatch = (
@@ -193,12 +217,14 @@ export function OnboardingMarkupTable(props: {
       cell: (row) => (
         <div className='space-y-0.5'>
           <div>
-            {taskTierConditions(
-              row.source,
-              props.entry.usage_schema,
-              language,
-              t
-            ) || row.tier}
+            {row.source
+              ? taskTierConditions(
+                  row.source,
+                  props.entry.usage_schema,
+                  language,
+                  t
+                ) || row.tier
+              : t('Per image')}
           </div>
           {row.reference && (
             <div className='text-muted-foreground text-xs'>
@@ -230,9 +256,13 @@ export function OnboardingMarkupTable(props: {
           </InputGroupAddon>
           <InputGroupInput
             inputMode='decimal'
-            aria-label={t('Price adjustment per second for {{tier}}', {
-              tier: row.tier,
-            })}
+            aria-label={
+              perImage
+                ? t('Price adjustment per image')
+                : t('Price adjustment per second for {{tier}}', {
+                    tier: row.tier,
+                  })
+            }
             aria-invalid={badInput.has(row.tier) || notPositive.has(row.tier)}
             className={
               (amounts[row.tier] ?? 0) < 0
@@ -249,7 +279,7 @@ export function OnboardingMarkupTable(props: {
             }
           />
           <InputGroupAddon align='inline-end'>
-            <InputGroupText>/{t('s')}</InputGroupText>
+            <InputGroupText>/{unit}</InputGroupText>
           </InputGroupAddon>
         </InputGroup>
       ),
@@ -275,9 +305,12 @@ export function OnboardingMarkupTable(props: {
 
   return (
     <section className='space-y-2'>
-      <h4 className='text-sm font-medium'>{t('Price per second')}</h4>
+      <h4 className='text-sm font-medium'>
+        {perImage ? t('Price per image') : t('Price per second')}
+      </h4>
       <OnboardingMarkupBatch
         symbol={symbol}
+        unit={unit}
         selectedCount={selected.size}
         onApply={applyBatch}
         onClear={clearBatch}
@@ -290,9 +323,13 @@ export function OnboardingMarkupTable(props: {
         columns={columns}
       />
       <p className='text-muted-foreground text-xs'>
-        {t(
-          'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
-        )}
+        {perImage
+          ? t(
+              'Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.'
+            )
+          : t(
+              'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
+            )}
       </p>
       {badInput.size > 0 && (
         <p role='alert' className='text-destructive text-sm'>

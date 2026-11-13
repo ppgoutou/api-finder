@@ -8258,6 +8258,9 @@
     "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "収入はユーザーがこのチャネルで課金された額です。上流コストは仕入れ先がチャネルのキーに実際に課金した額で、仕入れ先トークンで取得します（管理者の呼び出しを含む）。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
     "Failed to fetch": "取得失敗",
     "Total of channels with a cost": "合計（コスト取得済みチャネル）",
-    "Set a supplier token in model onboarding to read its charges": "モデル追加で仕入れ先トークンを設定すると課金を取得できます"
+    "Set a supplier token in model onboarding to read its charges": "モデル追加で仕入れ先トークンを設定すると課金を取得できます",
+    "Price adjustment per image": "画像1枚あたりの価格調整",
+    "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "顧客は画像1枚ごとに最終価格を支払います。負の調整は値下げになります。グループ倍率を変更しても調整額は変わりません。",
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格または固定価格のみです。先に上流価格を確定してください。"
   }
 }
