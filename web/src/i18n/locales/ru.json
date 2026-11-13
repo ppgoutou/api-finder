@@ -8234,6 +8234,8 @@
     "{{value}} s": "{{value}} с",
     "{{value}} MB": "{{value}} МБ",
     "Copy status": "Статус копирования",
-    "Retrying, attempt {{count}}": "Повтор, попытка {{count}}"
+    "Retrying, attempt {{count}}": "Повтор, попытка {{count}}",
+    "Hide changes": "Скрыть изменения",
+    "Show {{count}} changes": "Показать изменения: {{count}}"
   }
 }

@@ -8234,6 +8234,8 @@
     "{{value}} s": "{{value}} s",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "Copy status",
-    "Retrying, attempt {{count}}": "Retrying, attempt {{count}}"
+    "Retrying, attempt {{count}}": "Retrying, attempt {{count}}",
+    "Hide changes": "Hide changes",
+    "Show {{count}} changes": "Show {{count}} changes"
   }
 }
