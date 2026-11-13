@@ -8234,6 +8234,24 @@
     "{{value}} s": "{{value}} s",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "Copy status",
-    "Retrying, attempt {{count}}": "Retrying, attempt {{count}}"
+    "Retrying, attempt {{count}}": "Retrying, attempt {{count}}",
+    "All time": "All time",
+    "Paid in this period, net of refunds": "Paid in this period, net of refunds",
+    "Usage in this period, including test credit": "Usage in this period, including test credit",
+    "Promotional cost with no revenue": "Promotional cost with no revenue",
+    "New users": "New users",
+    "Registered in this period": "Registered in this period",
+    "Paid at least once": "Paid at least once",
+    "Dormant payers": "Dormant payers",
+    "Balance left, no calls in 30 days": "Balance left, no calls in 30 days",
+    "{{paid}} / {{registered}} registered in this period have paid": "{{paid}} / {{registered}} registered in this period have paid",
+    "Made at least one call": "Made at least one call",
+    "Paid at least twice in this period": "Paid at least twice in this period",
+    "Figures cover the selected period. Unused amount, negative balances and runway are current.": "Figures cover the selected period. Unused amount, negative balances and runway are current.",
+    "Top-up amount of all time, all channels": "Top-up amount of all time, all channels",
+    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.",
+    "Upstream cost": "Upstream cost",
+    "Profit": "Profit",
+    "Profit margin": "Profit margin"
   }
 }

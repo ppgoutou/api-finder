@@ -33,6 +33,7 @@ import {
 } from '../../lib/ops'
 
 const RANGE_OPTIONS: { value: OpsRangeKey; labelKey: string }[] = [
+  { value: 'all', labelKey: 'All time' },
   { value: 'today', labelKey: 'Today' },
   { value: 'yesterday', labelKey: 'Yesterday' },
   { value: '7d', labelKey: 'Last 7 days' },

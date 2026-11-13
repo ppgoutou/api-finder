@@ -8234,6 +8234,24 @@
     "{{value}} s": "{{value}} 秒",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "转存状态",
-    "Retrying, attempt {{count}}": "重试中，第 {{count}} 次"
+    "Retrying, attempt {{count}}": "重试中，第 {{count}} 次",
+    "All time": "全部",
+    "Paid in this period, net of refunds": "本期支付，已扣退款",
+    "Usage in this period, including test credit": "本期消费，含测试金",
+    "Promotional cost with no revenue": "推广成本，无收益",
+    "New users": "新注册用户",
+    "Registered in this period": "本期注册",
+    "Paid at least once": "至少充值过一次",
+    "Dormant payers": "沉睡付费用户",
+    "Balance left, no calls in 30 days": "有余额，30 天无调用",
+    "{{paid}} / {{registered}} registered in this period have paid": "本期注册 {{registered}} 人中 {{paid}} 人已充值",
+    "Made at least one call": "至少调用过一次",
+    "Paid at least twice in this period": "本期充值 2 次及以上",
+    "Figures cover the selected period. Unused amount, negative balances and runway are current.": "数据为所选时间段内的数值；待使用金额、负余额和可用天数为当前值。",
+    "Top-up amount of all time, all channels": "全部时间的充值金额，全部渠道",
+    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入为用户在该渠道的消费；上游成本为扣除分组倍率后的金额（模型价即供应商价）。任务成功率仅统计异步任务；“—”表示未获取余额。",
+    "Upstream cost": "上游成本",
+    "Profit": "利润",
+    "Profit margin": "利润率"
   }
 }

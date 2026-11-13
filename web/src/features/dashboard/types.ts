@@ -291,6 +291,8 @@ export interface OpsPeriodStats {
   used_quota: number
   other_credit_quota: number
   test_credit_quota: number
+  registered_payers: number
+  repeat_payers: number
 }
 
 export interface OpsWallet {
@@ -350,6 +352,7 @@ export interface OpsUpstream {
   channel_id: number
   name: string
   quota: number
+  cost_quota: number
   count: number
   balance: number
   balance_updated_time: number

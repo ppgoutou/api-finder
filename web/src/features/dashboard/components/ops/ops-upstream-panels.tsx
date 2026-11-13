@@ -22,6 +22,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -31,8 +32,9 @@ import {
   formatPercent,
   formatTimestampToDate,
 } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
-import { formatOpsMoney, percentOf } from '../../lib/ops'
+import { formatOpsMoney, opsProfit, percentOf } from '../../lib/ops'
 import type { OpsTopUser, OpsUpstream } from '../../types'
 import { PanelWrapper } from '../ui/panel-wrapper'
 
@@ -43,24 +45,29 @@ export function OpsUpstreamPanel(props: {
   loading: boolean
 }) {
   const { t } = useTranslation()
+  const revenue = props.upstream.reduce((sum, row) => sum + row.quota, 0)
+  const cost = props.upstream.reduce((sum, row) => sum + row.cost_quota, 0)
 
   return (
     <PanelWrapper
       title={t('Upstream channels')}
       description={t(
-        'Task success rate only covers async tasks; a dash means no balance was fetched.'
+        'Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.'
       )}
       loading={props.loading}
       empty={props.upstream.length === 0}
       height='h-40'
       className='min-w-0'
-      contentClassName='max-h-96 overflow-y-auto p-0 sm:p-0'
+      contentClassName='max-h-[32rem] overflow-y-auto p-0 sm:p-0'
     >
-      <Table className='min-w-[480px]'>
+      <Table className='min-w-[760px]'>
         <TableHeader>
           <TableRow>
             <TableHead>{t('Channel')}</TableHead>
-            <TableHead className='text-right'>{t('Usage amount')}</TableHead>
+            <TableHead className='text-right'>{t('Revenue')}</TableHead>
+            <TableHead className='text-right'>{t('Upstream cost')}</TableHead>
+            <TableHead className='text-right'>{t('Profit')}</TableHead>
+            <TableHead className='text-right'>{t('Profit margin')}</TableHead>
             <TableHead className='text-right'>
               {t('Task success rate')}
             </TableHead>
@@ -76,6 +83,10 @@ export function OpsUpstreamPanel(props: {
               <TableCell className={CELL}>
                 {formatOpsMoney(row.quota)}
               </TableCell>
+              <TableCell className={CELL}>
+                {formatOpsMoney(row.cost_quota)}
+              </TableCell>
+              <OpsProfitCells revenue={row.quota} cost={row.cost_quota} />
               <TableCell className={CELL}>
                 {formatPercent(
                   percentOf(
@@ -99,8 +110,33 @@ export function OpsUpstreamPanel(props: {
             </TableRow>
           ))}
         </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell className='font-medium'>{t('Total')}</TableCell>
+            <TableCell className={CELL}>{formatOpsMoney(revenue)}</TableCell>
+            <TableCell className={CELL}>{formatOpsMoney(cost)}</TableCell>
+            <OpsProfitCells revenue={revenue} cost={cost} />
+            <TableCell />
+            <TableCell />
+          </TableRow>
+        </TableFooter>
       </Table>
     </PanelWrapper>
+  )
+}
+
+function OpsProfitCells(props: { revenue: number; cost: number }) {
+  const result = opsProfit(props.revenue, props.cost)
+  const tone = result.profit < 0 ? 'text-destructive' : undefined
+  return (
+    <>
+      <TableCell className={cn(CELL, tone)}>
+        {formatOpsMoney(result.profit)}
+      </TableCell>
+      <TableCell className={cn(CELL, tone)}>
+        {formatPercent(result.margin)}
+      </TableCell>
+    </>
   )
 }
 

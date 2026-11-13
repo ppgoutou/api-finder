@@ -81,6 +81,7 @@ export function OpsTrendPanel(props: {
 export function OpsChannelPanel(props: {
   channels: OpsChannelStats[]
   loading: boolean
+  allTime: boolean
 }) {
   const { t } = useTranslation()
   const rows = useMemo(
@@ -96,7 +97,11 @@ export function OpsChannelPanel(props: {
   return (
     <PanelWrapper
       title={t('Order channel distribution')}
-      description={t('Top-up amount in the period, all channels')}
+      description={
+        props.allTime
+          ? t('Top-up amount of all time, all channels')
+          : t('Top-up amount in the period, all channels')
+      }
       loading={props.loading}
       empty={rows.length === 0}
       height='h-80'

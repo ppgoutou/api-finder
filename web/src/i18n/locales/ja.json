@@ -8234,6 +8234,24 @@
     "{{value}} s": "{{value}} 秒",
     "{{value}} MB": "{{value}} MB",
     "Copy status": "コピー状態",
-    "Retrying, attempt {{count}}": "再試行中（{{count}} 回目）"
+    "Retrying, attempt {{count}}": "再試行中（{{count}} 回目）",
+    "All time": "全期間",
+    "Paid in this period, net of refunds": "期間内の入金（返金控除後）",
+    "Usage in this period, including test credit": "期間内の利用額（テストクレジット含む）",
+    "Promotional cost with no revenue": "収益のない販促コスト",
+    "New users": "新規ユーザー",
+    "Registered in this period": "期間内に登録",
+    "Paid at least once": "1回以上入金",
+    "Dormant payers": "休眠中の課金ユーザー",
+    "Balance left, no calls in 30 days": "残高あり、30日間呼び出しなし",
+    "{{paid}} / {{registered}} registered in this period have paid": "期間内登録 {{registered}} 人中 {{paid}} 人が入金済み",
+    "Made at least one call": "1回以上呼び出し",
+    "Paid at least twice in this period": "期間内に2回以上入金",
+    "Figures cover the selected period. Unused amount, negative balances and runway are current.": "選択期間内の数値です。未使用額・マイナス残高・残り日数は現在値です。",
+    "Top-up amount of all time, all channels": "全期間のチャージ額（全チャネル）",
+    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "収入はユーザーがこのチャネルで消費した額です。上流コストはグループ倍率を除いた額です（モデル価格＝仕入れ価格）。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
+    "Upstream cost": "上流コスト",
+    "Profit": "利益",
+    "Profit margin": "利益率"
   }
 }

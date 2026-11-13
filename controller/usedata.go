@@ -35,13 +35,19 @@ func parseFlowQuotaTimeRange(c *gin.Context) (int64, int64, bool) {
 
 // GetOpsDashboard serves the administrator's business overview.
 func GetOpsDashboard(c *gin.Context) {
-	startTimestamp, endTimestamp, ok := parseFlowQuotaTimeRange(c)
-	if !ok {
-		return
-	}
-	if endTimestamp-startTimestamp > opsDashboardMaxRangeSeconds {
-		common.ApiErrorT(c, "The time range cannot exceed 366 days")
-		return
+	now := common.GetTimestamp()
+	allTime := c.Query("all_time") == "true"
+	startTimestamp, endTimestamp := int64(0), now
+	if !allTime {
+		var ok bool
+		startTimestamp, endTimestamp, ok = parseFlowQuotaTimeRange(c)
+		if !ok {
+			return
+		}
+		if endTimestamp-startTimestamp > opsDashboardMaxRangeSeconds {
+			common.ApiErrorT(c, "The time range cannot exceed 366 days")
+			return
+		}
 	}
 	tzOffsetMinutes := 0
 	if raw := c.Query("tz_offset_minutes"); raw != "" {
@@ -53,9 +59,10 @@ func GetOpsDashboard(c *gin.Context) {
 		tzOffsetMinutes = parsed
 	}
 	dashboard, err := model.GetOpsDashboard(model.OpsDashboardQuery{
+		AllTime:         allTime,
 		Start:           startTimestamp,
 		End:             endTimestamp,
-		Now:             common.GetTimestamp(),
+		Now:             now,
 		Channel:         c.DefaultQuery("channel", model.OpsChannelAll),
 		ExcludeInternal: c.Query("exclude_internal") != "false",
 		TZOffsetMinutes: tzOffsetMinutes,

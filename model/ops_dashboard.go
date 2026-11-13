@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -27,10 +28,15 @@ const (
 	opsTopUserLimit         = 10
 	opsFailReasonLimit      = 5
 	opsFailReasonMaxRunes   = 160
+	// The all-time trend shows at most this many of the latest days.
+	opsTrendMaxDays int64 = 366
 )
 
 // OpsDashboardQuery selects one reporting period. Start and End are inclusive.
+// AllTime ignores Start: the period then covers everything up to End, and
+// there is no previous period to compare with.
 type OpsDashboardQuery struct {
+	AllTime         bool
 	Start           int64
 	End             int64
 	Now             int64
@@ -54,6 +60,10 @@ type OpsPeriodStats struct {
 	UsedQuota        int64 `json:"used_quota"`
 	OtherCreditQuota int64 `json:"other_credit_quota"`
 	TestCreditQuota  int64 `json:"test_credit_quota"`
+	// RegisteredPayers are the users registered in the period who have paid.
+	RegisteredPayers int64 `json:"registered_payers"`
+	// RepeatPayers paid at least twice in the period.
+	RepeatPayers int64 `json:"repeat_payers"`
 }
 
 // OpsOtherCredit breaks down wallet credits that did not come from an order.
@@ -153,6 +163,7 @@ type OpsUpstream struct {
 	ChannelId          int     `json:"channel_id"`
 	Name               string  `json:"name"`
 	Quota              int64   `json:"quota"`
+	CostQuota          int64   `json:"cost_quota"`
 	Count              int64   `json:"count"`
 	Balance            float64 `json:"balance"`
 	BalanceUpdatedTime int64   `json:"balance_updated_time"`
@@ -387,12 +398,27 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 			stats.NewPayers++
 		}
 	}
-
-	users := DB.Model(&User{}).Where("created_at >= ? AND created_at <= ?", start, end)
-	if query.ExcludeInternal {
-		users = users.Where("role < ?", common.RoleAdminUser)
+	repeat := opsChannelFilter(query.Channel).apply(
+		opsOrders(scope).Where("status = ? AND complete_time >= ? AND complete_time <= ?", common.TopUpStatusSuccess, start, end),
+	).Select("user_id").Group("user_id").Having("count(*) >= 2")
+	if err = DB.Table("(?) as repeat_payers", repeat).Count(&stats.RepeatPayers).Error; err != nil {
+		return stats, err
 	}
-	if err = users.Count(&stats.NewUsers).Error; err != nil {
+
+	registered := func() *gorm.DB {
+		users := DB.Model(&User{}).Where("created_at >= ? AND created_at <= ?", start, end)
+		if query.ExcludeInternal {
+			users = users.Where("role < ?", common.RoleAdminUser)
+		}
+		return users
+	}
+	if err = registered().Count(&stats.NewUsers).Error; err != nil {
+		return stats, err
+	}
+	everPaid := opsChannelFilter(query.Channel).apply(
+		opsOrders(scope).Where("status = ?", common.TopUpStatusSuccess),
+	).Select("user_id")
+	if err = registered().Where("id IN (?)", everPaid).Count(&stats.RegisteredPayers).Error; err != nil {
 		return stats, err
 	}
 
@@ -855,6 +881,39 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 		target.Count = row.Count
 	}
 
+	// Model prices are what the supplier charges and the group ratio is the
+	// markup, so a call cost its charge divided by the ratio of the group it
+	// was billed in. A refunded charge was not paid upstream either.
+	var billed []struct {
+		ChannelId   int
+		BilledGroup string
+		Type        int
+		Quota       int64
+	}
+	billedQuery := LOG_DB.Table("logs").
+		Select("channel_id, "+logGroupCol+" as billed_group, type, coalesce(sum(quota), 0) as quota").
+		Where("type IN ? AND created_at >= ? AND created_at <= ? AND channel_id > 0", []int{LogTypeConsume, LogTypeRefund}, query.Start, query.End).
+		Group("channel_id, " + logGroupCol + ", type")
+	if err = scope.excludeUsers(billedQuery, "user_id").Scan(&billed).Error; err != nil {
+		return err
+	}
+	groupRatios := ratio_setting.GetGroupRatioCopy()
+	costByChannel := make(map[int]decimal.Decimal)
+	for _, row := range billed {
+		ratio := groupRatios[row.BilledGroup]
+		if ratio <= 0 {
+			ratio = 1
+		}
+		cost := decimal.NewFromInt(row.Quota).Div(decimal.NewFromFloat(ratio))
+		if row.Type == LogTypeRefund {
+			cost = cost.Neg()
+		}
+		costByChannel[row.ChannelId] = costByChannel[row.ChannelId].Add(cost)
+	}
+	for channelId, cost := range costByChannel {
+		upstream(channelId).CostQuota = max(cost.Round(0).IntPart(), 0)
+	}
+
 	var taskCounts []struct {
 		ChannelId int
 		Status    string
@@ -949,6 +1008,28 @@ func opsLoadTopUsers(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 	return nil
 }
 
+// opsFirstActivity is when the earliest order or usage happened, so an
+// all-time trend starts there instead of at the epoch. It is end when there
+// is none.
+func opsFirstActivity(end int64) (int64, error) {
+	var firstOrder, firstUsage int64
+	err := DB.Model(&TopUp{}).Where("create_time > 0").Select("coalesce(min(create_time), 0)").Scan(&firstOrder).Error
+	if err != nil {
+		return 0, err
+	}
+	err = DB.Table("quota_data").Where("created_at > 0").Select("coalesce(min(created_at), 0)").Scan(&firstUsage).Error
+	if err != nil {
+		return 0, err
+	}
+	first := end
+	for _, candidate := range []int64{firstOrder, firstUsage} {
+		if candidate > 0 {
+			first = min(first, candidate)
+		}
+	}
+	return first, nil
+}
+
 // GetOpsDashboard builds the administrator's business overview. Wallet figures
 // are in quota units, so the page shows them in the site's display currency.
 func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
@@ -971,12 +1052,17 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 		return nil, err
 	}
 
+	if query.AllTime {
+		query.Start = 0
+	}
 	if result.Current, err = opsPeriodStats(scope, query, query.Start, query.End, payers); err != nil {
 		return nil, err
 	}
-	length := query.End - query.Start + 1
-	if result.Previous, err = opsPeriodStats(scope, query, query.Start-length, query.Start-1, payers); err != nil {
-		return nil, err
+	if !query.AllTime {
+		length := query.End - query.Start + 1
+		if result.Previous, err = opsPeriodStats(scope, query, query.Start-length, query.Start-1, payers); err != nil {
+			return nil, err
+		}
 	}
 	if err = opsLoadUsersAndWallet(scope, query, result, payers); err != nil {
 		return nil, err
@@ -992,7 +1078,14 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = opsLoadTrend(scope, query, result, refunds); err != nil {
+	trendQuery := query
+	if query.AllTime {
+		if trendQuery.Start, err = opsFirstActivity(query.End); err != nil {
+			return nil, err
+		}
+		trendQuery.Start = max(trendQuery.Start, query.End-opsTrendMaxDays*24*60*60+1)
+	}
+	if err = opsLoadTrend(scope, trendQuery, result, refunds); err != nil {
 		return nil, err
 	}
 	if err = opsLoadModels(scope, query, result, refunds); err != nil {
