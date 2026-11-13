@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
-	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -314,36 +313,26 @@ func TestGetOpsDashboardAllTimeCoversEverythingWithoutComparison(t *testing.T) {
 	assert.Equal(t, int64(5), got.Trend[0].UsedQuota, "net of the refund that day")
 }
 
-func TestGetOpsDashboardUpstreamCostRemovesGroupMarkup(t *testing.T) {
+func TestGetOpsDashboardChannelRevenueKeepsUpWithLogs(t *testing.T) {
 	seedOpsDashboard(t)
-	original := ratio_setting.GroupRatio2JSONString()
-	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.25,"vip":2}`))
-	t.Cleanup(func() { require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(original)) })
-
 	logs := []Log{
-		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 1000, CreatedAt: opsTestStart + 10},
-		{UserId: 3, Type: LogTypeConsume, ChannelId: 2, Group: "vip", Quota: 400, CreatedAt: opsTestStart + 20},
-		// A refunded charge was not paid upstream.
-		{UserId: 3, Type: LogTypeRefund, ChannelId: 2, Group: "vip", Quota: 100, CreatedAt: opsTestStart + 30},
-		// A group without a ratio is billed at its charge.
-		{UserId: 2, Type: LogTypeConsume, ChannelId: 4, Group: "gone", Quota: 60, CreatedAt: opsTestStart + 40},
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Quota: 1000, CreatedAt: opsTestStart + 10},
+		{UserId: 3, Type: LogTypeConsume, ChannelId: 2, Quota: 400, CreatedAt: opsTestStart + 20},
+		{UserId: 3, Type: LogTypeRefund, ChannelId: 2, Quota: 100, CreatedAt: opsTestStart + 30},
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 4, Quota: 60, CreatedAt: opsTestStart + 40},
 		// Administrators are left out, and so is usage outside the period.
-		{UserId: 1, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 5000, CreatedAt: opsTestStart + 50},
-		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Group: "default", Quota: 5000, CreatedAt: opsTestStart - 50},
+		{UserId: 1, Type: LogTypeConsume, ChannelId: 2, Quota: 5000, CreatedAt: opsTestStart + 50},
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 2, Quota: 5000, CreatedAt: opsTestStart - 50},
 	}
 	require.NoError(t, DB.Create(&logs).Error)
 
 	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
 	require.NoError(t, err)
 
-	costs := make(map[int]int64)
 	revenue := make(map[int]int64)
 	for _, row := range got.Upstream {
-		costs[row.ChannelId] = row.CostQuota
 		revenue[row.ChannelId] = row.Quota
 	}
-	// 1000/1.25 + (400-100)/2 - the seeded refund of 10 at no group's ratio.
-	assert.Equal(t, map[int]int64{1: 0, 2: 940, 4: 60}, costs)
 	// Logs run ahead of the batched quota_data on channels 2 and 4
 	// (1000 + 400 - 100 - the seeded refund of 10); channel 1 keeps its
 	// quota_data figure, which its logs do not fully cover.

@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "Платили минимум дважды за период",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "Данные за выбранный период. Неиспользованная сумма, отрицательные балансы и запас — текущие.",
     "Top-up amount of all time, all channels": "Сумма пополнений за всё время, все каналы",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — расходы пользователей на канале. Затраты у поставщика — эта сумма без наценки группы, так как цены моделей равны цене поставщика. Успешность задач учитывает только асинхронные задачи; прочерк означает, что баланс не получен.",
     "Upstream cost": "Затраты у поставщика",
     "Profit": "Прибыль",
     "Profit margin": "Маржа",
     "Hide changes": "Скрыть изменения",
     "Show {{count}} changes": "Показать изменения: {{count}}",
-    "Key group ratio": "Коэффициент группы ключа"
+    "Key group ratio": "Коэффициент группы ключа",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — сколько списано с пользователей на канале. Затраты у поставщика — сколько поставщик списал за ключ канала, по данным поставщика через его токен, включая вызовы администраторов. Успешность задач учитывает только асинхронные задачи; прочерк означает, что баланс не получен.",
+    "Failed to fetch": "Не удалось получить",
+    "Total of channels with a cost": "Итого по каналам с затратами",
+    "Set a supplier token in model onboarding to read its charges": "Укажите токен поставщика в подключении моделей, чтобы читать его списания"
   }
 }

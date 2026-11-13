@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "本期儲值 2 次及以上",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "資料為所選時間段內的數值；待使用金額、負餘額和可用天數為當前值。",
     "Top-up amount of all time, all channels": "全部時間的儲值金額，全部渠道",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入為用戶在該渠道的消費；上游成本為扣除分組倍率後的金額（模型價即供應商價）。任務成功率僅統計非同步任務；「—」表示未取得餘額。",
     "Upstream cost": "上游成本",
     "Profit": "利潤",
     "Profit margin": "利潤率",
     "Hide changes": "收起變動",
     "Show {{count}} changes": "查看 {{count}} 項變動",
-    "Key group ratio": "令牌分組倍率"
+    "Key group ratio": "令牌分組倍率",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入為用戶在該渠道被扣的錢；上游成本為供應商對該渠道金鑰的實際扣費（用供應商令牌讀取，含管理員呼叫）。任務成功率僅統計非同步任務；「—」表示未取得餘額。",
+    "Failed to fetch": "取得失敗",
+    "Total of channels with a cost": "合計（有成本資料的渠道）",
+    "Set a supplier token in model onboarding to read its charges": "在模型上新中設定供應商令牌後才能讀取扣費"
   }
 }

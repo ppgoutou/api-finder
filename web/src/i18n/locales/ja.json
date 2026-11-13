@@ -8249,12 +8249,15 @@
     "Paid at least twice in this period": "期間内に2回以上入金",
     "Figures cover the selected period. Unused amount, negative balances and runway are current.": "選択期間内の数値です。未使用額・マイナス残高・残り日数は現在値です。",
     "Top-up amount of all time, all channels": "全期間のチャージ額（全チャネル）",
-    "Revenue is what users spent on the channel. Upstream cost is that charge without the group markup, since model prices are the supplier price. Task success rate only covers async tasks; a dash means no balance was fetched.": "収入はユーザーがこのチャネルで消費した額です。上流コストはグループ倍率を除いた額です（モデル価格＝仕入れ価格）。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
     "Upstream cost": "上流コスト",
     "Profit": "利益",
     "Profit margin": "利益率",
     "Hide changes": "変更を隠す",
     "Show {{count}} changes": "{{count}} 件の変更を表示",
-    "Key group ratio": "キーのグループ倍率"
+    "Key group ratio": "キーのグループ倍率",
+    "Revenue is what users were charged on the channel. Upstream cost is what the supplier charged the channel key, read from the supplier with its token, including administrator calls. Task success rate only covers async tasks; a dash means no balance was fetched.": "収入はユーザーがこのチャネルで課金された額です。上流コストは仕入れ先がチャネルのキーに実際に課金した額で、仕入れ先トークンで取得します（管理者の呼び出しを含む）。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
+    "Failed to fetch": "取得失敗",
+    "Total of channels with a cost": "合計（コスト取得済みチャネル）",
+    "Set a supplier token in model onboarding to read its charges": "モデル追加で仕入れ先トークンを設定すると課金を取得できます"
   }
 }

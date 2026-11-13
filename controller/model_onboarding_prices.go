@@ -126,6 +126,9 @@ func (snapshot *upstreamPriceSnapshot) stampKeyGroupRatio(models []string) {
 type upstreamCurrency struct {
 	DisplayType string  `json:"display_type"`
 	Rate        float64 `json:"usd_exchange_rate"`
+	// QuotaPerUnit is the supplier's quota for one internal unit. Zero for a
+	// snapshot taken before it was read.
+	QuotaPerUnit float64 `json:"quota_per_unit,omitempty"`
 }
 
 // priceScale is the factor that turns one supplier price unit into the local
@@ -532,12 +535,17 @@ func fetchUpstreamCurrency(ctx context.Context, baseURL string) (*upstreamCurren
 		Data struct {
 			QuotaDisplayType string  `json:"quota_display_type"`
 			USDExchangeRate  float64 `json:"usd_exchange_rate"`
+			QuotaPerUnit     float64 `json:"quota_per_unit"`
 		} `json:"data"`
 	}
 	if err := common.DecodeJson(io.LimitReader(response.Body, onboardingPriceMaxResponseBytes), &status); err != nil {
 		return nil, fmt.Errorf("invalid status response: %w", err)
 	}
-	return &upstreamCurrency{DisplayType: status.Data.QuotaDisplayType, Rate: status.Data.USDExchangeRate}, nil
+	return &upstreamCurrency{
+		DisplayType:  status.Data.QuotaDisplayType,
+		Rate:         status.Data.USDExchangeRate,
+		QuotaPerUnit: status.Data.QuotaPerUnit,
+	}, nil
 }
 
 // getSupplierDashboard reads one supplier dashboard route with the stored

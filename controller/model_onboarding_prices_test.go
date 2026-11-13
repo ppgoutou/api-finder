@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -914,4 +915,78 @@ func TestOnboardingPriceMarkupChargesAFixedAmountAfterTheGroupRatio(t *testing.T
 
 	assert.Equal(t, supplier, expression(), "clearing the markup restores the supplier expression")
 	assert.NotContains(t, readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption), "video")
+}
+
+func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	previous := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 8
+	t.Cleanup(func() { operation_setting.USDExchangeRate = previous })
+	opsSupplierCostCache.Lock()
+	opsSupplierCostCache.entries = map[string]opsSupplierCostEntry{}
+	opsSupplierCostCache.Unlock()
+
+	const start, end = int64(1_000_000), int64(1_000_000 + 86_399)
+	// The supplier serves two rows a page, whatever size is asked for.
+	consume := []int{400000, 400000, 800000}
+	logRequests := 0
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		switch r.URL.Path {
+		case "/api/status":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"CNY","usd_exchange_rate":1,"quota_per_unit":500000}}`))
+		case "/api/token/search":
+			if query.Get("token") == "shared-key" {
+				_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"name":"a"},{"name":"b"}]}}`))
+				return
+			}
+			assert.Equal(t, "key-1", query.Get("token"))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"name":"wave"}]}}`))
+		case "/api/log/self":
+			logRequests++
+			assert.Equal(t, "wave", query.Get("token_name"), "only the channel key's charges count")
+			assert.Equal(t, strconv.FormatInt(start, 10), query.Get("start_timestamp"))
+			assert.Equal(t, strconv.FormatInt(end, 10), query.Get("end_timestamp"))
+			rows, total := []int{400000}, 1
+			if query.Get("type") == strconv.Itoa(model.LogTypeConsume) {
+				page, _ := strconv.Atoi(query.Get("p"))
+				rows, total = consume[min((page-1)*2, len(consume)):min(page*2, len(consume))], len(consume)
+			}
+			items := make([]map[string]int, 0, len(rows))
+			for _, quota := range rows {
+				items = append(items, map[string]int{"quota": quota})
+			}
+			body, _ := common.Marshal(map[string]any{"success": true, "data": map[string]any{"items": items, "total": total}})
+			_, _ = w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(upstream.Close)
+	baseURL := upstream.URL
+	for _, channel := range []model.Channel{
+		{Id: 1, Type: 1, Key: "sk-key-1", Status: common.ChannelStatusEnabled, Name: "wave", BaseURL: &baseURL},
+		{Id: 2, Type: 1, Key: "key-2", Status: common.ChannelStatusEnabled, Name: "untracked", BaseURL: &baseURL},
+		{Id: 3, Type: 1, Key: "shared-key", Status: common.ChannelStatusEnabled, Name: "ambiguous", BaseURL: &baseURL},
+	} {
+		require.NoError(t, model.DB.Create(&channel).Error)
+	}
+	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token", "3": "supplier-token"}))
+
+	upstreamRows := []model.OpsUpstream{{ChannelId: 1}, {ChannelId: 2}, {ChannelId: 3}}
+	applySupplierCosts(context.Background(), upstreamRows, start, end, end)
+
+	// 1,600,000 charged less 400,000 refunded, in yuan at rate 1, is
+	// 1,200,000 / 8 in local dollars.
+	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostQuota: 150000, CostStatus: opsCostStatusOK}, upstreamRows[0])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 2, CostStatus: opsCostStatusNoToken}, upstreamRows[1])
+	assert.Equal(t, opsCostStatusError, upstreamRows[2].CostStatus)
+	assert.Equal(t, "the channel key matches 2 supplier tokens", upstreamRows[2].CostError)
+	assert.Equal(t, 3, logRequests, "two consume pages and one refund page")
+
+	again := []model.OpsUpstream{{ChannelId: 1}}
+	applySupplierCosts(context.Background(), again, start, end, end+10)
+	assert.Equal(t, int64(150000), again[0].CostQuota)
+	assert.Equal(t, 3, logRequests, "a repeated period is served from the cache")
 }

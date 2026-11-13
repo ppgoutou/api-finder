@@ -149,6 +149,57 @@ describe('OpsDashboard date range', () => {
     expect(screen.queryByText('Test credit used')).toBeNull()
   })
 
+  it('adds up profit only over channels with a supplier cost', async () => {
+    const channel = {
+      count: 0,
+      balance: 0,
+      balance_updated_time: 0,
+      task_success: 0,
+      task_failure: 0,
+    }
+    vi.mocked(getOpsDashboard).mockResolvedValue({
+      success: true,
+      data: {
+        ...emptyDashboard,
+        upstream: [
+          {
+            ...channel,
+            channel_id: 1,
+            name: 'costed',
+            quota: 1250000,
+            cost_quota: 1000000,
+            cost_status: 'ok',
+          },
+          {
+            ...channel,
+            channel_id: 2,
+            name: 'untracked',
+            quota: 900000,
+            cost_quota: 0,
+            cost_status: 'no_token',
+          },
+          {
+            ...channel,
+            channel_id: 3,
+            name: 'broken',
+            quota: 100000,
+            cost_quota: 0,
+            cost_status: 'error',
+            cost_error: 'supplier down',
+          },
+        ],
+      },
+    })
+    renderDashboard()
+
+    const broken = await screen.findByText('Failed to fetch')
+    expect(broken.getAttribute('title')).toBe('supplier down')
+    const total = screen
+      .getByText('Total of channels with a cost')
+      .closest('tr')
+    expect(total?.textContent).toContain('20%')
+  })
+
   it('reaches the present when refreshed on a page that stayed open', async () => {
     renderDashboard()
     await waitForRequests(1)
