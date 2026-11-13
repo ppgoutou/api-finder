@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -47,16 +48,25 @@ var opsSupplierCostCache = struct {
 
 // applySupplierCosts sets each upstream channel's cost to what its supplier
 // charged the channel key in the period, read from the supplier's own logs
-// with the onboarding supplier token. Channels without a token have no cost.
+// with the onboarding supplier token. Channels without a token have no cost,
+// and neither do deleted channels, whose token may outlive them.
 func applySupplierCosts(ctx context.Context, upstream []model.OpsUpstream, start, end, now int64) {
 	tokens := readOnboardingOption[map[string]string](onboardingPricingTokenOption)
+	var existing []int
+	if err := model.DB.Model(&model.Channel{}).Pluck("id", &existing).Error; err != nil {
+		for i := range upstream {
+			upstream[i].CostStatus = opsCostStatusError
+			upstream[i].CostError = err.Error()
+		}
+		return
+	}
 	ctx, cancel := context.WithTimeout(ctx, opsSupplierCostTimeout)
 	defer cancel()
 	var wg sync.WaitGroup
 	for i := range upstream {
 		row := &upstream[i]
 		token := strings.TrimSpace(tokens[strconv.Itoa(row.ChannelId)])
-		if token == "" {
+		if token == "" || !slices.Contains(existing, row.ChannelId) {
 			row.CostStatus = opsCostStatusNoToken
 			continue
 		}
