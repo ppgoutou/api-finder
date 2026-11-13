@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 )
@@ -32,6 +34,7 @@ const (
 	videoAssetURLPrefix       = "/video-assets/"
 	videoAssetRetention       = 7 * 24 * time.Hour
 	videoAssetCleanupInterval = time.Hour
+	videoAssetStoreTimeout    = 2 * time.Minute
 )
 
 // Sniffed content type → stored extension. Only media the video models accept
@@ -181,12 +184,28 @@ func UploadVideoAsset(c *gin.Context) {
 		return
 	}
 
+	// Upstream video services fetch the file, so the URL is absolute. Prefer
+	// the object storage copy: fetches from this server go through its 30 Mbps
+	// link and time out on the first, uncached request. The local copy stays
+	// as the fallback when object storage is off or the upload fails.
+	assetURL := strings.TrimRight(system_setting.ServerAddress, "/") + videoAssetURLPrefix + name
+	if saved, err := os.Open(filepath.Join(dir, name)); err == nil {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), videoAssetStoreTimeout)
+		storedURL, storeErr := service.StoreVideoAsset(ctx, saved, name, contentType, header.Size)
+		cancel()
+		_ = saved.Close()
+		if storeErr != nil {
+			common.SysError(common.LogText("video asset: object storage upload failed: %s", storeErr.Error()))
+		} else if storedURL != "" {
+			assetURL = storedURL
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
 		"data": gin.H{
-			// Upstream video services fetch the file, so the URL is absolute.
-			"url":          strings.TrimRight(system_setting.ServerAddress, "/") + videoAssetURLPrefix + name,
+			"url":          assetURL,
 			"content_type": contentType,
 			"size":         header.Size,
 			"expires_at":   time.Now().Add(videoAssetRetention).Unix(),
