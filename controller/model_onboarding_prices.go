@@ -46,6 +46,14 @@ var upstreamPriceFields = []string{
 	"audio_completion_ratio", "billing_mode", "billing_expr", "billing_plugin_variants",
 }
 
+// upstreamKeyGroupRatioField is stamped on the supplier rows of the models a
+// channel offers: the ratio of the group its key bills in. The supplier never
+// sends it, but a change to it changes what each of those models costs.
+const upstreamKeyGroupRatioField = "key_group_ratio"
+
+// upstreamComparedFields are the per-model fields a price check compares.
+var upstreamComparedFields = append(slices.Clone(upstreamPriceFields), upstreamKeyGroupRatioField)
+
 type upstreamPriceSnapshot struct {
 	BaselineTime  int64                     `json:"baseline_time"`
 	Baseline      map[string]map[string]any `json:"baseline"`
@@ -83,6 +91,32 @@ func (snapshot upstreamPriceSnapshot) supplyScale() (decimal.Decimal, error) {
 		return decimal.Zero, errors.New(upstreamPriceKeyGroupUnknown)
 	}
 	return scale.Mul(decimal.NewFromFloat(snapshot.LatestKeyGroup.Ratio)), nil
+}
+
+// stampKeyGroupRatio records the key's group ratio on the latest rows of the
+// given models, so a supplier moving the key to another group, or changing
+// its group's ratio, reports those models as repriced. A baseline row from
+// before the ratio was stamped takes the ratio its key group had at baseline
+// time; when that group was not listed then, the row stays unstamped and the
+// model shows as changed until handled.
+func (snapshot *upstreamPriceSnapshot) stampKeyGroupRatio(models []string) {
+	if snapshot.LatestKeyGroup == nil {
+		return
+	}
+	baselineRatio, known := snapshot.BaselineGroup[snapshot.LatestKeyGroup.Name].(float64)
+	for _, name := range models {
+		name = strings.TrimSpace(name)
+		if latest, ok := snapshot.Latest[name]; ok {
+			latest[upstreamKeyGroupRatioField] = snapshot.LatestKeyGroup.Ratio
+		}
+		baseline, ok := snapshot.Baseline[name]
+		if !ok || !known {
+			continue
+		}
+		if _, stamped := baseline[upstreamKeyGroupRatioField]; !stamped {
+			baseline[upstreamKeyGroupRatioField] = baselineRatio
+		}
+	}
 }
 
 // upstreamCurrency is the supplier's /api/status display currency. new-api
@@ -220,7 +254,7 @@ func diffUpstreamPrices(baseline, latest map[string]map[string]any) []upstreamPr
 		default:
 			change.Kind = "changed"
 		}
-		fields := upstreamPriceFields
+		fields := upstreamComparedFields
 		if name == onboardingGroupRatioModel {
 			fields = sortedKeys(before, after)
 		}
@@ -825,6 +859,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		snapshot.LatestDescriptions = results[i].descriptions
 		snapshot.LatestCurrency = results[i].currency
 		snapshot.LatestKeyGroup = results[i].keyGroup
+		snapshot.stampKeyGroupRatio(append(slices.Clone(rows[i].models), rows[i].pendingModels...))
 		if snapshot.BaselineTime == 0 {
 			snapshot.Baseline, snapshot.BaselineGroup, snapshot.BaselineTime = results[i].models, results[i].group, now
 			rows[i].Status = "baseline"

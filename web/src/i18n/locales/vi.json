@@ -8236,6 +8236,7 @@
     "Copy status": "Trạng thái sao lưu",
     "Retrying, attempt {{count}}": "Đang thử lại, lần {{count}}",
     "Hide changes": "Ẩn thay đổi",
-    "Show {{count}} changes": "Xem {{count}} thay đổi"
+    "Show {{count}} changes": "Xem {{count}} thay đổi",
+    "Key group ratio": "Hệ số nhóm của khóa"
   }
 }

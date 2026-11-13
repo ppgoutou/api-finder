@@ -277,6 +277,91 @@ func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
 	assert.Nil(t, prices["cny-expr"].Pricing)
 }
 
+func TestUpstreamPriceCheckRepricesModelsWhenTheKeyGroupRatioChanges(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	keyGroup, groupRatio := "doubao", `{"doubao":0.5}`
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/status":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7.3}}`))
+		case "/api/token/search":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"group":"` + keyGroup + `"}]}}`))
+		default:
+			_, _ = w.Write([]byte(`{"success":true,"group_ratio":` + groupRatio + `,"data":[
+				{"model_name":"video","quota_type":1,"model_price":2},
+				{"model_name":"unserved","quota_type":1,"model_price":3}
+			]}`))
+		}
+	}))
+	t.Cleanup(upstream.Close)
+	baseURL := upstream.URL
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: 1, Key: "key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
+		Group: "default", Models: "video", BaseURL: &baseURL,
+	}).Error)
+	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token"}))
+	check := func() upstreamPriceSnapshot {
+		t.Helper()
+		_, err := checkUpstreamPrices(context.Background())
+		require.NoError(t, err)
+		return readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
+	}
+	pricing := func() model.PricingValues {
+		t.Helper()
+		snapshot, err := model.GetModelPricingSnapshot([]string{"video"})
+		require.NoError(t, err)
+		return snapshot.Entries[0].Configured
+	}
+
+	snapshot := check()
+	require.Equal(t, model.PricingValues{"ModelPrice": 1.0}, pricing())
+	assert.Empty(t, snapshotChanges(upstreamPriceChannel{ID: 1}, snapshot))
+	assert.NotContains(t, snapshot.Latest["unserved"], upstreamKeyGroupRatioField, "only models the channel offers carry the key's ratio")
+
+	keyGroup, groupRatio = "doubaoDefault", `{"doubaoDefault":0.75}`
+	snapshot = check()
+
+	assert.Equal(t, model.PricingValues{"ModelPrice": 1.0}, pricing(), "a ratio change never rewrites a charged price")
+	changes := snapshotChanges(upstreamPriceChannel{ID: 1}, snapshot)
+	require.Len(t, changes, 2)
+	assert.Equal(t, upstreamPriceChange{ChannelID: 1, ModelName: "video", Kind: "changed", Fields: []upstreamPriceField{
+		{Field: upstreamKeyGroupRatioField, Previous: 0.5, Current: 0.75},
+	}}, changes[0])
+	assert.Equal(t, "group_ratio", changes[1].Kind)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"model_name":"video"}`))
+	ApplyOnboardingUpstreamPrice(c)
+	require.Contains(t, recorder.Body.String(), `"success":true`)
+
+	assert.Equal(t, model.PricingValues{"ModelPrice": 1.5}, pricing(), "applying charges the new ratio")
+	snapshot = readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
+	assert.Len(t, snapshotChanges(upstreamPriceChannel{ID: 1}, snapshot), 1, "only the supplier-level group row is left")
+}
+
+func TestStampKeyGroupRatioBackfillsBaselinesFromTheGroupList(t *testing.T) {
+	snapshot := func(baselineGroup map[string]any) upstreamPriceSnapshot {
+		return upstreamPriceSnapshot{
+			Baseline:       map[string]map[string]any{"video": {"model_price": 2.0}},
+			BaselineGroup:  baselineGroup,
+			Latest:         map[string]map[string]any{"video": {"model_price": 2.0}},
+			LatestKeyGroup: &upstreamKeyGroup{Name: "doubao", Ratio: 0.73},
+		}
+	}
+
+	sameGroup := snapshot(map[string]any{"doubao": 0.73})
+	sameGroup.stampKeyGroupRatio([]string{"video"})
+	assert.Empty(t, diffUpstreamPrices(sameGroup.Baseline, sameGroup.Latest), "an unchanged key group is not a price change")
+
+	renamed := snapshot(map[string]any{"legacy": 0.7})
+	renamed.stampKeyGroupRatio([]string{"video"})
+	assert.Equal(t, []upstreamPriceChange{{ModelName: "video", Kind: "changed", Fields: []upstreamPriceField{
+		{Field: upstreamKeyGroupRatioField, Previous: nil, Current: 0.73},
+	}}}, diffUpstreamPrices(renamed.Baseline, renamed.Latest), "a group missing from the baseline list shows the model for review")
+}
+
 func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T) {
 	modelManagementDB(t, "sqlite", "")
 	service.InitHttpClient()

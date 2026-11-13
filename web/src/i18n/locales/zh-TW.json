@@ -8236,6 +8236,7 @@
     "Copy status": "轉存狀態",
     "Retrying, attempt {{count}}": "重試中，第 {{count}} 次",
     "Hide changes": "收起變動",
-    "Show {{count}} changes": "查看 {{count}} 項變動"
+    "Show {{count}} changes": "查看 {{count}} 項變動",
+    "Key group ratio": "令牌分組倍率"
   }
 }

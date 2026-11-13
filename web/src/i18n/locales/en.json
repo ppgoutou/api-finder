@@ -8236,6 +8236,7 @@
     "Copy status": "Copy status",
     "Retrying, attempt {{count}}": "Retrying, attempt {{count}}",
     "Hide changes": "Hide changes",
-    "Show {{count}} changes": "Show {{count}} changes"
+    "Show {{count}} changes": "Show {{count}} changes",
+    "Key group ratio": "Key group ratio"
   }
 }
