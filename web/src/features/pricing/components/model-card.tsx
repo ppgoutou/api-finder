@@ -397,8 +397,8 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     ))
   } else {
     priceSummary = (
-      <div className='col-span-full flex min-w-0 flex-col gap-1'>
-        <span className='font-mono text-sm font-semibold tabular-nums'>
+      <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
+        <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
           {formatRequestPrice(
             props.model,
             showRechargePrice,
@@ -406,12 +406,11 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             usdExchangeRate,
             props.selectedGroup
           )}
-          <span className='text-muted-foreground text-xs font-normal'>
-            {' '}
-            / {t('request')}
-          </span>
         </span>
-      </div>
+        <span className='text-muted-foreground pb-0.5 text-xs'>
+          / {t('request')}
+        </span>
+      </p>
     )
   }
 
