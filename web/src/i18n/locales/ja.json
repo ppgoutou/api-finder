@@ -7278,7 +7278,6 @@
     "Unauthorized, insufficient privileges": "権限が不足しているため、この操作は実行できません",
     "Unauthorized, invalid access token": "権限がありません。アクセストークンが無効です",
     "Unauthorized, invalid user info": "権限がありません。ユーザー情報が無効です",
-    "Unauthorized, not logged in and no access token provided": "権限がありません。ログインしておらず、アクセストークンも指定されていません",
     "Unauthorized, the access token has expired": "権限がありません。アクセストークンの有効期限が切れています",
     "Unavailable": "表示不可",
     "Unbind": "連携解除",
@@ -8261,6 +8260,7 @@
     "Set a supplier token in model onboarding to read its charges": "モデル追加で仕入れ先トークンを設定すると課金を取得できます",
     "Price adjustment per image": "画像1枚あたりの価格調整",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "顧客は画像1枚ごとに最終価格を支払います。負の調整は値下げになります。グループ倍率を変更しても調整額は変わりません。",
-    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格または固定価格のみです。先に上流価格を確定してください。"
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格または固定価格のみです。先に上流価格を確定してください。",
+    "Your login has expired. Please sign in again.": "ログインの有効期限が切れました。再度ログインしてください"
   }
 }

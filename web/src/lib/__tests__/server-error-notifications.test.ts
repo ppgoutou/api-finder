@@ -304,23 +304,23 @@ it.each([200, 401])(
       access_expires_at: 2_000_000_000,
     }
     const open = vi.spyOn(XMLHttpRequest.prototype, 'open')
-    vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(
-      function (this: XMLHttpRequest) {
-        Object.defineProperties(this, {
-          status: { value: refreshStatus, configurable: true },
-          statusText: { value: 'Refresh response', configurable: true },
-          responseText: {
-            value: JSON.stringify({
-              success: refreshStatus === 200,
-              data: fresh,
-            }),
-            configurable: true,
-          },
-          readyState: { value: 4, configurable: true },
-        })
-        this.onloadend?.(new ProgressEvent('loadend'))
-      }
-    )
+    vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(function (
+      this: XMLHttpRequest
+    ) {
+      Object.defineProperties(this, {
+        status: { value: refreshStatus, configurable: true },
+        statusText: { value: 'Refresh response', configurable: true },
+        responseText: {
+          value: JSON.stringify({
+            success: refreshStatus === 200,
+            data: fresh,
+          }),
+          configurable: true,
+        },
+        readyState: { value: 4, configurable: true },
+      })
+      this.onloadend?.(new ProgressEvent('loadend'))
+    })
     let requests = 0
     api.defaults.adapter = async (config) => {
       requests++
@@ -365,6 +365,70 @@ it.each([200, 401])(
       expect(useAuthStore.getState().auth.accessToken).toBeNull()
     }
     client.clear()
+  }
+)
+
+it.each([401, 503])(
+  'retries a public read anonymously when the login cannot be refreshed (refresh HTTP %i)',
+  async (refreshStatus) => {
+    window.history.replaceState({}, '', '/pricing')
+    useAuthStore.getState().auth.setBundle({
+      access_token: 'expired-access',
+      token_type: 'Bearer',
+      access_expires_at: 1,
+      user: { id: 1, username: 'test-user', role: 1 },
+      session: {
+        sid: 'test-session',
+        current: true,
+        login_method: 'password',
+        ip: '',
+        user_agent: '',
+        created_at: 1,
+        last_active_at: 1,
+        expires_at: 2_000_000_000,
+      },
+    })
+    vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(function (
+      this: XMLHttpRequest
+    ) {
+      Object.defineProperties(this, {
+        status: { value: refreshStatus, configurable: true },
+        statusText: { value: 'Refresh response', configurable: true },
+        responseText: {
+          value: JSON.stringify({ success: false }),
+          configurable: true,
+        },
+        readyState: { value: 4, configurable: true },
+      })
+      this.onloadend?.(new ProgressEvent('loadend'))
+    })
+    const authorizations: (string | undefined)[] = []
+    api.defaults.adapter = async (config) => {
+      const authorization = config.headers.get('Authorization')
+      authorizations.push(authorization ? String(authorization) : undefined)
+      if (authorization) {
+        throw new AxiosError('HTTP 401', 'ERR_BAD_REQUEST', config, undefined, {
+          data: { message: 'Your login has expired. Please sign in again.' },
+          status: 401,
+          statusText: 'Unauthorized',
+          headers: {},
+          config,
+        })
+      }
+      return {
+        data: { success: true, data: [] },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      }
+    }
+    const notify = vi.spyOn(toast, 'error').mockReturnValue('error')
+    const response = await api.get('/api/pricing', { anonymousFallback: true })
+    expect(response.data).toEqual({ success: true, data: [] })
+    expect(authorizations).toEqual(['Bearer expired-access', undefined])
+    expect(notify).not.toHaveBeenCalled()
+    expect(window.location.pathname).toBe('/pricing')
   }
 )
 

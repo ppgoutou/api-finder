@@ -7278,7 +7278,6 @@
     "Unauthorized, insufficient privileges": "Нет доступа, недостаточно прав",
     "Unauthorized, invalid access token": "Нет доступа: недействительный токен доступа",
     "Unauthorized, invalid user info": "Нет доступа: недействительные данные пользователя",
-    "Unauthorized, not logged in and no access token provided": "Нет доступа: вход не выполнен и токен доступа не передан",
     "Unauthorized, the access token has expired": "Нет доступа: срок действия токена доступа истёк",
     "Unavailable": "Недоступно",
     "Unbind": "Отвязать",
@@ -8261,6 +8260,7 @@
     "Set a supplier token in model onboarding to read its charges": "Укажите токен поставщика в подключении моделей, чтобы читать его списания",
     "Price adjustment per image": "Корректировка цены за изображение",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Клиенты платят итоговую цену за каждое изображение. Отрицательная корректировка снижает цену; при новом коэффициенте группы корректировка сохраняется.",
-    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению или фиксированной цене. Сначала подтвердите цену поставщика."
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Наценку можно добавить только к цене-выражению или фиксированной цене. Сначала подтвердите цену поставщика.",
+    "Your login has expired. Please sign in again.": "Срок действия входа истёк. Войдите снова"
   }
 }
