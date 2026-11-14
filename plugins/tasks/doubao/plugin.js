@@ -5,24 +5,83 @@
 // separately) and whether audio output is priced separately (Seedance 1.5 pro;
 // generate_audio defaults to true). Seedance 1.0 lite is no longer listed and
 // keeps the 1.0 pro tiers.
+// Seedance 2.0 / 2.0 fast / 2.0 mini bill 480p 16:9 at 864x496: Volcengine's
+// price examples (5 s 480p at 46 CNY per million tokens = 2.31 CNY) give
+// 10044 tokens per second. Seedance 2.5 keeps 854x480 (9600 per second).
+// Display examples only; submit-time estimates keep resolutionMaxPixels.
+const SEEDANCE_2_0_EXAMPLE_PIXELS_480P = [864, 496];
 const VIDEO_MODELS = {
   "doubao-seedance-1-0-pro-250528": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
   "doubao-seedance-1-0-lite-t2v": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
   "doubao-seedance-1-0-lite-i2v": { resolutions: ["480p", "720p", "1080p"], minDuration: 2, maxDuration: 12 },
   "doubao-seedance-1-5-pro-251215": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 12, audio: true },
-  "doubao-seedance-2-0-260128": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-fast-260128": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-mini-260615": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-260128": {
+    resolutions: ["480p", "720p", "1080p", "4k"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "doubao-seedance-2-0-fast-260128": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "doubao-seedance-2-0-mini-260615": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
   "doubao-seedance-2-5-260628": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
   // Ark-compatible relays (PxRouter) serve the same models under 261111 names.
-  "doubao-seedance-2-0-261111": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "doubao-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "doubao-seedance-2-0-261111": {
+    resolutions: ["480p", "720p", "1080p", "4k"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "doubao-seedance-2-0-fast-261111": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "doubao-seedance-2-0-mini-261111": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
   "doubao-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
   // PxRouter's BytePlus (overseas) line: the same models under dreamina names.
-  "dreamina-seedance-2-0-261111": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "dreamina-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
-  "dreamina-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "dreamina-seedance-2-0-261111": {
+    resolutions: ["480p", "720p", "1080p", "4k"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "dreamina-seedance-2-0-fast-261111": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
+  "dreamina-seedance-2-0-mini-261111": {
+    resolutions: ["480p", "720p"],
+    minDuration: 4,
+    maxDuration: 15,
+    videoInput: true,
+    examplePixels480p: SEEDANCE_2_0_EXAMPLE_PIXELS_480P,
+  },
   "dreamina-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
 };
 // Every Ark resolution tier; an endpoint ID reached through channel mapping
@@ -279,7 +338,8 @@ function seedanceUsageExamples(profile) {
   if (profile.videoInput) specs.push({ label: "720p · 5s (+4s 输入视频)", resolution: "720p", seconds: 9, video_input: "video" });
   if (profile.audio) specs.push({ label: "720p · 5s · 无声", resolution: "720p", seconds: 5, generate_audio: false });
   return specs.map((spec) => {
-    const facts = { tokens: Math.round(estimateTokens(spec.seconds, spec.resolution)), resolution: spec.resolution };
+    const dims = spec.resolution === "480p" && profile.examplePixels480p ? profile.examplePixels480p : resolutionMaxPixels(spec.resolution);
+    const facts = { tokens: Math.round((spec.seconds * dims[0] * dims[1] * 24) / 1024), resolution: spec.resolution };
     if (profile.videoInput) facts.video_input = spec.video_input || "none";
     if (profile.audio) facts.generate_audio = spec.generate_audio !== false;
     return { label: spec.label, facts: facts };
@@ -313,7 +373,7 @@ export const meta = {
     en: "Volcengine Doubao Seedance video generation and Seedream image generation",
     zh: "火山引擎豆包 Seedance 视频生成与 Seedream 图片生成",
   },
-  version: "1.6.0",
+  version: "1.6.1",
   author: { name: "QuantumNous" },
   channelTypes: [54, 45], // VolcEngine-type channels serve Ark video models with the same wire format
   models: Object.keys(VIDEO_MODELS).concat(Object.keys(IMAGE_MODELS)),
@@ -464,8 +524,10 @@ function videoInputRatio(model, resolution, content) {
     if (res === "4k") return video ? 16 / 46 : 26 / 46;
     return video ? 28 / 46 : 1;
   }
-  if (model === "doubao-seedance-2-0-fast-260128" || model === "doubao-seedance-2-0-fast-261111" || model === "dreamina-seedance-2-0-fast-261111") return video ? 22 / 37 : 1;
-  if (model === "doubao-seedance-2-0-mini-260615" || model === "doubao-seedance-2-0-mini-261111" || model === "dreamina-seedance-2-0-mini-261111") return video ? 14 / 23 : 1;
+  if (model === "doubao-seedance-2-0-fast-260128" || model === "doubao-seedance-2-0-fast-261111" || model === "dreamina-seedance-2-0-fast-261111")
+    return video ? 22 / 37 : 1;
+  if (model === "doubao-seedance-2-0-mini-260615" || model === "doubao-seedance-2-0-mini-261111" || model === "dreamina-seedance-2-0-mini-261111")
+    return video ? 14 / 23 : 1;
   return 1;
 }
 
