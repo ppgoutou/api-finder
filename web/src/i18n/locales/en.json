@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "Available durations: {{min}}～{{max}} seconds",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.",
-    "With video input": "With video input",
-    "Without video input": "Without video input",
     "{{site}} price / second": "{{site}} price / second",
     "{{site}} price / 1M tokens": "{{site}} price / 1M tokens",
     "Official price / second": "Official price / second",
@@ -8281,11 +8279,12 @@
     "Discount rate": "Discount rate",
     "Per-second prices": "Per-second prices",
     "Per-token prices": "Per-token prices",
-    "Example prices": "Example prices",
-    "{{output}}s output + {{reference}}s reference video": "{{output}}s output + {{reference}}s reference video",
-    "{{seconds}}s output": "{{seconds}}s output",
-    "{{site}} price": "{{site}} price",
     "Official order price": "Official order price",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order."
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.",
+    "Resolution header without video": "(without /",
+    "Resolution header with video": "with video)",
+    "Row without video": "(without)",
+    "Row with video": "(with)",
+    "Video tokens per second: {{list}}": "Video tokens per second: {{list}}"
   }
 }

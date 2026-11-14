@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "選択可能な長さ：{{min}}～{{max}} 秒",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "参照動画ありの注文では、参照動画の秒数も「動画あり」のトークン単価で課金されます。表の秒単価は出力 1 秒分です。",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "1 秒あたりの動画トークン = 幅 × 高さ × 24 / 1024。例は 16:9 で試算しており、実際の請求は上流が返す使用量に基づきます。",
-    "With video input": "動画あり",
-    "Without video input": "動画なし",
     "{{site}} price / second": "{{site}} 価格（毎秒）",
     "{{site}} price / 1M tokens": "{{site}} 価格（100万トークン）",
     "Official price / second": "公式価格（毎秒）",
@@ -8281,11 +8279,12 @@
     "Discount rate": "割引率",
     "Per-second prices": "秒単位の価格",
     "Per-token prices": "トークン単位の価格",
-    "Example prices": "価格の例",
-    "{{output}}s output + {{reference}}s reference video": "出力 {{output}} 秒 + 参照動画 {{reference}} 秒",
-    "{{seconds}}s output": "出力 {{seconds}} 秒",
-    "{{site}} price": "{{site}} 価格",
     "Official order price": "公式価格",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "参照動画ありの注文は出力秒数のみで課金されます。その割引率は「出力 {{seconds}} 秒 + 参照動画 {{seconds}} 秒」の注文全体で比較しています。"
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "参照動画ありの注文は出力秒数のみで課金されます。その割引率は「出力 {{seconds}} 秒 + 参照動画 {{seconds}} 秒」の注文全体で比較しています。",
+    "Resolution header without video": "",
+    "Resolution header with video": "",
+    "Row without video": "（動画なし）",
+    "Row with video": "（動画あり）",
+    "Video tokens per second: {{list}}": "1 秒あたりのトークン：{{list}}"
   }
 }

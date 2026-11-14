@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "Thời lượng khả dụng: {{min}}～{{max}} giây",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "Đơn có video tham chiếu cũng tính số giây của video tham chiếu theo giá token \"có video\"; giá mỗi giây tính cho 1 giây video đầu ra.",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "Token video mỗi giây = rộng × cao × 24 / 1024. Ví dụ ước tính theo 16:9; phí thực tế theo lượng dùng do nhà cung cấp trả về.",
-    "With video input": "Có video",
-    "Without video input": "Không có video",
     "{{site}} price / second": "Giá {{site}} / giây",
     "{{site}} price / 1M tokens": "Giá {{site}} / 1M token",
     "Official price / second": "Giá chính thức / giây",
@@ -8281,11 +8279,12 @@
     "Discount rate": "Mức giảm",
     "Per-second prices": "Giá theo giây",
     "Per-token prices": "Giá theo token",
-    "Example prices": "Giá ví dụ",
-    "{{output}}s output + {{reference}}s reference video": "{{output}} giây đầu ra + {{reference}} giây video tham chiếu",
-    "{{seconds}}s output": "{{seconds}} giây đầu ra",
-    "{{site}} price": "Giá {{site}}",
     "Official order price": "Giá chính thức",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Đơn có video tham chiếu chỉ tính theo số giây đầu ra; mức giảm của chúng so sánh cả đơn {{seconds}} giây đầu ra + {{seconds}} giây tham chiếu."
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Đơn có video tham chiếu chỉ tính theo số giây đầu ra; mức giảm của chúng so sánh cả đơn {{seconds}} giây đầu ra + {{seconds}} giây tham chiếu.",
+    "Resolution header without video": "(không /",
+    "Resolution header with video": "có video)",
+    "Row without video": "(không)",
+    "Row with video": "(có)",
+    "Video tokens per second: {{list}}": "Token video mỗi giây: {{list}}"
   }
 }
