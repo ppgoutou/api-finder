@@ -86,6 +86,26 @@ describe('Docs', () => {
     }
   )
 
+  it.each([
+    ['en', EN_DOCS],
+    ['zhCN', ZH_DOCS],
+  ])(
+    'shows the image generation request for %s in the images section',
+    async (language, docs) => {
+      await i18next.changeLanguage(language)
+      render(<Docs />)
+
+      const imagesTitle = docs.sections.find(
+        (section) => section.id === 'images'
+      )?.title
+      const images = screen.getByRole('region', { name: imagesTitle })
+      expect(images.textContent).toContain(
+        'curl https://api.example.com/v1/images/generations'
+      )
+      expect(images.textContent).toContain('"response_format": "b64_json"')
+    }
+  )
+
   it.each(['zhCN', 'zhTW'])(
     'shows the Chinese docs for %s',
     async (language) => {

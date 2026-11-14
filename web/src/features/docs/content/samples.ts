@@ -29,7 +29,7 @@ export const DOC_SAMPLES = {
     '  -H "Authorization: Bearer $API_KEY" \\',
     '  -H "Content-Type: application/json" \\',
     "  -d '{",
-    '    "model": "seedance-2.0",',
+    '    "model": "seedance2.0-T",',
     '    "prompt": "A red sports car drifts through a rainy neon street at night, low tracking shot",',
     '    "seconds": 5,',
     '    "resolution": "720p",',
@@ -57,7 +57,7 @@ export const DOC_SAMPLES = {
 
   createFull: JSON.stringify(
     {
-      model: 'seedance-2.0',
+      model: 'seedance2.0-T',
       prompt:
         'The woman in the first image turns to the camera and smiles, soft morning light',
       seconds: 8,
@@ -71,7 +71,7 @@ export const DOC_SAMPLES = {
 
   firstLastFrame: JSON.stringify(
     {
-      model: 'seedance-2.0',
+      model: 'seedance2.0-T',
       prompt: 'The flower slowly blooms, camera stays still',
       seconds: 5,
       resolution: '720p',
@@ -82,11 +82,66 @@ export const DOC_SAMPLES = {
     2
   ),
 
+  dfybReference: JSON.stringify(
+    {
+      model: 'seedance-2.0-dfyb',
+      prompt: '@图1 中的女孩跟着 @音频1 的音乐，按 @视频1 的动作跳舞',
+      seconds: 10,
+      resolution: '720p',
+      ratio: '9:16',
+      images: ['https://example.com/girl.jpg'],
+      videos: ['https://example.com/dance.mp4'],
+      audios: ['https://example.com/music.mp3'],
+    },
+    null,
+    2
+  ),
+
+  officialText: JSON.stringify(
+    {
+      model: 'doubao-seedance-2-0-261111',
+      prompt: 'A red sports car drifts through a rainy neon street at night',
+      seconds: 5,
+      metadata: {
+        resolution: '1080p',
+        ratio: '16:9',
+      },
+    },
+    null,
+    2
+  ),
+
+  officialReference: JSON.stringify(
+    {
+      model: 'doubao-seedance-2-5-261111',
+      prompt:
+        'The man in the reference image walks along the beach in the reference video, with the reference music',
+      seconds: 10,
+      images: ['https://example.com/man.jpg'],
+      metadata: {
+        resolution: '720p',
+        ratio: '16:9',
+        content: [
+          {
+            type: 'video_url',
+            video_url: { url: 'https://example.com/beach.mp4' },
+          },
+          {
+            type: 'audio_url',
+            audio_url: { url: 'https://example.com/music.mp3' },
+          },
+        ],
+      },
+    },
+    null,
+    2
+  ),
+
   createResponse: JSON.stringify(
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance-2.0',
+      model: 'seedance2.0-T',
       status: 'queued',
       progress: 0,
       created_at: 1761000000,
@@ -99,7 +154,7 @@ export const DOC_SAMPLES = {
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance-2.0',
+      model: 'seedance2.0-T',
       status: 'completed',
       progress: 100,
       created_at: 1761000000,
@@ -113,18 +168,87 @@ export const DOC_SAMPLES = {
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance-2.0',
+      model: 'seedance2.0-T',
       status: 'failed',
       progress: 0,
       created_at: 1761000000,
       error: {
         code: 'video_generation_failed',
-        message: 'The video generation task failed.',
+        message:
+          'The video generation failed and your charge has been refunded. Please submit again later.',
       },
     },
     null,
     2
   ),
+
+  errorResponse: JSON.stringify(
+    {
+      error: {
+        code: 'balance_insufficient',
+        message: 'Your balance is too low. Please top up and try again.',
+      },
+    },
+    null,
+    2
+  ),
+
+  imageCreate: [
+    'curl {{BASE_URL}}/v1/images/generations \\',
+    '  -H "Authorization: Bearer $API_KEY" \\',
+    '  -H "Content-Type: application/json" \\',
+    '  --max-time 180 \\',
+    "  -d '{",
+    '    "model": "gpt-image-2.5-flare",',
+    '    "prompt": "A cozy coffee shop on a rainy evening, warm light, watercolor style",',
+    '    "n": 1,',
+    '    "size": "1024x1024",',
+    '    "response_format": "b64_json"',
+    "  }'",
+  ].join('\n'),
+
+  imageResponse: JSON.stringify(
+    {
+      created: 1761000000,
+      data: [
+        {
+          b64_json: 'iVBORw0KGgoAAAANSUhEUgAA...',
+          url: 'https://example.com/temporary/image.png',
+        },
+      ],
+    },
+    null,
+    2
+  ),
+
+  imagePython: `import base64
+import os
+
+import requests
+
+BASE_URL = "{{BASE_URL}}"
+API_KEY = os.environ["API_KEY"]
+
+# The API answers synchronously and can take over a minute per image
+res = requests.post(
+    f"{BASE_URL}/v1/images/generations",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "model": "gpt-image-2.5-flare",
+        "prompt": "A cozy coffee shop on a rainy evening, watercolor style",
+        "n": 1,
+        "size": "1024x1024",
+        "response_format": "b64_json",
+    },
+    timeout=180,
+)
+res.raise_for_status()
+images = res.json()["data"]
+for i, item in enumerate(images):
+    with open(f"image-{i + 1}.png", "wb") as f:
+        f.write(base64.b64decode(item["b64_json"]))
+print("saved", len(images), "image(s)")
+`,
 
   python: `import os
 import time
@@ -140,7 +264,7 @@ task = requests.post(
     f"{BASE_URL}/v1/videos",
     headers=HEADERS,
     json={
-        "model": "seedance-2.0",
+        "model": "seedance2.0-T",
         "prompt": "A red sports car drifts through a rainy neon street at night",
         "seconds": 5,
         "resolution": "720p",
@@ -184,7 +308,7 @@ let task = await fetch(\`\${BASE_URL}/v1/videos\`, {
   method: 'POST',
   headers: { ...headers, 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    model: 'seedance-2.0',
+    model: 'seedance2.0-T',
     prompt: 'A red sports car drifts through a rainy neon street at night',
     seconds: 5,
     resolution: '720p',
