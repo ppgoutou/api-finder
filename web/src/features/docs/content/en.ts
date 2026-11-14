@@ -96,7 +96,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
       blocks: [
         {
           type: 'markdown',
-          text: `Video models come in three groups. **The first two share one set of parameters; the official models use a different one**, see Official model requests.
+          text: `Video models come in three groups. **All of them take the same request parameters**, see Creating a task; the few extras of the official models are in Official model notes.
 
 | Model | Resolution | Duration | Billing |
 | --- | --- | --- | --- |
@@ -135,7 +135,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
       blocks: [
         {
           type: 'markdown',
-          text: `\`POST /v1/videos\` with a JSON body (\`Content-Type: application/json\`). The table applies to the \`-T\` and \`dfyb\` models; for the official models see Official model requests.
+          text: `\`POST /v1/videos\` with a JSON body (\`Content-Type: application/json\`). The table applies to every video model; the extras of the official models are in Official model notes.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -204,34 +204,29 @@ A duration or resolution outside the model's range is rejected at submission, an
     },
     {
       id: 'official',
-      title: 'Official model requests',
+      title: 'Official model notes',
       blocks: [
         {
           type: 'markdown',
-          text: `The 8 official models starting with \`doubao-\` or \`dreamina-\` also use \`POST /v1/videos\`, and checking and downloading work the same, but the request parameters differ:
+          text: `The 8 official models starting with \`doubao-\` or \`dreamina-\` take the same parameters as the other models (see Creating a task and Reference media and first/last frames), plus:
 
 | Parameter | Description |
 | --- | --- |
-| \`model\`, \`prompt\` | As above |
-| \`seconds\` | Duration in seconds; Seedance 2.x also takes \`-1\` to let the model choose |
-| \`images\` | Public image URLs: 1 is the first frame, 2 are the first and last frames, 3 or more (or any with reference video or audio) are reference images |
-| \`metadata.resolution\` | Resolution such as \`720p\` or \`1080p\`; **not the top-level \`resolution\`** |
-| \`metadata.ratio\` | Aspect ratio such as \`16:9\`; **not the top-level \`ratio\`** |
-| \`metadata.content\` | Reference videos and audios, see the example below |
+| \`seconds\` | Besides the model's durations, also takes \`-1\` to let the model choose; the submission reserves the model's longest duration, and completion settles the actual usage |
 | \`metadata.generate_audio\` | Whether to generate sound, on by default; \`false\` makes a silent video |
 
-- The official models ignore the top-level \`resolution\`, \`ratio\`, \`videos\`, \`audios\`, \`first_image_url\` and \`last_image_url\`;
 - A reference audio needs a reference image or video with it (Seedance 2.5 takes audio alone);
-- Without \`metadata.resolution\` the model chooses; the submission reserves the model's highest tier up to 1080p, and completion settles the actual usage.`,
+- Without \`resolution\` the model chooses; the submission reserves the model's highest tier up to 1080p, and completion settles the actual usage;
+- Other native Ark parameters can be passed through as is in \`metadata\`; \`resolution\` and \`ratio\` in \`metadata\` take precedence over the top-level ones.`,
         },
         {
           type: 'code',
-          label: 'Example: text to video (1080p, 16:9)',
+          label: 'Example: silent 1080p video',
           code: DOC_SAMPLES.officialText,
         },
         {
           type: 'code',
-          label: 'Example: reference image, video and audio',
+          label: 'Example: reference image, video and audio, length chosen by the model',
           code: DOC_SAMPLES.officialReference,
         },
       ],
@@ -292,7 +287,7 @@ If the download is slow, download it over several connections: the endpoint supp
       blocks: [
         {
           type: 'markdown',
-          text: 'These examples run the whole create → poll → download flow. Set the `API_KEY` environment variable first. To switch models, change `model` and its duration and resolution (for the official models, shape the body as in Official model requests).',
+          text: 'These examples run the whole create → poll → download flow. Set the `API_KEY` environment variable first. To switch models, change `model` and its duration and resolution.',
         },
         {
           type: 'code',
@@ -419,9 +414,6 @@ For images, yes. The video paths and responses follow the OpenAI video API, and 
 
 **How do I use a local image?**
 The API only takes public URLs. Upload the image to object storage or an image host first, then pass its link.
-
-**Why is my resolution ignored on an official model?**
-The official models read the resolution and ratio from \`metadata\`, see Official model requests.
 
 **How long are videos and images kept?**
 Download links are temporary. Download and save the files soon after they are ready.`,

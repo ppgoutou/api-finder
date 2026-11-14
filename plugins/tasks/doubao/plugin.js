@@ -470,6 +470,38 @@ function hasVideo(content) {
   return Array.isArray(content) && content.some((item) => item && (item.type === "video_url" || Object.prototype.hasOwnProperty.call(item, "video_url")));
 }
 
+function mediaURLs(value, name) {
+  if (value === undefined || value === null) return [];
+  if (typeof value === "string") return trimmed(value) ? [trimmed(value)] : [];
+  if (!Array.isArray(value) || value.some((url) => typeof url !== "string")) throw new Error(name + " must be an array of URLs");
+  return value.map(trimmed).filter(Boolean);
+}
+
+// Ark metadata for the /v1/videos fields every video model and the video
+// studio share: resolution, ratio, reference images, videos and audios, and
+// first and last frame. Explicit metadata wins: its resolution and ratio are
+// kept, and its content follows the unified media. Submission and the billing
+// estimate both read the result, so the reserved resolution and reference
+// video are the ones sent to Ark.
+function unifiedVideoMetadata(req) {
+  if (req.metadata !== undefined && (!req.metadata || typeof req.metadata !== "object" || Array.isArray(req.metadata)))
+    throw new Error("metadata must be an object");
+  const metadata = Object.assign({}, req.metadata || {});
+  for (const field of ["resolution", "ratio", "first_image_url", "last_image_url"]) {
+    if (req[field] !== undefined && req[field] !== null && typeof req[field] !== "string") throw new Error(field + " must be a string");
+  }
+  if (!trimmed(metadata.resolution) && trimmed(req.resolution)) metadata.resolution = trimmed(req.resolution).toLowerCase();
+  if (metadata.ratio === undefined && trimmed(req.ratio)) metadata.ratio = trimmed(req.ratio);
+  const content = [];
+  for (const url of mediaURLs(req.images, "images")) content.push({ type: "image_url", image_url: { url: url }, role: "reference_image" });
+  if (trimmed(req.first_image_url)) content.push({ type: "image_url", image_url: { url: trimmed(req.first_image_url) }, role: "first_frame" });
+  if (trimmed(req.last_image_url)) content.push({ type: "image_url", image_url: { url: trimmed(req.last_image_url) }, role: "last_frame" });
+  for (const url of mediaURLs(req.videos, "videos")) content.push({ type: "video_url", video_url: { url: url }, role: "reference_video" });
+  for (const url of mediaURLs(req.audios, "audios")) content.push({ type: "audio_url", audio_url: { url: url }, role: "reference_audio" });
+  if (content.length) metadata.content = content.concat(Array.isArray(metadata.content) ? metadata.content : []);
+  return metadata;
+}
+
 // Capability profile of the executing Seedance model. Channel mapping may send
 // a declared model to an Ark endpoint ID; the declared name still describes it.
 function videoProfile(ctx) {
@@ -1249,54 +1281,42 @@ const legacyRenderers = {
 protocols.openai_video = {
   decodeRequest: function (ctx) {
     if (!ctx.body || (ctx.body.kind !== "json" && ctx.body.kind !== "multipart")) throw new Error("JSON or multipart body required");
+    let req = {};
     if (ctx.body.kind === "json") {
       if (!ctx.body.value || Array.isArray(ctx.body.value)) throw new Error("JSON object required");
-      const req = ctx.body.value;
-      const seconds = req.seconds === undefined ? req.duration : req.seconds;
-      if (seconds !== undefined && Number(seconds) !== -1 && (!Number.isFinite(Number(seconds)) || Number(seconds) <= 0 || Number(seconds) > 3600))
-        throw new Error("seconds must be -1 or between 1 and 3600");
-      const requestBody = Object.assign({}, req, { model: ctx.model });
-      // buildSubmitRequest reads seconds; duration is accepted as its alias.
-      if (seconds !== undefined) requestBody.seconds = seconds;
-      return {
-        kind: "submit",
-        model: ctx.model,
-        action: req.input_reference || req.image ? "image_to_video" : "text_to_video",
-        requestBody: requestBody,
-      };
-    }
-    const first = function (name) {
-      const values = (ctx.body.fields || {})[name] || [];
-      if (values.length > 1) throw new Error(name + " must be provided once");
-      return values[0];
-    };
-    const req = {};
-    const fields = ctx.body.fields || {};
-    for (const name of Object.keys(fields)) {
-      req[name] = first(name);
-    }
-    if (req.metadata !== undefined) {
-      let parsed;
-      try {
-        parsed = JSON.parse(req.metadata);
-      } catch (e) {
-        throw new Error("metadata must be a JSON object string");
+      req = ctx.body.value;
+    } else {
+      const fields = ctx.body.fields || {};
+      for (const name of Object.keys(fields)) {
+        if (fields[name].length > 1) throw new Error(name + " must be provided once");
+        req[name] = fields[name][0];
       }
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("metadata must be a JSON object string");
-      req.metadata = parsed;
+      if (req.metadata !== undefined) {
+        let parsed;
+        try {
+          parsed = JSON.parse(req.metadata);
+        } catch (e) {
+          throw new Error("metadata must be a JSON object string");
+        }
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("metadata must be a JSON object string");
+        req.metadata = parsed;
+      }
+      if ((ctx.body.files || []).length) throw new Error("Doubao requires reference images, videos and audios as URLs");
     }
-    if ((ctx.body.files || []).length) throw new Error("Doubao requires image and video references to be URLs inside metadata.content");
-    if (req.seconds !== undefined) req.seconds = Number(req.seconds);
-    else if (req.duration !== undefined) req.seconds = Number(req.duration);
-    const seconds = req.seconds === undefined ? req.duration : req.seconds;
+    let seconds = req.seconds === undefined ? req.duration : req.seconds;
+    if (ctx.body.kind === "multipart" && seconds !== undefined) seconds = Number(seconds);
     if (seconds !== undefined && Number(seconds) !== -1 && (!Number.isFinite(Number(seconds)) || Number(seconds) <= 0 || Number(seconds) > 3600))
       throw new Error("seconds must be -1 or between 1 and 3600");
-    return {
-      kind: "submit",
-      model: ctx.model,
-      action: req.input_reference || req.image ? "image_to_video" : "text_to_video",
-      requestBody: Object.assign({}, req, { model: ctx.model }),
-    };
+    const metadata = unifiedVideoMetadata(req);
+    const requestBody = { model: ctx.model, prompt: req.prompt, metadata: metadata };
+    // buildSubmitRequest reads seconds; duration is accepted as its alias.
+    if (seconds !== undefined) requestBody.seconds = seconds;
+    if (req.size !== undefined) requestBody.size = req.size;
+    const hasMedia = Array.isArray(metadata.content) && metadata.content.some((item) => item && item.type !== "text");
+    const intent = { kind: "submit", model: ctx.model, action: hasMedia ? "image_to_video" : "text_to_video", requestBody: requestBody };
+    const originTaskIds = draftTaskIds(metadata.content);
+    if (originTaskIds.length) intent.originTaskIds = originTaskIds;
+    return intent;
   },
   render: function (ctx, task) {
     return legacyRenderers.openai_video(task);
