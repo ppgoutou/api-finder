@@ -16,9 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { QUOTA_TYPE_VALUES } from '@/features/pricing/constants'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import { formatTaskUsageUnitPrice } from '@/features/pricing/lib/dynamic-price'
-import { getDisplayGroupRatio } from '@/features/pricing/lib/model-helpers'
+import {
+  getDisplayGroupRatio,
+  isImagePricingModel,
+} from '@/features/pricing/lib/model-helpers'
 import {
   getModelDurationRange,
   getOfficialVideoPricing,
@@ -33,8 +37,12 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { getPriceDiscount, type PriceDiscount } from '../lib/video-home'
 
 export type SeriesPriceRow = {
+  /** Resolution of a per-second row; the model name of a per-image row. */
   option: string
-  /** Formatted lowest price per second, or per video for the per-video row. */
+  /**
+   * Formatted lowest price per second, per video for the per-video row, or
+   * per image for an image series.
+   */
   price: string
   /** Model that offers the price. */
   modelName: string
@@ -53,6 +61,11 @@ export type VideoSeriesPricing = {
   /** Name of the model square category the prices come from. */
   name: string
   /**
+   * What the rows price: generated seconds for a video series, or generated
+   * images for an image series, whose rows are its models in category order.
+   */
+  unit: 'second' | 'image'
+  /**
    * Sibling categories named after this one (for example "Mini" and "fast"
    * for Seedance 2.0 Mini and Seedance 2.0 fast); listed, never priced.
    */
@@ -60,7 +73,7 @@ export type VideoSeriesPricing = {
   isNew: boolean
   /** Lowest per-second price for each resolution, in resolution order. */
   rows: SeriesPriceRow[]
-  /** Cheapest of the per-second rows, for the card headline. */
+  /** Cheapest of the rows, for the card headline. */
   lowest: SeriesPriceRow | null
   /** Cheapest option among models billed per video. */
   perVideo: SeriesPriceRow | null
@@ -124,11 +137,13 @@ function isBetterPrice(
 }
 
 /**
- * Live lowest prices of every video model category in the model square, in
+ * Live lowest prices of every video and image model category in the model
+ * square, in
  * the category order the admin set. Each card prices only the models of its
  * own category; variant categories named after it (Seedance 2.0 fast, Seedance
  * 2.0 Mini, Seedance 2.0 -NSFW) are listed by name but never set its price.
- * Categories with no priced video model the viewer can buy are left out.
+ * An image category lists each per-image model with its price. Categories
+ * with no priced model the viewer can buy are left out.
  */
 export function useVideoSeriesPricing(): VideoSeriesPricing[] {
   const pricing = usePricingData()
@@ -145,7 +160,7 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
     })
 
   const categories = pricing.categories
-  return categories.flatMap((series) => {
+  return categories.flatMap((series): VideoSeriesPricing[] => {
     if (findParentCategory(series, categories)) return []
     const modelNames = new Set(series.models)
     // An unavailable model can't be bought, so it never sets a series price.
@@ -160,6 +175,30 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
     )
     const isNew = Object.values(series.badges ?? {}).some((badges) =>
       badges.includes('new')
+    )
+
+    const imageRows: PriceCandidate[] = []
+    for (const model of models) {
+      if (
+        !isImagePricingModel(model) ||
+        model.quota_type !== QUOTA_TYPE_VALUES.REQUEST ||
+        !(model.model_price && model.model_price > 0)
+      ) {
+        continue
+      }
+      const value = model.model_price * getDisplayGroupRatio(model)
+      imageRows.push({
+        option: model.model_name,
+        price: formatPrice(value),
+        modelName: model.model_name,
+        approximate: false,
+        value,
+      })
+    }
+    // Image rows list models in the order the admin set for the category.
+    imageRows.sort(
+      (a, b) =>
+        series.models.indexOf(a.modelName) - series.models.indexOf(b.modelName)
     )
 
     const bestByOption = new Map<string, PriceCandidate>()
@@ -214,7 +253,32 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
         aspectRatios.add(aspectRatio)
       }
     }
-    if (bestByOption.size === 0 && !perVideo) return []
+    if (bestByOption.size === 0 && !perVideo) {
+      if (imageRows.length === 0) return []
+      const cheapest = imageRows.reduce((low, row) =>
+        row.value < low.value ? row : low
+      )
+      const toImageRow = (candidate: PriceCandidate): SeriesPriceRow => ({
+        option: candidate.option,
+        price: candidate.price,
+        modelName: candidate.modelName,
+        approximate: false,
+        officialPrice: null,
+        discount: null,
+      })
+      return [
+        {
+          name: series.name,
+          unit: 'image',
+          variants,
+          isNew,
+          rows: imageRows.map(toImageRow),
+          lowest: toImageRow(cheapest),
+          perVideo: null,
+          aspectRatioCount: 0,
+        },
+      ]
+    }
 
     const toRow = (candidate: PriceCandidate): SeriesPriceRow => {
       const official = officialByOption.get(candidate.option)
@@ -240,6 +304,7 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
     return [
       {
         name: series.name,
+        unit: 'second',
         variants,
         isNew,
         rows: ranked.map(toRow),

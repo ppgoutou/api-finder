@@ -206,31 +206,37 @@ function SeriesCard(props: SeriesCardProps) {
   const last = series.rows.at(-1)
   const lowest = series.lowest
   const bestDiscount = getBestDiscount(series)
+  const isImage = series.unit === 'image'
 
-  const specs = [
-    first && last && first !== last
-      ? `${formatResolution(first.option)}–${formatResolution(last.option)}`
-      : first && formatResolution(first.option),
-    series.durationRange &&
-      t('{{min}}–{{max}} seconds', {
-        min: series.durationRange[0],
-        max: series.durationRange[1],
-      }),
-    series.aspectRatioCount > 0 &&
-      t('{{count}} ratios', { count: series.aspectRatioCount }),
-  ].filter((spec): spec is string => Boolean(spec))
+  const specs = isImage
+    ? [t('{{count}} models', { count: series.rows.length })]
+    : [
+        first && last && first !== last
+          ? `${formatResolution(first.option)}–${formatResolution(last.option)}`
+          : first && formatResolution(first.option),
+        series.durationRange &&
+          t('{{min}}–{{max}} seconds', {
+            min: series.durationRange[0],
+            max: series.durationRange[1],
+          }),
+        series.aspectRatioCount > 0 &&
+          t('{{count}} ratios', { count: series.aspectRatioCount }),
+      ].filter((spec): spec is string => Boolean(spec))
 
   const allColumns: StaticDataTableColumn<SeriesPriceRow>[] = [
     {
       id: 'option',
-      header: t('Resolution'),
+      header: isImage ? t('Model') : t('Resolution'),
       className: HEADER_CELL,
-      cellClassName: 'px-1 py-2 font-medium',
-      cell: (row) => formatResolution(row.option),
+      cellClassName: isImage
+        ? 'px-1 py-2 font-medium break-all'
+        : 'px-1 py-2 font-medium',
+      cell: (row) =>
+        isImage ? displayName(row.modelName) : formatResolution(row.option),
     },
     {
       id: 'price',
-      header: t('Price / s'),
+      header: isImage ? t('Price / image') : t('Price / s'),
       className: HEADER_CELL,
       cellClassName:
         'px-1 py-2 font-mono font-semibold whitespace-nowrap tabular-nums',
@@ -268,12 +274,14 @@ function SeriesCard(props: SeriesCardProps) {
     },
   ]
   // Without any configured official price the two comparison columns would
-  // only hold dashes, so the tables keep resolution and price alone.
-  const columns = props.showOfficialPrice
-    ? allColumns
-    : allColumns.filter(
-        (column) => column.id !== 'official' && column.id !== 'discount'
-      )
+  // only hold dashes, so the tables keep resolution and price alone. Image
+  // models have no official price to compare with.
+  const columns =
+    props.showOfficialPrice && !isImage
+      ? allColumns
+      : allColumns.filter(
+          (column) => column.id !== 'official' && column.id !== 'discount'
+        )
 
   return (
     <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
@@ -299,7 +307,9 @@ function SeriesCard(props: SeriesCardProps) {
           <span className='text-3xl font-bold tracking-tight tabular-nums'>
             {formatPrice(lowest)}
           </span>
-          <span className='text-muted-foreground text-sm'>{t('/ second')}</span>
+          <span className='text-muted-foreground text-sm'>
+            {isImage ? t('/ image') : t('/ second')}
+          </span>
         </p>
       )}
       {!bestDiscount && props.reserveDiscount && (

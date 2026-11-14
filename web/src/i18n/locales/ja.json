@@ -8261,6 +8261,8 @@
     "Price adjustment per image": "画像1枚あたりの価格調整",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "顧客は画像1枚ごとに最終価格を支払います。負の調整は値下げになります。グループ倍率を変更しても調整額は変わりません。",
     "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "上乗せできるのは式による価格または固定価格のみです。先に上流価格を確定してください。",
-    "Your login has expired. Please sign in again.": "ログインの有効期限が切れました。再度ログインしてください"
+    "Your login has expired. Please sign in again.": "ログインの有効期限が切れました。再度ログインしてください",
+    "/ image": "/ 枚",
+    "Price / image": "1 枚単価"
   }
 }

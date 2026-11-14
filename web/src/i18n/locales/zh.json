@@ -8261,6 +8261,8 @@
     "Price adjustment per image": "每张图片的价格调整",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "客户按最终价为每张图片付费。负数表示降价；修改分组倍率后调整金额保持不变。",
     "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "只有表达式价格或固定价格可以加价。请先确认上游价格。",
-    "Your login has expired. Please sign in again.": "登录已过期，请重新登录"
+    "Your login has expired. Please sign in again.": "登录已过期，请重新登录",
+    "/ image": "/ 张",
+    "Price / image": "每张低至"
   }
 }

@@ -8261,6 +8261,8 @@
     "Price adjustment per image": "Price adjustment per image",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.",
     "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Only expression or fixed prices can take a markup. Confirm the upstream price first.",
-    "Your login has expired. Please sign in again.": "Your login has expired. Please sign in again."
+    "Your login has expired. Please sign in again.": "Your login has expired. Please sign in again.",
+    "/ image": "/ image",
+    "Price / image": "Price / image"
   }
 }

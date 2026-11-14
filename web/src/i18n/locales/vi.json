@@ -8261,6 +8261,8 @@
     "Price adjustment per image": "Điều chỉnh giá mỗi ảnh",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Khách hàng trả giá cuối cho mỗi ảnh. Điều chỉnh âm sẽ giảm giá; tỷ lệ nhóm mới vẫn giữ nguyên mức điều chỉnh.",
     "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Chỉ giá theo biểu thức hoặc giá cố định mới có thể cộng thêm. Hãy xác nhận giá thượng nguồn trước.",
-    "Your login has expired. Please sign in again.": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại"
+    "Your login has expired. Please sign in again.": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại",
+    "/ image": "/ ảnh",
+    "Price / image": "Giá / ảnh"
   }
 }
