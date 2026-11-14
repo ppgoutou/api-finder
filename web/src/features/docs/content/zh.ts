@@ -22,7 +22,7 @@ import { DOC_SAMPLES } from './samples'
 export const ZH_DOCS: DocContent = {
   title: 'API 开发文档',
   intro:
-    '通过兼容 OpenAI 视频接口的 API 调用 Seedance、Wan 等视频生成模型：提交任务、查询进度、下载视频，三个接口即可完成接入，所有模型用法相同。',
+    '通过兼容 OpenAI 的接口调用 Seedance 视频生成模型和 GPT 图片生成模型：视频用提交任务、查询进度、下载视频三个接口完成，图片一次请求直接返回。',
   sections: [
     {
       id: 'overview',
@@ -32,15 +32,16 @@ export const ZH_DOCS: DocContent = {
           type: 'markdown',
           text: `**接口地址（Base URL）**：\`{{BASE_URL}}\`
 
-视频生成是异步任务：先提交任务拿到任务 ID，再轮询任务状态，完成后下载视频。
-
 | 接口 | 用途 |
 | --- | --- |
-| \`POST /v1/videos\` | 提交生成任务 |
-| \`GET /v1/videos/{id}\` | 查询任务状态 |
+| \`POST /v1/videos\` | 提交视频生成任务 |
+| \`GET /v1/videos/{id}\` | 查询视频任务状态 |
 | \`GET /v1/videos/{id}/content\` | 下载视频 |
+| \`POST /v1/images/generations\` | 生成图片（同步返回） |
 
-所有视频模型都使用这三个接口，换模型只需要改 \`model\` 参数。各模型支持的分辨率、时长和计费方式不同，见下方「选择模型」；最新规格和实时价格以 [模型广场](/pricing) 中的模型说明为准。`,
+视频生成是异步任务：先提交任务拿到任务 ID，再轮询任务状态，完成后下载视频。图片生成是同步接口，一次请求直接返回图片。
+
+各模型支持的分辨率、时长和计费方式不同，见下方「选择模型」和「图片生成」；最新规格和实时价格以 [模型广场](/pricing) 中的模型说明为准。`,
         },
       ],
     },
@@ -83,30 +84,36 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `| 模型 | 分辨率 | 时长 | 计费 |
+          text: `视频模型分三组，**前两组参数写法相同，官方模型写法不同**，见「官方模型写法」。
+
+| 模型 | 分辨率 | 时长 | 计费 |
 | --- | --- | --- | --- |
-| \`seedance-2.0\` | 480p / 720p / 1080p / 4k | 4–15 秒 | 按秒 |
-| \`seedance-2.0-fast\` | 480p / 720p | 4–15 秒 | 按秒 |
-| \`seedance-2.0-mini\` | 480p / 720p | 4–15 秒 | 按秒 |
-| \`sd-2.0-线路1\` | 720p | 4–15 秒 | 按秒 |
-| \`sd-2.0-线路1-fast\` | 720p | 4–15 秒 | 按秒 |
-| \`seedance-2.5\` | 480p / 720p / 1080p | 4–30 秒 | 按秒 |
-| \`sd-2.5-线路1（2.5）\` | 720p | 4–30 秒 | 按秒 |
-| \`seedance-2.5-G2-V\` | 720p | 5–30 秒 | 按条 |
-| \`seedance-2.5-g4-m1-官转\` | 480p | 4–25 秒 | 按条 |
-| \`wan3.0-超限\` | 480p / 720p / 1080p | 5–30 秒 | 按秒 |
+| \`seedance2.0-T\` | 480p–1080p | 4–15 秒 | 按秒 |
+| \`seedance2.0-fast-T\` | 480p–720p | 4–15 秒 | 按秒 |
+| \`seedance2.0-mini-T\` | 480p–720p | 4–15 秒 | 按秒 |
+| \`seedance2.5-T\` | 480p–1080p | 4–30 秒 | 按秒 |
+| \`seedance-2.0-dfyb\` | 480p–1080p | 4–15 秒 | 按秒 |
+| \`seedance-2.5-dfyb\` | 480p–720p | 4–30 秒 | 按秒 |
+| \`doubao-seedance-2-0-261111\` | 480p–4k | 4–15 秒 | 按 token |
+| \`doubao-seedance-2-0-fast-261111\` | 480p–720p | 4–15 秒 | 按 token |
+| \`doubao-seedance-2-0-mini-261111\` | 480p–720p | 4–15 秒 | 按 token |
+| \`doubao-seedance-2-5-261111\` | 480p–1080p | 4–30 秒 | 按 token |
+| \`dreamina-seedance-2-0-261111\` | 480p–4k | 4–15 秒 | 按 token |
+| \`dreamina-seedance-2-0-fast-261111\` | 480p–720p | 4–15 秒 | 按 token |
+| \`dreamina-seedance-2-0-mini-261111\` | 480p–720p | 4–15 秒 | 按 token |
+| \`dreamina-seedance-2-5-261111\` | 480p–1080p | 4–30 秒 | 按 token |
+
+**参考素材上限**：Seedance 2.0 系列最多 9 张图、3 段视频、3 段音频；Seedance 2.5 系列最多 30 张图、10 段视频、10 段音频；\`seedance-2.0-dfyb\` 合计不超过 12 个，\`seedance-2.5-dfyb\` 合计不超过 50 个。
 
 **怎么选**
 
-- **要高清或 4K**：\`seedance-2.0\`（最高 4K）或 \`seedance-2.5\`（最高 1080p）；
-- **要长视频**：Seedance 2.5 系列和 \`wan3.0-超限\` 单段最长 30 秒；
-- **要更快、更便宜**：\`seedance-2.0-fast\`、\`seedance-2.0-mini\`；
-- **大量参考素材**：\`sd-2.5-线路1（2.5）\`、\`seedance-2.5-G2-V\`、\`seedance-2.5-g4-m1-官转\` 最多 30 张参考图、10 段参考视频、10 段参考音频；
-- **长视频控制成本**：\`seedance-2.5-G2-V\`、\`seedance-2.5-g4-m1-官转\` 按条计费，时长越长越划算。
+- **要 4K**：只有官方 \`doubao-seedance-2-0-261111\`、\`dreamina-seedance-2-0-261111\` 支持；
+- **要长视频**：Seedance 2.5 系列单段最长 30 秒；
+- **要更快、更便宜**：选名字带 \`fast\`、\`mini\` 的模型；
+- **大量参考素材**：Seedance 2.5 系列最多 30 张参考图、10 段参考视频、10 段参考音频；
+- **官方模型**：\`doubao-\` 开头的是字节跳动火山引擎线路，\`dreamina-\` 开头的是 BytePlus 海外线路，可生成有声视频。
 
-**画面比例**：\`seedance-2.0\`、\`seedance-2.0-fast\`、\`seedance-2.0-mini\`、\`seedance-2.5\` 支持 \`16:9\`、\`9:16\`、\`1:1\`、\`21:9\`、\`4:3\`、\`3:4\`；\`seedance-2.5-G2-V\`、\`seedance-2.5-g4-m1-官转\`、\`wan3.0-超限\` 只支持 \`16:9\`、\`9:16\`、\`1:1\`。
-
-**其他限制**：\`sd-2.0-线路1\` 系列最多 9 张参考图、3 段参考视频、3 段参考音频；\`wan3.0-超限\` 最多 10 张参考图、5 段参考音频，不支持参考视频；\`seedance-2.5-g4-m1-官转\` 提示词最长 15000 字符。`,
+**画面比例**：\`-T\` 系列支持 \`16:9\`、\`9:16\`、\`1:1\`、\`4:3\`、\`3:4\`、\`21:9\`、\`9:21\`；\`dfyb\` 系列支持 \`16:9\`、\`9:16\`、\`1:1\`、\`4:3\`、\`3:4\`、\`21:9\`；官方模型支持 \`21:9\`、\`16:9\`、\`4:3\`、\`1:1\`、\`3:4\`、\`9:16\`，Seedance 2.5 还支持 \`adaptive\`（自适应）。\`-T\` 系列不传比例时，带首帧或参考图会按素材自适应。`,
         },
       ],
     },
@@ -116,22 +123,20 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `\`POST /v1/videos\`，请求体为 JSON（\`Content-Type: application/json\`）。
+          text: `\`POST /v1/videos\`，请求体为 JSON（\`Content-Type: application/json\`）。下表适用于 \`-T\` 和 \`dfyb\` 系列；官方模型请看「官方模型写法」。
 
 | 参数 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | \`model\` | \`string\` | 是 | 模型名，见「选择模型」 |
 | \`prompt\` | \`string\` | 是 | 视频描述，不能为空 |
-| \`seconds\` | \`integer\` | 否 | 时长（秒），整数，需在模型支持的范围内；不传时为 5 秒 |
-| \`resolution\` | \`string\` | 否 | \`480p\`、\`720p\`、\`1080p\`、\`4k\`，需为模型支持的分辨率；不传时为 720p（只支持 480p 的模型为 480p） |
+| \`seconds\` | \`integer\` | 建议 | 时长（秒），整数，需在模型支持的范围内 |
+| \`resolution\` | \`string\` | 建议 | \`480p\`、\`720p\`、\`1080p\`，需为模型支持的分辨率；\`-T\` 系列不传时为 720p |
 | \`ratio\` | \`string\` | 否 | 画面比例，如 \`16:9\`、\`9:16\`、\`1:1\`，可选值见「选择模型」 |
 | \`images\` | \`string[]\` | 否 | 参考图片的公网 URL |
 | \`videos\` | \`string[]\` | 否 | 参考视频的公网 URL |
 | \`audios\` | \`string[]\` | 否 | 参考音频的公网 URL |
 | \`first_image_url\` | \`string\` | 否 | 首帧图片的公网 URL |
 | \`last_image_url\` | \`string\` | 否 | 尾帧图片的公网 URL，需与 \`first_image_url\` 一起使用 |
-
-**兼容写法**：\`duration\` 等同于 \`seconds\`，两者同时传时必须相等；\`size\` 可用像素写法指定分辨率，可选 \`854x480\`、\`480x854\`、\`1280x720\`、\`720x1280\`、\`720x720\`、\`1920x1080\`、\`1080x1920\`、\`3840x2160\`、\`2160x3840\`，与 \`resolution\` 同时传时必须一致。
 
 **每个任务生成 1 条视频**，不要传 \`n\`。表中未列出的参数不保证生效。
 
@@ -155,12 +160,17 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `除纯文字生成外，有两种用法：
+          text: `除纯文字生成外，有两种用法，**两种用法不能混用**：传了首尾帧就不要再传参考素材。
 
 - **参考素材**：用 \`images\`、\`videos\`、\`audios\` 传入参考图、视频、音频，在提示词里描述它们如何出现在视频中；
 - **首尾帧**：用 \`first_image_url\` 指定第一帧，可再用 \`last_image_url\` 指定最后一帧，模型生成中间的过渡。
 
-\`seedance-2.5-G2-V\`、\`seedance-2.5-g4-m1-官转\` 的两种用法**不能混用**：传了首尾帧就不要再传参考素材。\`wan3.0-超限\` 只传一两张图片时，会按首尾帧处理。
+**\`dfyb\` 系列的额外要求**：
+
+- 每个素材都要在提示词里用 \`@图N\`、\`@视频N\`、\`@音频N\` 引用（按数组顺序从 1 开始编号）；
+- 首尾帧需要首帧和尾帧图片同时传；
+- \`seedance-2.0-dfyb\`：参考视频单段 1.8–15 秒、总长不超过 15 秒，音频每段 2–15 秒；\`seedance-2.5-dfyb\`：参考视频总长不超过 30 秒，音频每段 2–30 秒；
+- 素材须为 HTTPS 链接，单个不超过 100MB。
 
 **素材要求**：所有素材都必须是公网可直接访问的 HTTP(S) 链接，不能是需要登录的地址或本地文件路径。素材数量上限见「选择模型」。`,
         },
@@ -168,6 +178,45 @@ export const ZH_DOCS: DocContent = {
           type: 'code',
           label: '示例：首尾帧生成',
           code: DOC_SAMPLES.firstLastFrame,
+        },
+        {
+          type: 'code',
+          label: '示例：dfyb 系列参考素材（提示词引用素材）',
+          code: DOC_SAMPLES.dfybReference,
+        },
+      ],
+    },
+    {
+      id: 'official',
+      title: '官方模型写法',
+      blocks: [
+        {
+          type: 'markdown',
+          text: `\`doubao-\`、\`dreamina-\` 开头的 8 个官方模型同样使用 \`POST /v1/videos\`，查询和下载也完全一样，但请求参数写法不同：
+
+| 参数 | 说明 |
+| --- | --- |
+| \`model\`、\`prompt\` | 同上 |
+| \`seconds\` | 时长（秒）；Seedance 2.x 也可传 \`-1\`，由模型自动选择时长 |
+| \`images\` | 图片的公网 URL：1 张为首帧，2 张为首帧 + 尾帧，3 张及以上（或同时有参考视频 / 音频）为参考图 |
+| \`metadata.resolution\` | 分辨率，如 \`720p\`、\`1080p\`；**不要用顶层的 \`resolution\`** |
+| \`metadata.ratio\` | 画面比例，如 \`16:9\`；**不要用顶层的 \`ratio\`** |
+| \`metadata.content\` | 参考视频和音频，写法见下方示例 |
+| \`metadata.generate_audio\` | 是否生成声音，默认生成；传 \`false\` 生成无声视频 |
+
+- 官方模型不读取顶层的 \`resolution\`、\`ratio\`、\`videos\`、\`audios\`、\`first_image_url\`、\`last_image_url\`，传了也不会生效；
+- 参考音频需要搭配参考图片或视频一起使用（Seedance 2.5 可只传音频）；
+- 不传 \`metadata.resolution\` 时由模型选择，提交时按该模型最高 1080p 预扣，完成后按实际用量结算。`,
+        },
+        {
+          type: 'code',
+          label: '示例：文生视频（1080p、16:9）',
+          code: DOC_SAMPLES.officialText,
+        },
+        {
+          type: 'code',
+          label: '示例：参考图 + 参考视频 + 参考音频',
+          code: DOC_SAMPLES.officialReference,
         },
       ],
     },
@@ -227,7 +276,7 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: '以下示例完成「提交 → 轮询 → 下载」全流程。运行前先设置环境变量 `API_KEY`；换模型只需修改 `model` 和对应的时长、分辨率。',
+          text: '以下示例完成「提交 → 轮询 → 下载」全流程。运行前先设置环境变量 `API_KEY`；换模型只需修改 `model` 和对应的时长、分辨率（官方模型按「官方模型写法」改请求体）。',
         },
         {
           type: 'code',
@@ -235,6 +284,43 @@ export const ZH_DOCS: DocContent = {
           code: DOC_SAMPLES.python,
         },
         { type: 'code', label: 'Node.js', code: DOC_SAMPLES.node },
+      ],
+    },
+    {
+      id: 'images',
+      title: '图片生成',
+      blocks: [
+        {
+          type: 'markdown',
+          text: `\`POST /v1/images/generations\`，兼容 OpenAI Images 接口，根据文字描述生成 PNG 图片。
+
+| 模型 | 单张耗时（1024x1024，实测） | 返回内容 |
+| --- | --- | --- |
+| \`gpt-image-2.5-flare\` | 约 35–65 秒 | 默认同时返回 base64 和临时 \`url\` |
+| \`gpt-image-2.5-sunburst\` | 约 1 分钟 | 默认同时返回 base64 和临时 \`url\` |
+| \`gpt-image-2.5-flare-02\` | 1 分钟以上 | 请传 \`b64_json\`，否则可能只返回临时 \`url\` |
+| \`gpt-image-2.6-01\` | 约 50–85 秒 | 请传 \`b64_json\`，否则可能只返回临时 \`url\` |
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| \`model\` | \`string\` | 是 | 模型名，见上表 |
+| \`prompt\` | \`string\` | 是 | 图片描述 |
+| \`n\` | \`integer\` | 否 | 生成张数，默认 1 |
+| \`size\` | \`string\` | 否 | 图片尺寸，如 \`1024x1024\` |
+| \`response_format\` | \`string\` | 否 | 传 \`b64_json\` 返回 base64 图片 |
+
+- 接口**同步返回**，请把客户端超时设为 150 秒以上；
+- 临时 \`url\` 会过期，请及时下载保存；
+- 按实际返回的图片张数计费，与尺寸、质量无关；请求失败不扣费。
+- 也可以直接用 OpenAI SDK 的 \`images.generate\` 调用，把 \`base_url\` 设为 \`{{BASE_URL}}/v1\` 即可。`,
+        },
+        { type: 'code', label: 'cURL', code: DOC_SAMPLES.imageCreate },
+        { type: 'code', label: '返回示例', code: DOC_SAMPLES.imageResponse },
+        {
+          type: 'code',
+          label: 'Python（保存为 PNG 文件）',
+          code: DOC_SAMPLES.imagePython,
+        },
       ],
     },
     {
@@ -247,11 +333,12 @@ export const ZH_DOCS: DocContent = {
 
 | 计费方式 | 计算 | 模型 |
 | --- | --- | --- |
-| 按秒 | 视频时长（秒）× 该分辨率的每秒单价 | 选择模型表中标为「按秒」的模型 |
-| 按条 | 每条视频固定价格，与时长无关 | \`seedance-2.5-G2-V\`、\`seedance-2.5-g4-m1-官转\` |
+| 按秒 | 视频时长（秒）× 该分辨率的每秒单价 | \`-T\` 系列（带不带参考视频同价）、\`dfyb\` 系列（带参考视频单价更高） |
+| 按 token | token 数 × token 单价；token 数 =（输出时长 + 参考视频时长）× 宽 × 高 × 24 ÷ 1024，带参考视频时单价更低 | 官方模型（\`doubao-\`、\`dreamina-\` 开头） |
+| 按张 | 实际返回的图片张数 × 单价，与尺寸、质量无关 | 图片模型 |
 
-- 提交任务时按请求的时长和分辨率扣费，带不带参考素材价格相同；
-- **任务失败会自动退回费用**，可在控制台「使用日志」查看扣费与退款记录；
+- 视频在提交任务时预扣费用；按 token 计费的模型完成后按实际用量结算；
+- **视频任务失败会自动退回费用**，图片请求失败不扣费，可在控制台「消费记录」查看扣费与退款；
 - 余额不足时提交会被拒绝，请先在「钱包」充值。`,
         },
       ],
@@ -262,12 +349,37 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `| 情况 | 处理建议 |
+          text: `请求失败时返回 \`error\` 对象：\`error.code\` 是固定的错误代码，适合在程序里判断；\`error.message\` 是可以直接展示给用户的说明，语言跟随账号的语言设置（未设置时按 \`Accept-Language\` 请求头）。`,
+        },
+        {
+          type: 'code',
+          label: '错误返回示例',
+          code: DOC_SAMPLES.errorResponse,
+        },
+        {
+          type: 'markdown',
+          text: `**常见错误代码**
+
+| \`error.code\` | 含义 | 处理 |
+| --- | --- | --- |
+| \`balance_insufficient\` | 余额不足 | 到「钱包」充值后再提交 |
+| \`prompt_required\` | 未填写提示词 | 补充 \`prompt\` |
+| \`invalid_duration\` | 模型不支持该时长 | 按「选择模型」调整 \`seconds\` |
+| \`invalid_resolution\` | 模型不支持该分辨率或尺寸 | 按「选择模型」调整分辨率 |
+| \`request_too_large\` | 请求内容过大 | 减少或压缩素材 |
+| \`material_unreachable\` | 素材无法访问 | 确认链接有效、可公网访问 |
+| \`material_public_url\` | 素材不是公网 http(s) 链接 | 改用公网可访问的链接 |
+| \`moderation_prompt\` | 提示词未通过审核 | 修改提示词后重试 |
+| \`model_unavailable\` | 模型暂时不可用，未扣费 | 稍后重试或换一个模型 |
+| \`service_busy\` | 服务繁忙 | 稍后重试 |
+| \`submit_timeout\` | 提交超时，未开始生成，已退款 | 重新提交 |
+
+**其他情况**
+
+| 情况 | 处理建议 |
 | --- | --- |
-| 400 参数校验失败 | 检查模型名、时长范围、分辨率、参数写法和素材 URL |
 | 401 / 403 | 检查密钥是否完整、是否已删除或过期；不要自动重试 |
-| 余额不足 | 到「钱包」充值后再提交 |
-| 404 或 \`task_not_exist\` | 检查任务 ID 是否正确、是否由当前账号创建 |
+| \`task_not_exist\` | 检查任务 ID 是否正确、是否由当前账号创建 |
 | 429 / 查询临时失败 | 降低轮询频率，用同一个任务 ID 稍后再查 |
 | 提交时超时、断线或 5xx | 任务可能已经创建成功，先到控制台「任务日志」确认，**不要直接重新提交** |
 
@@ -287,16 +399,16 @@ export const ZH_DOCS: DocContent = {
 取决于模型、时长、分辨率和排队情况，请以轮询到的状态为准，不要设置过短的超时。
 
 **可以用 OpenAI SDK 调用吗？**
-接口路径和返回格式兼容 OpenAI 视频接口，可以直接用 HTTP 请求调用；参数请以本文档为准。
+图片接口可以直接用 OpenAI SDK 调用。视频接口的路径和返回格式兼容 OpenAI 视频接口，建议直接用 HTTP 请求调用；参数请以本文档为准。
 
 **上传本地图片怎么办？**
 接口只接受公网 URL。请先把图片上传到对象存储或图床，再把链接填入参数。
 
-**模型名里有中文，会不会出问题？**
-不会，请原样填写模型名（包括括号），JSON 请求体使用 UTF-8 编码即可。
+**为什么官方模型设置的分辨率没生效？**
+官方模型的分辨率和比例要写在 \`metadata\` 里，见「官方模型写法」。
 
-**生成的视频能保存多久？**
-下载地址是临时的，请在任务完成后尽快下载保存。`,
+**生成的视频和图片能保存多久？**
+下载地址是临时的，请在完成后尽快下载保存。`,
         },
       ],
     },
