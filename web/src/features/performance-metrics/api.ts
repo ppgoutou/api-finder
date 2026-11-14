@@ -27,6 +27,7 @@ export async function getPerfMetricsSummary(
   const res = await api.get<PerfSummaryAllData>('/api/perf-metrics/summary', {
     params: { hours, recent_model: recentModels },
     paramsSerializer: { indexes: null },
+    anonymousFallback: true,
   })
   return res.data
 }

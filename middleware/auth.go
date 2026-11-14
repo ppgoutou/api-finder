@@ -392,11 +392,11 @@ func writeDashboardAuthError(c *gin.Context, err error) {
 		return
 	}
 	if errors.Is(err, service.ErrAuthTokenExpired) {
-		abortWithWebMessage(c, http.StatusUnauthorized, "AUTH_TOKEN_EXPIRED", common.NewMessage("Unauthorized, not logged in and no access token provided"))
+		abortWithWebMessage(c, http.StatusUnauthorized, "AUTH_TOKEN_EXPIRED", common.NewMessage("Your login has expired. Please sign in again."))
 		return
 	}
 	if errors.Is(err, service.ErrLoginSessionRevoked) || errors.Is(err, gorm.ErrRecordNotFound) {
-		abortWithWebMessage(c, http.StatusUnauthorized, "AUTH_SESSION_REVOKED", common.NewMessage("Unauthorized, not logged in and no access token provided"))
+		abortWithWebMessage(c, http.StatusUnauthorized, "AUTH_SESSION_REVOKED", common.NewMessage("Your login has expired. Please sign in again."))
 		return
 	}
 	if errors.Is(err, service.ErrAuthTokenInvalid) {

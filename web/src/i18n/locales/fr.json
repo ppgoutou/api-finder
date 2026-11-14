@@ -7278,7 +7278,6 @@
     "Unauthorized, insufficient privileges": "Non autorisé, privilèges insuffisants",
     "Unauthorized, invalid access token": "Non autorisé, jeton d'accès invalide",
     "Unauthorized, invalid user info": "Non autorisé, informations utilisateur invalides",
-    "Unauthorized, not logged in and no access token provided": "Non autorisé : non connecté et aucun jeton d'accès fourni",
     "Unauthorized, the access token has expired": "Non autorisé, le jeton d'accès a expiré",
     "Unavailable": "Indisponible",
     "Unbind": "Dissocier",
@@ -8261,6 +8260,7 @@
     "Set a supplier token in model onboarding to read its charges": "Définissez un jeton fournisseur dans l'intégration des modèles pour lire ses frais",
     "Price adjustment per image": "Ajustement du prix par image",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Les clients paient le prix final pour chaque image. Un ajustement négatif baisse le prix ; un nouveau ratio de groupe conserve l'ajustement.",
-    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Seuls les prix par expression ou fixes acceptent une majoration. Confirmez d'abord le prix amont."
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Seuls les prix par expression ou fixes acceptent une majoration. Confirmez d'abord le prix amont.",
+    "Your login has expired. Please sign in again.": "Votre session a expiré. Veuillez vous reconnecter."
   }
 }

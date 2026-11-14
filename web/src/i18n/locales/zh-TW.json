@@ -7278,7 +7278,6 @@
     "Unauthorized, insufficient privileges": "無權進行此操作，權限不足",
     "Unauthorized, invalid access token": "無權進行此操作，access token 無效",
     "Unauthorized, invalid user info": "無權進行此操作，使用者資訊無效",
-    "Unauthorized, not logged in and no access token provided": "無權進行此操作，未登入且未提供 access token",
     "Unauthorized, the access token has expired": "存取權杖已過期",
     "Unavailable": "無法顯示",
     "Unbind": "解綁",
@@ -8261,6 +8260,7 @@
     "Set a supplier token in model onboarding to read its charges": "在模型上新中設定供應商令牌後才能讀取扣費",
     "Price adjustment per image": "每張圖片的價格調整",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "客戶按最終價為每張圖片付費。負數表示降價；修改分組倍率後調整金額保持不變。",
-    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "只有表達式價格或固定價格可以加價。請先確認上游價格。"
+    "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "只有表達式價格或固定價格可以加價。請先確認上游價格。",
+    "Your login has expired. Please sign in again.": "登入已過期，請重新登入"
   }
 }

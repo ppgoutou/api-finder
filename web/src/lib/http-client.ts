@@ -41,6 +41,10 @@ declare module 'axios' {
     authRetry?: boolean
     acceptAuthRotation?: boolean
     singleUseAuthorization?: boolean
+    // Public read: a stale login falls back to an anonymous retry instead
+    // of failing, so public pages keep loading as a guest.
+    anonymousFallback?: boolean
+    anonymousRetry?: boolean
   }
 }
 
@@ -96,7 +100,9 @@ api.interceptors.response.use(
     const skipErrorHandler = config?.skipErrorHandler
     const status = error?.response?.status
 
-    if (status === 401) {
+    // A failed anonymous retry means the page needs a login; the caller
+    // reports it without clearing a session the refresh may still restore.
+    if (status === 401 && !config?.anonymousRetry) {
       if (config && !config.skipAuthRefresh && !config.authRetry) {
         config.authRetry = true
         const outcome = await refreshAuthentication()
@@ -108,6 +114,14 @@ api.interceptors.response.use(
               Authorization: `Bearer ${token}`,
             }
           }
+          return api.request(config)
+        }
+
+        if (
+          config.anonymousFallback &&
+          (outcome.kind === 'anonymous' || outcome.kind === 'transient_error')
+        ) {
+          config.anonymousRetry = true
           return api.request(config)
         }
 
@@ -145,6 +159,10 @@ api.interceptors.response.use(
 )
 
 api.interceptors.request.use(async (config) => {
+  if (config.anonymousRetry) {
+    config.headers.delete('Authorization')
+    return config
+  }
   if (config.singleUseAuthorization || config.headers.has('X-Security-Proof')) {
     // Refresh before spending a proof/flow, never by replaying its request.
     config.skipAuthRefresh = true
