@@ -29,7 +29,7 @@ func TestValidatePricingCategories(t *testing.T) {
 		{name: "padded model name", value: `[{"id":"a","name":"A","models":[" seedance-2.0"]}]`},
 		{name: "name over 40 characters", value: `[{"id":"a","name":"` + strings.Repeat("类", 41) + `","models":[]}]`},
 		{name: "not a list", value: `{"id":"a"}`},
-		{name: "badges on own models", value: `[{"id":"a","name":"A","models":["seedance-2.0","sd-2.0"],"badges":{"seedance-2.0":["hot","recommended","stable"],"sd-2.0":[]}}]`, valid: true},
+		{name: "badges on own models", value: `[{"id":"a","name":"A","models":["seedance-2.0","sd-2.0"],"badges":{"seedance-2.0":["hot","recommended","stable","nsfw"],"sd-2.0":[]}}]`, valid: true},
 		{name: "unknown badge", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.0":["free"]}}]`},
 		{name: "repeated badge", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.0":["hot","hot"]}}]`},
 		{name: "badge on a model outside the category", value: `[{"id":"a","name":"A","models":["seedance-2.0"],"badges":{"seedance-2.5":["hot"]}}]`},

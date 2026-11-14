@@ -33,6 +33,7 @@ export const PRESSED_BADGE_CLASSES: Record<PricingModelBadge, string> = {
   new: 'aria-pressed:border-[#16c784] aria-pressed:bg-[#16c784] aria-pressed:text-neutral-950 aria-pressed:hover:bg-[#16c784]/90 aria-pressed:hover:text-neutral-950',
   stable:
     'aria-pressed:border-success aria-pressed:bg-success aria-pressed:text-success-foreground aria-pressed:hover:bg-success/90 aria-pressed:hover:text-success-foreground',
+  nsfw: 'aria-pressed:border-[#d6246e] aria-pressed:bg-[#d6246e] aria-pressed:text-white aria-pressed:hover:bg-[#d6246e]/90 aria-pressed:hover:text-white',
 }
 
 export const PRICING_CATEGORIES_OPTION_KEY = 'PricingCategories'

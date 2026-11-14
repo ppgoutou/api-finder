@@ -94,6 +94,7 @@ const MODEL_BADGE_CLASSES: Record<HeaderBadge, string> = {
   recommended: 'bg-brand text-white',
   hot: 'bg-destructive text-destructive-foreground',
   new: 'bg-success text-success-foreground',
+  nsfw: 'bg-[#d6246e] text-white',
 }
 
 export const ModelCard = memo(function ModelCard(props: ModelCardProps) {

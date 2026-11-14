@@ -26,7 +26,7 @@ const (
 
 // pricingModelBadges are the highlight labels an administrator can put on a
 // model card.
-var pricingModelBadges = []string{"recommended", "hot", "new", "stable"}
+var pricingModelBadges = []string{"recommended", "hot", "new", "stable", "nsfw"}
 
 // pricingCategory groups models on the public pricing page. The option stores
 // them in display order, each model listed in the order it is shown, and the

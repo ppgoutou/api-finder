@@ -28,7 +28,12 @@ export type PricingVendor = {
 }
 
 /** Highlight label an administrator can put on a model card. */
-export type PricingModelBadge = 'recommended' | 'hot' | 'new' | 'stable'
+export type PricingModelBadge =
+  | 'recommended'
+  | 'hot'
+  | 'new'
+  | 'stable'
+  | 'nsfw'
 
 /** Administrator-defined pricing page category; models are in display order. */
 export type PricingCategory = {
