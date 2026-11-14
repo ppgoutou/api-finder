@@ -142,6 +142,7 @@ func supplierCharges(ctx context.Context, channelId int, token string, start, en
 	}
 	var tokenPage struct {
 		Items []struct {
+			Id   int    `json:"id"`
 			Name string `json:"name"`
 		} `json:"items"`
 	}
@@ -153,7 +154,10 @@ func supplierCharges(ctx context.Context, channelId int, token string, start, en
 	if len(tokenPage.Items) != 1 {
 		return 0, fmt.Errorf("the channel key matches %d supplier tokens", len(tokenPage.Items))
 	}
-	tokenName := tokenPage.Items[0].Name
+	// A log keeps the token name it was written under, so a renamed token is
+	// matched by id; a supplier that reports no token ids falls back to the
+	// current name.
+	supplierToken := tokenPage.Items[0]
 
 	if start <= 0 {
 		start = channel.CreatedTime
@@ -169,16 +173,25 @@ func supplierCharges(ctx context.Context, channelId int, token string, start, en
 				}
 				var logs struct {
 					Items []struct {
-						Quota int64 `json:"quota"`
+						Quota     int64  `json:"quota"`
+						TokenId   int    `json:"token_id"`
+						TokenName string `json:"token_name"`
 					} `json:"items"`
 					Total int `json:"total"`
 				}
-				path := fmt.Sprintf("/api/log/self?p=%d&page_size=%d&type=%d&token_name=%s&start_timestamp=%d&end_timestamp=%d",
-					page, opsSupplierLogPageSize, logType, url.QueryEscape(tokenName), windowStart, windowEnd)
+				path := fmt.Sprintf("/api/log/self?p=%d&page_size=%d&type=%d&start_timestamp=%d&end_timestamp=%d",
+					page, opsSupplierLogPageSize, logType, windowStart, windowEnd)
 				if err := getSupplierDashboard(ctx, baseURL, path, token, &logs); err != nil {
 					return 0, err
 				}
 				for _, item := range logs.Items {
+					if supplierToken.Id != 0 && item.TokenId != 0 {
+						if item.TokenId != supplierToken.Id {
+							continue
+						}
+					} else if item.TokenName != supplierToken.Name {
+						continue
+					}
 					if logType == model.LogTypeRefund {
 						net -= item.Quota
 					} else {
