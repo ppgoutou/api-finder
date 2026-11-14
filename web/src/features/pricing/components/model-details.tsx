@@ -77,15 +77,16 @@ import {
   isUnconfiguredTaskUsageModel,
   type DynamicPriceEntry,
 } from '../lib/dynamic-price'
+import { parseTags } from '../lib/filters'
 import {
   getAvailableGroups,
   isTokenBasedModel,
   modelDisplayName,
 } from '../lib/model-helpers'
 import { getOfficialTokenPricing } from '../lib/official-price'
-import { getPriceComparison } from '../lib/price-comparison'
 import { withPluginPricing } from '../lib/plugin-pricing'
 import { formatFixedPrice, formatGroupPrice } from '../lib/price'
+import { getPriceComparison } from '../lib/price-comparison'
 import {
   evaluateTaskUsageExamples,
   getTaskEnumFields,
@@ -527,45 +528,70 @@ function ModelBackendDetailsSection(props: { model: PricingModel }) {
 // Model header (always visible above the detail sections)
 // ----------------------------------------------------------------------------
 
-function ModelHeader(props: { model: PricingModel }) {
+export function ModelHeader(props: { model: PricingModel }) {
   const { t } = useTranslation()
   const model = props.model
   const modelIconKey = model.icon || model.vendor_icon
-  const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 20) : null
+  const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 28) : null
   const description = model.description || model.vendor_description || null
   const displayName = modelDisplayName(model)
+  const tags = parseTags(model.tags)
 
   return (
-    <header className='pb-4'>
-      <div className='flex items-center gap-2.5'>
-        {modelIcon}
-        <h1 className='font-mono text-xl font-bold tracking-tight sm:text-2xl'>
-          {displayName}
-        </h1>
+    <header className='border-b pb-5'>
+      <div className='flex items-start gap-3.5'>
+        <div
+          aria-hidden='true'
+          className='bg-brand-soft text-brand-hover dark:text-brand-on-dark flex size-12 shrink-0 items-center justify-center rounded-xl'
+        >
+          {modelIcon || (
+            <span className='text-base font-bold'>
+              {displayName.charAt(0).toUpperCase() || '?'}
+            </span>
+          )}
+        </div>
+        <div className='min-w-0 flex-1'>
+          <h1 className='text-xl leading-tight font-semibold tracking-tight break-words sm:text-2xl'>
+            {displayName}
+          </h1>
+          <div className='mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs'>
+            {model.vendor_name && (
+              <span className='text-muted-foreground font-medium'>
+                {model.vendor_name}
+              </span>
+            )}
+            <ModelBillingModeBadge model={model} />
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className='bg-muted text-muted-foreground rounded-md px-1.5 py-0.5'
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className='bg-muted/50 mt-4 inline-flex max-w-full items-center gap-2 rounded-lg border py-1 pr-1 pl-2.5'>
+        <span className='text-muted-foreground shrink-0 text-xs'>
+          {t('Model ID for API calls')}
+        </span>
+        <code className='min-w-0 font-mono text-xs font-medium break-all'>
+          {model.model_name}
+        </code>
         <CopyButton
           value={model.model_name || ''}
-          className='size-6'
+          className='size-6 shrink-0'
           iconClassName='size-3'
           tooltip={t('Copy model name')}
           successTooltip={t('Copied!')}
           aria-label={t('Copy model name')}
         />
       </div>
-      {displayName !== model.model_name && (
-        <p className='text-muted-foreground mt-1 text-xs'>
-          {t('Model ID for API calls')}:{' '}
-          <code className='text-foreground font-mono'>{model.model_name}</code>
-        </p>
-      )}
-      <div className='mt-1 flex flex-wrap items-center gap-1.5 text-xs'>
-        {model.vendor_name && (
-          <span className='text-muted-foreground'>{model.vendor_name}</span>
-        )}
-        <span className='text-muted-foreground/30'>·</span>
-        <ModelBillingModeBadge model={model} />
-      </div>
+
       {description && (
-        <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
+        <p className='text-muted-foreground mt-3 max-w-3xl text-sm leading-relaxed'>
           {description}
         </p>
       )}
