@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "可選時長：{{min}}～{{max}} 秒",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "含參考影片的訂單，參考影片的秒數也按「含影片」的 Token 單價計費；表中每秒價格按 1 秒輸出影片計算。",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "每秒影片 Token = 寬 × 高 × 24 / 1024。示例按 16:9 估算，實際扣費以上游回傳的用量為準。",
-    "With video input": "含影片",
-    "Without video input": "不含影片",
     "{{site}} price / second": "{{site}} 價格（每秒）",
     "{{site}} price / 1M tokens": "{{site}} 價格（每百萬 Token）",
     "Official price / second": "官方價格（每秒）",
@@ -8281,11 +8279,12 @@
     "Discount rate": "折扣率",
     "Per-second prices": "按秒計價",
     "Per-token prices": "按 Token 計價",
-    "Example prices": "示例價格",
-    "{{output}}s output + {{reference}}s reference video": "輸出 {{output}} 秒 + 參考影片 {{reference}} 秒",
-    "{{seconds}}s output": "輸出 {{seconds}} 秒",
-    "{{site}} price": "{{site}} 價格",
     "Official order price": "官方價格",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "本模型含參考影片的訂單只按輸出秒數計費；其折扣率按「輸出 {{seconds}} 秒 + 參考影片 {{seconds}} 秒」的整單價格比較。"
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "本模型含參考影片的訂單只按輸出秒數計費；其折扣率按「輸出 {{seconds}} 秒 + 參考影片 {{seconds}} 秒」的整單價格比較。",
+    "Resolution header without video": "",
+    "Resolution header with video": "",
+    "Row without video": "（不含影片）",
+    "Row with video": "（含影片）",
+    "Video tokens per second: {{list}}": "每秒 Token：{{list}}"
   }
 }

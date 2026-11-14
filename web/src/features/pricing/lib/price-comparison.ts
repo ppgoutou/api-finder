@@ -298,3 +298,11 @@ export function rowPriceRatio(
     row.official?.[unit]
   )
 }
+
+/** Whether a usage fact marks an order made from a reference video. */
+export function isReferenceVideoFact(field: string, value: unknown): boolean {
+  if (field === REFERENCE_SWITCH_FIELD) {
+    return value === true || (typeof value === 'string' && !isPlainSwitchValue(value))
+  }
+  return field === 'input_video_seconds' && typeof value === 'number' && value > 0
+}

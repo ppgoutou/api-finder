@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "Durées disponibles : {{min}}～{{max}} secondes",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "Avec une vidéo de référence, ses secondes sont aussi facturées au prix par token « avec vidéo » ; le prix par seconde compte une seconde de sortie.",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "Tokens vidéo par seconde = largeur × hauteur × 24 / 1024. Les exemples supposent du 16:9 ; la facturation finale suit l’usage renvoyé par le fournisseur.",
-    "With video input": "Avec vidéo",
-    "Without video input": "Sans vidéo",
     "{{site}} price / second": "Prix {{site}} / seconde",
     "{{site}} price / 1M tokens": "Prix {{site}} / 1M tokens",
     "Official price / second": "Prix officiel / seconde",
@@ -8281,11 +8279,12 @@
     "Discount rate": "Remise",
     "Per-second prices": "Prix par seconde",
     "Per-token prices": "Prix par token",
-    "Example prices": "Exemples de prix",
-    "{{output}}s output + {{reference}}s reference video": "{{output}} s de sortie + {{reference}} s de vidéo de référence",
-    "{{seconds}}s output": "{{seconds}} s de sortie",
-    "{{site}} price": "Prix {{site}}",
     "Official order price": "Prix officiel",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Les commandes avec vidéo de référence sont facturées uniquement à la seconde de sortie ; leur remise compare une commande complète de {{seconds}} s de sortie + {{seconds}} s de référence."
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Les commandes avec vidéo de référence sont facturées uniquement à la seconde de sortie ; leur remise compare une commande complète de {{seconds}} s de sortie + {{seconds}} s de référence.",
+    "Resolution header without video": "(sans /",
+    "Resolution header with video": "avec vidéo)",
+    "Row without video": "(sans)",
+    "Row with video": "(avec)",
+    "Video tokens per second: {{list}}": "Tokens vidéo par seconde : {{list}}"
   }
 }

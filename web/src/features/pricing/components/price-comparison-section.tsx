@@ -36,22 +36,18 @@ import {
 import { getConfiguredGroupRatio } from '../lib/model-helpers'
 import {
   COMPARISON_ORDER_SECONDS,
-  comparisonOrderCost,
-  priceRatio,
+  isReferenceVideoFact,
   rowPriceRatio,
   type PriceComparison,
   type PriceComparisonRow,
 } from '../lib/price-comparison'
+import { evaluateTaskUsageExamples } from '../lib/task-expr'
 import { taskEnumLabel } from '../lib/task-price-display'
 import {
   getModelDurationRange,
   VIDEO_PRICE_FRACTION_DIGITS,
 } from '../lib/video-pricing'
 import type { PricingModel } from '../types'
-
-/** Example orders: a 5 s video, and a 5 s video made from a 5 s reference. */
-const EXAMPLE_OUTPUT_SECONDS = COMPARISON_ORDER_SECONDS
-const EXAMPLE_REFERENCE_SECONDS = COMPARISON_ORDER_SECONDS
 
 /** Ratios this close to 1 read as the official price. */
 const SAME_PRICE_TOLERANCE = 0.005
@@ -66,14 +62,12 @@ type PriceComparisonSectionProps = {
   showRechargePrice: boolean
 }
 
-type ExampleRow = PriceComparisonRow & {
-  ourCost?: number
-  officialCost?: number
-}
-
+/** Equal-width, centered columns; a phone keeps them within the screen. */
+const tableClass = 'table-fixed text-sm'
 const headClass =
-  'h-auto px-1.5 py-2 text-xs font-medium whitespace-normal sm:px-2'
-const priceCellClass = 'px-1.5 font-mono text-xs tabular-nums sm:px-2 sm:text-sm'
+  'h-auto px-1 py-2 text-center text-xs font-medium whitespace-normal sm:px-2'
+const cellClass = 'px-1 py-2.5 text-center whitespace-normal sm:px-2'
+const priceCellClass = 'font-mono text-xs tabular-nums sm:text-sm'
 
 function DiscountBadge(props: { ratio: number | undefined }) {
   const { t } = useTranslation()
@@ -192,37 +186,52 @@ function GroupComparisonTables(
   const official = options(1)
   const rows = props.comparison.rows
 
-  const conditionCell = (
-    row: PriceComparisonRow,
-    detail?: React.ReactNode
-  ) => (
-    <div className='flex min-w-0 flex-col'>
-      <span className='font-medium whitespace-nowrap'>
-        {taskEnumLabel(optionDefinition, row.option, i18n.language)}
-      </span>
-      <span className='text-muted-foreground text-[11px] leading-tight whitespace-nowrap sm:text-xs'>
-        {row.withVideo ? t('With video input') : t('Without video input')}
-      </span>
-      {detail}
-    </div>
-  )
-
-  const conditionColumn = <TRow extends PriceComparisonRow>(
-    detail?: (row: TRow) => React.ReactNode
-  ): StaticDataTableColumn<TRow> => ({
+  // Languages with short condition words name both conditions in the header
+  // and keep the rows short; the others spell the condition out per row.
+  const headerWithout = t('Resolution header without video')
+  const headerWith = t('Resolution header with video')
+  const rowCondition = (row: PriceComparisonRow) =>
+    row.withVideo ? t('Row with video') : t('Row without video')
+  const conditionColumn: StaticDataTableColumn<PriceComparisonRow> = {
     id: 'condition',
-    header: t('Resolution'),
-    className: headClass,
-    cellClassName: 'px-1.5 py-2.5 align-top whitespace-normal sm:px-2',
-    cell: (row) => conditionCell(row, detail?.(row)),
-  })
+    header: (
+      <>
+        {t('Resolution')}
+        {headerWithout && ` ${headerWithout}`}
+        {headerWith && <VideoText> {headerWith}</VideoText>}
+      </>
+    ),
+    // A phone gives the condition column room for one bracketed label line;
+    // wider screens split the four columns evenly.
+    className: cn(headClass, 'w-[30%] sm:w-1/4'),
+    cellClassName: cellClass,
+    cell: (row) => (
+      <>
+        <span className='inline-block font-medium'>
+          {taskEnumLabel(optionDefinition, row.option, i18n.language)}
+        </span>
+        <span
+          className={cn(
+            'inline-block whitespace-nowrap',
+            // Latin brackets read with a space before them; CJK ones carry
+            // their own.
+            rowCondition(row).startsWith('(') && 'ms-1'
+          )}
+        >
+          {row.withVideo ? (
+            <VideoText>{rowCondition(row)}</VideoText>
+          ) : (
+            rowCondition(row)
+          )}
+        </span>
+      </>
+    ),
+  }
 
-  const priceColumns = <TRow extends PriceComparisonRow>(
+  const priceColumns = (
     unit: 'second' | 'perMillion',
-    ourValue: (row: TRow) => number | undefined,
-    officialValue: (row: TRow) => number | undefined,
     format: (value: number, priceOptions: DynamicPriceOptions) => string
-  ): StaticDataTableColumn<TRow>[] => [
+  ): StaticDataTableColumn<PriceComparisonRow>[] => [
     {
       id: 'ours',
       header: (
@@ -236,9 +245,9 @@ function GroupComparisonTables(
         />
       ),
       className: headClass,
-      cellClassName: cn(priceCellClass, 'font-semibold'),
+      cellClassName: cn(cellClass, priceCellClass, 'font-semibold'),
       cell: (row) => {
-        const value = ourValue(row)
+        const value = row.ours?.[unit]
         return value === undefined ? '-' : format(value, ours)
       },
     },
@@ -255,9 +264,9 @@ function GroupComparisonTables(
         />
       ),
       className: headClass,
-      cellClassName: cn(priceCellClass, 'text-muted-foreground'),
+      cellClassName: cn(cellClass, priceCellClass, 'text-muted-foreground'),
       cell: (row) => {
-        const value = officialValue(row)
+        const value = row.official?.[unit]
         return value === undefined ? '-' : format(value, official)
       },
     },
@@ -265,7 +274,7 @@ function GroupComparisonTables(
       id: 'discount',
       header: t('Discount rate'),
       className: headClass,
-      cellClassName: 'px-1.5 py-2.5 sm:px-2',
+      cellClassName: cellClass,
       cell: (row) => (
         <DiscountBadge ratio={rowPriceRatio(row, unit, props.ratio)} />
       ),
@@ -277,138 +286,122 @@ function GroupComparisonTables(
       row.ours?.perMillion !== undefined ||
       row.official?.perMillion !== undefined
   )
-  const exampleRows: ExampleRow[] = rows.map((row) => {
-    const referenceSeconds = row.withVideo ? EXAMPLE_REFERENCE_SECONDS : 0
-    return {
-      ...row,
-      ourCost: comparisonOrderCost(
-        row.ours,
-        row.tokensPerSecond,
-        EXAMPLE_OUTPUT_SECONDS,
-        referenceSeconds
-      ),
-      officialCost: comparisonOrderCost(
-        row.official,
-        row.tokensPerSecond,
-        EXAMPLE_OUTPUT_SECONDS,
-        referenceSeconds
-      ),
-    }
-  })
+  const tokensPerSecond = [
+    ...new Map(
+      tokenRows.flatMap((row) =>
+        row.tokensPerSecond ? [[row.option, row.tokensPerSecond] as const] : []
+      )
+    ),
+  ]
+  const exampleRows = usageExampleRows(props.model)
 
   return (
     <>
       <ComparisonTable title={t('Per-second prices')}>
         <StaticDataTable
-          tableClassName='text-sm'
+          tableClassName={tableClass}
           headerRowClassName='hover:bg-transparent'
           data={rows}
           getRowKey={(row) => row.key}
-          columns={[
-            conditionColumn<PriceComparisonRow>(),
-            ...priceColumns<PriceComparisonRow>(
-              'second',
-              (row) => row.ours?.second,
-              (row) => row.official?.second,
-              formatTaskUsageUnitPrice
-            ),
-          ]}
+          columns={[conditionColumn, ...priceColumns('second', formatTaskUsageUnitPrice)]}
         />
       </ComparisonTable>
 
       {tokenRows.length > 0 && (
         <ComparisonTable title={t('Per-token prices')}>
           <StaticDataTable
-            tableClassName='text-sm'
+            tableClassName={tableClass}
             headerRowClassName='hover:bg-transparent'
             data={tokenRows}
             getRowKey={(row) => row.key}
             columns={[
-              conditionColumn<PriceComparisonRow>((row) =>
-                row.tokensPerSecond ? (
-                  <span className='text-muted-foreground font-mono text-[11px] leading-tight tabular-nums'>
-                    {t('{{count}} tokens per second', {
-                      count: formatNumber(Math.round(row.tokensPerSecond), locale),
-                    })}
-                  </span>
-                ) : null
-              ),
-              ...priceColumns<PriceComparisonRow>(
-                'perMillion',
-                (row) => row.ours?.perMillion,
-                (row) => row.official?.perMillion,
-                formatDynamicUnitPrice
-              ),
+              conditionColumn,
+              ...priceColumns('perMillion', formatDynamicUnitPrice),
             ]}
           />
+          {tokensPerSecond.length > 0 && (
+            <p className='text-muted-foreground mt-2 text-xs'>
+              {t('Video tokens per second: {{list}}', {
+                list: tokensPerSecond
+                  .map(
+                    ([option, count]) =>
+                      `${taskEnumLabel(optionDefinition, option, i18n.language)} ${formatNumber(Math.round(count), locale)}`
+                  )
+                  .join(' · '),
+              })}
+            </p>
+          )}
         </ComparisonTable>
       )}
 
-      <ComparisonTable title={t('Example prices')}>
-        <StaticDataTable
-          tableClassName='text-sm'
-          headerRowClassName='hover:bg-transparent'
-          data={exampleRows}
-          getRowKey={(row) => row.key}
-          columns={[
-            conditionColumn<ExampleRow>((row) => (
-              <span className='text-muted-foreground text-[11px] leading-tight sm:text-xs'>
-                {row.withVideo
-                  ? t('{{output}}s output + {{reference}}s reference video', {
-                      output: EXAMPLE_OUTPUT_SECONDS,
-                      reference: EXAMPLE_REFERENCE_SECONDS,
-                    })
-                  : t('{{seconds}}s output', {
-                      seconds: EXAMPLE_OUTPUT_SECONDS,
-                    })}
-              </span>
-            )),
-            {
-              id: 'ours',
-              header: (
-                <ResponsiveHeader
-                  short={siteName}
-                  full={t('{{site}} price', { site: siteName })}
-                />
-              ),
-              className: headClass,
-              cellClassName: cn(priceCellClass, 'font-semibold'),
-              cell: (row) =>
-                row.ourCost === undefined
-                  ? '-'
-                  : formatTaskUsageUnitPrice(row.ourCost, ours),
-            },
-            {
-              id: 'official',
-              header: t('Official order price'),
-              className: headClass,
-              cellClassName: cn(priceCellClass, 'text-muted-foreground'),
-              cell: (row) =>
-                row.officialCost === undefined
-                  ? '-'
-                  : formatTaskUsageUnitPrice(row.officialCost, official),
-            },
-            {
-              id: 'discount',
-              header: t('Discount rate'),
-              className: headClass,
-              cellClassName: 'px-1.5 py-2.5 sm:px-2',
-              cell: (row) => (
-                <DiscountBadge
-                  ratio={priceRatio(
-                    row.ourCost === undefined
-                      ? undefined
-                      : row.ourCost * props.ratio,
-                    row.officialCost
-                  )}
-                />
-              ),
-            },
-          ]}
-        />
-      </ComparisonTable>
+      {exampleRows.length > 0 && (
+        <ComparisonTable title={t('Price examples')}>
+          <StaticDataTable
+            tableClassName={tableClass}
+            headerRowClassName='hover:bg-transparent'
+            data={exampleRows}
+            getRowKey={(row) => row.label}
+            columns={[
+              {
+                id: 'spec',
+                header: t('Spec'),
+                className: headClass,
+                cellClassName: cellClass,
+                cell: (row) => (
+                  // Spec labels wrap rather than truncate on a narrow screen.
+                  <span className='break-words'>
+                    {row.withVideo ? (
+                      <VideoText>{row.label}</VideoText>
+                    ) : (
+                      <span>{row.label}</span>
+                    )}
+                  </span>
+                ),
+              },
+              {
+                id: 'price',
+                header: t('Example price'),
+                className: headClass,
+                cellClassName: cn(cellClass, priceCellClass),
+                cell: (row) => `≈ ${formatTaskUsageUnitPrice(row.total, ours)}`,
+              },
+            ]}
+          />
+          <p className='text-muted-foreground mt-2 text-xs'>
+            {t('Approximate prices for common specs.')}
+          </p>
+        </ComparisonTable>
+      )}
     </>
   )
+}
+
+/**
+ * The plugin's display examples priced by the model's expression, marking the
+ * ones made from a reference video.
+ */
+function usageExampleRows(
+  model: PricingModel
+): { label: string; total: number; withVideo: boolean }[] {
+  const examples = model.billing_usage_examples ?? []
+  const withVideo = new Map(
+    examples.map((example) => [
+      example.label,
+      Object.entries(example.facts).some(([field, value]) =>
+        isReferenceVideoFact(field, value)
+      ),
+    ])
+  )
+  return evaluateTaskUsageExamples(
+    model.billing_expr,
+    model.billing_usage_schema,
+    examples
+  ).map((row) => ({ ...row, withVideo: withVideo.get(row.label) ?? false }))
+}
+
+/** Text about orders made from a reference video, shown in red in every language. */
+function VideoText(props: { children: React.ReactNode }) {
+  return <span className='text-destructive'>{props.children}</span>
 }
 
 /** A short column header on phones and the full one from the `sm` breakpoint. */

@@ -18,7 +18,10 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import i18next from 'i18next'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+
+import en from '@/i18n/locales/en.json'
 
 import { ModelDetailsContent } from '../components/model-details'
 import {
@@ -159,6 +162,16 @@ describe('rowPriceRatio', () => {
 })
 
 describe('price comparison overview', () => {
+  // The condition labels are worded per language, so this suite reads the
+  // shipped English strings.
+  beforeAll(() => {
+    i18next.addResourceBundle('en', 'translation', en.translation, true, true)
+  })
+  afterAll(() => {
+    i18next.removeResourceBundle('en', 'translation')
+    i18next.addResourceBundle('en', 'translation', {})
+  })
+
   it('shows per-second, per-token and example tables with the discount', () => {
     renderDetails(tokenVideoModel)
 
@@ -173,9 +186,49 @@ describe('price comparison overview', () => {
     expect(
       within(section).getByRole('region', { name: 'Per-token prices' })
     ).toBeVisible()
-    expect(
-      within(section).getByRole('region', { name: 'Example prices' })
-    ).toBeVisible()
+    expect(within(section).queryByRole('region', { name: 'Price examples' })).toBeNull()
+  })
+
+  it('names both video conditions in the English header and keeps each row on one label', () => {
+    renderDetails(tokenVideoModel)
+
+    const perSecond = screen.getByRole('region', { name: 'Per-second prices' })
+    const header = within(perSecond).getAllByRole('columnheader')[0]
+    expect(header).toHaveTextContent('Resolution (without / with video)')
+    const rows = within(perSecond).getAllByRole('row').slice(1)
+    expect(within(rows[0]).getAllByRole('cell')[0]).toHaveTextContent('480p(without)')
+    expect(within(rows[1]).getAllByRole('cell')[0]).toHaveTextContent('480p(with)')
+  })
+
+  it('shows every with-video label in red', () => {
+    renderDetails(tokenVideoModel)
+
+    const perSecond = screen.getByRole('region', { name: 'Per-second prices' })
+    expect(within(perSecond).getAllByText('(with)')[0]).toHaveClass('text-destructive')
+    expect(within(perSecond).getAllByText('(without)')[0]).not.toHaveClass('text-destructive')
+    expect(within(perSecond).getByText('with video)')).toHaveClass('text-destructive')
+  })
+
+  it('restores the plugin price examples and marks the reference-video ones', () => {
+    renderDetails({
+      ...tokenVideoModel,
+      billing_usage_examples: [
+        {
+          label: '720p · 5s',
+          facts: { resolution: '720p', tokens: 108000, video_input: 'none' },
+        },
+        {
+          label: '720p · 5s (+4s video)',
+          facts: { resolution: '720p', tokens: 194400, video_input: 'video' },
+        },
+      ],
+    })
+
+    const examples = screen.getByRole('region', { name: 'Price examples' })
+    // 108000 tokens × $5 / 1M = $0.54.
+    expect(within(examples).getByText(/≈ \$0\.54/)).toBeVisible()
+    expect(within(examples).getByText('720p · 5s')).not.toHaveClass('text-destructive')
+    expect(within(examples).getByText('720p · 5s (+4s video)')).toHaveClass('text-destructive')
   })
 
   it('no longer shows the model type, group and endpoint block', () => {

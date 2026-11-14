@@ -8272,8 +8272,6 @@
     "Available durations: {{min}}～{{max}} seconds": "Доступная длительность: {{min}}～{{max}} с",
     "Orders with a reference video bill the reference seconds too, at the with-video token price; the per-second price counts one output second.": "В заказах с референсным видео его секунды тоже оплачиваются по цене токена «с видео»; цена за секунду указана за одну секунду результата.",
     "Video tokens per second = width × height × 24 / 1024. Examples assume 16:9; the final charge follows the usage the upstream reports.": "Видеотокенов в секунду = ширина × высота × 24 / 1024. Примеры рассчитаны для 16:9; итоговое списание — по фактическому расходу от поставщика.",
-    "With video input": "С видео",
-    "Without video input": "Без видео",
     "{{site}} price / second": "Цена {{site}} / сек",
     "{{site}} price / 1M tokens": "Цена {{site}} / 1M токенов",
     "Official price / second": "Официальная цена / сек",
@@ -8281,11 +8279,12 @@
     "Discount rate": "Скидка",
     "Per-second prices": "Цены за секунду",
     "Per-token prices": "Цены за токены",
-    "Example prices": "Примеры цен",
-    "{{output}}s output + {{reference}}s reference video": "{{output}} с результата + {{reference}} с референса",
-    "{{seconds}}s output": "{{seconds}} с результата",
-    "{{site}} price": "Цена {{site}}",
     "Official order price": "Официальная цена",
-    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Заказы с референсным видео оплачиваются только за секунды результата; их скидка сравнивает весь заказ: {{seconds}} с результата + {{seconds}} с референса."
+    "Orders with a reference video are billed by output seconds only; their discount compares a whole {{seconds}}s output + {{seconds}}s reference order.": "Заказы с референсным видео оплачиваются только за секунды результата; их скидка сравнивает весь заказ: {{seconds}} с результата + {{seconds}} с референса.",
+    "Resolution header without video": "(без /",
+    "Resolution header with video": "с видео)",
+    "Row without video": "(без)",
+    "Row with video": "(с)",
+    "Video tokens per second: {{list}}": "Видеотокенов в секунду: {{list}}"
   }
 }
