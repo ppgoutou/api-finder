@@ -999,7 +999,7 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"name":"wave"}]}}`))
 		case "/api/log/self":
 			logRequests++
-			assert.Equal(t, "wave", query.Get("token_name"), "only the channel key's charges count")
+			assert.Empty(t, query.Get("token_name"), "logs are matched row by row, not searched by a name the token may no longer have")
 			assert.Equal(t, strconv.FormatInt(start, 10), query.Get("start_timestamp"))
 			assert.Equal(t, strconv.FormatInt(end, 10), query.Get("end_timestamp"))
 			rows, total := []int{400000}, 1
@@ -1007,9 +1007,9 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 				page, _ := strconv.Atoi(query.Get("p"))
 				rows, total = consume[min((page-1)*2, len(consume)):min(page*2, len(consume))], len(consume)
 			}
-			items := make([]map[string]int, 0, len(rows))
+			items := make([]map[string]any, 0, len(rows))
 			for _, quota := range rows {
-				items = append(items, map[string]int{"quota": quota})
+				items = append(items, map[string]any{"quota": quota, "token_name": "wave"})
 			}
 			body, _ := common.Marshal(map[string]any{"success": true, "data": map[string]any{"items": items, "total": total}})
 			_, _ = w.Write(body)
@@ -1045,4 +1045,70 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 	applySupplierCosts(context.Background(), again, start, end, end+10)
 	assert.Equal(t, int64(150000), again[0].CostQuota)
 	assert.Equal(t, 3, logRequests, "a repeated period is served from the cache")
+}
+
+// supplierWithLogs serves a USD supplier whose channel key is token 12, now
+// named "new-name", and the given consume and refund log pages.
+func supplierWithLogs(t *testing.T, tokenItems string, consume string, refund string) string {
+	t.Helper()
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/status":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7,"quota_per_unit":500000}}`))
+		case "/api/token/search":
+			assert.Equal(t, "key-1", r.URL.Query().Get("token"))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":` + tokenItems + `}}`))
+		case "/api/log/self":
+			assert.Empty(t, r.URL.Query().Get("token_name"), "the logs are not searched by a name the token may no longer have")
+			items := consume
+			if r.URL.Query().Get("type") == "6" {
+				items = refund
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"items":` + items + `,"total":-1}}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(upstream.Close)
+	return upstream.URL
+}
+
+func createSupplierCostChannel(t *testing.T, baseURL string) {
+	t.Helper()
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: 1, Key: "sk-key-1", Status: common.ChannelStatusEnabled, Name: "supplier",
+		Group: "default", Models: "video", BaseURL: &baseURL, CreatedTime: 1,
+	}).Error)
+}
+
+func TestSupplierChargesCountsARenamedTokenByItsId(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	baseURL := supplierWithLogs(t,
+		`[{"id":12,"name":"new-name"}]`,
+		`[{"quota":1000,"token_id":12,"token_name":"old-name"},{"quota":500,"token_id":12,"token_name":"new-name"},{"quota":7000,"token_id":24,"token_name":"other"}]`,
+		`[{"quota":300,"token_id":12,"token_name":"old-name"}]`,
+	)
+	createSupplierCostChannel(t, baseURL)
+
+	quota, err := supplierCharges(context.Background(), 1, "supplier-token", 1, 100)
+
+	require.NoError(t, err)
+	assert.Equal(t, int64(1200), quota, "1000 + 500 charged to token 12 under either name, less its 300 refund; token 24 is another key")
+}
+
+func TestSupplierChargesMatchesTheNameWhenTheSupplierReportsNoTokenIds(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	baseURL := supplierWithLogs(t,
+		`[{"name":"new-name"}]`,
+		`[{"quota":400,"token_name":"new-name"},{"quota":900,"token_name":"other"}]`,
+		`[]`,
+	)
+	createSupplierCostChannel(t, baseURL)
+
+	quota, err := supplierCharges(context.Background(), 1, "supplier-token", 1, 100)
+
+	require.NoError(t, err)
+	assert.Equal(t, int64(400), quota)
 }
