@@ -27,10 +27,11 @@ export const PRICING_MODEL_BADGES = [
   'hot',
   'new',
   'stable',
+  'nsfw',
 ] as const satisfies readonly PricingModelBadge[]
 
 /**
- * Label of a card badge; HOT and NEW read the same in every language. A
+ * Label of a card badge; HOT, NEW and NSFW read the same in every language. A
  * stable card shows no label, so only administrators see the stable one.
  */
 export function modelBadgeLabel(
@@ -39,6 +40,7 @@ export function modelBadgeLabel(
 ): string {
   if (badge === 'recommended') return t('Recommended')
   if (badge === 'stable') return t('Stable')
+  if (badge === 'nsfw') return 'NSFW'
   return badge === 'hot' ? 'HOT' : 'NEW'
 }
 

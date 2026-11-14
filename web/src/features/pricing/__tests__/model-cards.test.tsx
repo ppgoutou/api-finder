@@ -85,7 +85,7 @@ describe('model cards', () => {
     render(
       <ModelCard
         model={pricingModel({})}
-        badges={['recommended', 'hot']}
+        badges={['recommended', 'hot', 'nsfw']}
         onClick={vi.fn()}
       />
     )
@@ -93,7 +93,7 @@ describe('model cards', () => {
     const items = within(highlights).getAllByRole('listitem')
     expect(
       items.map((item) => item.getAttribute('aria-label') ?? item.textContent)
-    ).toEqual(['Recommended', 'HOT'])
+    ).toEqual(['Recommended', 'HOT', 'NSFW'])
   })
 
   it('shows the recommended badge as an icon with its label for screen readers', () => {
