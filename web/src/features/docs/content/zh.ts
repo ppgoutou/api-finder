@@ -84,7 +84,7 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `视频模型分三组，**前两组参数写法相同，官方模型写法不同**，见「官方模型写法」。
+          text: `视频模型分三组，**请求参数写法完全相同**，见「创建任务」；官方模型的少量补充见「官方模型补充说明」。
 
 | 模型 | 分辨率 | 时长 | 计费 |
 | --- | --- | --- | --- |
@@ -123,7 +123,7 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: `\`POST /v1/videos\`，请求体为 JSON（\`Content-Type: application/json\`）。下表适用于 \`-T\` 和 \`dfyb\` 系列；官方模型请看「官方模型写法」。
+          text: `\`POST /v1/videos\`，请求体为 JSON（\`Content-Type: application/json\`）。下表适用于所有视频模型；官方模型的补充参数见「官方模型补充说明」。
 
 | 参数 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -188,34 +188,29 @@ export const ZH_DOCS: DocContent = {
     },
     {
       id: 'official',
-      title: '官方模型写法',
+      title: '官方模型补充说明',
       blocks: [
         {
           type: 'markdown',
-          text: `\`doubao-\`、\`dreamina-\` 开头的 8 个官方模型同样使用 \`POST /v1/videos\`，查询和下载也完全一样，但请求参数写法不同：
+          text: `\`doubao-\`、\`dreamina-\` 开头的 8 个官方模型和其他模型使用同一套参数（见「创建任务」「参考素材与首尾帧」），另外支持：
 
 | 参数 | 说明 |
 | --- | --- |
-| \`model\`、\`prompt\` | 同上 |
-| \`seconds\` | 时长（秒）；Seedance 2.x 也可传 \`-1\`，由模型自动选择时长 |
-| \`images\` | 图片的公网 URL：1 张为首帧，2 张为首帧 + 尾帧，3 张及以上（或同时有参考视频 / 音频）为参考图 |
-| \`metadata.resolution\` | 分辨率，如 \`720p\`、\`1080p\`；**不要用顶层的 \`resolution\`** |
-| \`metadata.ratio\` | 画面比例，如 \`16:9\`；**不要用顶层的 \`ratio\`** |
-| \`metadata.content\` | 参考视频和音频，写法见下方示例 |
+| \`seconds\` | 除模型支持的时长外，也可传 \`-1\`，由模型自动选择时长；提交时按该模型最长时长预扣，完成后按实际用量结算 |
 | \`metadata.generate_audio\` | 是否生成声音，默认生成；传 \`false\` 生成无声视频 |
 
-- 官方模型不读取顶层的 \`resolution\`、\`ratio\`、\`videos\`、\`audios\`、\`first_image_url\`、\`last_image_url\`，传了也不会生效；
 - 参考音频需要搭配参考图片或视频一起使用（Seedance 2.5 可只传音频）；
-- 不传 \`metadata.resolution\` 时由模型选择，提交时按该模型最高 1080p 预扣，完成后按实际用量结算。`,
+- 不传 \`resolution\` 时由模型选择，提交时按该模型最高 1080p 预扣，完成后按实际用量结算；
+- 方舟（Ark）的其他原生参数可以放进 \`metadata\` 原样透传；\`metadata\` 里的 \`resolution\`、\`ratio\` 优先于顶层参数。`,
         },
         {
           type: 'code',
-          label: '示例：文生视频（1080p、16:9）',
+          label: '示例：1080p 无声视频',
           code: DOC_SAMPLES.officialText,
         },
         {
           type: 'code',
-          label: '示例：参考图 + 参考视频 + 参考音频',
+          label: '示例：参考图 + 参考视频 + 参考音频，时长由模型选择',
           code: DOC_SAMPLES.officialReference,
         },
       ],
@@ -276,7 +271,7 @@ export const ZH_DOCS: DocContent = {
       blocks: [
         {
           type: 'markdown',
-          text: '以下示例完成「提交 → 轮询 → 下载」全流程。运行前先设置环境变量 `API_KEY`；换模型只需修改 `model` 和对应的时长、分辨率（官方模型按「官方模型写法」改请求体）。',
+          text: '以下示例完成「提交 → 轮询 → 下载」全流程。运行前先设置环境变量 `API_KEY`；换模型只需修改 `model` 和对应的时长、分辨率。',
         },
         {
           type: 'code',
@@ -403,9 +398,6 @@ export const ZH_DOCS: DocContent = {
 
 **上传本地图片怎么办？**
 接口只接受公网 URL。请先把图片上传到对象存储或图床，再把链接填入参数。
-
-**为什么官方模型设置的分辨率没生效？**
-官方模型的分辨率和比例要写在 \`metadata\` 里，见「官方模型写法」。
 
 **生成的视频和图片能保存多久？**
 下载地址是临时的，请在完成后尽快下载保存。`,

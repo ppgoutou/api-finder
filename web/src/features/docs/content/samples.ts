@@ -102,9 +102,10 @@ export const DOC_SAMPLES = {
       model: 'doubao-seedance-2-0-261111',
       prompt: 'A red sports car drifts through a rainy neon street at night',
       seconds: 5,
+      resolution: '1080p',
+      ratio: '16:9',
       metadata: {
-        resolution: '1080p',
-        ratio: '16:9',
+        generate_audio: false,
       },
     },
     null,
@@ -116,22 +117,12 @@ export const DOC_SAMPLES = {
       model: 'doubao-seedance-2-5-261111',
       prompt:
         'The man in the reference image walks along the beach in the reference video, with the reference music',
-      seconds: 10,
+      seconds: -1,
+      resolution: '720p',
+      ratio: '16:9',
       images: ['https://example.com/man.jpg'],
-      metadata: {
-        resolution: '720p',
-        ratio: '16:9',
-        content: [
-          {
-            type: 'video_url',
-            video_url: { url: 'https://example.com/beach.mp4' },
-          },
-          {
-            type: 'audio_url',
-            audio_url: { url: 'https://example.com/music.mp3' },
-          },
-        ],
-      },
+      videos: ['https://example.com/beach.mp4'],
+      audios: ['https://example.com/music.mp3'],
     },
     null,
     2

@@ -454,6 +454,147 @@ func TestDoubaoSeedanceUsageFacts(t *testing.T) {
 		require.ErrorContains(t, err, "seconds must be -1 or between 1 and 3600")
 	})
 
+	// /v1/videos takes the same top-level fields as every other video model
+	// and the video studio; metadata keeps passing Ark fields through and wins
+	// on conflict. The estimate reads the resolution and reference video sent.
+	t.Run("unified /v1/videos fields reach Ark and the estimate", func(t *testing.T) {
+		const official = "doubao-seedance-2-0-261111"
+		image := map[string]any{"type": "image_url", "image_url": map[string]any{"url": "https://cdn.example/a.png"}, "role": "reference_image"}
+		text := map[string]any{"type": "text", "text": "a cat"}
+		for _, tc := range []struct {
+			name        string
+			model       string
+			request     map[string]any
+			wantAction  string
+			wantBody    map[string]any
+			wantFacts   map[string]any
+			wantRatios  map[string]float64
+			wantErr     string
+			wantDecoder string
+		}{
+			{
+				name:  "studio references",
+				model: official,
+				request: map[string]any{
+					"resolution": "1080p", "ratio": "9:16", "images": []any{"https://cdn.example/a.png"},
+					"videos": []any{"https://cdn.example/v.mp4"}, "audios": []any{"https://cdn.example/s.mp3"},
+				},
+				wantAction: "image_to_video",
+				wantBody: map[string]any{"resolution": "1080p", "ratio": "9:16", "content": []any{
+					image,
+					map[string]any{"type": "video_url", "video_url": map[string]any{"url": "https://cdn.example/v.mp4"}, "role": "reference_video"},
+					map[string]any{"type": "audio_url", "audio_url": map[string]any{"url": "https://cdn.example/s.mp3"}, "role": "reference_audio"},
+					text,
+				}},
+				wantFacts:  map[string]any{"tokens": float64(243000), "resolution": "1080p", "video_input": "video"},
+				wantRatios: map[string]float64{"video_input_ratio": 31.0 / 46},
+			},
+			{
+				name:       "a single reference image stays a reference",
+				model:      official,
+				request:    map[string]any{"resolution": "720P", "images": []any{"https://cdn.example/a.png"}},
+				wantAction: "image_to_video",
+				wantBody:   map[string]any{"resolution": "720p", "content": []any{image, text}},
+				wantFacts:  map[string]any{"tokens": float64(108000), "resolution": "720p", "video_input": "none"},
+			},
+			{
+				name:  "studio first and last frame",
+				model: official,
+				request: map[string]any{
+					"resolution": "480p", "first_image_url": "https://cdn.example/first.png", "last_image_url": "https://cdn.example/last.png",
+				},
+				wantAction: "image_to_video",
+				wantBody: map[string]any{"resolution": "480p", "content": []any{
+					map[string]any{"type": "image_url", "image_url": map[string]any{"url": "https://cdn.example/first.png"}, "role": "first_frame"},
+					map[string]any{"type": "image_url", "image_url": map[string]any{"url": "https://cdn.example/last.png"}, "role": "last_frame"},
+					text,
+				}},
+				wantFacts: map[string]any{"tokens": float64(48037.5), "resolution": "480p", "video_input": "none"},
+			},
+			{
+				name:  "metadata wins and its content follows",
+				model: official,
+				request: map[string]any{
+					"resolution": "480p", "ratio": "16:9", "videos": []any{"https://cdn.example/v.mp4"},
+					"metadata": map[string]any{"resolution": "720p", "ratio": "1:1", "generate_audio": false, "content": []any{
+						map[string]any{"type": "image_url", "image_url": map[string]any{"url": "https://cdn.example/a.png"}},
+					}},
+				},
+				wantAction: "image_to_video",
+				wantBody: map[string]any{"resolution": "720p", "ratio": "1:1", "generate_audio": false, "content": []any{
+					map[string]any{"type": "video_url", "video_url": map[string]any{"url": "https://cdn.example/v.mp4"}, "role": "reference_video"},
+					image,
+					text,
+				}},
+				wantFacts:  map[string]any{"tokens": float64(108000), "resolution": "720p", "video_input": "video"},
+				wantRatios: map[string]float64{"video_input_ratio": 28.0 / 46},
+			},
+			{
+				name:    "a top-level tier the model lacks is rejected",
+				model:   "doubao-seedance-2-0-mini-261111",
+				request: map[string]any{"resolution": "1080p"},
+				wantErr: "doubao-seedance-2-0-mini-261111 resolution must be one of 480p, 720p",
+			},
+			{
+				name:        "media must be URLs",
+				model:       official,
+				request:     map[string]any{"videos": []any{float64(1)}},
+				wantDecoder: "videos must be an array of URLs",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				request := map[string]any{"model": tc.model, "prompt": "a cat", "seconds": float64(5)}
+				maps.Copy(request, tc.request)
+				value, err := plugin.Engine.CallPath(t.Context(), "protocols", []string{"openai_video", "decodeRequest"}, map[string]any{
+					"model": tc.model, "body": map[string]any{"kind": "json", "value": request},
+				})
+				if tc.wantDecoder != "" {
+					require.ErrorContains(t, err, tc.wantDecoder)
+					return
+				}
+				require.NoError(t, err)
+				intent := alibabaObject(t, value)
+				info := &relaycommon.RelayInfo{
+					ChannelMeta:     &relaycommon.ChannelMeta{ChannelBaseUrl: doubaoBaseURL, UpstreamModelName: tc.model},
+					OriginModelName: tc.model,
+					TaskRelayInfo:   &relaycommon.TaskRelayInfo{PublicTaskID: "task_public", Action: fmt.Sprint(intent["action"])},
+				}
+				adaptor := taskplugin.New(plugin)
+				adaptor.Init(info)
+				c, _ := gin.CreateTestContext(httptest.NewRecorder())
+				c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", nil)
+				c.Set("task_request", intent["requestBody"])
+				taskErr := adaptor.ValidateRequestAndSetAction(c, info)
+				if tc.wantErr != "" {
+					require.NotNil(t, taskErr)
+					assert.Contains(t, taskErr.Message, tc.wantErr)
+					return
+				}
+				require.Nil(t, taskErr)
+				assert.Equal(t, tc.wantAction, intent["action"])
+				reader, err := adaptor.BuildRequestBody(c, info)
+				require.NoError(t, err)
+				encoded, err := io.ReadAll(reader)
+				require.NoError(t, err)
+				var body map[string]any
+				require.NoError(t, common.Unmarshal(encoded, &body))
+				want := map[string]any{"model": tc.model, "duration": float64(5)}
+				maps.Copy(want, tc.wantBody)
+				assert.Equal(t, want, body)
+				facts, err := adaptor.ExtractUsageFactsValidated(c, info)
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantFacts, alibabaObject(t, facts))
+				ratios, err := adaptor.EstimateBillingValidated(c, info)
+				require.NoError(t, err)
+				if tc.wantRatios == nil {
+					assert.Empty(t, ratios)
+				} else {
+					assert.InDeltaMapValues(t, tc.wantRatios, ratios, 1e-9)
+				}
+			})
+		}
+	})
+
 	t.Run("completion overlays only resolutions the model offers", func(t *testing.T) {
 		for _, tc := range []struct {
 			model      string
