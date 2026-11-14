@@ -70,7 +70,17 @@ export function ModelPricing() {
   const showOfficialPrice = seriesList.some((series) =>
     series.rows.some((row) => row.officialPrice)
   )
-  const reserveDiscount = seriesList.some((series) => getBestDiscount(series))
+  // The headline quotes the deepest discount any card shows.
+  const headlineDiscount = seriesList.reduce<SeriesPriceRow['discount']>(
+    (best, series) => {
+      const discount = getBestDiscount(series)
+      return discount && (!best || discount.percentOff > best.percentOff)
+        ? discount
+        : best
+    },
+    null
+  )
+  const reserveDiscount = headlineDiscount !== null
   const reserveVariants = seriesList.some(
     (series) => series.variants.length > 0
   )
@@ -87,11 +97,19 @@ export function ModelPricing() {
               {t('Models and pricing')}
             </p>
             <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
-              {t('Billed per second, as low as half the official price')}
+              {headlineDiscount
+                ? t(
+                    'Video billed per second, images per image, up to {{percentOff}}% off official prices',
+                    {
+                      percentOff: headlineDiscount.percentOff,
+                      zhe: headlineDiscount.zhe,
+                    }
+                  )
+                : t('Video billed per second, images per image')}
             </h2>
             <p className='text-muted-foreground mt-3 max-w-2xl'>
               {t(
-                'No monthly fee or minimum spend: pay only for what you generate. Each resolution shows the cheapest model in the series.'
+                'No monthly fee or minimum spend: pay only for what you generate. Prices come from the cheapest model in each series.'
               )}
             </p>
           </div>
