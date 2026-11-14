@@ -402,6 +402,8 @@ func TestDoubaoPublishesSeedanceDurationLimits(t *testing.T) {
 		{"doubao-seedance-2-0-mini-261111", 4, 15},
 		{"doubao-seedance-2-5-260628", 4, 30},
 		{"doubao-seedance-2-5-261111", 4, 30},
+		{"dreamina-seedance-2-0-fast-261111", 4, 15},
+		{"dreamina-seedance-2-5-261111", 4, 30},
 	}
 	for _, tc := range cases {
 		limits, declared := plugin.Meta.LimitsForModel(tc.model)

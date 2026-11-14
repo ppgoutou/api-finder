@@ -19,6 +19,11 @@ const VIDEO_MODELS = {
   "doubao-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
   "doubao-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
   "doubao-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
+  // PxRouter's BytePlus (overseas) line: the same models under dreamina names.
+  "dreamina-seedance-2-0-261111": { resolutions: ["480p", "720p", "1080p", "4k"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "dreamina-seedance-2-0-fast-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "dreamina-seedance-2-0-mini-261111": { resolutions: ["480p", "720p"], minDuration: 4, maxDuration: 15, videoInput: true },
+  "dreamina-seedance-2-5-261111": { resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 30, videoInput: true },
 };
 // Every Ark resolution tier; an endpoint ID reached through channel mapping
 // without a declared profile keeps them all and the longest Seedance duration.
@@ -308,7 +313,7 @@ export const meta = {
     en: "Volcengine Doubao Seedance video generation and Seedream image generation",
     zh: "火山引擎豆包 Seedance 视频生成与 Seedream 图片生成",
   },
-  version: "1.5.1",
+  version: "1.6.0",
   author: { name: "QuantumNous" },
   channelTypes: [54, 45], // VolcEngine-type channels serve Ark video models with the same wire format
   models: Object.keys(VIDEO_MODELS).concat(Object.keys(IMAGE_MODELS)),
@@ -450,17 +455,17 @@ function estimateTokens(seconds, resolution) {
 function videoInputRatio(model, resolution, content) {
   const video = hasVideo(content);
   const res = trimmed(resolution).toLowerCase();
-  if (model === "doubao-seedance-2-5-260628" || model === "doubao-seedance-2-5-261111") {
+  if (model === "doubao-seedance-2-5-260628" || model === "doubao-seedance-2-5-261111" || model === "dreamina-seedance-2-5-261111") {
     if (res === "1080p") return video ? 7.0 / 10.7 : 11.7 / 10.7;
     return video ? 42 / 70 : 1;
   }
-  if (model === "doubao-seedance-2-0-260128" || model === "doubao-seedance-2-0-261111") {
+  if (model === "doubao-seedance-2-0-260128" || model === "doubao-seedance-2-0-261111" || model === "dreamina-seedance-2-0-261111") {
     if (res === "1080p") return video ? 31 / 46 : 51 / 46;
     if (res === "4k") return video ? 16 / 46 : 26 / 46;
     return video ? 28 / 46 : 1;
   }
-  if (model === "doubao-seedance-2-0-fast-260128" || model === "doubao-seedance-2-0-fast-261111") return video ? 22 / 37 : 1;
-  if (model === "doubao-seedance-2-0-mini-260615" || model === "doubao-seedance-2-0-mini-261111") return video ? 14 / 23 : 1;
+  if (model === "doubao-seedance-2-0-fast-260128" || model === "doubao-seedance-2-0-fast-261111" || model === "dreamina-seedance-2-0-fast-261111") return video ? 22 / 37 : 1;
+  if (model === "doubao-seedance-2-0-mini-260615" || model === "doubao-seedance-2-0-mini-261111" || model === "dreamina-seedance-2-0-mini-261111") return video ? 14 / 23 : 1;
   return 1;
 }
 
