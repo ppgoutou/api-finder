@@ -52,6 +52,7 @@ export type PricingCategorySection = {
   id: string
   name: string
   description?: string
+  comparison?: string
   models: PricingModel[]
 }
 
@@ -82,6 +83,7 @@ export function groupModelsByCategory(
         id: category.id,
         name: category.name,
         description: category.description,
+        comparison: category.comparison,
         models: members,
       })
     }

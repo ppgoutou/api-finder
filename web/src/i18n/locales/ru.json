@@ -8285,6 +8285,9 @@
     "Resolution header with video": "с видео)",
     "Row without video": "(без)",
     "Row with video": "(с)",
-    "Video tokens per second: {{list}}": "Видеотокенов в секунду: {{list}}"
+    "Video tokens per second: {{list}}": "Видеотокенов в секунду: {{list}}",
+    "Model comparison": "Сравнение моделей",
+    "{{name}} model comparison": "Сравнение моделей {{name}}",
+    "Shown in a popover under the category heading. Supports Markdown.": "Показывается во всплывающем окне под заголовком категории. Поддерживается Markdown."
   }
 }

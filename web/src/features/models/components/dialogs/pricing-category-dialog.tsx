@@ -72,6 +72,7 @@ export function PricingCategoryDialog(props: {
     defaultValues: {
       name: '',
       description: '',
+      comparison: '',
       models: [],
       badges: {},
       officialPriceExpr: '',
@@ -86,6 +87,7 @@ export function PricingCategoryDialog(props: {
     form.reset({
       name: props.category?.name ?? '',
       description: props.category?.description ?? '',
+      comparison: props.category?.comparison ?? '',
       models: props.category?.models ?? [],
       badges: props.category?.badges ?? {},
       officialPriceExpr: props.category?.official_price_expr ?? '',
@@ -175,6 +177,25 @@ export function PricingCategoryDialog(props: {
                   <LanguageBlocksTextarea {...field} rows={3} />
                 </FormControl>
                 <FormDescription>{t(LANGUAGE_BLOCKS_HINT)}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='comparison'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Model comparison')}</FormLabel>
+                <FormControl>
+                  <LanguageBlocksTextarea {...field} rows={5} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Shown in a popover under the category heading. Supports Markdown.'
+                  )}{' '}
+                  {t(LANGUAGE_BLOCKS_HINT)}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

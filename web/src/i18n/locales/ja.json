@@ -8285,6 +8285,9 @@
     "Resolution header with video": "",
     "Row without video": "（動画なし）",
     "Row with video": "（動画あり）",
-    "Video tokens per second: {{list}}": "1 秒あたりのトークン：{{list}}"
+    "Video tokens per second: {{list}}": "1 秒あたりのトークン：{{list}}",
+    "Model comparison": "モデル比較",
+    "{{name}} model comparison": "{{name}} モデル比較",
+    "Shown in a popover under the category heading. Supports Markdown.": "カテゴリ見出しの下のポップオーバーに表示されます。Markdown に対応。"
   }
 }

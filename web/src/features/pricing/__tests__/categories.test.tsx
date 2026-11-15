@@ -139,7 +139,7 @@ describe('pricing categories', () => {
       ['zhTW', '字節跳動 Seedance 2.0 影片模型'],
       ['fr', 'Seedance 2.0 video models'],
     ])(
-      'shows the %s block of a multi-language category description',
+      'shows the %s block of a multi-language category description and comparison',
       async (language, expected) => {
         await i18next.changeLanguage(language)
         vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
@@ -162,6 +162,10 @@ describe('pricing categories', () => {
                     '<!-- lang:zh -->\n字节跳动 Seedance 2.0 视频模型\n' +
                     '<!-- lang:zh-TW -->\n字節跳動 Seedance 2.0 影片模型\n' +
                     '<!-- lang:en -->\nSeedance 2.0 video models',
+                  comparison:
+                    '<!-- lang:zh -->\n字节跳动 Seedance 2.0 视频模型\n' +
+                    '<!-- lang:zh-TW -->\n字節跳動 Seedance 2.0 影片模型\n' +
+                    '<!-- lang:en -->\nSeedance 2.0 video models',
                 },
               ],
             },
@@ -181,6 +185,7 @@ describe('pricing categories', () => {
         await waitFor(() =>
           expect(result.current.categories[0]?.description).toBe(expected)
         )
+        expect(result.current.categories[0]?.comparison).toBe(expected)
       }
     )
   })

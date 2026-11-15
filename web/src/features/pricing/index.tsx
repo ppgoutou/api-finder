@@ -31,6 +31,7 @@ import {
   PricingTable,
   PricingSidebar,
   PricingToolbar,
+  CategoryComparison,
   ModelCardGrid,
   ModelDistribution,
   PricingHeroNote,
@@ -207,6 +208,14 @@ export function Pricing() {
             <p className='text-muted-foreground w-full text-sm'>
               {section.description}
             </p>
+          )}
+          {section.comparison && (
+            <div className='w-full'>
+              <CategoryComparison
+                categoryName={name}
+                comparison={section.comparison}
+              />
+            </div>
           )}
         </div>
         {renderModels(section.models)}

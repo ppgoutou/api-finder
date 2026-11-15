@@ -8285,6 +8285,9 @@
     "Resolution header with video": "with video)",
     "Row without video": "(without)",
     "Row with video": "(with)",
-    "Video tokens per second: {{list}}": "Video tokens per second: {{list}}"
+    "Video tokens per second: {{list}}": "Video tokens per second: {{list}}",
+    "Model comparison": "Model comparison",
+    "{{name}} model comparison": "{{name}} model comparison",
+    "Shown in a popover under the category heading. Supports Markdown.": "Shown in a popover under the category heading. Supports Markdown."
   }
 }
