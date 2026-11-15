@@ -95,6 +95,9 @@ export function usePricingData(enabled = true, live = false, quiet = false) {
       description: category.description
         ? selectLanguageBlock(category.description, language)
         : category.description,
+      comparison: category.comparison
+        ? selectLanguageBlock(category.comparison, language)
+        : category.comparison,
     }))
   }, [data, language])
 

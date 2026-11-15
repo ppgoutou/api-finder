@@ -8285,6 +8285,9 @@
     "Resolution header with video": "",
     "Row without video": "（不含影片）",
     "Row with video": "（含影片）",
-    "Video tokens per second: {{list}}": "每秒 Token：{{list}}"
+    "Video tokens per second: {{list}}": "每秒 Token：{{list}}",
+    "Model comparison": "模型對比說明",
+    "{{name}} model comparison": "{{name}} 模型對比",
+    "Shown in a popover under the category heading. Supports Markdown.": "顯示在類目標題下方的彈窗中，支援 Markdown。"
   }
 }

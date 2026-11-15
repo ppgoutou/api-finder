@@ -40,6 +40,8 @@ export type PricingCategory = {
   id: string
   name: string
   description?: string
+  /** How the models of this category differ, shown in a popover. */
+  comparison?: string
   models: string[]
   /** Card badges keyed by model name, for models of this category. */
   badges?: Record<string, PricingModelBadge[]>

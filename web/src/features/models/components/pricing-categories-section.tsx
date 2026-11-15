@@ -112,6 +112,9 @@ export function PricingCategoriesSection() {
       id: editing?.id ?? newPricingCategoryId(categories),
       name: values.name.trim(),
       description: values.description.trim(),
+      ...(values.comparison.trim()
+        ? { comparison: values.comparison.trim() }
+        : {}),
       models: values.models,
       badges: selectedModelBadges(values.models, values.badges),
       ...(values.officialPrice ? { official_price: values.officialPrice } : {}),

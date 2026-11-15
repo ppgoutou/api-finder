@@ -39,10 +39,12 @@ export const PRESSED_BADGE_CLASSES: Record<PricingModelBadge, string> = {
 export const PRICING_CATEGORIES_OPTION_KEY = 'PricingCategories'
 export const PRICING_CATEGORY_NAME_MAX = 40
 export const PRICING_CATEGORY_DESCRIPTION_MAX = 3000
+export const PRICING_CATEGORY_COMPARISON_MAX = 12000
 
 export const pricingCategoryFormSchema = z.object({
   name: z.string().trim().min(1).max(PRICING_CATEGORY_NAME_MAX),
   description: z.string().max(PRICING_CATEGORY_DESCRIPTION_MAX),
+  comparison: z.string().max(PRICING_CATEGORY_COMPARISON_MAX),
   models: z.array(z.string()),
   badges: z.record(z.string(), z.array(z.enum(PRICING_MODEL_BADGES))),
   officialPriceExpr: z.string(),
@@ -73,6 +75,9 @@ export function parsePricingCategories(
           name: record.name,
           description:
             typeof record.description === 'string' ? record.description : '',
+          ...(typeof record.comparison === 'string' && record.comparison.trim()
+            ? { comparison: record.comparison }
+            : {}),
           models: Array.isArray(record.models)
             ? record.models.filter(
                 (model): model is string => typeof model === 'string'

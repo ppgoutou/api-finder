@@ -20,6 +20,8 @@ func TestValidatePricingCategories(t *testing.T) {
 		{name: "empty value clears the categories", value: "", valid: true},
 		{name: "empty list", value: `[]`, valid: true},
 		{name: "categories with distinct models", value: `[{"id":"sd20","name":"Seedance 2.0","description":"多条线路","models":["sd-2.0-线路1","seedance-2.0"]},{"id":"sd25","name":"Seedance 2.5","models":["seedance-2.5"]}]`, valid: true},
+		{name: "model comparison", value: `[{"id":"a","name":"A","comparison":"- **A**：最快","models":["a1"]}]`, valid: true},
+		{name: "model comparison over 12000 characters", value: `[{"id":"a","name":"A","comparison":"` + strings.Repeat("比", 12001) + `","models":[]}]`},
 		{name: "category without models", value: `[{"id":"sd20","name":"Seedance 2.0","models":[]}]`, valid: true},
 		{name: "model in two categories", value: `[{"id":"a","name":"A","models":["seedance-2.0"]},{"id":"b","name":"B","models":["seedance-2.0"]}]`, conflict: "seedance-2.0"},
 		{name: "model listed twice in one category", value: `[{"id":"a","name":"A","models":["seedance-2.0","seedance-2.0"]}]`, conflict: "seedance-2.0"},

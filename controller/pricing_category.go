@@ -16,6 +16,7 @@ const (
 	pricingCategoryModelsMax        = 200
 	pricingCategoryNameMaxRunes     = 40
 	pricingCategoryDescMaxRunes     = 3000
+	pricingCategoryCompareMaxRunes  = 12000
 	pricingCategoryIDMaxLength      = 64
 	pricingCategoryModelNameMaxSize = 255
 	pricingCategoryOfficialMaxSize  = 8192
@@ -33,10 +34,12 @@ var pricingModelBadges = []string{"recommended", "hot", "new", "stable", "nsfw"}
 // badges shown on the cards of its models. OfficialPrice is the display-only
 // official price table its models show when they have no official price of
 // their own; OfficialPriceExpr is the expression form saved before the table.
+// Comparison is the text that tells its models apart, shown in a popover.
 type pricingCategory struct {
 	ID                string                    `json:"id"`
 	Name              string                    `json:"name"`
 	Description       string                    `json:"description"`
+	Comparison        string                    `json:"comparison,omitempty"`
 	Models            []string                  `json:"models"`
 	Badges            map[string][]string       `json:"badges,omitempty"`
 	OfficialPriceExpr string                    `json:"official_price_expr,omitempty"`
@@ -91,6 +94,9 @@ func validatePricingCategories(value string) error {
 			return errInvalidPricingCategories
 		}
 		if utf8.RuneCountInString(category.Description) > pricingCategoryDescMaxRunes {
+			return errInvalidPricingCategories
+		}
+		if utf8.RuneCountInString(category.Comparison) > pricingCategoryCompareMaxRunes {
 			return errInvalidPricingCategories
 		}
 		if len(category.OfficialPriceExpr) > pricingCategoryOfficialMaxSize || category.OfficialPriceExpr != strings.TrimSpace(category.OfficialPriceExpr) {
