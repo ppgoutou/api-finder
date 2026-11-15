@@ -591,7 +591,7 @@ export function ModelHeader(props: { model: PricingModel }) {
       </div>
 
       {description && (
-        <p className='text-muted-foreground mt-3 max-w-3xl text-sm leading-relaxed'>
+        <p className='text-muted-foreground mt-3 text-sm leading-relaxed'>
           {description}
         </p>
       )}
