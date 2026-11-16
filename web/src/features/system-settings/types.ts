@@ -369,6 +369,13 @@ export type BillingSettings = {
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number
+  'membership_setting.enabled': boolean
+  'membership_setting.base_group': string
+  'membership_setting.vip_group': string
+  'membership_setting.total_topup_usd': number
+  'membership_setting.single_topup_usd': number
+  'membership_setting.downgrade_on_reversal': boolean
+  'membership_setting.vip_support_telegram': string
 }
 
 export type OperationsSettings = {

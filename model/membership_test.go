@@ -14,6 +14,7 @@ import (
 
 func setupMembershipTest(t *testing.T) {
 	t.Helper()
+	require.NoError(t, DB.AutoMigrate(&Redemption{}, &Option{}))
 	original := *operation_setting.GetMembershipSetting()
 	originalRatio := ratio_setting.GroupRatio2JSONString()
 	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1,"vip":0.85,"svip":0.7}`))
@@ -27,6 +28,8 @@ func setupMembershipTest(t *testing.T) {
 		DB.Exec("DELETE FROM top_ups")
 		DB.Exec("DELETE FROM users")
 		DB.Exec("DELETE FROM logs")
+		DB.Exec("DELETE FROM redemptions")
+		DB.Exec("DELETE FROM options")
 	})
 }
 
@@ -158,4 +161,30 @@ func TestBackfillTopUpMembership(t *testing.T) {
 	require.NoError(t, DB.Model(&User{}).Where("id = ?", 400).Update("group", "default").Error)
 	BackfillTopUpMembership()
 	assert.Equal(t, "default", membershipGroup(t, 400))
+}
+
+func TestRedemptionCodesCountTowardVip(t *testing.T) {
+	setupMembershipTest(t)
+	insertMembershipUser(t, 500, "default")
+	for _, tradeNo := range []string{"member-mixed-a", "member-mixed-b"} {
+		insertPendingTopUp(t, tradeNo, 500, PaymentProviderEpay, 400)
+		_, err := RechargeEpay(tradeNo, "", "127.0.0.1")
+		require.NoError(t, err)
+	}
+	require.Equal(t, "default", membershipGroup(t, 500))
+
+	require.NoError(t, DB.Create(&Redemption{Key: "membercode300", Status: common.RedemptionCodeStatusEnabled, Quota: int(300 * common.QuotaPerUnit)}).Error)
+	_, err := Redeem("membercode300", 500)
+	require.NoError(t, err)
+	assert.Equal(t, "vip", membershipGroup(t, 500))
+
+	// Codes redeemed before they counted are checked once at startup.
+	insertMembershipUser(t, 501, "default")
+	require.NoError(t, DB.Create(&Redemption{Key: "membercode500", Status: common.RedemptionCodeStatusUsed, UsedUserId: 501, Quota: int(500 * common.QuotaPerUnit)}).Error)
+	BackfillTopUpMembership()
+	assert.Equal(t, "vip", membershipGroup(t, 501))
+
+	require.NoError(t, DB.Model(&User{}).Where("id = ?", 501).Update("group", "default").Error)
+	BackfillTopUpMembership()
+	assert.Equal(t, "default", membershipGroup(t, 501))
 }

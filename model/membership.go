@@ -22,13 +22,26 @@ type topUpTotals struct {
 	Single int64
 }
 
+// paidTopUpTotals sums what a user paid for: successful top-up orders and
+// redeemed redemption codes, which are sold for money. Invitation rebates,
+// check-in rewards, test credit and administrator adjustments are not here.
 func paidTopUpTotals(tx *gorm.DB, userId int) (topUpTotals, error) {
-	var totals topUpTotals
+	var orders, codes topUpTotals
 	err := tx.Model(&TopUp{}).
 		Select("COALESCE(SUM(credited_quota), 0) AS total, COALESCE(MAX(credited_quota), 0) AS single").
 		Where("user_id = ? AND status = ?", userId, common.TopUpStatusSuccess).
-		Scan(&totals).Error
-	return totals, err
+		Scan(&orders).Error
+	if err != nil {
+		return topUpTotals{}, err
+	}
+	err = tx.Model(&Redemption{}).
+		Select("COALESCE(SUM(quota), 0) AS total, COALESCE(MAX(quota), 0) AS single").
+		Where("used_user_id = ? AND status = ?", userId, common.RedemptionCodeStatusUsed).
+		Scan(&codes).Error
+	if err != nil {
+		return topUpTotals{}, err
+	}
+	return topUpTotals{Total: orders.Total + codes.Total, Single: max(orders.Single, codes.Single)}, nil
 }
 
 func membershipThresholdQuota(usd float64) int64 {
@@ -55,6 +68,19 @@ func addTopUpCreditedQuota(tx *gorm.DB, topUp *TopUp, quota int) (*MembershipCha
 	}
 	topUp.CreditedQuota += quota
 	return upgradeMembershipTx(tx, topUp.UserId)
+}
+
+// PaidTopUpQuota returns the quota a user has paid for in total and in their
+// largest single top-up or redemption code, the figures VIP is measured by.
+func PaidTopUpQuota(userId int) (total int64, single int64, err error) {
+	totals, err := paidTopUpTotals(DB, userId)
+	return totals.Total, totals.Single, err
+}
+
+// MembershipThresholdQuota converts a USD threshold to quota; 0 means the
+// rule is off.
+func MembershipThresholdQuota(usd float64) int64 {
+	return membershipThresholdQuota(usd)
 }
 
 // upgradeMembershipTx moves a user in the base group to the VIP group when
@@ -161,6 +187,14 @@ func BackfillTopUpMembership() {
 		return
 	}
 	userIds := make(map[int]struct{})
+	redemptionUserIds, err := redemptionUsersToBackfill()
+	if err != nil {
+		common.SysError(common.LogText("failed to load redemption users for membership backfill: %s", err.Error()))
+		return
+	}
+	for _, userId := range redemptionUserIds {
+		userIds[userId] = struct{}{}
+	}
 	for _, topUp := range topUps {
 		quota, err := legacyTopUpCreditedQuota(DB, topUp)
 		if err != nil || quota <= 0 {
@@ -186,7 +220,33 @@ func BackfillTopUpMembership() {
 		}
 		announceMembershipChange(change)
 	}
+	if redemptionUserIds != nil {
+		if err := DB.Create(&Option{Key: membershipRedemptionBackfillKey, Value: "true"}).Error; err != nil {
+			common.SysError(common.LogText("failed to mark redemption membership backfill: %s", err.Error()))
+		}
+	}
 	if len(topUps) > 0 {
 		common.SysLog(common.LogText("membership backfill checked %d top-ups for %d users", len(topUps), len(userIds)))
 	}
+}
+
+// membershipRedemptionBackfillKey marks that users who redeemed codes before
+// redemption codes counted toward VIP have been checked once.
+const membershipRedemptionBackfillKey = "MembershipRedemptionBackfilled"
+
+// redemptionUsersToBackfill returns the users who redeemed codes, or nil once
+// they have been checked, so an administrator's later group change is kept.
+func redemptionUsersToBackfill() ([]int, error) {
+	var marked int64
+	if err := DB.Model(&Option{}).Where(commonKeyCol+" = ?", membershipRedemptionBackfillKey).Count(&marked).Error; err != nil {
+		return nil, err
+	}
+	if marked > 0 {
+		return nil, nil
+	}
+	userIds := []int{}
+	err := DB.Model(&Redemption{}).Distinct("used_user_id").
+		Where("status = ? AND used_user_id > 0", common.RedemptionCodeStatusUsed).
+		Pluck("used_user_id", &userIds).Error
+	return userIds, err
 }

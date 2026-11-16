@@ -16,12 +16,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
 import { CardStaggerContainer } from '@/components/page-transition'
 import { Card } from '@/components/ui/card'
+import {
+  MEMBERSHIP_QUERY_KEY,
+  MembershipCard,
+  useMembership,
+} from '@/features/membership'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -90,6 +96,8 @@ export function Wallet(props: WalletProps) {
   const [selectedCreemProduct, setSelectedCreemProduct] =
     useState<CreemProduct | null>(null)
 
+  const queryClient = useQueryClient()
+  const { data: membership } = useMembership()
   const { currency } = useSystemConfig()
   const { topupInfo, presetAmounts, loading: topupLoading } = useTopupInfo()
 
@@ -136,13 +144,15 @@ export function Wallet(props: WalletProps) {
       if (response.success && response.data) {
         setUser(response.data as UserWalletData)
       }
+      // A top-up or redeemed code may have made the user VIP.
+      queryClient.invalidateQueries({ queryKey: MEMBERSHIP_QUERY_KEY })
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch user data:', error)
     } finally {
       setUserLoading(false)
     }
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
     fetchUser()
@@ -303,6 +313,23 @@ export function Wallet(props: WalletProps) {
         <SectionPageLayout.Content>
           <CardStaggerContainer className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
             <WalletStatsCard user={user} loading={userLoading} />
+
+            {membership?.enabled && membership.signed_in && (
+              <WalletTiltCard>
+                <MembershipCard
+                  info={membership}
+                  className={WALLET_SURFACE_CLASS}
+                  onTopUp={
+                    showRechargeCard
+                      ? () =>
+                          document
+                            .querySelector('#wallet-add-funds')
+                            ?.scrollIntoView({ behavior: 'smooth' })
+                      : undefined
+                  }
+                />
+              </WalletTiltCard>
+            )}
 
             <div
               className={cn(

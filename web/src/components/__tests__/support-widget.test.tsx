@@ -23,6 +23,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SupportWidget } from '../support-widget'
 
 const routerState = vi.hoisted(() => ({ pathname: '/' }))
+const membershipState = vi.hoisted(() => ({
+  data: undefined as
+    | { is_vip?: boolean; vip_support_telegram?: string }
+    | undefined,
+}))
 
 vi.mock('@tanstack/react-router', () => ({
   useRouterState: (options: {
@@ -30,9 +35,37 @@ vi.mock('@tanstack/react-router', () => ({
   }) => options.select({ location: { pathname: routerState.pathname } }),
 }))
 
+vi.mock('@/features/membership', () => ({
+  useMembership: () => membershipState,
+}))
+
 describe('support widget', () => {
   beforeEach(() => {
     routerState.pathname = '/'
+    membershipState.data = undefined
+  })
+
+  it('sends a VIP user to the VIP support account', async () => {
+    membershipState.data = { is_vip: true, vip_support_telegram: 'vip_desk' }
+    const user = userEvent.setup()
+    render(<SupportWidget />)
+
+    await user.click(screen.getByRole('button', { name: 'Contact support' }))
+
+    expect(screen.getByText('VIP support, 24/7')).toBeInTheDocument()
+    const link = await screen.findByRole('link', { name: /Open Telegram/ })
+    expect(link).toHaveAttribute('href', 'https://t.me/vip_desk')
+  })
+
+  it('keeps regular support for a VIP user when no VIP account is set', async () => {
+    membershipState.data = { is_vip: true, vip_support_telegram: '' }
+    const user = userEvent.setup()
+    render(<SupportWidget />)
+
+    await user.click(screen.getByRole('button', { name: 'Contact support' }))
+
+    const link = await screen.findByRole('link', { name: /Open Telegram/ })
+    expect(link).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
   })
 
   it('opens the Telegram card when the floating button is clicked', async () => {

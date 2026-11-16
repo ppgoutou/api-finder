@@ -148,6 +148,7 @@ func Redeem(key string, userId int) (quota int, err error) {
 	}
 	common.RandomSleep()
 	var rebate *AffRebate
+	var membership *MembershipChange
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := lockForUpdate(tx).Where(keyCol+" = ?", key).First(redemption).Error
 		if err != nil {
@@ -178,6 +179,9 @@ func Redeem(key string, userId int) (quota int, err error) {
 		if err := creditTopUpQuota(tx, userId, redemption.Quota, nil); err != nil {
 			return err
 		}
+		if membership, err = upgradeMembershipTx(tx, userId); err != nil {
+			return err
+		}
 		var rebateErr error
 		rebate, rebateErr = creditAffRebate(tx, userId, AffRebateSourceRedemption, strconv.Itoa(redemption.Id), redemption.Quota)
 		return rebateErr
@@ -189,6 +193,7 @@ func Redeem(key string, userId int) (quota int, err error) {
 	syncCreditUserQuotaCache(userId, redemption.Quota, common.LogText("redemption"))
 	RecordLog(userId, LogTypeTopup, common.NewMessage("Topped up {{quota}} with a redemption code, code ID {{id}}", map[string]any{"quota": logger.FormatQuota(redemption.Quota), "id": redemption.Id}))
 	recordAffRebateLog(rebate)
+	announceMembershipChange(membership)
 	return redemption.Quota, nil
 }
 
