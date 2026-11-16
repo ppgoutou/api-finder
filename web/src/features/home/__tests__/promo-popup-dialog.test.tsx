@@ -222,6 +222,30 @@ describe('home promotion popup', () => {
     ).toBeVisible()
   })
 
+  it('keeps the line breaks the admin typed in a description', async () => {
+    const description = 'Seedance (F) at 39% of list\nOfficial channel at 75%'
+    mockSettings(
+      JSON.stringify({
+        enabled: true,
+        cards: [
+          {
+            kind: 'list',
+            title: 'Seedance sale',
+            description,
+            deals: [{ model_name: 'Seedance 2.0', sale_price: '¥0.39' }],
+          },
+        ],
+      })
+    )
+    renderPopup()
+
+    const text = await screen.findByText(
+      (_content, element) =>
+        element?.tagName === 'P' && element.textContent === description
+    )
+    expect(text).toHaveClass('whitespace-pre-line')
+  })
+
   it('hides the arrows and tabs for a single card', async () => {
     mockSettings(
       JSON.stringify({

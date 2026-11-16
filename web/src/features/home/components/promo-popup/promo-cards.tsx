@@ -90,7 +90,7 @@ function PromoCopy(props: { card: PromoCard }) {
         </h3>
       )}
       {props.card.description && (
-        <p className='text-muted-foreground mt-2 line-clamp-2 text-sm leading-[22px]'>
+        <p className='text-muted-foreground mt-2 line-clamp-2 text-sm leading-[22px] whitespace-pre-line'>
           {props.card.description}
         </p>
       )}
@@ -228,7 +228,7 @@ function RechargePromoCard(props: PromoCardProps) {
           </ul>
         )}
         {card.description && (
-          <p className='text-muted-foreground mt-3.5 line-clamp-2 text-sm leading-[22px]'>
+          <p className='text-muted-foreground mt-3.5 line-clamp-2 text-sm leading-[22px] whitespace-pre-line'>
             {card.description}
           </p>
         )}
@@ -268,7 +268,7 @@ function ListPromoCard(props: PromoCardProps) {
         {card.description && (
           <p
             className={cn(
-              'mt-1.5 line-clamp-2 text-sm leading-[22px] text-white/75 max-sm:mt-1 max-sm:text-xs max-sm:leading-[18px]',
+              'mt-1.5 line-clamp-2 whitespace-pre-line text-sm leading-[22px] text-white/75 max-sm:mt-1 max-sm:text-xs max-sm:leading-[18px]',
               !roomy && 'max-sm:line-clamp-1'
             )}
           >
