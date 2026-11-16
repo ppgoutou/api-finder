@@ -23,9 +23,13 @@ export const PX_SHOW_LINKS_ENABLED = true
 /** Where on this site a PX Show link sits, sent as utm_medium. */
 export type PxShowPlacement = 'studio' | 'home-use-cases'
 
-/** PX Show homepage tagged with this site as the source and the placement. */
+/** This site's PX Show invite code, so sign-ups from these links are credited to it. */
+const PX_SHOW_INVITE_CODE = 'YRBTAW7N'
+
+/** PX Show homepage with this site's invite code, tagged with the source and placement. */
 export function pxShowUrl(placement: PxShowPlacement): string {
   const params = new URLSearchParams({
+    invite: PX_SHOW_INVITE_CODE,
     utm_source: 'api-finder',
     utm_medium: placement,
     utm_campaign: 'partner',

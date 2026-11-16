@@ -32,6 +32,7 @@ describe('UseCases', () => {
     for (const link of links) {
       const url = new URL(link.getAttribute('href') ?? '')
       expect(url.origin).toBe('https://www.pxshow.com')
+      expect(url.searchParams.get('invite')).toBe('YRBTAW7N')
       expect(url.searchParams.get('utm_source')).toBe('api-finder')
       expect(url.searchParams.get('utm_medium')).toBe('home-use-cases')
       expect(link).toHaveAttribute('target', '_blank')
