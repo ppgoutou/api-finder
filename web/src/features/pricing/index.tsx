@@ -46,6 +46,7 @@ import {
   UNCATEGORIZED_CATEGORY,
   type PricingCategorySection,
 } from './lib/categories'
+import type { VipPriceContext } from './lib/vip-price'
 import type { PricingModel } from './types'
 
 // The drawer pulls in the VChart performance charts, so load it on first open.
@@ -58,6 +59,16 @@ const LazyModelDetailsDrawer = lazy(() =>
 export function Pricing() {
   const { t } = useTranslation()
   const { data: membership } = useMembership()
+  const vipPrice = useMemo((): VipPriceContext | undefined => {
+    if (!membership?.enabled || !membership.vip_group) return undefined
+    const displayRatio = membership.vip_display_group_ratio ?? 0
+    if (!(displayRatio > 0)) return undefined
+    return {
+      group: membership.vip_group,
+      displayRatio,
+      isVip: membership.is_vip === true,
+    }
+  }, [membership])
   const [selectedModelName, setSelectedModelName] = useState<string | null>(
     null
   )
@@ -147,6 +158,7 @@ export function Pricing() {
           tokenUnit={tokenUnit}
           showRechargePrice={showRechargePrice}
           selectedGroup={groupFilter}
+          vip={vipPrice}
           badges={modelBadges}
         />
       )

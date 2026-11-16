@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "Nếu khoản thanh toán bị hoàn hoặc tranh chấp là lý do đạt VIP, đưa người dùng về nhóm thường",
     "You are VIP: the prices below already include your {{percent}}% saving.": "Bạn là VIP: giá bên dưới đã gồm ưu đãi {{percent}}%.",
     "Your VIP prices apply to every request automatically.": "Giá VIP tự động áp dụng cho mọi yêu cầu.",
-    "{{amount}} more to become VIP": "Còn {{amount}} để lên VIP"
+    "{{amount}} more to become VIP": "Còn {{amount}} để lên VIP",
+    "VIP price": "Giá VIP",
+    "Save {{percent}}%": "Tiết kiệm {{percent}}%",
+    "You save {{percent}}%": "Đã tiết kiệm {{percent}}%",
+    "/s": "/giây"
   }
 }

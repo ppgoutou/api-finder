@@ -36,7 +36,7 @@ import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import { DEFAULT_TOKEN_UNIT } from '../constants'
+import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { useBillingTime } from '../hooks/use-billing-time'
 import { modelBadgeLabel } from '../lib/categories'
 import {
@@ -61,12 +61,18 @@ import {
   getVideoPricing,
   VIDEO_PRICE_FRACTION_DIGITS,
 } from '../lib/video-pricing'
+import {
+  getCardVipRatios,
+  VIP_VIDEO_PRICE_FRACTION_DIGITS,
+  type VipPriceContext,
+} from '../lib/vip-price'
 import type {
   PricingModel,
   PricingModelBadge,
   PriceType,
   TokenUnit,
 } from '../types'
+import { CardVipPrice } from './card-vip-price'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 
 // Brand color shared by the cheapest tier and the details action; a stable
@@ -85,6 +91,8 @@ export interface ModelCardProps {
   tokenUnit?: TokenUnit
   showRechargePrice?: boolean
   selectedGroup?: string
+  /** VIP pricing for the viewer; adds the VIP price to the card. */
+  vip?: VipPriceContext
   badges?: PricingModelBadge[]
 }
 
@@ -148,6 +156,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [props.model, dynamicPriceOptions, currency]
   )
+  const vipRatios = useMemo(
+    () => getCardVipRatios(props.model, props.selectedGroup, props.vip),
+    [props.model, props.selectedGroup, props.vip]
+  )
   const videoPricing = useMemo(
     () => getVideoPricing(props.model) ?? getTokenVideoPricing(props.model),
     [props.model]
@@ -180,17 +192,40 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     const lowestRow = videoPricing.rows.reduce((lowest, row) =>
       row.secondPrice < lowest.secondPrice ? row : lowest
     )
+    // VIP prices keep a third decimal so a small saving stays visible.
+    const formatVipSecondPrice = (price: number) =>
+      formatTaskUsageUnitPrice(price, {
+        ...dynamicPriceOptions,
+        groupRatioMultiplier: vipRatios?.vipRatio,
+        fractionDigits: VIP_VIDEO_PRICE_FRACTION_DIGITS,
+      })
+    const formatShownSecondPrice = vipRatios?.isVip
+      ? formatVipSecondPrice
+      : formatSecondPrice
     priceSummary = (
       <>
         <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
           <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
-            {formatSecondPrice(lowestRow.secondPrice)}
+            {formatShownSecondPrice(lowestRow.secondPrice)}
           </span>
           <span className='text-muted-foreground pb-0.5 text-xs'>
             {t('/s from')} ·{' '}
             {taskEnumLabel(optionDefinition, lowestRow.option, i18n.language)}
           </span>
         </p>
+        {vipRatios && (
+          <CardVipPrice
+            isVip={vipRatios.isVip}
+            vipPrice={formatVipSecondPrice(lowestRow.secondPrice)}
+            standardPrice={formatTaskUsageUnitPrice(lowestRow.secondPrice, {
+              ...dynamicPriceOptions,
+              groupRatioMultiplier: vipRatios.standardRatio,
+              fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
+            })}
+            unit={t('/s')}
+            savingPercent={vipRatios.savingPercent}
+          />
+        )}
         <dl
           aria-label={t('Video billing (per second)')}
           className='col-span-full flex flex-wrap gap-1.5'
@@ -207,7 +242,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 {taskEnumLabel(optionDefinition, row.option, i18n.language)}
               </dt>
               <dd className='truncate font-mono text-xs font-bold tabular-nums'>
-                {formatSecondPrice(row.secondPrice)}
+                {formatShownSecondPrice(row.secondPrice)}
               </dd>
             </div>
           ))}
@@ -397,21 +432,42 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       </div>
     ))
   } else {
+    const formatRequestPriceAt = (groupRatioMultiplier: number) =>
+      formatTaskUsageUnitPrice(props.model.model_price ?? 0, {
+        ...dynamicPriceOptions,
+        groupRatioMultiplier,
+        fractionDigits: 4,
+      })
+    const showVipRequestPrice =
+      vipRatios !== null && props.model.quota_type === QUOTA_TYPE_VALUES.REQUEST
     priceSummary = (
-      <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
-        <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
-          {formatRequestPrice(
-            props.model,
-            showRechargePrice,
-            priceRate,
-            usdExchangeRate,
-            props.selectedGroup
-          )}
-        </span>
-        <span className='text-muted-foreground pb-0.5 text-xs'>
-          / {t('request')}
-        </span>
-      </p>
+      <>
+        <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
+          <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
+            {showVipRequestPrice && vipRatios.isVip
+              ? formatRequestPriceAt(vipRatios.vipRatio)
+              : formatRequestPrice(
+                  props.model,
+                  showRechargePrice,
+                  priceRate,
+                  usdExchangeRate,
+                  props.selectedGroup
+                )}
+          </span>
+          <span className='text-muted-foreground pb-0.5 text-xs'>
+            / {t('request')}
+          </span>
+        </p>
+        {showVipRequestPrice && (
+          <CardVipPrice
+            isVip={vipRatios.isVip}
+            vipPrice={formatRequestPriceAt(vipRatios.vipRatio)}
+            standardPrice={formatRequestPriceAt(vipRatios.standardRatio)}
+            unit={` / ${t('request')}`}
+            savingPercent={vipRatios.savingPercent}
+          />
+        )}
+      </>
     )
   }
 
