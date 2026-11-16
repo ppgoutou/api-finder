@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
@@ -138,6 +139,29 @@ func validatePrompt(prompt string) *dto.TaskError {
 		return createTaskError(fmt.Errorf("prompt is required"), "invalid_request", http.StatusBadRequest, true)
 	}
 	return nil
+}
+
+// MaxTaskPromptLength is the longest task prompt, in Unicode characters. A
+// supplier refuses longer prompts only after the task is queued and charged,
+// so every task submission is held to it up front. The video studio caps its
+// prompt box at the same number.
+const MaxTaskPromptLength = 5000
+
+// ValidateTaskPromptLength rejects a prompt over MaxTaskPromptLength. The
+// request is the resolved task request: a TaskSubmitReq or a decoded JSON body.
+func ValidateTaskPromptLength(request any) *dto.TaskError {
+	var prompt string
+	switch body := request.(type) {
+	case TaskSubmitReq:
+		prompt = body.Prompt
+	case map[string]any:
+		prompt, _ = body["prompt"].(string)
+	}
+	length := utf8.RuneCountInString(strings.TrimSpace(prompt))
+	if length <= MaxTaskPromptLength {
+		return nil
+	}
+	return createTaskError(fmt.Errorf("prompt has %d characters, at most %d are allowed", length, MaxTaskPromptLength), "prompt_too_long", http.StatusBadRequest, true)
 }
 
 // MaxTaskDurationSeconds caps user-supplied video duration. Duration is used

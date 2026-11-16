@@ -23,6 +23,8 @@ import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
@@ -45,7 +47,7 @@ import {
   replacementModel,
 } from '../lib/draft'
 import { buildImageRequest, validateImageDraft } from '../lib/image-draft'
-import { promptGuide } from '../lib/prompt-guide'
+import { PROMPT_TOO_LONG, promptGuide, promptLength } from '../lib/prompt-guide'
 import type { StudioDraft } from '../types'
 import { ChoiceMenu } from './choice-menu'
 import { PromptInput } from './prompt-input'
@@ -63,7 +65,8 @@ interface ImageComposerProps {
 
 /** Prompt box for image generation: reference images, model, size, count. */
 export function ImageComposer(props: ImageComposerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const studio = useStudioDraft(
     props.initialDraft ??
       (props.initialModel ? { model: props.initialModel } : undefined)
@@ -91,9 +94,14 @@ export function ImageComposer(props: ImageComposerProps) {
   let problem = model
     ? validateImageDraft(draft)
     : 'No image model is available'
+  const guide = promptGuide(model?.name)
+  if (!problem && model && promptLength(draft.prompt) > guide.maxLength) {
+    problem = PROMPT_TOO_LONG
+  }
   if (unavailable) {
     problem = 'This model is temporarily unavailable. Pick another model.'
   }
+  const problemParams = { max: formatNumber(guide.maxLength, locale) }
 
   const addReferences = (files: File[]) => {
     const images = files.filter((file) => assetKindOf(file) === 'image')
@@ -105,7 +113,7 @@ export function ImageComposer(props: ImageComposerProps) {
 
   const submit = async () => {
     if (problem) {
-      toast.error(t(problem))
+      toast.error(t(problem, problemParams))
       return
     }
     if (insufficient) return
@@ -154,7 +162,7 @@ export function ImageComposer(props: ImageComposerProps) {
           )}
           onSubmit={submit}
           label={t('Image prompt')}
-          guide={promptGuide(model?.name)}
+          guide={guide}
         />
       </div>
 
@@ -207,7 +215,7 @@ export function ImageComposer(props: ImageComposerProps) {
             onClick={submit}
             disabled={submitting || insufficient || unavailable}
             aria-label={t('Generate image')}
-            title={problem ? t(problem) : t('Generate image')}
+            title={problem ? t(problem, problemParams) : t('Generate image')}
           >
             {submitting ? (
               <Spinner className='size-4' />
