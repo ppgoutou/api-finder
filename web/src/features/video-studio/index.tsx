@@ -18,11 +18,13 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { ArrowUpRight } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Main } from '@/components/layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PX_SHOW_LINKS_ENABLED, pxShowUrl } from '@/lib/partner-links'
 
 import { Composer } from './components/composer'
 import { GalleryList } from './components/gallery-list'
@@ -77,6 +79,17 @@ export function VideoStudio() {
                 ? t('Create an image, bring your ideas to life')
                 : t('Create a video, bring your ideas to life')}
             </h1>
+            {PX_SHOW_LINKS_ENABLED && (
+              <a
+                href={pxShowUrl('studio')}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground hover:text-foreground -mt-2 inline-flex items-center gap-1 text-center text-sm transition-colors'
+              >
+                {t('Making a multi-shot short drama? Try our partner PX Show')}
+                <ArrowUpRight className='size-3.5 shrink-0' aria-hidden />
+              </a>
+            )}
             <Tabs
               value={kind}
               onValueChange={(value) => {

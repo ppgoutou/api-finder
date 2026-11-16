@@ -64,4 +64,20 @@ describe('video studio layout', () => {
     expect(page).toHaveClass('max-w-[1800px]')
     expect(composer?.lastElementChild).toHaveClass('w-full', 'max-w-5xl')
   })
+  it('points short-drama makers to PX Show in a new tab under the heading', () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <VideoStudio />
+      </QueryClientProvider>
+    )
+
+    const link = screen.getByRole('link', { name: /PX Show/ })
+    const url = new URL(link.getAttribute('href') ?? '')
+    expect(url.origin).toBe('https://www.pxshow.com')
+    expect(url.searchParams.get('utm_medium')).toBe('studio')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('heading', { level: 1 }).nextElementSibling).toBe(
+      link
+    )
+  })
 })
