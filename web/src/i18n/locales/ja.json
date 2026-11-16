@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "返金・異議申し立てされた支払いがVIPの条件だった場合、通常グループに戻します",
     "You are VIP: the prices below already include your {{percent}}% saving.": "あなたはVIPです。以下の料金は {{percent}}% の割引適用済みです。",
     "Your VIP prices apply to every request automatically.": "すべてのリクエストにVIP料金が自動で適用されます。",
-    "{{amount}} more to become VIP": "あと {{amount}} でVIP"
+    "{{amount}} more to become VIP": "あと {{amount}} でVIP",
+    "VIP price": "VIP価格",
+    "Save {{percent}}%": "{{percent}}% お得",
+    "You save {{percent}}%": "{{percent}}% お得になっています",
+    "/s": "/秒"
   }
 }

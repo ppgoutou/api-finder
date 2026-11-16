@@ -70,6 +70,8 @@ func TestGetMembership(t *testing.T) {
 	assert.InDelta(t, 0.85, visitor["vip_price_rate"], 1e-9)
 	assert.InDelta(t, 1000*common.QuotaPerUnit, visitor["total_threshold_quota"], 0.5)
 	assert.NotContains(t, visitor, "paid_total_quota")
+	assert.Equal(t, "vip", visitor["vip_group"])
+	assert.InDelta(t, ratio_setting.PublicGroupRatio(0.85), visitor["vip_display_group_ratio"], 1e-9)
 
 	standard := call(1)
 	assert.Equal(t, false, standard["is_vip"])

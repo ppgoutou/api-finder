@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "Если возвращённый или оспоренный платёж был причиной VIP, вернуть пользователя в стандартную группу",
     "You are VIP: the prices below already include your {{percent}}% saving.": "Вы VIP: цены ниже уже включают вашу скидку {{percent}}%.",
     "Your VIP prices apply to every request automatically.": "VIP-цены автоматически применяются к каждому запросу.",
-    "{{amount}} more to become VIP": "Ещё {{amount}} до VIP"
+    "{{amount}} more to become VIP": "Ещё {{amount}} до VIP",
+    "VIP price": "Цена VIP",
+    "Save {{percent}}%": "−{{percent}}%",
+    "You save {{percent}}%": "Экономия {{percent}}%",
+    "/s": "/с"
   }
 }

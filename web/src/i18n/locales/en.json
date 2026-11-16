@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "When a refunded or disputed payment was what qualified a user, move them back to the standard group",
     "You are VIP: the prices below already include your {{percent}}% saving.": "You are VIP: the prices below already include your {{percent}}% saving.",
     "Your VIP prices apply to every request automatically.": "Your VIP prices apply to every request automatically.",
-    "{{amount}} more to become VIP": "{{amount}} more to become VIP"
+    "{{amount}} more to become VIP": "{{amount}} more to become VIP",
+    "VIP price": "VIP price",
+    "Save {{percent}}%": "Save {{percent}}%",
+    "You save {{percent}}%": "You save {{percent}}%",
+    "/s": "/s"
   }
 }

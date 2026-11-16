@@ -18,11 +18,13 @@ func GetMembership(c *gin.Context) {
 	setting := operation_setting.GetMembershipSetting()
 	enabled := setting.Enabled && setting.VipGroup != "" && ratio_setting.ContainsGroupRatio(setting.VipGroup)
 	data := gin.H{
-		"enabled":                enabled,
-		"total_threshold_quota":  model.MembershipThresholdQuota(setting.TotalTopUpUSD),
-		"single_threshold_quota": model.MembershipThresholdQuota(setting.SingleTopUpUSD),
-		"vip_price_rate":         vipPriceRate(setting),
-		"signed_in":              false,
+		"enabled":                 enabled,
+		"total_threshold_quota":   model.MembershipThresholdQuota(setting.TotalTopUpUSD),
+		"single_threshold_quota":  model.MembershipThresholdQuota(setting.SingleTopUpUSD),
+		"vip_price_rate":          vipPriceRate(setting),
+		"vip_group":               setting.VipGroup,
+		"vip_display_group_ratio": vipDisplayGroupRatio(setting, enabled),
+		"signed_in":               false,
 	}
 	userId := c.GetInt("id")
 	if userId > 0 {
@@ -60,4 +62,14 @@ func vipPriceRate(setting *operation_setting.MembershipSetting) float64 {
 		return 1
 	}
 	return vip / base
+}
+
+// vipDisplayGroupRatio is the VIP group ratio the pricing page multiplies
+// model prices by, scaled like the group ratios /api/pricing publishes; 0
+// when the program is off.
+func vipDisplayGroupRatio(setting *operation_setting.MembershipSetting, enabled bool) float64 {
+	if !enabled {
+		return 0
+	}
+	return ratio_setting.PublicGroupRatio(ratio_setting.GetGroupRatio(setting.VipGroup))
 }

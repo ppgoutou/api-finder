@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "Si un paiement remboursé ou contesté était ce qui qualifiait l’utilisateur, le replacer dans le groupe standard",
     "You are VIP: the prices below already include your {{percent}}% saving.": "Vous êtes VIP : les prix ci-dessous incluent déjà votre réduction de {{percent}} %.",
     "Your VIP prices apply to every request automatically.": "Vos prix VIP s’appliquent automatiquement à chaque requête.",
-    "{{amount}} more to become VIP": "Encore {{amount}} pour devenir VIP"
+    "{{amount}} more to become VIP": "Encore {{amount}} pour devenir VIP",
+    "VIP price": "Prix VIP",
+    "Save {{percent}}%": "−{{percent}} %",
+    "You save {{percent}}%": "Vous économisez {{percent}} %",
+    "/s": "/s"
   }
 }

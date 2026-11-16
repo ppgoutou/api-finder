@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import type { StudioKind } from '@/features/video-studio/types'
 
 import { DEFAULT_PRICING_PAGE_SIZE, DEFAULT_TOKEN_UNIT } from '../constants'
+import type { VipPriceContext } from '../lib/vip-price'
 import type { PricingModel, PricingModelBadge, TokenUnit } from '../types'
 import { ModelCard } from './model-card'
 
@@ -37,6 +38,8 @@ export interface ModelCardGridProps {
   tokenUnit?: TokenUnit
   showRechargePrice?: boolean
   selectedGroup?: string
+  /** VIP pricing for the viewer; cards add VIP prices when set. */
+  vip?: VipPriceContext
   /** Administrator-chosen card badges keyed by model name. */
   badges?: Map<string, PricingModelBadge[]>
 }
@@ -72,6 +75,7 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             usdExchangeRate={props.usdExchangeRate}
             showRechargePrice={props.showRechargePrice}
             selectedGroup={props.selectedGroup}
+            vip={props.vip}
             badges={props.badges?.get(model.model_name || '')}
             onClick={props.onModelClick}
             onTry={props.onModelTry}

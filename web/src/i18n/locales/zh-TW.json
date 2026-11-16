@@ -8338,6 +8338,10 @@
     "When a refunded or disputed payment was what qualified a user, move them back to the standard group": "如果退款或拒付的訂單正是用戶達標的原因，則將其降回一般分組",
     "You are VIP: the prices below already include your {{percent}}% saving.": "你是 VIP，以下價格已包含 {{percent}}% 的會員優惠。",
     "Your VIP prices apply to every request automatically.": "每次呼叫都會自動按 VIP 價格計費。",
-    "{{amount}} more to become VIP": "再儲值 {{amount}} 即可升級 VIP"
+    "{{amount}} more to become VIP": "再儲值 {{amount}} 即可升級 VIP",
+    "VIP price": "VIP 價",
+    "Save {{percent}}%": "省 {{percent}}%",
+    "You save {{percent}}%": "已省 {{percent}}%",
+    "/s": "/秒"
   }
 }
