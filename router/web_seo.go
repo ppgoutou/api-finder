@@ -22,7 +22,8 @@ var (
 )
 
 type seoPage struct {
-	// Title is appended to the system name, e.g. "API-Finder | Pricing".
+	// Title is followed by the system name, e.g. "Pricing | API-Finder", so
+	// the words a page ranks for lead its search result.
 	Title       string
 	Description string
 }
@@ -39,8 +40,8 @@ var seoPages = map[string]seoPage{
 		Description: "Create cinematic AI video with ByteDance Seedance: text-to-video, image-to-video and reference video up to 4K, pay as you go with no subscription.",
 	},
 	"/pricing": {
-		Title:       "Pricing",
-		Description: "Per-second pricing for Seedance text-to-video, image-to-video and reference-video generation. No subscription or minimum spend.",
+		Title:       "Seedance AI Video Pricing per Second",
+		Description: "Per-second prices for Seedance 2.0 text-to-video, image-to-video and reference-video generation, below official list prices. Pay as you go with no subscription or minimum spend.",
 	},
 	"/about": {
 		Title:       "About",
@@ -74,11 +75,14 @@ var seoHeadTemplate = template.Must(template.New("seo-head").Parse(`<title>{{.Fu
     {{- if .Image}}
     <meta property="og:image" content="{{.Image}}" />
     {{- end}}
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="{{.FullTitle}}" />
     <meta name="twitter:description" content="{{.Description}}" />
     {{- if .Image}}
     <meta name="twitter:image" content="{{.Image}}" />
+    {{- end}}
+    {{- if .StructuredData}}
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":{{.OrgID}},"name":{{.SiteName}},"url":{{.HomeURL}},"logo":{{.Image}}},{"@type":"WebSite","name":{{.SiteName}},"url":{{.HomeURL}},"publisher":{"@id":{{.OrgID}}}}]}</script>
     {{- end}}
     `))
 
@@ -142,13 +146,18 @@ type seoLink struct {
 }
 
 type seoView struct {
-	SiteName    string
-	FullTitle   string
-	Description string
-	URL         string
-	Image       string
-	Contact     template.HTML
-	LegalLinks  []seoLink
+	SiteName string
+	HomeURL  string
+	OrgID    string
+	// StructuredData adds schema.org Organization and WebSite data, which
+	// belongs on the home page only.
+	StructuredData bool
+	FullTitle      string
+	Description    string
+	URL            string
+	Image          string
+	Contact        template.HTML
+	LegalLinks     []seoLink
 }
 
 // seoSnapshot is the option state needed to render SEO output, read once
@@ -235,11 +244,15 @@ func renderIndexPage(c *gin.Context, indexPage []byte, path string) []byte {
 	snap := readSEOSnapshot(c)
 	view := seoView{
 		SiteName:    snap.siteName,
-		FullTitle:   snap.siteName + " | " + page.Title,
+		HomeURL:     snap.baseURL + "/",
+		OrgID:       snap.baseURL + "/#organization",
+		FullTitle:   page.Title + " | " + snap.siteName,
 		Description: page.Description,
 		URL:         snap.baseURL + path,
 		Image:       snap.baseURL + "/logo.png",
 		LegalLinks:  snap.legalLinks,
+
+		StructuredData: path == "/",
 	}
 	// Admin-authored footer HTML is already rendered unescaped by the app.
 	view.Contact = template.HTML(footerContact(snap.footer))
@@ -269,6 +282,35 @@ func renderIndexPage(c *gin.Context, indexPage []byte, path string) []byte {
 	out.Write(body.Bytes())
 	out.Write(rest[rootAt:])
 	return out.Bytes()
+}
+
+// spaRouteRoots are the first path segments the React app routes, plus the
+// old console paths it redirects. Any other path gets the app shell with a 404
+// status, so crawlers drop URLs that never existed here (the domain served a
+// different site before, and Google kept reporting its pages as soft 404s).
+// A test keeps this list in step with web/src/routes.
+var spaRouteRoots = map[string]bool{
+	"401": true, "403": true, "404": true, "500": true, "503": true,
+	"about": true, "channels": true, "chat": true, "chat2link": true,
+	"console": true, "dashboard": true, "docs": true, "errors": true,
+	"forgot-password": true, "keys": true, "landing": true, "login": true,
+	"models": true, "oauth": true, "otp": true, "playground": true,
+	"pricing": true, "privacy-policy": true, "profile": true,
+	"rankings": true, "redemption-codes": true, "refund-policy": true,
+	"register": true, "reset": true, "security": true, "setup": true,
+	"sign-in": true, "sign-up": true, "subscriptions": true,
+	"system-info": true, "system-settings": true, "task-plugins": true,
+	"usage-logs": true, "user": true, "user-agreement": true, "users": true,
+	"video-studio": true, "wallet": true,
+}
+
+// indexPageStatus is the HTTP status for the app shell served at path.
+func indexPageStatus(path string) int {
+	first, _, _ := strings.Cut(strings.TrimPrefix(path, "/"), "/")
+	if first == "" || spaRouteRoots[first] {
+		return http.StatusOK
+	}
+	return http.StatusNotFound
 }
 
 // Signed-in areas are disallowed so crawlers spend their budget on public pages.
