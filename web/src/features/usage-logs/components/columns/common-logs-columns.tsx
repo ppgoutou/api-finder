@@ -17,13 +17,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { ColumnDef } from '@tanstack/react-table'
-import { GitBranch, Sparkles, KeyRound } from 'lucide-react'
+import {
+  GitBranch,
+  KeyRound,
+  ListFilter,
+  Sparkles,
+  UserRound,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { GroupBadge } from '@/components/group-badge'
 import { StatusBadge, type StatusBadgeProps } from '@/components/status-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Popover,
   PopoverContent,
@@ -584,53 +596,86 @@ export function useCommonLogsColumns(
               sensitiveVisible,
               setSelectedUserId,
               setUserInfoDialogOpen,
+              showUserLogs,
             } = useUsageLogsContext()
             const log = row.original
 
             if (!log.username) return null
 
             return (
-              <button
-                type='button'
-                className='flex items-center gap-1.5 text-left'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedUserId(log.user_id)
-                  setUserInfoDialogOpen(true)
-                }}
-              >
-                <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
-                  <AvatarFallback
-                    className={cn(
-                      'text-[11px] font-semibold',
-                      !sensitiveVisible && 'bg-muted text-muted-foreground'
-                    )}
-                    style={
-                      sensitiveVisible
-                        ? getUserAvatarStyle(log.username)
-                        : undefined
-                    }
-                  >
-                    {sensitiveVisible
-                      ? getUserAvatarFallback(log.username)
-                      : '•'}
-                  </AvatarFallback>
-                </Avatar>
-                <TooltipProvider delay={300}>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <span className='text-muted-foreground max-w-[100px] truncate text-sm hover:underline' />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type='button'
+                      aria-label={
+                        sensitiveVisible
+                          ? `${t('User')}: ${log.username}`
+                          : t('User')
+                      }
+                      className='flex items-center gap-1.5 text-left'
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  }
+                >
+                  <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
+                    <AvatarFallback
+                      className={cn(
+                        'text-[11px] font-semibold',
+                        !sensitiveVisible && 'bg-muted text-muted-foreground'
+                      )}
+                      style={
+                        sensitiveVisible
+                          ? getUserAvatarStyle(log.username)
+                          : undefined
                       }
                     >
-                      {sensitiveVisible ? log.username : '••••'}
-                    </TooltipTrigger>
-                    {sensitiveVisible && log.username.length > 12 && (
-                      <TooltipContent side='top'>{log.username}</TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              </button>
+                      {sensitiveVisible
+                        ? getUserAvatarFallback(log.username)
+                        : '•'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <TooltipProvider delay={300}>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span className='text-muted-foreground max-w-[100px] truncate text-sm hover:underline' />
+                        }
+                      >
+                        {sensitiveVisible ? log.username : '••••'}
+                      </TooltipTrigger>
+                      {sensitiveVisible && log.username.length > 12 && (
+                        <TooltipContent side='top'>
+                          {log.username}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='start' className='w-44'>
+                  {showUserLogs && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        showUserLogs(log.username)
+                      }}
+                    >
+                      <ListFilter aria-hidden='true' />
+                      {t('Only this user')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedUserId(log.user_id)
+                      setUserInfoDialogOpen(true)
+                    }}
+                  >
+                    <UserRound aria-hidden='true' />
+                    {t('User Information')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )
           },
         }

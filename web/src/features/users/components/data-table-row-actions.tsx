@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useNavigate } from '@tanstack/react-router'
 import type { Row } from '@tanstack/react-table'
 import {
   Pencil,
@@ -28,6 +29,7 @@ import {
   ShieldAlert,
   Link2,
   CreditCard,
+  ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -76,6 +78,7 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const user = row.original
   const {
     setOpen,
@@ -250,6 +253,21 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         )}
+
+        <DropdownMenuItem
+          onClick={() =>
+            navigate({
+              to: '/usage-logs/$section',
+              params: { section: 'common' },
+              search: { username: user.username },
+            })
+          }
+        >
+          {t('View Usage Logs')}
+          <DropdownMenuShortcut>
+            <ScrollText size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
 
         <DropdownMenuItem
           onSelect={(event) => {

@@ -8288,6 +8288,8 @@
     "Video tokens per second: {{list}}": "每秒 Token：{{list}}",
     "Model comparison": "模型对比说明",
     "{{name}} model comparison": "{{name}} 模型对比",
-    "Shown in a popover under the category heading. Supports Markdown.": "显示在类目标题下方的弹窗中，支持 Markdown。"
+    "Shown in a popover under the category heading. Supports Markdown.": "显示在类目标题下方的弹窗中，支持 Markdown。",
+    "Only this user": "只看该用户",
+    "View Usage Logs": "查看使用日志"
   }
 }

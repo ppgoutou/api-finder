@@ -48,13 +48,21 @@ interface UsageLogsContextValue {
   setSensitiveVisible: (visible: boolean) => void
   viewScope: LogsViewScope
   setViewScope: (scope: LogsViewScope) => void
+  /** Narrows the logs to one user; absent where the page cannot navigate. */
+  showUserLogs?: (username: string) => void
 }
 
 const UsageLogsContext = createContext<UsageLogsContextValue | undefined>(
   undefined
 )
 
-export function UsageLogsProvider({ children }: { children: ReactNode }) {
+export function UsageLogsProvider({
+  children,
+  onShowUserLogs,
+}: {
+  children: ReactNode
+  onShowUserLogs?: (username: string) => void
+}) {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [userInfoDialogOpen, setUserInfoDialogOpen] = useState(false)
   const [affinityTarget, setAffinityTarget] =
@@ -78,6 +86,7 @@ export function UsageLogsProvider({ children }: { children: ReactNode }) {
         setSensitiveVisible,
         viewScope,
         setViewScope,
+        showUserLogs: onShowUserLogs,
       }}
     >
       {children}

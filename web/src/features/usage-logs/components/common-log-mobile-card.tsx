@@ -398,17 +398,30 @@ export function CommonLogMobileCard<TData>(props: {
               </div>
             )}
             {selectedField === 'user' && (
-              <Button
-                variant='outline'
-                className='min-h-11'
-                onClick={() => {
-                  setSelectedField(null)
-                  context.setSelectedUserId(log.user_id)
-                  context.setUserInfoDialogOpen(true)
-                }}
-              >
-                {t('User Information')}
-              </Button>
+              <div className='grid gap-2'>
+                {context.showUserLogs && (
+                  <Button
+                    className='min-h-11'
+                    onClick={() => {
+                      setSelectedField(null)
+                      context.showUserLogs?.(log.username)
+                    }}
+                  >
+                    {t('Only this user')}
+                  </Button>
+                )}
+                <Button
+                  variant='outline'
+                  className='min-h-11'
+                  onClick={() => {
+                    setSelectedField(null)
+                    context.setSelectedUserId(log.user_id)
+                    context.setUserInfoDialogOpen(true)
+                  }}
+                >
+                  {t('User Information')}
+                </Button>
+              </div>
             )}
           </div>
         )}

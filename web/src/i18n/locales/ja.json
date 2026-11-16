@@ -8288,6 +8288,8 @@
     "Video tokens per second: {{list}}": "1 秒あたりのトークン：{{list}}",
     "Model comparison": "モデル比較",
     "{{name}} model comparison": "{{name}} モデル比較",
-    "Shown in a popover under the category heading. Supports Markdown.": "カテゴリ見出しの下のポップオーバーに表示されます。Markdown に対応。"
+    "Shown in a popover under the category heading. Supports Markdown.": "カテゴリ見出しの下のポップオーバーに表示されます。Markdown に対応。",
+    "Only this user": "このユーザーのみ",
+    "View Usage Logs": "使用ログを表示"
   }
 }
