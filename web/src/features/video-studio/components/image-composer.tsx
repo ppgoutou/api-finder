@@ -47,6 +47,7 @@ import {
   replacementModel,
 } from '../lib/draft'
 import { buildImageRequest, validateImageDraft } from '../lib/image-draft'
+import { localizeMentions } from '../lib/mention-names'
 import { PROMPT_TOO_LONG, promptGuide, promptLength } from '../lib/prompt-guide'
 import type { StudioDraft } from '../types'
 import { ChoiceMenu } from './choice-menu'
@@ -158,7 +159,13 @@ export function ImageComposer(props: ImageComposerProps) {
             ({ asset, token }) => ({ token, fileName: asset.fileName })
           )}
           placeholder={t(
-            'Describe the image. Type @ to mention an uploaded image, e.g. put the character in @图片1 on a beach.'
+            'Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.',
+            {
+              image: localizeMentions(
+                '@图片1',
+                i18n.resolvedLanguage || i18n.language
+              ).slice(1),
+            }
           )}
           onSubmit={submit}
           label={t('Image prompt')}
