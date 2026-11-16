@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "被邀請人的付款已退款或被拒付，邀請返利 {{quota}} 已撤回",
     "Invitation rebate percentage": "邀請返利比例（%）",
     "Invitation rebate percentage must be between 0 and 100": "邀請返利比例必須在 0 到 100 之間",
+    "Invite Count": "邀請用戶數",
     "Invite Info": "邀請資訊",
     "Invited": "已邀請",
     "Invited {{count}} users": "邀請 {{count}} 人",

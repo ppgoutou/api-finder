@@ -78,3 +78,15 @@ func TestGetAllUsersDefaultsToNewestRegistrationFirst(t *testing.T) {
 	assert.Equal(t, int64(3), total)
 	assert.Equal(t, []int{1, 3, 2}, collectUserIDs(users))
 }
+
+func TestGetAllUsersSortsByInviteCount(t *testing.T) {
+	truncateTables(t)
+	insertUsersForPaginationTest(t, 3)
+	require.NoError(t, DB.Model(&User{}).Where("id = ?", 1).Update("aff_count", 2).Error)
+	require.NoError(t, DB.Model(&User{}).Where("id = ?", 2).Update("aff_count", 5).Error)
+
+	users, _, err := GetAllUsers(&common.PageInfo{Page: 1, PageSize: 20}, NewUserSortOptions("aff_count", "desc"))
+	require.NoError(t, err)
+	assert.Equal(t, []int{2, 1, 3}, collectUserIDs(users))
+	assert.Equal(t, 5, users[0].AffCount)
+}

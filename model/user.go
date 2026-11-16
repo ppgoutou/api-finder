@@ -35,6 +35,7 @@ var userSortColumns = map[string]string{
 	"group":         "group",
 	"created_at":    "created_at",
 	"last_login_at": "last_login_at",
+	"aff_count":     "aff_count",
 }
 
 type UserSortOptions struct {

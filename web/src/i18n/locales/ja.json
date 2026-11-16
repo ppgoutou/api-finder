@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "被招待者の支払いが返金または異議申し立てされたため、招待リベート {{quota}} を取り消しました",
     "Invitation rebate percentage": "招待リベート率（%）",
     "Invitation rebate percentage must be between 0 and 100": "招待リベート率は 0〜100 の範囲で入力してください",
+    "Invite Count": "招待ユーザー数",
     "Invite Info": "招待情報",
     "Invited": "招待済み",
     "Invited {{count}} users": "招待 {{count}} 人",

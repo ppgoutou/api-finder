@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Remise d'invitation de {{quota}} annulée : le paiement de l'invité a été remboursé ou contesté",
     "Invitation rebate percentage": "Pourcentage de remise d'invitation",
     "Invitation rebate percentage must be between 0 and 100": "Le pourcentage de remise doit être compris entre 0 et 100",
+    "Invite Count": "Nombre d'invités",
     "Invite Info": "Informations sur l'invitation",
     "Invited": "Invité",
     "Invited {{count}} users": "{{count}} invitations",

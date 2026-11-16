@@ -85,6 +85,7 @@ export type UserSortBy =
   | 'group'
   | 'created_at'
   | 'last_login_at'
+  | 'aff_count'
 
 export type UserSortOrder = 'asc' | 'desc'
 

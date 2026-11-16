@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Вознаграждение {{quota}} отменено: платёж приглашённого возвращён или оспорен",
     "Invitation rebate percentage": "Процент вознаграждения за приглашение",
     "Invitation rebate percentage must be between 0 and 100": "Процент вознаграждения должен быть от 0 до 100",
+    "Invite Count": "Приглашено пользователей",
     "Invite Info": "Информация о приглашении",
     "Invited": "Приглашен",
     "Invited {{count}} users": "Приглашено: {{count}}",

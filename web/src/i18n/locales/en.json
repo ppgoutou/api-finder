@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed",
     "Invitation rebate percentage": "Invitation rebate percentage",
     "Invitation rebate percentage must be between 0 and 100": "Invitation rebate percentage must be between 0 and 100",
+    "Invite Count": "Invite Count",
     "Invite Info": "Invite Info",
     "Invited": "Invited",
     "Invited {{count}} users": "Invited {{count}} users",
