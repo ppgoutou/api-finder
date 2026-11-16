@@ -25,6 +25,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '@/lib/api'
 
 import { SettingsPageProvider } from '../../../components/settings-page-context'
+import { promoPopupFormSchema } from '../schema'
 import { PromoPopupSection } from '../section'
 
 function Fixture(props: { stored: string }) {
@@ -288,5 +289,29 @@ describe('promotion popup settings', () => {
     await waitFor(() => expect(api.put).toHaveBeenCalled())
     const body = vi.mocked(api.put).mock.calls[0][1] as { value: string }
     expect(JSON.parse(body.value).daily_limit).toBe(3)
+  })
+})
+
+describe('promotion popup text limits', () => {
+  // 80 characters with two emoji, which are four UTF-16 units.
+  const eightyWithEmoji =
+    '🔥 Seedance 2.0 (F) & 2.5 (F): up to 67% off official prices, 720p from ¥0.39/s 🎬'
+
+  function announcementResult(text: string) {
+    return promoPopupFormSchema.safeParse({
+      enabled: false,
+      dailyLimit: 1,
+      cards: [],
+      announcement: { enabled: true, text, textZh: '', href: '' },
+    })
+  }
+
+  it('accepts an announcement of 80 characters that contains emoji', () => {
+    expect([...eightyWithEmoji]).toHaveLength(80)
+    expect(announcementResult(eightyWithEmoji).success).toBe(true)
+  })
+
+  it('rejects an announcement of 81 characters', () => {
+    expect(announcementResult(`${eightyWithEmoji}!`).success).toBe(false)
   })
 })

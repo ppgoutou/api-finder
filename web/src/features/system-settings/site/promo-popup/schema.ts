@@ -27,18 +27,23 @@ import {
   PROMO_POPUP_MAX_TIERS,
 } from '@/features/home/lib/promo-popup'
 
-/** Limits mirrored from the server (controller/promo_popup.go). */
-const shortText = z
-  .string()
-  .trim()
-  .max(60, { message: 'At most 60 characters' })
-const longText = z
-  .string()
-  .trim()
-  .max(160, { message: 'At most 160 characters' })
-const amount = z.string().trim().max(16, { message: 'At most 16 characters' })
+/**
+ * Limits mirrored from the server (controller/promo_popup.go), which counts
+ * characters, so an emoji counts once here too rather than as two UTF-16
+ * units.
+ */
+function textUpTo(limit: number, message: string) {
+  return z
+    .string()
+    .trim()
+    .refine((value) => [...value].length <= limit, { message })
+}
+
+const shortText = textUpTo(60, 'At most 60 characters')
+const longText = textUpTo(160, 'At most 160 characters')
+const amount = textUpTo(16, 'At most 16 characters')
 const unit = amount
-const icon = z.string().trim().max(100, { message: 'At most 100 characters' })
+const icon = textUpTo(100, 'At most 100 characters')
 
 const href = z
   .string()
@@ -118,10 +123,10 @@ const cardSchema = z
     }
   })
 
-const announcementText = z
-  .string()
-  .trim()
-  .max(PROMO_ANNOUNCEMENT_MAX_LENGTH, { message: 'At most 80 characters' })
+const announcementText = textUpTo(
+  PROMO_ANNOUNCEMENT_MAX_LENGTH,
+  'At most 80 characters'
+)
 
 const announcementSchema = z
   .object({
