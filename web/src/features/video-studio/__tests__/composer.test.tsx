@@ -131,6 +131,22 @@ describe('Composer', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
+  it('highlights mentions of uploaded references and not of missing ones', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await uploadImage(user)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'the cat in @Image1 meets @Image2'
+    )
+
+    const layer = screen.getByTestId('prompt-mention-layer')
+    const marks = within(layer)
+      .queryAllByText(/^@Image\d$/)
+      .filter((element) => element.tagName === 'MARK')
+    expect(marks.map((mark) => mark.textContent)).toEqual(['@Image1'])
+  })
+
   it('sends a localized mention to the model as its Chinese token', async () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
@@ -270,8 +286,9 @@ describe('Composer', () => {
     expect(
       screen.getByRole('button', { name: 'Model: seedance-2.5' })
     ).toBeInTheDocument()
-    expect(screen.getByText('@Image1')).toBeInTheDocument()
-    expect(screen.getByText('@Audio1')).toBeInTheDocument()
+    // The badges; the prompt's highlighted mentions are left out.
+    expect(screen.getByText('@Image1', { ignore: 'mark' })).toBeInTheDocument()
+    expect(screen.getByText('@Audio1', { ignore: 'mark' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Generate video' }))
 
     await waitFor(() => expect(createMock).toHaveBeenCalledOnce())

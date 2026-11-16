@@ -18,7 +18,11 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { describe, expect, it } from 'vitest'
 
-import { canonicalMentions, localizeMentions } from '../lib/mention-names'
+import {
+  canonicalMentions,
+  localizeMentions,
+  splitMentions,
+} from '../lib/mention-names'
 
 describe('localizeMentions', () => {
   it.each([
@@ -63,5 +67,27 @@ describe('canonicalMentions', () => {
     expect(canonicalMentions('@图片1 and @画像1', 'en')).toBe(
       '@图片1 and @画像1'
     )
+  })
+})
+
+describe('splitMentions', () => {
+  it('marks only mentions of the given references', () => {
+    expect(splitMentions('the @Image1 and @Image9', ['Image1'])).toEqual([
+      { start: 0, text: 'the ', mention: false },
+      { start: 4, text: '@Image1', mention: true },
+      { start: 11, text: ' and @Image9', mention: false },
+    ])
+  })
+
+  it('does not mark a longer number as a shorter mention', () => {
+    expect(splitMentions('@Image12', ['Image1'])).toEqual([
+      { start: 0, text: '@Image12', mention: false },
+    ])
+  })
+
+  it('keeps the text as one plain run when there are no references', () => {
+    expect(splitMentions('@Image1', [])).toEqual([
+      { start: 0, text: '@Image1', mention: false },
+    ])
   })
 })
