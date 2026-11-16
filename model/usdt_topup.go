@@ -178,6 +178,7 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 	topUp := &TopUp{}
 	var credits []usdtCredit
 	completedNow := false
+	var membership *MembershipChange
 
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		if err := lockForUpdate(tx).Where("trade_no = ?", snapshot.TradeNo).First(topUp).Error; err != nil {
@@ -214,6 +215,7 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 			if credit != nil {
 				credits = append(credits, *credit)
 				money = money.Add(creditUSD)
+				topUp.CreditedQuota += credit.quota
 			}
 		}
 
@@ -233,6 +235,11 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
+		if len(credits) > 0 {
+			if membership, err = upgradeMembershipTx(tx, topUp.UserId); err != nil {
+				return err
+			}
+		}
 
 		order.IntentId = snapshot.IntentId
 		order.DepositAddress = snapshot.DepositAddress
@@ -251,6 +258,7 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 		RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(credit.quota), "amount": credit.amount + " USDT"}), callerIp, topUp.PaymentMethod, PaymentProviderUSDT)
 		recordAffRebateLog(credit.rebate)
 	}
+	announceMembershipChange(membership)
 	if completedNow {
 		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
 	}
