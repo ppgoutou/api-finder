@@ -189,7 +189,10 @@ export function getOfficialVideoPricing(
   model: PricingModel
 ): VideoPricing | null {
   if (model.official_price_expr?.trim()) {
-    return videoPricingFromExpr(model, model.official_price_expr)
+    return (
+      videoPricingFromExpr(model, model.official_price_expr) ??
+      tokenOfficialVideoPricing(model, model.official_price_expr)
+    )
   }
   const table = model.official_price
   const schema = model.billing_usage_schema
@@ -244,6 +247,86 @@ export function getOfficialVideoPricing(
  * the option of a per-second schema, or the resolution of a model billed by
  * video tokens. Undefined for schemas the page does not show per second.
  */
+/**
+ * The official price of a model billed by video tokens, written as a token
+ * expression: each resolution's per-million price as a per-second price at its
+ * tokens per second, plus the per-million price of orders with a reference
+ * video. It carries no CNY list price, so CNY interfaces convert it at the
+ * site rate. Null unless every resolution has a plain-order price.
+ */
+function tokenOfficialVideoPricing(
+  model: PricingModel,
+  expression: string
+): VideoPricing | null {
+  const schema = model.billing_usage_schema
+  const numberFields = getTaskNumberFields(schema)
+  const optionField = getVideoOptionField(schema)
+  if (
+    !schema ||
+    !optionField ||
+    numberFields.length !== 1 ||
+    numberFields[0][1].unit !== 'token'
+  ) {
+    return null
+  }
+  const split = splitBillingExprAndRequestRules(expression)
+  if (split.requestRuleExpr?.trim()) return null
+
+  const tokensField = numberFields[0][0]
+  const options = schema[optionField]?.enum ?? []
+  const plainPrices = new Map<string, number>()
+  const referencePrices = new Map<string, number>()
+  for (const tier of getTaskPricingDisplayTiers(split.billingExpr, schema)) {
+    if (
+      tier.constant !== 0 ||
+      Object.keys(tier.unitPrices).some((field) => field !== tokensField)
+    ) {
+      return null
+    }
+    const option =
+      tier.conditions.find((condition) => condition.field === optionField)
+        ?.value ?? (options.length === 1 ? options[0] : undefined)
+    if (option === undefined || !options.includes(option)) continue
+    if (
+      tier.conditions.some(
+        (condition) =>
+          condition.field !== optionField &&
+          condition.field !== REFERENCE_SWITCH_FIELD
+      )
+    ) {
+      return null
+    }
+    const switchValue = tier.conditions.find(
+      (condition) => condition.field === REFERENCE_SWITCH_FIELD
+    )?.value
+    const prices =
+      switchValue === undefined || isPlainOrderSwitchValue(switchValue)
+        ? plainPrices
+        : referencePrices
+    if (!prices.has(option))
+      prices.set(option, tier.unitPrices[tokensField] ?? 0)
+  }
+  if (options.some((option) => !plainPrices.has(option))) return null
+
+  const rows = options.map((option): VideoPricingRow => {
+    const tokensPerSecond =
+      videoTokensPerSecond(model, optionField, option) ?? 0
+    return {
+      option,
+      secondPrice:
+        ((plainPrices.get(option) ?? 0) * tokensPerSecond) / 1_000_000,
+      tokensPerSecond,
+      referencePricePerMillion: referencePrices.get(option),
+    }
+  })
+  return {
+    optionField,
+    hasReferencePricing: referencePrices.size > 0,
+    durationRange: getModelDurationRange(model),
+    rows,
+  }
+}
+
 export function getVideoOptionField(
   schema: BillingUsageSchema | null | undefined
 ): string | undefined {
