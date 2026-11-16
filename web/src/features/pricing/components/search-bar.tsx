@@ -59,8 +59,8 @@ export function SearchBar(props: SearchBarProps) {
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
         className={cn(
-          'border-border/60 bg-background placeholder:text-muted-foreground/50',
-          'hover:border-border',
+          'border-muted-foreground/80 bg-background placeholder:text-muted-foreground',
+          'hover:border-muted-foreground',
           'focus:border-primary/50 focus:ring-primary/20 focus:ring-2',
           'h-10 w-full rounded-lg border pr-16 pl-10 text-sm transition-all outline-none'
         )}

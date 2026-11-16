@@ -63,9 +63,6 @@ export function ImageToVideo() {
     <section className='bg-muted/30 border-border/40 relative z-10 border-y px-6 py-14 md:py-20'>
       <div className='mx-auto flex max-w-6xl flex-wrap items-center gap-12'>
         <div className='min-w-0 flex-[1_1_22rem]'>
-          <p className='mb-2 text-sm font-semibold text-brand dark:text-brand-on-dark'>
-            {t('Three ways to generate')}
-          </p>
           <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
             {t('Bring a single image to life')}
           </h2>
@@ -107,7 +104,7 @@ export function ImageToVideo() {
 
         <div className='flex min-w-0 flex-[1.3_1_30rem] flex-wrap items-center gap-4'>
           <figure className='min-w-0 flex-[1_1_12rem]'>
-            <div className='border-border/60 aspect-video overflow-hidden rounded-xl bg-ink-raised border'>
+            <div className='border-border/60 bg-ink-raised aspect-video overflow-hidden rounded-xl border'>
               {inputImage ? (
                 <img
                   src={inputImage}
@@ -134,11 +131,11 @@ export function ImageToVideo() {
             </figcaption>
           </figure>
           <ArrowRight
-            className='size-6 shrink-0 text-brand dark:text-brand-on-dark'
+            className='text-brand dark:text-brand-on-dark size-6 shrink-0'
             aria-hidden
           />
           <figure className='min-w-0 flex-[1.4_1_16rem]'>
-            <div className='aspect-video overflow-hidden rounded-xl border-brand/50 bg-ink-raised border'>
+            <div className='border-brand/50 bg-ink-raised aspect-video overflow-hidden rounded-xl border'>
               <PlayableClip
                 key={pair.video}
                 src={pair.video}

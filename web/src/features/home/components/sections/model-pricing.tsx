@@ -17,7 +17,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -93,9 +92,6 @@ export function ModelPricing() {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-4'>
           <div>
-            <p className='text-brand dark:text-brand-on-dark mb-2 text-sm font-semibold'>
-              {t('Models and pricing')}
-            </p>
             <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
               {headlineDiscount
                 ? t(
@@ -115,13 +111,9 @@ export function ModelPricing() {
           </div>
           <Link
             to='/pricing'
-            className='group text-brand dark:text-brand-on-dark inline-flex items-center text-sm font-semibold hover:underline'
+            className='text-brand dark:text-brand-on-dark text-sm font-semibold hover:underline'
           >
             {t('See prices in the model square')}
-            <ArrowRight
-              aria-hidden='true'
-              className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5'
-            />
           </Link>
         </div>
 

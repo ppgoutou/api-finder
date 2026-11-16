@@ -25,6 +25,14 @@ import { getBillingModeLabelKey } from '../lib/billing-mode'
 import { isDynamicPricingModel } from '../lib/dynamic-price'
 import type { PricingModel } from '../types'
 
+// The shared text colours sit near 3:1 on white; a caption is small text and
+// needs 4.5:1, so it takes a darker shade of the same hue in light mode.
+const CAPTION_TEXT_CLASS: Partial<Record<StatusVariant, string>> = {
+  warning: 'text-amber-700 dark:text-warning',
+  info: 'text-sky-700 dark:text-info',
+  purple: 'text-fuchsia-700 dark:text-chart-4',
+}
+
 interface ModelBillingModeBadgeProps {
   model: PricingModel
   appearance?: 'default' | 'caption'
@@ -51,7 +59,10 @@ export function ModelBillingModeBadge(props: ModelBillingModeBadgeProps) {
       type={isCaption ? 'text' : undefined}
       copyable={false}
       size='sm'
-      className={cn(isCaption && 'text-xs font-normal', props.className)}
+      className={cn(
+        isCaption && cn('text-xs font-normal', CAPTION_TEXT_CLASS[variant]),
+        props.className
+      )}
     />
   )
 }

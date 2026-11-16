@@ -30,6 +30,7 @@ import {
   SHOWCASE_CATEGORY_LABELS,
   SHOWCASE_VIDEOS,
 } from '../../lib/video-home'
+import { ClipSpec } from '../clip-spec'
 import { PlayableClip } from '../playable-clip'
 
 const ALL_CATEGORIES = 'all'
@@ -98,9 +99,6 @@ export function Showcase(props: ShowcaseProps) {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-6'>
           <div className='max-w-xl'>
-            <p className='mb-2 text-sm font-semibold text-brand dark:text-brand-on-dark'>
-              {t('Showcase')}
-            </p>
             <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
               {t('Prompt → video')}
             </h2>
@@ -146,9 +144,10 @@ export function Showcase(props: ShowcaseProps) {
                   title={card.title}
                 />
                 {card.spec && (
-                  <span className='pointer-events-none absolute right-2.5 bottom-2.5 rounded-md bg-ink/70 px-2 py-0.5 font-mono text-[11px] text-white/90'>
-                    {card.spec}
-                  </span>
+                  <ClipSpec
+                    spec={card.spec}
+                    className='pointer-events-none absolute right-2.5 bottom-2.5 px-2 py-0.5 text-[11px]'
+                  />
                 )}
               </div>
               <div className='flex flex-1 flex-col gap-3 p-5'>
@@ -178,9 +177,9 @@ export function Showcase(props: ShowcaseProps) {
                   )}
                   <Link
                     to={startTarget}
-                    className='px-2 text-sm font-semibold text-brand dark:text-brand-on-dark hover:underline'
+                    className='text-brand dark:text-brand-on-dark px-2 text-sm font-semibold hover:underline'
                   >
-                    {t('Generate with it')} →
+                    {t('Generate with it')}
                   </Link>
                 </div>
               </div>

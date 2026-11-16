@@ -67,9 +67,6 @@ export function ApiQuickstart() {
     >
       <div className='mx-auto flex max-w-6xl flex-wrap items-start gap-12'>
         <div className='min-w-0 flex-[1_1_20rem]'>
-          <p className='mb-2 text-sm font-semibold text-brand dark:text-brand-on-dark'>
-            {t('For developers')}
-          </p>
           <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
             {t('Prefer code? Generate video with the API')}
           </h2>
@@ -77,7 +74,7 @@ export function ApiQuickstart() {
             {steps.map((step, index) => (
               <li key={step.title} className='flex gap-4'>
                 <span
-                  className='flex size-7 shrink-0 items-center justify-center rounded-full border-brand/50 text-brand-hover dark:text-brand-on-dark border text-xs font-semibold'
+                  className='border-brand/50 text-brand-hover dark:text-brand-on-dark flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold'
                   aria-hidden
                 >
                   {index + 1}
@@ -92,7 +89,7 @@ export function ApiQuickstart() {
             ))}
           </ol>
         </div>
-        <div className='border-border/60 min-w-0 flex-[1.4_1_28rem] overflow-hidden rounded-2xl bg-ink border text-white/85'>
+        <div className='border-border/60 bg-ink min-w-0 flex-[1.4_1_28rem] overflow-hidden rounded-2xl border text-white/85'>
           <div className='flex items-center justify-between border-b border-white/10 px-4 py-2'>
             <span className='font-mono text-xs text-white/60'>curl</span>
             <CopyButton
