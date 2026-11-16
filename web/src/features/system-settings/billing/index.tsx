@@ -117,6 +117,13 @@ const defaultBillingSettings: BillingSettings = {
   'checkin_setting.enabled': false,
   'checkin_setting.min_quota': 1000,
   'checkin_setting.max_quota': 10000,
+  'membership_setting.enabled': true,
+  'membership_setting.base_group': 'default',
+  'membership_setting.vip_group': 'vip',
+  'membership_setting.total_topup_usd': 1000,
+  'membership_setting.single_topup_usd': 500,
+  'membership_setting.downgrade_on_reversal': true,
+  'membership_setting.vip_support_telegram': '',
 }
 
 export function BillingSettings() {

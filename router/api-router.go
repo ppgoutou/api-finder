@@ -48,6 +48,7 @@ func SetApiRouter(router *gin.Engine) {
 			homeMediaRoute.DELETE("/:name", controller.DeleteHomeMedia)
 		}
 		apiRouter.GET("/pricing", middleware.HeaderNavModuleAuth("pricing"), controller.GetPricing)
+		apiRouter.GET("/membership", middleware.DisableCache(), middleware.TryUserAuth(), controller.GetMembership)
 		perfMetricsRoute := apiRouter.Group("/perf-metrics")
 		perfMetricsRoute.Use(middleware.HeaderNavModulePublicOrUserAuth("pricing"))
 		{

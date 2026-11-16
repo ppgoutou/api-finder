@@ -59,6 +59,7 @@ func TestMain(m *testing.M) {
 		&model.TopUp{},
 		&model.USDTOrder{},
 		&model.USDTReceipt{},
+		&model.Redemption{},
 		&model.Option{},
 		&model.UserSubscription{},
 		&model.SystemTask{},

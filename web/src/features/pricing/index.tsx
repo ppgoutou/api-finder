@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
+import { MembershipPriceNote, useMembership } from '@/features/membership'
 import type { StudioKind } from '@/features/video-studio/types'
 
 import {
@@ -56,6 +57,7 @@ const LazyModelDetailsDrawer = lazy(() =>
 
 export function Pricing() {
   const { t } = useTranslation()
+  const { data: membership } = useMembership()
   const [selectedModelName, setSelectedModelName] = useState<string | null>(
     null
   )
@@ -261,6 +263,7 @@ export function Pricing() {
             </p>
             <ModelDistribution sections={distributionSections} />
             <PricingHeroNote models={models || []} />
+            <MembershipPriceNote info={membership} />
             <SearchBar
               value={searchInput}
               onChange={setSearchInput}

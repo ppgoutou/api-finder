@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SignOutDialog } from '@/components/sign-out-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useMembership } from '@/features/membership'
 import useDialogState from '@/hooks/use-dialog'
 import { useIsSidebarModuleVisible } from '@/hooks/use-sidebar-config'
 import { useUserDisplay } from '@/hooks/use-user-display'
@@ -45,6 +47,7 @@ export function ProfileDropdown() {
   const navigate = useNavigate()
   const [open, setOpen] = useDialogState()
   const user = useAuthStore((state) => state.auth.user)
+  const { data: membership } = useMembership({ signedInOnly: true })
   const { displayName, roleLabel } = useUserDisplay(user)
   const isSuperAdmin = user?.role === ROLE.SUPER_ADMIN
   const isWalletVisible = useIsSidebarModuleVisible('/wallet')
@@ -82,9 +85,16 @@ export function ProfileDropdown() {
               </AvatarFallback>
             </Avatar>
             <div className='flex flex-1 flex-col gap-0.5 overflow-hidden'>
-              <p className='text-foreground truncate text-sm font-medium'>
-                {displayName}
-              </p>
+              <div className='flex items-center gap-1.5'>
+                <p className='text-foreground truncate text-sm font-medium'>
+                  {displayName}
+                </p>
+                {membership?.is_vip && (
+                  <Badge className='h-4 shrink-0 bg-amber-500 px-1.5 text-[10px] text-white'>
+                    VIP
+                  </Badge>
+                )}
+              </div>
               <div className='flex items-center gap-1.5'>
                 <span className='text-muted-foreground text-xs'>
                   {roleLabel}

@@ -37,6 +37,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { SUPPORT_TELEGRAM } from '@/features/home/lib/video-home'
+import { useMembership } from '@/features/membership'
 import { cn } from '@/lib/utils'
 
 /**
@@ -53,6 +54,7 @@ const HIDDEN_PATH_PREFIXES = ['/setup', '/playground', '/chat', '/video-studio']
 export function SupportWidget() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const { data: membership } = useMembership({ signedInOnly: true })
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -62,8 +64,13 @@ export function SupportWidget() {
   )
   if (hidden) return null
 
-  const telegramUrl = `https://t.me/${SUPPORT_TELEGRAM}`
-  const handle = `@${SUPPORT_TELEGRAM}`
+  // VIP users reach the round-the-clock VIP account when one is set.
+  const isVip = membership?.is_vip === true
+  const account =
+    (isVip && membership?.vip_support_telegram?.trim().replace(/^@/, '')) ||
+    SUPPORT_TELEGRAM
+  const telegramUrl = `https://t.me/${account}`
+  const handle = `@${account}`
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -98,7 +105,7 @@ export function SupportWidget() {
           </span>
           <div className='min-w-0'>
             <PopoverTitle className='text-primary-foreground text-sm font-semibold'>
-              {t('Customer support')}
+              {isVip ? t('VIP support, 24/7') : t('Customer support')}
             </PopoverTitle>
             <p className='flex items-center gap-1.5 text-xs text-white/80'>
               <span
