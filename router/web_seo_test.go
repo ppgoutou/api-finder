@@ -3,6 +3,9 @@ package router
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -53,9 +56,10 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	engine := setupSEOTest(t, "", "r")
 
 	home := getBody(t, engine, "/")
-	assert.Contains(t, home, "<title>Acme &lt;Video&gt; | AI Video Generator powered by Seedance</title>")
+	assert.Contains(t, home, "<title>AI Video Generator powered by Seedance | Acme &lt;Video&gt;</title>")
 	assert.Contains(t, home, `<link rel="canonical" href="https://video.example.com/" />`)
 	assert.Contains(t, home, `<meta property="og:image" content="https://video.example.com/logo.png" />`)
+	assert.Contains(t, home, `<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://video.example.com/#organization","name":"Acme \u003cVideo\u003e","url":"https://video.example.com/"`)
 	assert.Contains(t, home, `<div id="prerender"`)
 	assert.Contains(t, home, "<span>support@example.com</span>")
 	assert.NotContains(t, home, "客服")
@@ -66,11 +70,12 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	assert.Contains(t, home, `html.js #prerender{display:none}`)
 
 	pricing := getBody(t, engine, "/pricing")
-	assert.Contains(t, pricing, "<title>Acme &lt;Video&gt; | Pricing</title>")
+	assert.Contains(t, pricing, "<title>Seedance AI Video Pricing per Second | Acme &lt;Video&gt;</title>")
+	assert.NotContains(t, pricing, "application/ld+json")
 	assert.NotContains(t, pricing, `id="prerender"`)
 
 	landing := getBody(t, engine, "/landing")
-	assert.Contains(t, landing, "<title>Acme &lt;Video&gt; | Cinematic AI Video, Billed per Second</title>")
+	assert.Contains(t, landing, "<title>Cinematic AI Video, Billed per Second | Acme &lt;Video&gt;</title>")
 	assert.Contains(t, landing, `<link rel="canonical" href="https://video.example.com/landing" />`)
 	assert.NotContains(t, landing, `id="prerender"`)
 
@@ -81,7 +86,7 @@ func TestRenderIndexPageSkipsHomeCopyWhenCustomHomeIsConfigured(t *testing.T) {
 	engine := setupSEOTest(t, "# Custom", "")
 
 	home := getBody(t, engine, "/")
-	assert.Contains(t, home, "| AI Video Generator powered by Seedance</title>")
+	assert.Contains(t, home, "<title>AI Video Generator powered by Seedance | ")
 	assert.NotContains(t, home, `id="prerender"`)
 }
 
@@ -98,4 +103,58 @@ func TestRobotsAndSitemapListOnlyConfiguredPublicPages(t *testing.T) {
 	assert.Contains(t, sitemap, "<loc>https://video.example.com/privacy-policy</loc>")
 	assert.NotContains(t, sitemap, "/refund-policy")
 	assert.NotContains(t, sitemap, "/about")
+}
+
+func TestIndexPageStatusIsNotFoundOutsideAppRoutes(t *testing.T) {
+	cases := map[string]int{
+		"/":                          http.StatusOK,
+		"/pricing":                   http.StatusOK,
+		"/pricing/seedance-2.0":      http.StatusOK,
+		"/sign-in":                   http.StatusOK,
+		"/usage-logs/audit":          http.StatusOK,
+		"/best-for/no-api-key":       http.StatusNotFound,
+		"/zh/privacy":                http.StatusNotFound,
+		"/ja/compare/giphy-vs-klipy": http.StatusNotFound,
+		"/directory":                 http.StatusNotFound,
+		"/pricing-old":               http.StatusNotFound,
+	}
+	for path, want := range cases {
+		assert.Equal(t, want, indexPageStatus(path), path)
+	}
+}
+
+// Every route the React app defines must be served with 200, or the page
+// would answer crawlers with 404 while rendering fine in a browser.
+func TestSPARouteRootsCoverEveryFrontendRoute(t *testing.T) {
+	routePattern := regexp.MustCompile(`createFileRoute\('([^']+)'\)`)
+	var files []string
+	err := filepath.WalkDir("../web/src/routes", func(path string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasSuffix(path, ".tsx") {
+			files = append(files, path)
+		}
+		return err
+	})
+	require.NoError(t, err)
+
+	seen := 0
+	for _, file := range files {
+		src, err := os.ReadFile(file)
+		require.NoError(t, err)
+		for _, m := range routePattern.FindAllStringSubmatch(string(src), -1) {
+			var segments []string
+			for segment := range strings.SplitSeq(strings.Trim(m[1], "/"), "/") {
+				// Layout and group segments do not appear in the URL; "/" has none.
+				if segment == "" || strings.HasPrefix(segment, "_") || strings.HasPrefix(segment, "(") {
+					continue
+				}
+				segments = append(segments, segment)
+			}
+			seen++
+			if len(segments) == 0 {
+				continue
+			}
+			assert.True(t, spaRouteRoots[segments[0]], "route %s (%s) is missing from spaRouteRoots", m[1], file)
+		}
+	}
+	assert.Greater(t, seen, 40)
 }

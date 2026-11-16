@@ -2,7 +2,6 @@ package router
 
 import (
 	"embed"
-	"net/http"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -43,7 +42,8 @@ func SetWebRouter(router *gin.Engine, assets WebAssets, pluginDispatcher gin.Han
 				return
 			}
 			c.Header("Cache-Control", "no-cache")
-			c.Data(http.StatusOK, "text/html; charset=utf-8", renderIndexPage(c, assets.IndexPage, c.Request.URL.Path))
+			path := c.Request.URL.Path
+			c.Data(indexPageStatus(path), "text/html; charset=utf-8", renderIndexPage(c, assets.IndexPage, path))
 		},
 	)
 }
