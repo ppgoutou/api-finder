@@ -254,6 +254,18 @@ export function useUsersColumns(): ColumnDef<User>[] {
         meta: { mobileOrder: 20 },
       },
       {
+        id: 'aff_count',
+        accessorKey: 'aff_count',
+        header: t('Invite Count'),
+        cell: ({ row }) => (
+          <span className='text-sm tabular-nums'>
+            {row.original.aff_count || 0}
+          </span>
+        ),
+        size: 120,
+        meta: { mobileHidden: true },
+      },
+      {
         id: 'invite_info',
         header: t('Invite Info'),
         cell: ({ row }) => {

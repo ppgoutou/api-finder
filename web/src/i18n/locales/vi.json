@@ -3651,6 +3651,7 @@
     "Invitation rebate {{quota}} reversed because the invitee's payment was refunded or disputed": "Đã thu hồi hoa hồng mời {{quota}} vì thanh toán của người được mời bị hoàn tiền hoặc khiếu nại",
     "Invitation rebate percentage": "Tỷ lệ hoa hồng mời (%)",
     "Invitation rebate percentage must be between 0 and 100": "Tỷ lệ hoa hồng phải từ 0 đến 100",
+    "Invite Count": "Số người đã mời",
     "Invite Info": "Thông tin mời",
     "Invited": "Đã mời",
     "Invited {{count}} users": "Đã mời {{count}} người",
