@@ -16,13 +16,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Clapperboard, Megaphone, ShoppingBag, Sparkles } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Clapperboard,
+  Film,
+  Images,
+  Megaphone,
+  ShoppingBag,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+
+import { PX_SHOW_LINKS_ENABLED, pxShowUrl } from '@/lib/partner-links'
+
+interface UseCase {
+  icon: LucideIcon
+  title: string
+  desc: string
+  /** Partner site that does this use case end to end, opened in a new tab. */
+  href?: string
+}
 
 export function UseCases() {
   const { t } = useTranslation()
 
-  const cases = [
+  const cases: UseCase[] = [
     {
       icon: ShoppingBag,
       title: t('Product and e-commerce ads'),
@@ -52,6 +71,27 @@ export function UseCases() {
       ),
     },
   ]
+  if (PX_SHOW_LINKS_ENABLED) {
+    const href = pxShowUrl('home-use-cases')
+    cases.push(
+      {
+        icon: Film,
+        title: t('AI short dramas'),
+        desc: t(
+          'Turn a script into characters, storyboards and a finished episode in one workspace.'
+        ),
+        href,
+      },
+      {
+        icon: Images,
+        title: t('E-commerce product images'),
+        desc: t(
+          'Make white-background hero images, new scenes and model shots for a whole catalog.'
+        ),
+        href,
+      }
+    )
+  }
 
   return (
     <section
@@ -73,6 +113,17 @@ export function UseCases() {
                 {item.title}
               </h3>
               <p className='text-muted-foreground mt-2 max-w-md'>{item.desc}</p>
+              {item.href && (
+                <a
+                  href={item.href}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-brand dark:text-brand-on-dark mt-3 inline-flex items-center gap-1 text-sm font-medium hover:underline'
+                >
+                  {t('Make it with our partner PX Show')}
+                  <ArrowUpRight className='size-3.5 shrink-0' aria-hidden />
+                </a>
+              )}
             </li>
           ))}
         </ul>

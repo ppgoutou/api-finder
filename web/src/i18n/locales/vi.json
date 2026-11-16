@@ -8297,6 +8297,12 @@
     "One line above the home page header. It hides once the visitor scrolls.": "Một dòng phía trên đầu trang chủ. Dòng này ẩn khi khách cuộn trang.",
     "Announcement text": "Nội dung thông báo",
     "Announcement text (Chinese)": "Nội dung thông báo (tiếng Trung)",
+    "Making a multi-shot short drama? Try our partner PX Show": "Muốn làm phim ngắn nhiều cảnh quay? Hãy thử đối tác PX Show",
+    "AI short dramas": "Phim ngắn AI",
+    "Turn a script into characters, storyboards and a finished episode in one workspace.": "Biến kịch bản thành nhân vật, phân cảnh và một tập phim hoàn chỉnh trong một không gian làm việc.",
+    "E-commerce product images": "Ảnh sản phẩm thương mại điện tử",
+    "Make white-background hero images, new scenes and model shots for a whole catalog.": "Tạo ảnh chính nền trắng, bối cảnh mới và ảnh người mẫu cho cả danh mục sản phẩm.",
+    "Make it with our partner PX Show": "Làm với đối tác PX Show",
     "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "Prompt dài hơn mức mô hình này cho phép. Khoản phí (nếu có) đã được hoàn lại. Vui lòng rút ngắn prompt và gửi lại.",
     "The prompt is too long for this model": "Prompt quá dài đối với mô hình này",
     "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "Prompt có {{length}} ký tự; mô hình này nhận tối đa {{max}}. Vui lòng rút ngắn."

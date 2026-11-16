@@ -8297,6 +8297,12 @@
     "One line above the home page header. It hides once the visitor scrolls.": "ホームページのヘッダー上に表示する1行。訪問者がスクロールすると隠れます。",
     "Announcement text": "お知らせの文言",
     "Announcement text (Chinese)": "お知らせの文言（中国語）",
+    "Making a multi-shot short drama? Try our partner PX Show": "マルチショットのショートドラマを作るなら、パートナーの PX Show へ",
+    "AI short dramas": "AI ショートドラマ",
+    "Turn a script into characters, storyboards and a finished episode in one workspace.": "1 つのワークスペースで、脚本からキャラクター、絵コンテ、完成した 1 話まで作れます。",
+    "E-commerce product images": "EC 商品画像",
+    "Make white-background hero images, new scenes and model shots for a whole catalog.": "カタログ全体の白背景メイン画像、新しいシーン、モデル写真を作成できます。",
+    "Make it with our partner PX Show": "パートナーの PX Show で作成",
     "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "プロンプトがこのモデルの上限を超えています。料金が発生した場合は返金済みです。プロンプトを短くして再送信してください。",
     "The prompt is too long for this model": "プロンプトがこのモデルには長すぎます",
     "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "プロンプトは {{length}} 文字です。このモデルは最大 {{max}} 文字までです。短くしてください。"

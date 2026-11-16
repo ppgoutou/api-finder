@@ -8297,6 +8297,12 @@
     "One line above the home page header. It hides once the visitor scrolls.": "Une ligne au-dessus de l'en-tête de la page d'accueil. Elle disparaît dès que le visiteur fait défiler.",
     "Announcement text": "Texte de l'annonce",
     "Announcement text (Chinese)": "Texte de l'annonce (chinois)",
+    "Making a multi-shot short drama? Try our partner PX Show": "Vous préparez un court drame multi-plans ? Essayez notre partenaire PX Show",
+    "AI short dramas": "Courts drames IA",
+    "Turn a script into characters, storyboards and a finished episode in one workspace.": "Transformez un scénario en personnages, storyboard et épisode terminé dans un seul espace de travail.",
+    "E-commerce product images": "Images produits e-commerce",
+    "Make white-background hero images, new scenes and model shots for a whole catalog.": "Créez des visuels sur fond blanc, de nouveaux décors et des photos de mannequin pour tout un catalogue.",
+    "Make it with our partner PX Show": "Le réaliser avec notre partenaire PX Show",
     "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "Le prompt dépasse la longueur autorisée par ce modèle. Tout montant prélevé a été remboursé. Raccourcissez le prompt et soumettez à nouveau.",
     "The prompt is too long for this model": "Le prompt est trop long pour ce modèle",
     "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "Le prompt compte {{length}} caractères ; ce modèle en accepte au plus {{max}}. Veuillez le raccourcir."

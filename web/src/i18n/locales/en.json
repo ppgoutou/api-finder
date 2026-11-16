@@ -8297,6 +8297,12 @@
     "One line above the home page header. It hides once the visitor scrolls.": "One line above the home page header. It hides once the visitor scrolls.",
     "Announcement text": "Announcement text",
     "Announcement text (Chinese)": "Announcement text (Chinese)",
+    "Making a multi-shot short drama? Try our partner PX Show": "Making a multi-shot short drama? Try our partner PX Show",
+    "AI short dramas": "AI short dramas",
+    "Turn a script into characters, storyboards and a finished episode in one workspace.": "Turn a script into characters, storyboards and a finished episode in one workspace.",
+    "E-commerce product images": "E-commerce product images",
+    "Make white-background hero images, new scenes and model shots for a whole catalog.": "Make white-background hero images, new scenes and model shots for a whole catalog.",
+    "Make it with our partner PX Show": "Make it with our partner PX Show",
     "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.",
     "The prompt is too long for this model": "The prompt is too long for this model",
     "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it."
