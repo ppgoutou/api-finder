@@ -8288,6 +8288,8 @@
     "Video tokens per second: {{list}}": "Видеотокенов в секунду: {{list}}",
     "Model comparison": "Сравнение моделей",
     "{{name}} model comparison": "Сравнение моделей {{name}}",
-    "Shown in a popover under the category heading. Supports Markdown.": "Показывается во всплывающем окне под заголовком категории. Поддерживается Markdown."
+    "Shown in a popover under the category heading. Supports Markdown.": "Показывается во всплывающем окне под заголовком категории. Поддерживается Markdown.",
+    "Only this user": "Только этот пользователь",
+    "View Usage Logs": "Журнал использования"
   }
 }

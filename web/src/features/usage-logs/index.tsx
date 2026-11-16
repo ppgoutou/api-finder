@@ -34,6 +34,7 @@ import {
   useUsageLogsContext,
 } from './components/usage-logs-provider'
 import { UsageLogsTable } from './components/usage-logs-table'
+import { useShowUserLogs } from './hooks/use-show-user-logs'
 import {
   isUsageLogsSectionId,
   USAGE_LOGS_DEFAULT_SECTION,
@@ -191,8 +192,9 @@ function UsageLogsContent() {
 }
 
 export function UsageLogs() {
+  const showUserLogs = useShowUserLogs()
   return (
-    <UsageLogsProvider>
+    <UsageLogsProvider onShowUserLogs={showUserLogs}>
       <UsageLogsContent />
     </UsageLogsProvider>
   )

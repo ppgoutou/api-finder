@@ -103,7 +103,7 @@ async function renderFilter(
       await screen.findByRole('button', { name: /^Filter/ })
     )
   }
-  await screen.findByRole('combobox', { name: 'Group' })
+  await screen.findAllByRole('button', { name: 'Search' })
   return router
 }
 
@@ -148,10 +148,38 @@ it('loads personal groups and filters choices without submitting until Search', 
 it('loads all groups in the administrator view', async () => {
   useAuthStore.getState().auth.setUser({ id: 1, username: 'admin', role: 10 })
   await renderFilter()
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }))
   await userEvent.click(screen.getByRole('combobox', { name: 'Group' }))
   expect(await screen.findByRole('option', { name: 'premium' })).toBeVisible()
   expect(api.get).toHaveBeenCalledWith('/api/group/')
   expect(api.get).not.toHaveBeenCalledWith('/api/user/self/groups')
+})
+
+it('shows administrators the user filter in the first row and moves the group behind Expand', async () => {
+  useAuthStore.getState().auth.setUser({ id: 1, username: 'admin', role: 10 })
+  const router = await renderFilter('/usage-logs/common?group=premium')
+  expect(
+    screen.queryByRole('combobox', { name: 'Group' })
+  ).not.toBeInTheDocument()
+  const expand = screen.getByRole('button', { name: /^Expand/ })
+  expect(expand).toHaveTextContent('1')
+  const input = screen.getByRole('textbox', { name: 'Username' })
+  await userEvent.type(input, 'gvelt{Enter}')
+  await waitFor(() =>
+    expect(router.state.location.search).toMatchObject({
+      username: 'gvelt',
+      group: 'premium',
+      page: 1,
+    })
+  )
+})
+
+it('keeps the group in the first row and offers no user filter in a personal view', async () => {
+  await renderFilter()
+  expect(screen.getByRole('combobox', { name: 'Group' })).toBeVisible()
+  expect(
+    screen.queryByRole('textbox', { name: 'Username' })
+  ).not.toBeInTheDocument()
 })
 
 it('confirms a keyboard choice before Enter submits the selected group', async () => {
@@ -273,6 +301,9 @@ it.each([1, 10])(
       auto: { desc: '', ratio: 1 },
       'auto-team': { desc: '', ratio: 1 },
     })
+    if (role >= 10) {
+      await userEvent.click(screen.getByRole('button', { name: 'Expand' }))
+    }
     const input = screen.getByRole('combobox', { name: 'Group' })
     await userEvent.click(input)
     const option = await screen.findByRole('option', { name: 'auto-team' })

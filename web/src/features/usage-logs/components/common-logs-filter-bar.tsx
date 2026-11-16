@@ -272,24 +272,25 @@ export function CommonLogsFilterBar<TData>(
     [handleApply]
   )
 
-  const hasExpandedFilters =
-    !!filters.token ||
-    !!filters.username ||
-    !!filters.channel ||
-    !!filters.requestId ||
-    !!filters.upstreamRequestId
-
-  const hasTypeFilter = logType !== LOG_TYPE_ALL_VALUE
-  const hasAdditionalFilters =
-    !!filters.model || !!filters.group || hasTypeFilter || hasExpandedFilters
-
-  const expandedFilterCount = [
+  // Administrators look logs up by user far more often than by group, so the
+  // user field takes the group's place in the first row.
+  const expandedFilterValues = [
+    isAdmin ? filters.group : undefined,
     filters.token,
-    isAdmin ? filters.username : undefined,
     isAdmin ? filters.channel : undefined,
     filters.requestId,
     filters.upstreamRequestId,
-  ].filter(Boolean).length
+  ]
+  const expandedFilterCount = expandedFilterValues.filter(Boolean).length
+  const hasExpandedFilters = expandedFilterCount > 0
+
+  const hasTypeFilter = logType !== LOG_TYPE_ALL_VALUE
+  const hasAdditionalFilters =
+    !!filters.model ||
+    !!filters.group ||
+    (isAdmin && !!filters.username) ||
+    hasTypeFilter ||
+    hasExpandedFilters
   const sensitiveInputClass = sensitiveVisible
     ? undefined
     : '[-webkit-text-security:disc]'
@@ -370,6 +371,18 @@ export function CommonLogsFilterBar<TData>(
       />
     </LogsFilterField>
   )
+  const userFilter = (
+    <LogsFilterField>
+      <LogsFilterInput
+        placeholder={t('Username')}
+        aria-label={t('Username')}
+        className={sensitiveInputClass}
+        value={filters.username || ''}
+        onChange={(e) => handleChange('username', e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+    </LogsFilterField>
+  )
   const typeFilter = (
     <LogsFilterField>
       <Select
@@ -445,6 +458,7 @@ export function CommonLogsFilterBar<TData>(
   )
   const advancedFilters = (
     <>
+      {isAdmin && groupFilter}
       <LogsFilterField>
         <LogsFilterInput
           placeholder={t('Token Name')}
@@ -454,17 +468,6 @@ export function CommonLogsFilterBar<TData>(
           onKeyDown={handleKeyDown}
         />
       </LogsFilterField>
-      {isAdmin && (
-        <LogsFilterField>
-          <LogsFilterInput
-            placeholder={t('Username')}
-            className={sensitiveInputClass}
-            value={filters.username || ''}
-            onChange={(e) => handleChange('username', e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </LogsFilterField>
-      )}
       {isAdmin && (
         <LogsFilterField>
           <LogsFilterInput
@@ -505,7 +508,7 @@ export function CommonLogsFilterBar<TData>(
         <>
           {dateRangeFilter}
           {modelFilter}
-          {groupFilter}
+          {isAdmin ? userFilter : groupFilter}
           {typeFilter}
         </>
       }
@@ -514,14 +517,17 @@ export function CommonLogsFilterBar<TData>(
       mobileFilters={
         <>
           {modelFilter}
-          {groupFilter}
+          {isAdmin ? userFilter : groupFilter}
           {typeFilter}
           {advancedFilters}
         </>
       }
       mobileFilterCount={
-        [filters.model, filters.group, hasTypeFilter].filter(Boolean).length +
-        expandedFilterCount
+        [
+          filters.model,
+          isAdmin ? filters.username : filters.group,
+          hasTypeFilter,
+        ].filter(Boolean).length + expandedFilterCount
       }
       hasAdvancedActiveFilters={hasExpandedFilters}
       advancedFilterCount={expandedFilterCount}

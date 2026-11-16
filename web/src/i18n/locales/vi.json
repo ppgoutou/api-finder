@@ -8288,6 +8288,8 @@
     "Video tokens per second: {{list}}": "Token video mỗi giây: {{list}}",
     "Model comparison": "So sánh mô hình",
     "{{name}} model comparison": "So sánh mô hình {{name}}",
-    "Shown in a popover under the category heading. Supports Markdown.": "Hiển thị trong cửa sổ bật lên dưới tiêu đề danh mục. Hỗ trợ Markdown."
+    "Shown in a popover under the category heading. Supports Markdown.": "Hiển thị trong cửa sổ bật lên dưới tiêu đề danh mục. Hỗ trợ Markdown.",
+    "Only this user": "Chỉ người dùng này",
+    "View Usage Logs": "Xem nhật ký sử dụng"
   }
 }
