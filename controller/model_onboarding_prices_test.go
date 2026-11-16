@@ -281,12 +281,16 @@ func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
 func TestUpstreamPriceCheckRepricesModelsWhenTheKeyGroupRatioChanges(t *testing.T) {
 	modelManagementDB(t, "sqlite", "")
 	service.InitHttpClient()
-	keyGroup, groupRatio := "doubao", `{"doubao":0.5}`
+	keyGroup, groupRatio, searchLimited := "doubao", `{"doubao":0.5}`, false
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/status":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7.3}}`))
 		case "/api/token/search":
+			if searchLimited {
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
+			}
 			_, _ = w.Write([]byte(`{"success":true,"data":{"items":[{"group":"` + keyGroup + `"}]}}`))
 		default:
 			_, _ = w.Write([]byte(`{"success":true,"group_ratio":` + groupRatio + `,"data":[
@@ -340,6 +344,20 @@ func TestUpstreamPriceCheckRepricesModelsWhenTheKeyGroupRatioChanges(t *testing.
 	assert.Equal(t, model.PricingValues{"ModelPrice": 1.5}, pricing(), "applying charges the new ratio")
 	snapshot = readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
 	assert.Len(t, snapshotChanges(upstreamPriceChannel{ID: 1}, snapshot), 1, "only the supplier-level group row is left")
+
+	searchLimited = true
+	groupRatio = `{"doubaoDefault":0.8}`
+	result, err := checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "ok", result.Rows[0].Status, "a rate-limited key lookup keeps the last known group")
+	snapshot = readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
+	assert.Equal(t, &upstreamKeyGroup{Name: "doubaoDefault", Ratio: 0.8}, snapshot.LatestKeyGroup)
+
+	require.NoError(t, writeOnboardingOption(onboardingPriceSnapshotOption, map[string]upstreamPriceSnapshot{}))
+	result, err = checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "error", result.Rows[0].Status, "with no known group the lookup failure is reported")
+	assert.Equal(t, "supplier /api/token/search returned HTTP 429", result.Rows[0].Error, "the error never shows the channel key")
 }
 
 func TestStampKeyGroupRatioBackfillsBaselinesFromTheGroupList(t *testing.T) {
