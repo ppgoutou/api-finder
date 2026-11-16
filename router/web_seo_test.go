@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -24,10 +25,18 @@ func setupSEOTest(t *testing.T, homeContent string, refundPolicy string) *gin.En
 
 	prevName, prevAddr, prevFooter, prevMap := common.SystemName, system_setting.ServerAddress, common.Footer, common.OptionMap
 	prevLegal := *system_setting.GetLegalSettings()
+	prevPricing := loadVisitorPricing
 	t.Cleanup(func() {
 		common.SystemName, system_setting.ServerAddress, common.Footer, common.OptionMap = prevName, prevAddr, prevFooter, prevMap
 		*system_setting.GetLegalSettings() = prevLegal
+		loadVisitorPricing = prevPricing
 	})
+	loadVisitorPricing = func() []model.Pricing {
+		return []model.Pricing{
+			{ModelName: "seedance-2.5", DisplayName: "Seedance 2.5", Description: "<!-- lang:zh -->\n中文说明\n<!-- lang:en -->\nByteDance Seedance 2.5 video model, 4–30 seconds per clip."},
+			{ModelName: "gpt-image-2"},
+		}
+	}
 
 	common.SystemName = "Acme <Video>"
 	system_setting.ServerAddress = "https://video.example.com/"
@@ -39,7 +48,11 @@ func setupSEOTest(t *testing.T, homeContent string, refundPolicy string) *gin.En
 	engine.GET("/robots.txt", serveRobotsTxt)
 	engine.GET("/sitemap.xml", serveSitemapXML)
 	engine.NoRoute(func(c *gin.Context) {
-		c.Data(http.StatusOK, "text/html", renderIndexPage(c, []byte(seoTestIndex), c.Request.URL.Path))
+		if redirectToCanonicalHost(c) {
+			return
+		}
+		status, page := renderIndexPage(c, []byte(seoTestIndex), c.Request.URL.Path)
+		c.Data(status, "text/html", page)
 	})
 	return engine
 }
@@ -59,7 +72,10 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	assert.Contains(t, home, "<title>AI Video Generator powered by Seedance | Acme &lt;Video&gt;</title>")
 	assert.Contains(t, home, `<link rel="canonical" href="https://video.example.com/" />`)
 	assert.Contains(t, home, `<meta property="og:image" content="https://video.example.com/logo.png" />`)
-	assert.Contains(t, home, `<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://video.example.com/#organization","name":"Acme \u003cVideo\u003e","url":"https://video.example.com/"`)
+	assert.Contains(t, home, `<script type="application/ld+json">{`)
+	assert.Contains(t, home, `"@type":"Organization"`)
+	assert.Contains(t, home, `"@id":"https://video.example.com/#organization"`)
+	assert.NotContains(t, home, `"name":"Acme <Video`)
 	assert.Contains(t, home, `<div id="prerender"`)
 	assert.Contains(t, home, "<span>support@example.com</span>")
 	assert.NotContains(t, home, "客服")
@@ -71,8 +87,11 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 
 	pricing := getBody(t, engine, "/pricing")
 	assert.Contains(t, pricing, "<title>Seedance AI Video Pricing per Second | Acme &lt;Video&gt;</title>")
-	assert.NotContains(t, pricing, "application/ld+json")
-	assert.NotContains(t, pricing, `id="prerender"`)
+	assert.Contains(t, pricing, `"@type":"BreadcrumbList"`)
+	assert.Contains(t, pricing, `<li><a href="/pricing/gpt-image-2">gpt-image-2</a></li>`)
+	assert.Contains(t, pricing, `<li><a href="/pricing/seedance-2.5">Seedance 2.5</a> — ByteDance Seedance 2.5 video model, 4–30 seconds per clip.</li>`)
+	assert.NotContains(t, pricing, "中文说明")
+	assert.Less(t, strings.Index(pricing, `id="prerender"`), strings.Index(pricing, `<div id="root"></div>`))
 
 	landing := getBody(t, engine, "/landing")
 	assert.Contains(t, landing, "<title>Cinematic AI Video, Billed per Second | Acme &lt;Video&gt;</title>")
@@ -101,6 +120,9 @@ func TestRobotsAndSitemapListOnlyConfiguredPublicPages(t *testing.T) {
 	assert.Contains(t, sitemap, "<loc>https://video.example.com/</loc>")
 	assert.Contains(t, sitemap, "<loc>https://video.example.com/landing</loc>")
 	assert.Contains(t, sitemap, "<loc>https://video.example.com/privacy-policy</loc>")
+	assert.Contains(t, sitemap, "<loc>https://video.example.com/docs</loc>")
+	assert.Contains(t, sitemap, "<loc>https://video.example.com/pricing</loc>")
+	assert.Contains(t, sitemap, "<loc>https://video.example.com/pricing/seedance-2.5</loc>")
 	assert.NotContains(t, sitemap, "/refund-policy")
 	assert.NotContains(t, sitemap, "/about")
 }
@@ -157,4 +179,62 @@ func TestSPARouteRootsCoverEveryFrontendRoute(t *testing.T) {
 		}
 	}
 	assert.Greater(t, seen, 40)
+}
+
+func TestModelPagesGetTheirOwnMetadataAndUnknownModelsAreNotFound(t *testing.T) {
+	engine := setupSEOTest(t, "", "")
+
+	page := getBody(t, engine, "/pricing/seedance-2.5")
+	assert.Contains(t, page, "<title>Seedance 2.5 API Pricing | Acme &lt;Video&gt;</title>")
+	assert.Contains(t, page, `<meta name="description" content="ByteDance Seedance 2.5 video model, 4–30 seconds per clip." />`)
+	assert.Contains(t, page, `<link rel="canonical" href="https://video.example.com/pricing/seedance-2.5" />`)
+	assert.Contains(t, page, `"position":3`)
+	assert.Contains(t, page, "<h1 style=\"font-size:2rem;line-height:1.2;margin:16px 0\">Seedance 2.5 API pricing</h1>")
+	assert.Contains(t, page, "<code>seedance-2.5</code>")
+
+	noDescription := getBody(t, engine, "/pricing/gpt-image-2/")
+	assert.Contains(t, noDescription, `<meta name="description" content="gpt-image-2 pricing, capabilities and API model ID.`)
+	assert.Contains(t, noDescription, `<link rel="canonical" href="https://video.example.com/pricing/gpt-image-2" />`)
+
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/pricing/retired-model", nil))
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestPricingPagesStayGenericWhenPricingNeedsSignIn(t *testing.T) {
+	engine := setupSEOTest(t, "", "")
+	common.OptionMap["HeaderNavModules"] = `{"pricing":{"enabled":true,"requireAuth":true},"docs":false}`
+
+	pricing := getBody(t, engine, "/pricing")
+	assert.NotContains(t, pricing, `id="prerender"`)
+	assert.Equal(t, seoTestIndex, getBody(t, engine, "/pricing/seedance-2.5"))
+
+	sitemap := getBody(t, engine, "/sitemap.xml")
+	assert.NotContains(t, sitemap, "/pricing")
+	assert.NotContains(t, sitemap, "/docs")
+}
+
+func TestWWWPageRequestsRedirectToServerAddress(t *testing.T) {
+	engine := setupSEOTest(t, "", "")
+	cases := []struct {
+		method, host, path, location string
+	}{
+		{http.MethodGet, "www.video.example.com", "/pricing?view=table", "https://video.example.com/pricing?view=table"},
+		{http.MethodGet, "WWW.video.example.com", "/", "https://video.example.com/"},
+		{http.MethodGet, "www.video.example.com", "/oauth/github?code=x", ""},
+		{http.MethodPost, "www.video.example.com", "/pricing", ""},
+		{http.MethodGet, "video.example.com", "/pricing", ""},
+	}
+	for _, tc := range cases {
+		req := httptest.NewRequest(tc.method, tc.path, nil)
+		req.Host = tc.host
+		rec := httptest.NewRecorder()
+		engine.ServeHTTP(rec, req)
+		if tc.location == "" {
+			assert.NotEqual(t, http.StatusMovedPermanently, rec.Code, "%s %s%s", tc.method, tc.host, tc.path)
+			continue
+		}
+		assert.Equal(t, http.StatusMovedPermanently, rec.Code, tc.path)
+		assert.Equal(t, tc.location, rec.Header().Get("Location"))
+	}
 }

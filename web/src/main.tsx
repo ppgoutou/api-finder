@@ -26,6 +26,7 @@ import { applyFaviconToDom } from '@/lib/dom-utils'
 import '@/lib/dayjs'
 import { initializeFrontendCache } from '@/lib/frontend-cache'
 import { createAppQueryClient } from '@/lib/query-client'
+import { createSiteTitle } from '@/lib/site-title'
 import { readCachedStatus, statusQueryOptions } from '@/lib/status-query'
 import { rememberXClickId } from '@/lib/x-click-id'
 
@@ -73,13 +74,11 @@ if (!rootElement) {
 ;(function initSystemBranding() {
   try {
     if (typeof window === 'undefined' || typeof document === 'undefined') return
-    const apply = (name: string) => {
-      document.title = name
-      const metaTitle = document.querySelector(
-        'meta[name="title"]'
-      ) as HTMLMetaElement | null
-      if (metaTitle) metaTitle.setAttribute('content', name)
-    }
+    const siteTitle = createSiteTitle(document, window.location.pathname)
+    router.subscribe('onResolved', (event) => {
+      siteTitle.setPath(event.toLocation.pathname)
+    })
+    const apply = siteTitle.setSiteName
     // Cache-first
     const cached = readCachedStatus()
     if (cached?.system_name) apply(cached.system_name as string)
@@ -102,8 +101,8 @@ if (!rootElement) {
     /* empty */
   }
 })()
-// The server prerenders static home copy for clients without JavaScript;
-// the app renders the same content, so drop it before mounting.
+// The server prerenders static copy of public pages for clients without
+// JavaScript; the app renders the same content, so drop it before mounting.
 document.querySelector('#prerender')?.remove()
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)

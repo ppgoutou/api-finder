@@ -35,6 +35,12 @@ func filterPricingByUsableGroups(pricing []model.Pricing, usableGroup map[string
 	return filtered
 }
 
+// VisitorPricing is the model list the pricing page shows a visitor who is
+// not signed in.
+func VisitorPricing() []model.Pricing {
+	return filterPricingByUsableGroups(model.GetPublicPricing(), service.GetUserUsableGroups(""))
+}
+
 func GetPricing(c *gin.Context) {
 	// Base prices are the site's supply cost: only administrators read them.
 	seesBasePrices := c.GetInt("role") >= common.RoleAdminUser

@@ -2,12 +2,19 @@ package router
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
+	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/controller"
+	"github.com/QuantumNous/new-api/middleware"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 )
@@ -42,6 +49,18 @@ var seoPages = map[string]seoPage{
 	"/pricing": {
 		Title:       "Seedance AI Video Pricing per Second",
 		Description: "Per-second prices for Seedance 2.0 text-to-video, image-to-video and reference-video generation, below official list prices. Pay as you go with no subscription or minimum spend.",
+	},
+	"/docs": {
+		Title:       "Seedance Video API Documentation",
+		Description: "Generate Seedance AI video from code: authentication, creating text-to-video, image-to-video and reference-video tasks, polling results and request examples.",
+	},
+	"/sign-in": {
+		Title:       "Sign In",
+		Description: "Sign in to create AI video with Seedance and manage your balance and API keys.",
+	},
+	"/sign-up": {
+		Title:       "Sign Up Free",
+		Description: "Create a free account to generate AI video with ByteDance Seedance. Pay as you go, no subscription.",
 	},
 	"/about": {
 		Title:       "About",
@@ -81,8 +100,8 @@ var seoHeadTemplate = template.Must(template.New("seo-head").Parse(`<title>{{.Fu
     {{- if .Image}}
     <meta name="twitter:image" content="{{.Image}}" />
     {{- end}}
-    {{- if .StructuredData}}
-    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":{{.OrgID}},"name":{{.SiteName}},"url":{{.HomeURL}},"logo":{{.Image}}},{"@type":"WebSite","name":{{.SiteName}},"url":{{.HomeURL}},"publisher":{"@id":{{.OrgID}}}}]}</script>
+    {{- if .JSONLD}}
+    <script type="application/ld+json">{{.JSONLD}}</script>
     {{- end}}
     `))
 
@@ -140,24 +159,101 @@ var seoHomeTemplate = template.Must(template.New("seo-home").Parse(`<style>html.
     </div>
     `))
 
+// seoCatalogTemplate is a static rendering of the pricing page, or of one
+// model's page, for crawlers and clients without JavaScript. It lists names
+// and descriptions only: prices stay in the app.
+var seoCatalogTemplate = template.Must(template.New("seo-catalog").Parse(`<style>html.js #prerender{display:none}</style>
+    <script>document.documentElement.classList.add('js')</script>
+    <div id="prerender" style="max-width:960px;margin:0 auto;padding:96px 24px 48px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6">
+      <nav><a href="/">{{.SiteName}}</a> · <a href="/pricing">Pricing</a> · <a href="/docs">API docs</a></nav>
+      {{- if .Model}}
+      <h1 style="font-size:2rem;line-height:1.2;margin:16px 0">{{.Model.Name}} API pricing</h1>
+      {{- if .Model.Description}}
+      <p>{{.Model.Description}}</p>
+      {{- end}}
+      <p>Model ID: <code>{{.Model.ID}}</code>. Billed per use with no subscription or minimum spend.</p>
+      <p><a href="/sign-up">Sign up to try {{.Model.Name}}</a> · <a href="/pricing">Compare all models</a></p>
+      {{- else}}
+      <h1 style="font-size:2rem;line-height:1.2;margin:16px 0">AI video and image model pricing</h1>
+      <p>{{.Description}}</p>
+      <ul>
+        {{- range .Models}}
+        <li><a href="{{.Href}}">{{.Name}}</a>{{if .Summary}} — {{.Summary}}{{end}}</li>
+        {{- end}}
+      </ul>
+      <p><a href="/sign-up">Sign up free</a> · <a href="/docs">Read the API docs</a></p>
+      {{- end}}
+    </div>
+    `))
+
+// seoModel is one model an anonymous visitor sees on the pricing page.
+type seoModel struct {
+	ID          string
+	Href        string
+	Name        string
+	Description string
+	// Summary is the description cut to the length of a meta description.
+	Summary string
+}
+
+// loadVisitorPricing is swapped in tests, which have no pricing database.
+var loadVisitorPricing = controller.VisitorPricing
+
+// visitorModels lists the models the pricing page shows a visitor who is not
+// signed in, or nil when the pricing page itself needs a sign-in.
+func visitorModels() []seoModel {
+	if !middleware.HeaderNavModuleIsPublic("pricing") {
+		return nil
+	}
+	pricing := loadVisitorPricing()
+	models := make([]seoModel, 0, len(pricing))
+	for _, item := range pricing {
+		models = append(models, newSEOModel(item))
+	}
+	slices.SortFunc(models, func(a, b seoModel) int { return cmp.Compare(a.ID, b.ID) })
+	return models
+}
+
+func newSEOModel(item model.Pricing) seoModel {
+	name := strings.TrimSpace(item.DisplayName)
+	if name == "" {
+		name = item.ModelName
+	}
+	description := strings.Join(strings.Fields(englishBlock(item.Description)), " ")
+	summary := description
+	if utf8.RuneCountInString(summary) > 155 {
+		cut := string([]rune(summary)[:155])
+		if space := strings.LastIndex(cut, " "); space > 80 {
+			cut = cut[:space]
+		}
+		summary = strings.TrimRight(cut, " ,.;:") + "…"
+	}
+	return seoModel{
+		ID:          item.ModelName,
+		Href:        "/pricing/" + url.PathEscape(item.ModelName),
+		Name:        name,
+		Description: description,
+		Summary:     summary,
+	}
+}
+
 type seoLink struct {
 	Href  string
 	Label string
 }
 
 type seoView struct {
-	SiteName string
-	HomeURL  string
-	OrgID    string
-	// StructuredData adds schema.org Organization and WebSite data, which
-	// belongs on the home page only.
-	StructuredData bool
-	FullTitle      string
-	Description    string
-	URL            string
-	Image          string
-	Contact        template.HTML
-	LegalLinks     []seoLink
+	SiteName    string
+	FullTitle   string
+	Description string
+	URL         string
+	Image       string
+	// JSONLD is schema.org data built by seoStructuredData.
+	JSONLD     template.JS
+	Contact    template.HTML
+	LegalLinks []seoLink
+	Models     []seoModel
+	Model      *seoModel
 }
 
 // seoSnapshot is the option state needed to render SEO output, read once
@@ -202,7 +298,7 @@ func readSEOSnapshot(c *gin.Context) seoSnapshot {
 		snap.legalLinks = append(snap.legalLinks, seoLink{Href: "/refund-policy", Label: "Refund Policy"})
 	}
 
-	snap.sitemapURLs = []string{"/", "/landing", "/pricing"}
+	snap.sitemapURLs = []string{"/", "/landing"}
 	if snap.hasAbout {
 		snap.sitemapURLs = append(snap.sitemapURLs, "/about")
 	}
@@ -212,76 +308,155 @@ func readSEOSnapshot(c *gin.Context) seoSnapshot {
 	return snap
 }
 
-// footerContact returns the English block of the admin footer HTML (or the
-// whole footer when it has no language blocks) so the prerendered page shows
-// the same contact details as the live footer.
-func footerContact(footer string) string {
+// englishBlock returns the English block of admin text written in
+// "<!-- lang:xx -->" blocks (or the whole text when it has no language
+// blocks), such as the footer HTML or a model description.
+func englishBlock(text string) string {
 	const enMarker = "<!-- lang:en -->"
-	_, after, found := strings.Cut(footer, enMarker)
+	_, after, found := strings.Cut(text, enMarker)
 	if !found {
-		if strings.Contains(footer, "<!-- lang:") {
+		if strings.Contains(text, "<!-- lang:") {
 			return ""
 		}
-		return strings.TrimSpace(footer)
+		return strings.TrimSpace(text)
 	}
 	block, _, _ := strings.Cut(after, "<!-- lang:")
 	return strings.TrimSpace(block)
 }
 
-// renderIndexPage returns the index document for path with page-specific
-// metadata and, for the default home page, a static rendering of its copy.
-func renderIndexPage(c *gin.Context, indexPage []byte, path string) []byte {
+// renderIndexPage returns the HTTP status and index document for path, with
+// page-specific metadata and, for the home, pricing and model pages, a static
+// rendering of their copy.
+func renderIndexPage(c *gin.Context, indexPage []byte, path string) (int, []byte) {
+	status := indexPageStatus(path)
 	page, ok := seoPages[path]
+	var models []seoModel
+	if path == "/pricing" || strings.HasPrefix(path, "/pricing/") {
+		models = visitorModels()
+	}
+	var current *seoModel
 	if !ok {
-		return indexPage
+		modelID, isModelPage := strings.CutPrefix(strings.TrimSuffix(path, "/"), "/pricing/")
+		if !isModelPage || models == nil {
+			return status, indexPage
+		}
+		index := slices.IndexFunc(models, func(m seoModel) bool { return m.ID == modelID })
+		if index < 0 {
+			return http.StatusNotFound, indexPage
+		}
+		current = &models[index]
+		page = seoPage{Title: current.Name + " API Pricing", Description: current.Summary}
+		if page.Description == "" {
+			page.Description = current.Name + " pricing, capabilities and API model ID. Pay as you go with no subscription."
+		}
+		path = current.Href
 	}
 	start := bytes.Index(indexPage, seoHeadStart)
 	end := bytes.Index(indexPage, seoHeadEnd)
 	if start < 0 || end < start {
-		return indexPage
+		return status, indexPage
 	}
 
 	snap := readSEOSnapshot(c)
 	view := seoView{
 		SiteName:    snap.siteName,
-		HomeURL:     snap.baseURL + "/",
-		OrgID:       snap.baseURL + "/#organization",
 		FullTitle:   page.Title + " | " + snap.siteName,
 		Description: page.Description,
 		URL:         snap.baseURL + path,
 		Image:       snap.baseURL + "/logo.png",
 		LegalLinks:  snap.legalLinks,
-
-		StructuredData: path == "/",
+		Models:      models,
+		Model:       current,
 	}
+	view.JSONLD = seoStructuredData(snap, view, path)
 	// Admin-authored footer HTML is already rendered unescaped by the app.
-	view.Contact = template.HTML(footerContact(snap.footer))
+	view.Contact = template.HTML(englishBlock(snap.footer))
 
 	var head bytes.Buffer
 	if err := seoHeadTemplate.Execute(&head, view); err != nil {
-		return indexPage
+		return status, indexPage
 	}
 
 	var out bytes.Buffer
-	out.Grow(len(indexPage) + head.Len() + 4096)
+	out.Grow(len(indexPage) + head.Len() + 8192)
 	out.Write(indexPage[:start])
 	out.Write(head.Bytes())
 	rest := indexPage[end+len(seoHeadEnd):]
 
-	rootAt := bytes.Index(rest, rootDiv)
-	if path != "/" || snap.customHome || rootAt < 0 {
-		out.Write(rest)
-		return out.Bytes()
+	var bodyTemplate *template.Template
+	switch {
+	case path == "/" && !snap.customHome:
+		bodyTemplate = seoHomeTemplate
+	case models != nil:
+		bodyTemplate = seoCatalogTemplate
 	}
+	rootAt := bytes.Index(rest, rootDiv)
 	var body bytes.Buffer
-	if err := seoHomeTemplate.Execute(&body, view); err != nil {
+	if bodyTemplate == nil || rootAt < 0 || bodyTemplate.Execute(&body, view) != nil {
 		out.Write(rest)
-		return out.Bytes()
+		return status, out.Bytes()
 	}
 	out.Write(rest[:rootAt])
 	out.Write(body.Bytes())
 	out.Write(rest[rootAt:])
-	return out.Bytes()
+	return status, out.Bytes()
+}
+
+// seoStructuredData returns schema.org JSON-LD for the page: the organization
+// and website on the home page, and a breadcrumb trail on pricing pages.
+func seoStructuredData(snap seoSnapshot, view seoView, path string) template.JS {
+	home := snap.baseURL + "/"
+	var data map[string]any
+	switch {
+	case path == "/":
+		orgID := snap.baseURL + "/#organization"
+		data = map[string]any{
+			"@context": "https://schema.org",
+			"@graph": []any{
+				map[string]any{"@type": "Organization", "@id": orgID, "name": snap.siteName, "url": home, "logo": view.Image},
+				map[string]any{"@type": "WebSite", "name": snap.siteName, "url": home, "publisher": map[string]any{"@id": orgID}},
+			},
+		}
+	case strings.HasPrefix(path, "/pricing"):
+		crumbs := []any{
+			map[string]any{"@type": "ListItem", "position": 1, "name": "Home", "item": home},
+			map[string]any{"@type": "ListItem", "position": 2, "name": "Pricing", "item": snap.baseURL + "/pricing"},
+		}
+		if view.Model != nil {
+			crumbs = append(crumbs, map[string]any{"@type": "ListItem", "position": 3, "name": view.Model.Name, "item": view.URL})
+		}
+		data = map[string]any{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs}
+	default:
+		return ""
+	}
+	encoded, err := common.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	// Keep admin-provided names from closing the script element.
+	return template.JS(strings.ReplaceAll(string(encoded), "<", `\u003c`))
+}
+
+// redirectToCanonicalHost answers a page request on the www host of the
+// configured server address with a permanent redirect to the address itself,
+// so search engines index one copy of each page. OAuth callbacks stay on the
+// host the provider was given, where their state cookie lives.
+func redirectToCanonicalHost(c *gin.Context) bool {
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		return false
+	}
+	if strings.HasPrefix(c.Request.URL.Path, "/oauth") {
+		return false
+	}
+	common.OptionMapRWMutex.RLock()
+	address := system_setting.ServerAddress
+	common.OptionMapRWMutex.RUnlock()
+	canonical, err := url.Parse(strings.TrimRight(address, "/"))
+	if err != nil || canonical.Host == "" || !strings.EqualFold(c.Request.Host, "www."+canonical.Host) {
+		return false
+	}
+	c.Redirect(http.StatusMovedPermanently, canonical.Scheme+"://"+canonical.Host+c.Request.URL.RequestURI())
+	return true
 }
 
 // spaRouteRoots are the first path segments the React app routes, plus the
@@ -337,10 +512,20 @@ func serveRobotsTxt(c *gin.Context) {
 
 func serveSitemapXML(c *gin.Context) {
 	snap := readSEOSnapshot(c)
+	paths := snap.sitemapURLs
+	if middleware.HeaderNavModuleIsPublic("docs") {
+		paths = append(paths, "/docs")
+	}
+	if models := visitorModels(); models != nil {
+		paths = append(paths, "/pricing")
+		for _, m := range models {
+			paths = append(paths, m.Href)
+		}
+	}
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	b.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
-	for _, path := range snap.sitemapURLs {
+	for _, path := range paths {
 		b.WriteString("  <url><loc>")
 		template.HTMLEscape(&b, []byte(snap.baseURL+path))
 		b.WriteString("</loc></url>\n")
