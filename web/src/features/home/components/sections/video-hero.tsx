@@ -17,13 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 
 import { useHeroClip } from '../../hooks/use-hero-clip'
 import { useSeedancePricing } from '../../hooks/use-seedance-pricing'
+import { ClipSpec } from '../clip-spec'
 import { ShowcaseVideo } from '../showcase-video'
 
 interface VideoHeroProps {
@@ -46,18 +46,14 @@ export function VideoHero(props: VideoHeroProps) {
   return (
     <section className='relative z-10 px-6 pt-24 pb-10 md:pt-32 md:pb-14'>
       <div className='mx-auto flex max-w-6xl flex-col items-center gap-6 text-center'>
-        <p className='landing-animate-fade-up inline-flex items-center gap-2 rounded-full border-brand/20 bg-brand-soft text-brand-hover dark:text-brand-on-dark border px-3.5 py-1.5 text-xs font-medium opacity-0'>
-          <span className='size-1.5 rounded-full bg-brand' aria-hidden />
-          {t('Seedance 2.5 is live · up to 30 seconds per clip')}
+        <p className='landing-animate-fade-up border-brand/20 bg-brand-soft text-brand-hover dark:text-brand-on-dark rounded-full border px-3.5 py-1.5 text-xs font-medium opacity-0'>
+          {t('Seedance 2.5 is live, up to 30 seconds per clip')}
         </p>
         <h1
           className='landing-animate-fade-up max-w-4xl text-[clamp(2.25rem,6vw,4.25rem)] leading-[1.1] font-bold tracking-tight opacity-0'
           style={{ animationDelay: '60ms' }}
         >
-          {t('Turn one sentence into')}{' '}
-          <span className='text-brand dark:text-brand-on-dark'>
-            {t('cinematic video')}
-          </span>
+          {t('Turn one sentence into')} {t('cinematic video')}
         </h1>
         <p
           className='landing-animate-fade-up text-muted-foreground max-w-2xl text-base leading-relaxed opacity-0 md:text-lg'
@@ -80,16 +76,12 @@ export function VideoHero(props: VideoHeroProps) {
           style={{ animationDelay: '180ms' }}
         >
           <Button
-            className='group h-12 rounded-xl px-6 text-base font-semibold'
+            className='h-12 rounded-xl px-6 text-base font-semibold'
             render={<Link to={startTarget} />}
           >
             {props.isAuthenticated
               ? t('Open Video Creation')
               : t('Sign up free and start creating')}
-            <ArrowRight
-              className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5'
-              aria-hidden
-            />
           </Button>
           <Button
             variant='outline'
@@ -107,7 +99,7 @@ export function VideoHero(props: VideoHeroProps) {
       </div>
 
       <figure
-        className='landing-animate-fade-up border-border/60 relative mx-auto mt-12 max-w-5xl overflow-hidden rounded-2xl border bg-ink opacity-0 shadow-2xl shadow-ink/20'
+        className='landing-animate-fade-up border-border/60 bg-ink shadow-ink/20 relative mx-auto mt-12 max-w-5xl overflow-hidden rounded-2xl border opacity-0 shadow-2xl'
         style={{ animationDelay: '240ms' }}
       >
         <div className='relative aspect-video'>
@@ -120,15 +112,16 @@ export function VideoHero(props: VideoHeroProps) {
             soundToggle
           />
           {hero.spec && (
-            <span className='absolute top-3 left-3 rounded-md bg-ink/70 px-2.5 py-1 font-mono text-xs text-white/90'>
-              {hero.spec}
-            </span>
+            <ClipSpec
+              spec={hero.spec}
+              className='absolute top-3 left-3 px-2.5 py-1 text-xs'
+            />
           )}
         </div>
         {/* Below the clip on phones; overlaid on its bottom edge from sm up. */}
         {hero.prompt && (
-          <figcaption className='flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-left sm:absolute sm:inset-x-3 sm:bottom-3 sm:rounded-xl sm:bg-ink/80 sm:backdrop-blur-sm'>
-            <span className='rounded-md bg-brand/25 text-brand-on-dark px-2 py-0.5 text-xs font-semibold'>
+          <figcaption className='sm:bg-ink/80 flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-left sm:absolute sm:inset-x-3 sm:bottom-3 sm:rounded-xl sm:backdrop-blur-sm'>
+            <span className='bg-brand/25 text-brand-on-dark rounded-md px-2 py-0.5 text-xs font-semibold'>
               {t('Prompt used')}
             </span>
             <span className='min-w-0 flex-[1_1_18rem] truncate text-sm text-white/90'>
@@ -136,9 +129,9 @@ export function VideoHero(props: VideoHeroProps) {
             </span>
             <Link
               to={startTarget}
-              className='text-sm font-semibold hover:text-brand-on-dark text-white'
+              className='hover:text-brand-on-dark text-sm font-semibold text-white'
             >
-              {t('Try this prompt')} →
+              {t('Try this prompt')}
             </Link>
           </figcaption>
         )}

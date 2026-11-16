@@ -19,8 +19,6 @@ For commercial licensing, please contact support@quantumnous.com
 import { Clapperboard, Megaphone, ShoppingBag, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { FeatureItem } from '../feature-item'
-
 export function UseCases() {
   const { t } = useTranslation()
 
@@ -61,28 +59,20 @@ export function UseCases() {
       className='relative z-10 scroll-mt-20 px-6 py-14 md:py-20'
     >
       <div className='mx-auto max-w-6xl'>
-        <p className='mb-2 text-sm font-semibold text-brand dark:text-brand-on-dark'>
-          {t('Use cases')}
-        </p>
         <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
           {t('Video for every team that creates')}
         </h2>
-        <ul className='mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <ul className='mt-10 grid gap-x-12 gap-y-8 sm:grid-cols-2'>
           {cases.map((item) => (
-            <li
-              key={item.title}
-              className='bg-card border-border/60 rounded-2xl border'
-            >
-              <FeatureItem
-                title={item.title}
-                description={item.desc}
-                icon={
-                  <item.icon
-                    className='size-5 text-highlight'
-                    aria-hidden
-                  />
-                }
-              />
+            <li key={item.title} className='border-border border-t pt-5'>
+              <h3 className='flex items-center gap-2.5 text-lg font-semibold'>
+                <item.icon
+                  className='text-brand dark:text-brand-on-dark size-5 shrink-0'
+                  aria-hidden
+                />
+                {item.title}
+              </h3>
+              <p className='text-muted-foreground mt-2 max-w-md'>{item.desc}</p>
             </li>
           ))}
         </ul>

@@ -102,7 +102,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
