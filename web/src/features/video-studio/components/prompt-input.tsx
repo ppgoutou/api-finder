@@ -24,6 +24,7 @@ import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
+import { canonicalMentions, localizeMentions } from '../lib/mention-names'
 import {
   PROMPT_INPUT_CAP,
   promptLength,
@@ -31,11 +32,13 @@ import {
 } from '../lib/prompt-guide'
 
 export interface MentionOption {
+  /** Token the model reads, such as "图片1". */
   token: string
   fileName: string
 }
 
 interface PromptInputProps {
+  /** Prompt as the model reads it, mentions such as "@图片1" included. */
   value: string
   onChange: (value: string) => void
   /** References the prompt can mention; typing "@" lists them. */
@@ -50,11 +53,19 @@ interface PromptInputProps {
 
 /**
  * Prompt textarea. Typing "@" opens a list of the uploaded references and
- * picking one inserts its token, such as "@图片1". Ctrl/⌘ + Enter submits.
+ * picking one inserts its mention. Mentions show in the interface language,
+ * such as "@Image1", and reach onChange as the model's "@图片1".
+ * Ctrl/⌘ + Enter submits.
  */
 export function PromptInput(props: PromptInputProps) {
   const { t, i18n } = useTranslation()
-  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const language = i18n.resolvedLanguage || i18n.language
+  const locale = toIntlLocale(language)
+  const shown = localizeMentions(props.value, language)
+  const mentionName = (option: MentionOption) =>
+    localizeMentions(`@${option.token}`, language).slice(1)
+  const change = (text: string) =>
+    props.onChange(canonicalMentions(text, language))
   const hintId = useId()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   // Caret position right after the "@" that opened the list.
@@ -71,10 +82,10 @@ export function PromptInput(props: PromptInputProps) {
 
   const insertMention = (option: MentionOption) => {
     if (mentionAt === null) return
-    const before = props.value.slice(0, mentionAt)
-    const after = props.value.slice(mentionAt)
-    const inserted = `${option.token} `
-    props.onChange(before + inserted + after)
+    const before = shown.slice(0, mentionAt)
+    const after = shown.slice(mentionAt)
+    const inserted = `${mentionName(option)} `
+    change(before + inserted + after)
     closeMenu()
     const caret = mentionAt + inserted.length
     requestAnimationFrame(() => {
@@ -113,7 +124,7 @@ export function PromptInput(props: PromptInputProps) {
     <div className='relative min-w-0 flex-1'>
       <Textarea
         ref={textareaRef}
-        value={props.value}
+        value={shown}
         placeholder={props.placeholder}
         aria-label={props.label ?? t('Video prompt')}
         maxLength={PROMPT_INPUT_CAP}
@@ -124,9 +135,8 @@ export function PromptInput(props: PromptInputProps) {
         onChange={(event) => {
           const next = event.target.value
           const caret = event.target.selectionStart
-          props.onChange(next)
-          const typedAt =
-            next.length > props.value.length && next[caret - 1] === '@'
+          change(next)
+          const typedAt = next.length > shown.length && next[caret - 1] === '@'
           if (typedAt) {
             setMentionAt(caret)
             setHighlighted(0)
@@ -181,7 +191,7 @@ export function PromptInput(props: PromptInputProps) {
                   index === highlighted && 'bg-accent text-accent-foreground'
                 )}
               >
-                <span className='font-semibold'>@{option.token}</span>
+                <span className='font-semibold'>@{mentionName(option)}</span>
                 <span className='text-muted-foreground truncate text-xs'>
                   {option.fileName}
                 </span>

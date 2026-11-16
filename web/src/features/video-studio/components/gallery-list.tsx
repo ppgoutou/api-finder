@@ -38,6 +38,7 @@ import { useStudioGallery } from '../hooks/use-studio-gallery'
 import { useStudioModels } from '../hooks/use-studio-models'
 import { draftFromGalleryItem, parseGallerySpec } from '../lib/gallery-draft'
 import { groupByModel, specAspectRatio } from '../lib/gallery-layout'
+import { localizeMentions } from '../lib/mention-names'
 import type { StudioDraft } from '../types'
 
 const ALL_FILTER = 'all'
@@ -185,7 +186,7 @@ function GalleryDetailsDialog(props: {
   onOpenChange: (open: boolean) => void
   onUsePrompt: (card: GalleryCard) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const card = props.card
   const spec = parseGallerySpec(card?.spec ?? '')
   const params = [
@@ -249,7 +250,10 @@ function GalleryDetailsDialog(props: {
                   {t('Prompt words')}
                 </h3>
                 <p className='bg-muted/50 max-h-60 min-h-0 flex-1 overflow-y-auto rounded-lg p-3 text-sm leading-relaxed break-words whitespace-pre-wrap md:max-h-none'>
-                  {card.prompt}
+                  {localizeMentions(
+                    card.prompt,
+                    i18n.resolvedLanguage || i18n.language
+                  )}
                 </p>
               </section>
             )}

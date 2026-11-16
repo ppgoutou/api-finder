@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ASSET_ACCEPT } from '../constants'
 import { labelReferences } from '../lib/draft'
+import { localizeMentions } from '../lib/mention-names'
 import type { StudioAsset } from '../types'
 import { AssetThumb } from './asset-thumb'
 
@@ -76,7 +77,8 @@ interface ReferencePanelProps {
 
 /** Reference mode: images, videos and audio, each labeled with its token. */
 export function ReferencePanel(props: ReferencePanelProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage || i18n.language
   const accept = props.accept ?? Object.values(ASSET_ACCEPT).join(',')
   return (
     <div className='flex gap-2 overflow-x-auto pb-1'>
@@ -90,7 +92,7 @@ export function ReferencePanel(props: ReferencePanelProps) {
         <AssetThumb
           key={asset.id}
           asset={asset}
-          label={`@${token}`}
+          label={localizeMentions(`@${token}`, language)}
           onRemove={() => props.onRemove(asset)}
         />
       ))}

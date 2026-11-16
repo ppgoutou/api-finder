@@ -42,6 +42,7 @@ import {
   replacementModel,
   validateDraft,
 } from '../lib/draft'
+import { localizeMentions } from '../lib/mention-names'
 import { PROMPT_TOO_LONG, promptGuide, promptLength } from '../lib/prompt-guide'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 import type { StudioDraft, StudioMode } from '../types'
@@ -64,7 +65,8 @@ interface ComposerProps {
 /** Prompt box with references, mode, model and output settings. */
 export function Composer(props: ComposerProps) {
   const { t, i18n } = useTranslation()
-  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const language = i18n.resolvedLanguage || i18n.language
+  const locale = toIntlLocale(language)
   const studio = useStudioDraft(
     props.initialDraft ??
       (props.initialModel ? { model: props.initialModel } : undefined)
@@ -179,7 +181,11 @@ export function Composer(props: ComposerProps) {
           placeholder={
             draft.mode === 'reference'
               ? t(
-                  'Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @视频1 and the character in @图片1.'
+                  'Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.',
+                  {
+                    video: localizeMentions('@视频1', language).slice(1),
+                    image: localizeMentions('@图片1', language).slice(1),
+                  }
                 )
               : t(
                   'Describe how the video moves from the first frame to the last frame.'

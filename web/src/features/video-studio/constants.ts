@@ -96,13 +96,30 @@ export const ASSET_RETENTION_DAYS = 7
 
 /**
  * Prompt tokens that point at a reference, numbered per kind in upload order:
- * "@图片1" is the first image. The model reads these names, so they stay the
- * same in every interface language.
+ * "@图片1" is the first image. The model reads these names, so the prompt
+ * always carries them; the composer shows MENTION_NAMES instead.
  */
 export const REFERENCE_TOKEN_NAMES: Readonly<Record<AssetKind, string>> = {
   image: '图片',
   video: '视频',
   audio: '音频',
+}
+
+/**
+ * Reference names the composer shows per interface language, such as
+ * "@Image1" in English. Each is one word, so a mention stays one token, and
+ * is turned back into REFERENCE_TOKEN_NAMES before the prompt is sent.
+ */
+export const MENTION_NAMES: Readonly<
+  Record<string, Readonly<Record<AssetKind, string>>>
+> = {
+  zhCN: REFERENCE_TOKEN_NAMES,
+  zhTW: { image: '圖片', video: '影片', audio: '音訊' },
+  en: { image: 'Image', video: 'Video', audio: 'Audio' },
+  fr: { image: 'Image', video: 'Vidéo', audio: 'Audio' },
+  ru: { image: 'Изображение', video: 'Видео', audio: 'Аудио' },
+  ja: { image: '画像', video: '動画', audio: '音声' },
+  vi: { image: 'Ảnh', video: 'Video', audio: 'Audio' },
 }
 
 export const DEFAULT_DRAFT: StudioDraft = {

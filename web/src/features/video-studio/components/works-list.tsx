@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils'
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { draftFromVideoRequest } from '../lib/draft'
 import { hideTask, readHiddenTasks } from '../lib/hidden-works'
+import { localizeMentions } from '../lib/mention-names'
 import { recallTaskPrompt } from '../lib/prompt-history'
 import type { StudioDraft } from '../types'
 import { WorkDownloadButton } from './work-download-button'
@@ -97,7 +98,7 @@ function WorkCard(props: {
   onEdit?: (draft: Partial<StudioDraft>) => void
   onDelete: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const task = props.task
   const remembered = recallTaskPrompt(task.task_id)
   const modelName = task.properties?.origin_model_name
@@ -150,7 +151,12 @@ function WorkCard(props: {
             props.compact ? 'truncate text-xs' : 'line-clamp-2 min-h-10 text-sm'
           )}
         >
-          {remembered?.prompt || t('Video task')}
+          {remembered?.prompt
+            ? localizeMentions(
+                remembered.prompt,
+                i18n.resolvedLanguage || i18n.language
+              )
+            : t('Video task')}
         </p>
         <div className='flex items-center gap-2'>
           <p

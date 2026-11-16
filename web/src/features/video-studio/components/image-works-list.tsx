@@ -34,6 +34,7 @@ import { formatTimestamp } from '@/lib/format'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { restoredAssets } from '../lib/draft'
+import { localizeMentions } from '../lib/mention-names'
 import type { StudioDraft } from '../types'
 
 /**
@@ -44,7 +45,8 @@ import type { StudioDraft } from '../types'
 export function ImageWorksList(props: {
   onEdit?: (draft: Partial<StudioDraft>, size: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage || i18n.language
   const displayName = useModelDisplayName()
   const works = useStudioImageWorks((state) => state.works)
   const removeWork = useStudioImageWorks((state) => state.remove)
@@ -100,7 +102,9 @@ export function ImageWorksList(props: {
               </Button>
             </div>
             <div className='flex flex-col gap-1 p-3'>
-              <p className='line-clamp-2 min-h-10 text-sm'>{work.prompt}</p>
+              <p className='line-clamp-2 min-h-10 text-sm'>
+                {localizeMentions(work.prompt, language)}
+              </p>
               <div className='flex items-center gap-2'>
                 <p className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
                   {displayName(work.model)} · {work.size.replace('x', '×')} ·{' '}

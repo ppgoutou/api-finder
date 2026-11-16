@@ -113,22 +113,39 @@ afterEach(() => {
 async function uploadImage(user: ReturnType<typeof userEvent.setup>) {
   const file = new File(['png!'], 'cat.png', { type: 'image/png' })
   await user.upload(screen.getByLabelText('References'), file)
-  await screen.findByText('@图片1')
+  await screen.findByText('@Image1')
 }
 
 describe('Composer', () => {
-  it('inserts the token of an uploaded reference when @ is typed', async () => {
+  it('inserts the mention in the interface language when @ is typed', async () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
     await uploadImage(user)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
     await user.type(prompt, 'the cat in @')
-    expect(screen.getByRole('option', { name: /@图片1/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /@Image1/ })).toBeInTheDocument()
     await user.keyboard('{Enter}')
 
-    expect(prompt).toHaveValue('the cat in @图片1 ')
+    expect(prompt).toHaveValue('the cat in @Image1 ')
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('sends a localized mention to the model as its Chinese token', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await uploadImage(user)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'the cat in @Image1 runs'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: 'the cat in @图片1 runs' })
+    )
   })
 
   it('submits the prompt with the uploaded reference URL and refreshes the works', async () => {
@@ -197,7 +214,7 @@ describe('Composer', () => {
     await user.click(screen.getByRole('button', { name: 'Remove cat.png' }))
 
     expect(prompt).toHaveValue('keep  ')
-    expect(screen.queryByText('@图片1')).not.toBeInTheDocument()
+    expect(screen.queryByText('@Image1')).not.toBeInTheDocument()
   })
 
   it('lists every model from the pricing data and submits the picked one', async () => {
@@ -248,13 +265,13 @@ describe('Composer', () => {
     )
 
     expect(screen.getByRole('textbox', { name: 'Video prompt' })).toHaveValue(
-      past.prompt
+      'the dog in @Image1 dances to @Audio1'
     )
     expect(
       screen.getByRole('button', { name: 'Model: seedance-2.5' })
     ).toBeInTheDocument()
-    expect(screen.getByText('@图片1')).toBeInTheDocument()
-    expect(screen.getByText('@音频1')).toBeInTheDocument()
+    expect(screen.getByText('@Image1')).toBeInTheDocument()
+    expect(screen.getByText('@Audio1')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Generate video' }))
 
     await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
