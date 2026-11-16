@@ -101,6 +101,13 @@ func parseHeaderNavBool(value any, fallback bool) bool {
 	}
 }
 
+// HeaderNavModuleIsPublic reports whether module is enabled for visitors who
+// are not signed in.
+func HeaderNavModuleIsPublic(module string) bool {
+	access := getHeaderNavAccess(module)
+	return access.Enabled && !access.RequireAuth
+}
+
 func HeaderNavModuleAuth(module string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		access := getHeaderNavAccess(module)

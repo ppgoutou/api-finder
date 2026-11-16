@@ -42,8 +42,11 @@ func SetWebRouter(router *gin.Engine, assets WebAssets, pluginDispatcher gin.Han
 				return
 			}
 			c.Header("Cache-Control", "no-cache")
-			path := c.Request.URL.Path
-			c.Data(indexPageStatus(path), "text/html; charset=utf-8", renderIndexPage(c, assets.IndexPage, path))
+			if redirectToCanonicalHost(c) {
+				return
+			}
+			status, page := renderIndexPage(c, assets.IndexPage, c.Request.URL.Path)
+			c.Data(status, "text/html; charset=utf-8", page)
 		},
 	)
 }
