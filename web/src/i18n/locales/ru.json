@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "Подтверждение безопасности больше не действует. Пройдите его снова.",
     "See prices in the model square": "Цены на витрине моделей",
     "Seed": "Seed",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 уже доступен: до 30 секунд на ролик",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 уже доступен · до 30 секунд на ролик",
     "Seedance AI video · online": "ИИ-видео Seedance · онлайн",
     "Seedance models": "Модели Seedance",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 поддерживает от 480p до 4K и 4–15 секунд на ролик; seedance-2.5 — от 480p до 1080p и 4–30 секунд на ролик.",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "Сравнение моделей {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Показывается во всплывающем окне под заголовком категории. Поддерживается Markdown.",
     "Only this user": "Только этот пользователь",
-    "View Usage Logs": "Журнал использования"
+    "View Usage Logs": "Журнал использования",
+    "Announcement bar": "Строка объявления",
+    "Show the announcement bar": "Показывать строку объявления",
+    "One line above the home page header. It hides once the visitor scrolls.": "Одна строка над шапкой главной страницы. Скрывается, когда посетитель прокручивает страницу.",
+    "Announcement text": "Текст объявления",
+    "Announcement text (Chinese)": "Текст объявления (китайский)"
   }
 }

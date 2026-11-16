@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "セキュリティ確認が無効になりました。再度確認してください。",
     "See prices in the model square": "モデル一覧で料金を見る",
     "Seed": "シード",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 提供開始、1本最長30秒",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 提供開始・1本最長30秒",
     "Seedance AI video · online": "Seedance AI 動画 · 稼働中",
     "Seedance models": "Seedance モデル",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 は 480p〜4K、1本4〜15秒に対応。seedance-2.5 は 480p〜1080p、1本4〜30秒に対応。",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "{{name}} モデル比較",
     "Shown in a popover under the category heading. Supports Markdown.": "カテゴリ見出しの下のポップオーバーに表示されます。Markdown に対応。",
     "Only this user": "このユーザーのみ",
-    "View Usage Logs": "使用ログを表示"
+    "View Usage Logs": "使用ログを表示",
+    "Announcement bar": "お知らせバー",
+    "Show the announcement bar": "お知らせバーを表示",
+    "One line above the home page header. It hides once the visitor scrolls.": "ホームページのヘッダー上に表示する1行。訪問者がスクロールすると隠れます。",
+    "Announcement text": "お知らせの文言",
+    "Announcement text (Chinese)": "お知らせの文言（中国語）"
   }
 }

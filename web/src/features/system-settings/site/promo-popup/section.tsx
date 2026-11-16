@@ -43,6 +43,7 @@ import { Switch } from '@/components/ui/switch'
 import { PromoDialog } from '@/features/home/components/promo-popup/promo-dialog'
 import { PROMO_POPUP_QUERY_KEY } from '@/features/home/hooks/use-promo-popup'
 import {
+  EMPTY_PROMO_ANNOUNCEMENT,
   emptyPromoCard,
   parsePromoPopup,
   PROMO_POPUP_DEFAULT_DAILY_LIMIT,
@@ -64,6 +65,7 @@ import { SettingsPageFormActions } from '../../components/settings-page-context'
 import { SettingsSection } from '../../components/settings-section'
 import { useUpdateOption } from '../../hooks/use-update-option'
 import { CollapsibleMediaClip } from '../components/collapsible-media-clip'
+import { ShowcaseTextField } from '../home-showcase/item-fields'
 import { PromoCardFields } from './card-fields'
 import { promoPopupFormSchema, type PromoPopupFormValues } from './schema'
 
@@ -132,6 +134,7 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
       enabled: true,
       dailyLimit: PROMO_POPUP_DEFAULT_DAILY_LIMIT,
       cards: (watched.cards ?? []) as PromoCard[],
+      announcement: EMPTY_PROMO_ANNOUNCEMENT,
     },
     i18n.resolvedLanguage || i18n.language,
     toPromoDay(new Date())
@@ -207,6 +210,52 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
               </FormItem>
             )}
           />
+
+          <fieldset className='flex min-w-0 flex-col gap-4 rounded-lg border p-4'>
+            <legend className='px-1 text-sm font-semibold'>
+              {t('Announcement bar')}
+            </legend>
+            <FormField
+              control={form.control}
+              name='announcement.enabled'
+              render={({ field }) => (
+                <SettingsSwitchItem>
+                  <SettingsSwitchContent>
+                    <FormLabel>{t('Show the announcement bar')}</FormLabel>
+                    <FormDescription>
+                      {t(
+                        'One line above the home page header. It hides once the visitor scrolls.'
+                      )}
+                    </FormDescription>
+                  </SettingsSwitchContent>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </SettingsSwitchItem>
+              )}
+            />
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <ShowcaseTextField
+                control={form.control}
+                name='announcement.text'
+                label={t('Announcement text')}
+              />
+              <ShowcaseTextField
+                control={form.control}
+                name='announcement.textZh'
+                label={t('Announcement text (Chinese)')}
+              />
+            </div>
+            <ShowcaseTextField
+              control={form.control}
+              name='announcement.href'
+              label={t('Link (optional)')}
+              placeholder='/pricing'
+            />
+          </fieldset>
 
           <fieldset className='flex min-w-0 flex-col gap-3 rounded-lg border p-4'>
             <legend className='px-1 text-sm font-semibold'>

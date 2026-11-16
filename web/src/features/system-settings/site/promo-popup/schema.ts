@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import * as z from 'zod'
 
 import {
+  PROMO_ANNOUNCEMENT_MAX_LENGTH,
   PROMO_CARD_KINDS,
   PROMO_POPUP_MAX_CARDS,
   PROMO_POPUP_MAX_DAILY_LIMIT,
@@ -117,6 +118,24 @@ const cardSchema = z
     }
   })
 
+const announcementText = z
+  .string()
+  .trim()
+  .max(PROMO_ANNOUNCEMENT_MAX_LENGTH, { message: 'At most 80 characters' })
+
+const announcementSchema = z
+  .object({
+    enabled: z.boolean(),
+    text: announcementText,
+    textZh: announcementText,
+    href,
+  })
+  .superRefine((announcement, context) => {
+    if (announcement.enabled && !announcement.text && !announcement.textZh) {
+      context.addIssue({ code: 'custom', message: REQUIRED, path: ['text'] })
+    }
+  })
+
 export const promoPopupFormSchema = z.object({
   enabled: z.boolean(),
   dailyLimit: z
@@ -125,6 +144,7 @@ export const promoPopupFormSchema = z.object({
     .min(1, { message: DAILY_LIMIT_MESSAGE })
     .max(PROMO_POPUP_MAX_DAILY_LIMIT, { message: DAILY_LIMIT_MESSAGE }),
   cards: z.array(cardSchema).max(PROMO_POPUP_MAX_CARDS),
+  announcement: announcementSchema,
 })
 
 export type PromoPopupFormValues = z.infer<typeof promoPopupFormSchema>

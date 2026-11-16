@@ -22,15 +22,20 @@ import { useTranslation } from 'react-i18next'
 import { getPromoPopup } from '../api'
 import {
   parsePromoPopup,
+  selectPromoAnnouncement,
   selectPromoCards,
   toPromoDay,
 } from '../lib/promo-popup'
 
 export const PROMO_POPUP_QUERY_KEY = ['promo-popup'] as const
 
-/** Today's promotion cards in the interface language; empty on failure. */
+/**
+ * Today's promotion cards and the announcement bar in the interface
+ * language; empty on failure.
+ */
 export function usePromoPopup() {
   const { i18n } = useTranslation()
+  const language = i18n.resolvedLanguage || i18n.language
   const { data } = useQuery({
     queryKey: PROMO_POPUP_QUERY_KEY,
     queryFn: getPromoPopup,
@@ -40,10 +45,7 @@ export function usePromoPopup() {
   const settings = parsePromoPopup(data?.success ? data.data : '')
   return {
     dailyLimit: settings.dailyLimit,
-    cards: selectPromoCards(
-      settings,
-      i18n.resolvedLanguage || i18n.language,
-      toPromoDay(new Date())
-    ),
+    cards: selectPromoCards(settings, language, toPromoDay(new Date())),
+    announcement: selectPromoAnnouncement(settings.announcement, language),
   }
 }

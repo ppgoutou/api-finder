@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "安全驗證已失效，請重新驗證。",
     "See prices in the model square": "在模型廣場查看價格",
     "Seed": "隨機種子",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 已上線，單段最長 30 秒",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 已上線 · 單段最長 30 秒",
     "Seedance AI video · online": "Seedance AI 影片 · 線上",
     "Seedance models": "Seedance 模型",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 支援 480p 到 4K、單段 4–15 秒；seedance-2.5 支援 480p 到 1080p、單段 4–30 秒。",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "{{name}} 模型對比",
     "Shown in a popover under the category heading. Supports Markdown.": "顯示在類目標題下方的彈窗中，支援 Markdown。",
     "Only this user": "只看該使用者",
-    "View Usage Logs": "查看使用日誌"
+    "View Usage Logs": "查看使用日誌",
+    "Announcement bar": "公告條",
+    "Show the announcement bar": "顯示公告條",
+    "One line above the home page header. It hides once the visitor scrolls.": "顯示在首頁頂部導覽上方的一行文字，訪客往下捲動後隱藏。",
+    "Announcement text": "公告文案",
+    "Announcement text (Chinese)": "公告文案（中文）"
   }
 }

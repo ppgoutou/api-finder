@@ -16,9 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { PublicHeader } from '../public-header'
 
@@ -84,4 +84,48 @@ describe('PublicHeader desktop navigation', () => {
       expect(link).toHaveClass('shrink-0', 'whitespace-nowrap')
     }
   )
+})
+
+describe('PublicHeader announcement bar', () => {
+  afterEach(() => {
+    window.scrollY = 0
+  })
+
+  it('links the announcement text to its page when the bar has a link', () => {
+    render(
+      <PublicHeader
+        announcement={{ text: 'Seedance 2.5 is live', href: '/pricing' }}
+      />
+    )
+
+    expect(
+      screen.getByRole('link', { name: 'Seedance 2.5 is live' })
+    ).toHaveAttribute('href', '/pricing')
+  })
+
+  it('shows the announcement as plain text when the bar has no link', () => {
+    render(
+      <PublicHeader announcement={{ text: 'Maintenance tonight', href: '' }} />
+    )
+
+    expect(screen.getByText('Maintenance tonight')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Maintenance tonight' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides the announcement once the page scrolls', () => {
+    render(
+      <PublicHeader
+        announcement={{ text: 'Seedance 2.5 is live', href: '/pricing' }}
+      />
+    )
+
+    act(() => {
+      window.scrollY = 200
+      fireEvent.scroll(window)
+    })
+
+    expect(screen.queryByText('Seedance 2.5 is live')).not.toBeInTheDocument()
+  })
 })

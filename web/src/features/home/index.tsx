@@ -39,6 +39,7 @@ import {
 import { HomePlaybackProvider } from './components/home-playback'
 import { PromoPopup } from './components/promo-popup/promo-popup'
 import { useHomePageContent } from './hooks'
+import { usePromoPopup } from './hooks/use-promo-popup'
 
 function HomeContent() {
   const { i18n, t } = useTranslation()
@@ -47,6 +48,7 @@ function HomeContent() {
   const { auth } = useAuthStore()
   const isAuthenticated = !!auth.user
   const { content, isLoaded, isUrl } = useHomePageContent()
+  const { announcement } = usePromoPopup()
 
   const syncIframePreferences = useCallback(() => {
     try {
@@ -132,7 +134,7 @@ function HomeContent() {
   }
 
   return (
-    <PublicLayout showMainContainer={false}>
+    <PublicLayout showMainContainer={false} headerProps={{ announcement }}>
       <HomePlaybackProvider>
         <VideoHero isAuthenticated={isAuthenticated} />
         <Showcase isAuthenticated={isAuthenticated} />

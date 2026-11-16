@@ -44,7 +44,15 @@ type AuthPromptTarget = {
   href: string
 }
 
+/** A one-line notice shown above the header until the page scrolls. */
+export type HeaderAnnouncement = {
+  text: string
+  /** Same-site path or https link; empty shows plain text. */
+  href: string
+}
+
 export interface PublicHeaderProps {
+  announcement?: HeaderAnnouncement | null
   navLinks?: TopNavLink[]
   mobileLinks?: TopNavLink[]
   navContent?: React.ReactNode
@@ -197,6 +205,20 @@ export function PublicHeader(props: PublicHeaderProps) {
   return (
     <>
       <header className='pointer-events-none fixed inset-x-0 top-0 z-50'>
+        {props.announcement && !scrolled && (
+          <div className='bg-brand pointer-events-auto flex h-9 items-center justify-center px-4 text-center text-xs font-medium text-white sm:text-sm'>
+            {props.announcement.href ? (
+              <a
+                href={props.announcement.href}
+                className='truncate underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
+              >
+                {props.announcement.text}
+              </a>
+            ) : (
+              <span className='truncate'>{props.announcement.text}</span>
+            )}
+          </div>
+        )}
         <div
           className={cn(
             'pointer-events-auto mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',

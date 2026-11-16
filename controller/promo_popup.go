@@ -57,10 +57,19 @@ type promoPopupCard struct {
 	Deals         []promoPopupDeal `json:"deals"`
 }
 
+// promoAnnouncement is the one-line bar shown above the home page header.
+type promoAnnouncement struct {
+	Enabled bool   `json:"enabled"`
+	Text    string `json:"text"`
+	TextZh  string `json:"text_zh"`
+	Href    string `json:"href"`
+}
+
 type promoPopupSettings struct {
-	Enabled    bool             `json:"enabled"`
-	DailyLimit int              `json:"daily_limit"`
-	Cards      []promoPopupCard `json:"cards"`
+	Enabled      bool              `json:"enabled"`
+	DailyLimit   int               `json:"daily_limit"`
+	Cards        []promoPopupCard  `json:"cards"`
+	Announcement promoAnnouncement `json:"announcement"`
 }
 
 // GetPromoPopup returns the home page promotion popup settings (a JSON string,
@@ -132,7 +141,8 @@ func promoPopupCardAllowed(card promoPopupCard) bool {
 }
 
 // validatePromoPopup checks the PromoPopup option before it is saved: a bounded
-// daily limit, known card kinds, bounded text and lists, real end dates and safe links.
+// daily limit, known card kinds, bounded text and lists, real end dates and safe
+// links, on the cards and on the announcement bar.
 func validatePromoPopup(value string) error {
 	if strings.TrimSpace(value) == "" {
 		return nil
@@ -151,6 +161,12 @@ func validatePromoPopup(value string) error {
 		if !promoPopupCardAllowed(card) {
 			return errInvalidPromoPopup
 		}
+	}
+	announcement := settings.Announcement
+	if !promoPopupTextFits(80, announcement.Text, announcement.TextZh) ||
+		!promoPopupTextFits(500, announcement.Href) ||
+		!promoPopupHrefAllowed(announcement.Href) {
+		return errInvalidPromoPopup
 	}
 	return nil
 }
