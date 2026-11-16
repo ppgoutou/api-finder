@@ -81,12 +81,20 @@ func TestGetAllUsersDefaultsToNewestRegistrationFirst(t *testing.T) {
 
 func TestGetAllUsersSortsByInviteCount(t *testing.T) {
 	truncateTables(t)
-	insertUsersForPaginationTest(t, 3)
-	require.NoError(t, DB.Model(&User{}).Where("id = ?", 1).Update("aff_count", 2).Error)
-	require.NoError(t, DB.Model(&User{}).Where("id = ?", 2).Update("aff_count", 5).Error)
+	insertUsersForPaginationTest(t, 6)
+	// aff_count only grows when an inviter reward is paid, so it must not drive the count.
+	require.NoError(t, DB.Model(&User{}).Where("id = ?", 1).Update("aff_count", 9).Error)
+	require.NoError(t, DB.Model(&User{}).Where("id IN ?", []int{3, 4}).Update("inviter_id", 2).Error)
+	require.NoError(t, DB.Model(&User{}).Where("id = ?", 5).Update("inviter_id", 1).Error)
+	require.NoError(t, DB.Delete(&User{}, 4).Error) // deleted invitees still count
 
-	users, _, err := GetAllUsers(&common.PageInfo{Page: 1, PageSize: 20}, NewUserSortOptions("aff_count", "desc"))
+	users, _, err := GetAllUsers(&common.PageInfo{Page: 1, PageSize: 3}, NewUserSortOptions("invite_count", "desc"))
 	require.NoError(t, err)
-	assert.Equal(t, []int{2, 1, 3}, collectUserIDs(users))
-	assert.Equal(t, 5, users[0].AffCount)
+	assert.Equal(t, []int{2, 1, 6}, collectUserIDs(users))
+	assert.Equal(t, []int64{2, 1, 0}, []int64{users[0].InviteCount, users[1].InviteCount, users[2].InviteCount})
+
+	searched, _, err := SearchUsers("user", "", nil, nil, 0, 20, NewUserSortOptions("invite_count", "asc"))
+	require.NoError(t, err)
+	assert.Equal(t, 2, searched[len(searched)-1].Id)
+	assert.Equal(t, int64(2), searched[len(searched)-1].InviteCount)
 }

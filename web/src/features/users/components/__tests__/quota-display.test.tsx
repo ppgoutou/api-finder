@@ -273,7 +273,7 @@ async function renderUsersList(emptyInvitation = false) {
             created_at: Math.floor(Date.now() / 1000) - 86400,
             last_login_at: Math.floor(Date.now() / 1000) - 20,
             group: 'default',
-            aff_count: emptyInvitation ? 0 : 2,
+            invite_count: emptyInvitation ? 0 : 2,
             aff_history_quota: emptyInvitation ? 0 : 500000,
             inviter_id: emptyInvitation ? 0 : 42,
           },
