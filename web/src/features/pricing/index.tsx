@@ -204,17 +204,15 @@ export function Pricing() {
           <span className='text-muted-foreground text-xs'>
             {t('{{count}} models', { count: section.models.length })}
           </span>
-          {section.description && (
-            <p className='text-muted-foreground w-full text-sm'>
-              {section.description}
-            </p>
-          )}
-          {section.comparison && (
-            <div className='w-full'>
-              <CategoryComparison
-                categoryName={name}
-                comparison={section.comparison}
-              />
+          {(section.description || section.comparison) && (
+            <div className='text-muted-foreground flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
+              {section.description && <p>{section.description}</p>}
+              {section.comparison && (
+                <CategoryComparison
+                  categoryName={name}
+                  comparison={section.comparison}
+                />
+              )}
             </div>
           )}
         </div>
