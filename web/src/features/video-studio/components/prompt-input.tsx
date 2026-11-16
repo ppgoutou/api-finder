@@ -24,12 +24,20 @@ import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-import { canonicalMentions, localizeMentions } from '../lib/mention-names'
+import {
+  canonicalMentions,
+  localizeMentions,
+  splitMentions,
+} from '../lib/mention-names'
 import {
   PROMPT_INPUT_CAP,
   promptLength,
   type PromptGuide,
 } from '../lib/prompt-guide'
+
+/** Box and type the prompt textarea and its mention layer share. */
+const PROMPT_TEXT_BOX =
+  'px-1 py-1 text-base leading-6 break-words whitespace-pre-wrap [scrollbar-gutter:stable] md:text-sm md:leading-6'
 
 export interface MentionOption {
   /** Token the model reads, such as "图片1". */
@@ -54,7 +62,9 @@ interface PromptInputProps {
 /**
  * Prompt textarea. Typing "@" opens a list of the uploaded references and
  * picking one inserts its mention. Mentions show in the interface language,
- * such as "@Image1", and reach onChange as the model's "@图片1".
+ * such as "@Image1", and reach onChange as the model's "@图片1". Mentions of
+ * an uploaded reference stand out: the textarea text is transparent and a
+ * layer underneath draws the same text with the mentions marked.
  * Ctrl/⌘ + Enter submits.
  */
 export function PromptInput(props: PromptInputProps) {
@@ -68,6 +78,11 @@ export function PromptInput(props: PromptInputProps) {
     props.onChange(canonicalMentions(text, language))
   const hintId = useId()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const layerRef = useRef<HTMLDivElement>(null)
+  const parts = splitMentions(
+    shown,
+    props.mentions.map((option) => mentionName(option))
+  )
   // Caret position right after the "@" that opened the list.
   const [mentionAt, setMentionAt] = useState<number | null>(null)
   const [highlighted, setHighlighted] = useState(0)
@@ -122,31 +137,67 @@ export function PromptInput(props: PromptInputProps) {
 
   return (
     <div className='relative min-w-0 flex-1'>
-      <Textarea
-        ref={textareaRef}
-        value={shown}
-        placeholder={props.placeholder}
-        aria-label={props.label ?? t('Video prompt')}
-        maxLength={PROMPT_INPUT_CAP}
-        aria-describedby={hintId}
-        aria-invalid={tooLong}
-        rows={3}
-        className='min-h-20 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent'
-        onChange={(event) => {
-          const next = event.target.value
-          const caret = event.target.selectionStart
-          change(next)
-          const typedAt = next.length > shown.length && next[caret - 1] === '@'
-          if (typedAt) {
-            setMentionAt(caret)
-            setHighlighted(0)
-          } else if (menuOpen) {
-            closeMenu()
-          }
-        }}
-        onKeyDown={handleKeyDown}
-        onBlur={() => closeMenu()}
-      />
+      <div className='relative'>
+        {/* Same box and type as the textarea, so every glyph lines up. */}
+        <div
+          ref={layerRef}
+          aria-hidden
+          data-testid='prompt-mention-layer'
+          className={cn(
+            PROMPT_TEXT_BOX,
+            'pointer-events-none absolute inset-0 overflow-hidden'
+          )}
+        >
+          {parts.map((part) =>
+            part.mention ? (
+              <mark
+                key={part.start}
+                className='bg-primary/15 text-primary rounded-sm'
+              >
+                {part.text}
+              </mark>
+            ) : (
+              <span key={part.start}>{part.text}</span>
+            )
+          )}
+          {/* Keeps the height of a trailing empty line. */}
+          {'\u200b'}
+        </div>
+        <Textarea
+          ref={textareaRef}
+          value={shown}
+          placeholder={props.placeholder}
+          aria-label={props.label ?? t('Video prompt')}
+          maxLength={PROMPT_INPUT_CAP}
+          aria-describedby={hintId}
+          aria-invalid={tooLong}
+          rows={3}
+          className={cn(
+            PROMPT_TEXT_BOX,
+            'caret-foreground relative min-h-20 resize-none border-0 bg-transparent text-transparent shadow-none focus-visible:ring-0 dark:bg-transparent'
+          )}
+          onScroll={(event) => {
+            if (layerRef.current) {
+              layerRef.current.scrollTop = event.currentTarget.scrollTop
+            }
+          }}
+          onChange={(event) => {
+            const next = event.target.value
+            const caret = event.target.selectionStart
+            change(next)
+            const typedAt =
+              next.length > shown.length && next[caret - 1] === '@'
+            if (typedAt) {
+              setMentionAt(caret)
+              setHighlighted(0)
+            } else if (menuOpen) {
+              closeMenu()
+            }
+          }}
+          onKeyDown={handleKeyDown}
+          onBlur={() => closeMenu()}
+        />
+      </div>
       {/* The advice until the user types, then a character counter. */}
       <p
         id={hintId}

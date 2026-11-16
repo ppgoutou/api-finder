@@ -59,3 +59,43 @@ export function canonicalMentions(
 ): string {
   return renameMentions(text, namesFor(language), REFERENCE_TOKEN_NAMES)
 }
+
+/** A run of prompt text, flagged when it is a mention of a known reference. */
+export interface PromptPart {
+  /** Offset of the run in the text. */
+  start: number
+  text: string
+  mention: boolean
+}
+
+/**
+ * Prompt text cut into plain runs and mentions such as "@Image1", where
+ * mentions are the given names only; "@Image12" is not "@Image1".
+ */
+export function splitMentions(
+  text: string,
+  mentions: readonly string[]
+): PromptPart[] {
+  if (mentions.length === 0) return [{ start: 0, text, mention: false }]
+  const escaped = [...mentions]
+    .sort((a, b) => b.length - a.length)
+    .map((name) => name.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const pattern = new RegExp(`@(?:${escaped.join('|')})(?!\\d)`, 'g')
+  const parts: PromptPart[] = []
+  let last = 0
+  for (const match of text.matchAll(pattern)) {
+    if (match.index > last) {
+      parts.push({
+        start: last,
+        text: text.slice(last, match.index),
+        mention: false,
+      })
+    }
+    parts.push({ start: match.index, text: match[0], mention: true })
+    last = match.index + match[0].length
+  }
+  if (last < text.length) {
+    parts.push({ start: last, text: text.slice(last), mention: false })
+  }
+  return parts
+}
