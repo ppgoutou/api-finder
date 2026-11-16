@@ -35,7 +35,7 @@ var userSortColumns = map[string]string{
 	"group":         "group",
 	"created_at":    "created_at",
 	"last_login_at": "last_login_at",
-	"aff_count":     "aff_count",
+	"invite_count":  "invite_count",
 }
 
 type UserSortOptions struct {
@@ -65,10 +65,21 @@ func (options UserSortOptions) Apply(query *gorm.DB) *gorm.DB {
 	if !ok {
 		columnName = "id"
 	}
-	q := query.Order(clause.OrderByColumn{
-		Column: clause.Column{Name: columnName},
-		Desc:   options.SortOrder != "asc",
-	})
+	desc := options.SortOrder != "asc"
+	var q *gorm.DB
+	if columnName == "invite_count" {
+		// Counted from inviter_id: aff_count only grows when an inviter reward is paid.
+		direction := "DESC"
+		if !desc {
+			direction = "ASC"
+		}
+		q = query.Order("(SELECT COUNT(*) FROM users AS invitees WHERE invitees.inviter_id = users.id) " + direction)
+	} else {
+		q = query.Order(clause.OrderByColumn{
+			Column: clause.Column{Name: columnName},
+			Desc:   desc,
+		})
+	}
 	if columnName != "id" {
 		q = q.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: "id"},
@@ -114,6 +125,7 @@ type User struct {
 	AffQuota             int                        `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota      int                        `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
 	InviterId            int                        `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	InviteCount          int64                      `json:"invite_count" gorm:"-"` // users whose inviter_id is this user; filled by the admin list
 	DeletedAt            gorm.DeletedAt             `gorm:"index"`
 	LinuxDOId            string                     `json:"linux_do_id" gorm:"column:linux_do_id;index"`
 	Setting              string                     `json:"setting" gorm:"type:text;column:setting"`
@@ -502,6 +514,9 @@ func GetAllUsers(pageInfo *common.PageInfo, sortOptions ...UserSortOptions) (use
 		return nil, 0, err
 	}
 
+	if err = fillInviteCounts(users); err != nil {
+		return nil, 0, err
+	}
 	return users, total, nil
 }
 
@@ -571,7 +586,41 @@ func SearchUsers(keyword string, group string, role *int, status *int, startIdx 
 		return nil, 0, err
 	}
 
+	if err = fillInviteCounts(users); err != nil {
+		return nil, 0, err
+	}
 	return users, total, nil
+}
+
+// fillInviteCounts sets InviteCount on each user from the users that name it as inviter.
+func fillInviteCounts(users []*User) error {
+	if len(users) == 0 {
+		return nil
+	}
+	ids := make([]int, 0, len(users))
+	for _, user := range users {
+		ids = append(ids, user.Id)
+	}
+	var rows []struct {
+		InviterId int
+		Count     int64
+	}
+	err := DB.Unscoped().Model(&User{}).
+		Select("inviter_id, COUNT(*) AS count").
+		Where("inviter_id IN ?", ids).
+		Group("inviter_id").
+		Scan(&rows).Error
+	if err != nil {
+		return err
+	}
+	counts := make(map[int]int64, len(rows))
+	for _, row := range rows {
+		counts[row.InviterId] = row.Count
+	}
+	for _, user := range users {
+		user.InviteCount = counts[user.Id]
+	}
+	return nil
 }
 
 func GetUserById(id int, selectAll bool) (*User, error) {

@@ -48,6 +48,7 @@ export const userSchema = z.object({
   group: z.string(),
   aff_code: z.string().optional(),
   aff_count: z.number().optional(),
+  invite_count: z.number().optional(),
   aff_quota: z.number().optional(),
   aff_history_quota: z.number().optional(),
   inviter_id: z.number().optional(),
@@ -85,7 +86,7 @@ export type UserSortBy =
   | 'group'
   | 'created_at'
   | 'last_login_at'
-  | 'aff_count'
+  | 'invite_count'
 
 export type UserSortOrder = 'asc' | 'desc'
 
