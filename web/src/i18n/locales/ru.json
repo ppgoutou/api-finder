@@ -8296,6 +8296,9 @@
     "Show the announcement bar": "Показывать строку объявления",
     "One line above the home page header. It hides once the visitor scrolls.": "Одна строка над шапкой главной страницы. Скрывается, когда посетитель прокручивает страницу.",
     "Announcement text": "Текст объявления",
-    "Announcement text (Chinese)": "Текст объявления (китайский)"
+    "Announcement text (Chinese)": "Текст объявления (китайский)",
+    "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "Промпт длиннее, чем допускает эта модель. Списанные средства, если были, возвращены. Сократите промпт и отправьте снова.",
+    "The prompt is too long for this model": "Промпт слишком длинный для этой модели",
+    "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "В промпте {{length}} символов, эта модель принимает не более {{max}}. Сократите его."
   }
 }

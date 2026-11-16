@@ -178,7 +178,7 @@ export function Composer(props: ComposerProps) {
                 )
           }
           onSubmit={submit}
-          guide={promptGuide(model?.name)}
+          guide={promptGuide(model?.name, model?.maxPromptLength)}
         />
       </div>
 

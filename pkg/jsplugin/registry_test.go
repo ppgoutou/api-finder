@@ -1236,13 +1236,22 @@ modelLimits: {
 	require.True(t, declared)
 	assert.Equal(t, ModelLimits{MaxReferenceImages: 4}, limits)
 
+	// So is a prompt length alone.
+	promptOnly, err := CompilePlugin(routingTestPluginSource("prompt-limits", 0, `["short"]`, `modelLimits: {short: {maxPromptLength: 5000}},`, ""), Options{})
+	require.NoError(t, err)
+	limits, declared = promptOnly.Meta.LimitsForModel("short")
+	require.True(t, declared)
+	assert.Equal(t, ModelLimits{MaxPromptLength: 5000}, limits)
+
 	for _, tc := range []struct {
 		name, limits, errorText string
 	}{
 		{"not an object", `[]`, "modelLimits must be an object"},
 		{"unknown model", `{other: {ratios: ["1:1"]}}`, "not declared"},
 		{"unknown field", `{short: {fps: 24}}`, "unknown field"},
-		{"empty", `{short: {}}`, "durations, ratios or reference counts"},
+		{"empty", `{short: {}}`, "durations, ratios, reference counts or a prompt length"},
+		{"zero prompt length", `{short: {maxPromptLength: 0}}`, "maxPromptLength must be at least 1"},
+		{"prompt length over cap", `{short: {maxPromptLength: 100001}}`, "maxPromptLength must lie between 1 and 100000"},
 		{"zero references", `{short: {maxReferenceVideos: 0}}`, "maxReferenceVideos must be at least 1"},
 		{"too many references", `{short: {maxReferenceImages: 101}}`, "reference counts must lie between 1 and 100"},
 		{"fractional references", `{short: {maxReferenceAudios: 2.5}}`, "must be an integer"},

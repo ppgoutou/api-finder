@@ -40,6 +40,8 @@ export interface StudioModel extends StudioModelAvailability {
   ratios: readonly StudioRatio[]
   /** Most reference files of each kind, when the plugin declares them. */
   referenceLimits?: Readonly<Record<AssetKind, number>>
+  /** Longest prompt in Unicode characters, when the plugin declares it. */
+  maxPromptLength?: number
 }
 
 /**

@@ -18,6 +18,7 @@ const (
 	CodeBalanceInsufficient       = "balance_insufficient"
 	CodeBalanceInsufficientDetail = "balance_insufficient_detail"
 	CodePromptRequired            = "prompt_required"
+	CodePromptTooLong             = "prompt_too_long"
 	CodeModelRequired             = "model_required"
 	CodeRefImageRequired          = "ref_image_required"
 	CodeRatioRequired             = "ratio_required"
@@ -65,6 +66,7 @@ var messages = map[string]string{
 	CodeBalanceInsufficient:       "Your balance is too low. Please top up and try again.",
 	CodeBalanceInsufficientDetail: "Your balance is too low: {{remaining}} available, {{required}} needed for this request. Please top up and try again.",
 	CodePromptRequired:            "Please enter a prompt.",
+	CodePromptTooLong:             "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.",
 	CodeModelRequired:             "Please select a model.",
 	CodeRefImageRequired:          "This model needs at least 1 reference image. Please upload one and submit again.",
 	CodeRatioRequired:             "Please select a video aspect ratio.",
@@ -185,6 +187,7 @@ var textRules = []rule{
 	{CodeMaterialFrameRate, []string{"frame rate must"}},
 	{CodeMaterialPixels, []string{"pixel count must"}},
 	{CodeMaterialRequirements, []string{"请检查上传素材", "inner_generation__classification"}},
+	{CodePromptTooLong, []string{"prompt is too long", "prompt too long", "prompt_too_long", "提示词共", "提示词过长", "提示词长度"}},
 	{CodePromptRequired, []string{"prompt is required", "missing `prompt`", "prompt 不能为空"}},
 	{CodeModelRequired, []string{"model field is required", "model_name_required"}},
 	{CodeRefImageRequired, []string{"at least one reference image"}},
@@ -212,6 +215,7 @@ var failReasonRules = []rule{
 	{CodeTaskTimeout, []string{"task timed out"}},
 	{CodeTaskCancelledByAdmin, []string{"按管理员要求驳回"}},
 	{CodeTaskResultUnavailable, []string{"upstream task not found", "failed to query the upstream task status"}},
+	{CodePromptTooLong, []string{"prompt is too long", "prompt too long", "prompt_too_long", "提示词共", "提示词过长", "提示词长度"}},
 	{CodeGenerationMaybeContent, []string{"请检查提示词和素材"}},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
 	{CodeModerationCopyright, []string{"copyright"}},

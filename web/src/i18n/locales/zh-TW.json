@@ -8296,6 +8296,9 @@
     "Show the announcement bar": "顯示公告條",
     "One line above the home page header. It hides once the visitor scrolls.": "顯示在首頁頂部導覽上方的一行文字，訪客往下捲動後隱藏。",
     "Announcement text": "公告文案",
-    "Announcement text (Chinese)": "公告文案（中文）"
+    "Announcement text (Chinese)": "公告文案（中文）",
+    "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "提示詞超過了該模型允許的長度。如已扣費，費用已退回，請縮短提示詞後重新提交。",
+    "The prompt is too long for this model": "提示詞超出該模型的長度上限",
+    "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "提示詞共 {{length}} 字元，該模型最多 {{max}} 字元，請縮短後再提交。"
   }
 }

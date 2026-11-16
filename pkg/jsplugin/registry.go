@@ -162,7 +162,8 @@ type UsageProfile struct {
 // requests. Durations are seconds: the range, and optionally the only values
 // inside it the vendor takes. Ratios are output aspect ratios such as "16:9".
 // The reference counts are the most reference images, videos and audio clips
-// one request takes. Display only; the plugin's decoder still enforces its own
+// one request takes. MaxPromptLength is the longest prompt the vendor takes, in
+// Unicode characters. Display only; the plugin's decoder still enforces its own
 // limits.
 type ModelLimits struct {
 	MinDuration        int      `json:"minDuration,omitempty"`
@@ -172,6 +173,7 @@ type ModelLimits struct {
 	MaxReferenceImages int      `json:"maxReferenceImages,omitempty"`
 	MaxReferenceVideos int      `json:"maxReferenceVideos,omitempty"`
 	MaxReferenceAudios int      `json:"maxReferenceAudios,omitempty"`
+	MaxPromptLength    int      `json:"maxPromptLength,omitempty"`
 }
 
 // DeclaresModel reports whether the plugin lists the model. Plugins look
@@ -1531,10 +1533,16 @@ const maxModelLimitValues = 64
 // maxModelLimitReferences bounds a declared reference count per kind.
 const maxModelLimitReferences = 100
 
+// maxModelLimitPromptLength bounds a declared prompt length.
+const maxModelLimitPromptLength = 100000
+
 func validateModelLimits(limits ModelLimits) error {
 	references := []int{limits.MaxReferenceImages, limits.MaxReferenceVideos, limits.MaxReferenceAudios}
-	if limits.MinDuration == 0 && limits.MaxDuration == 0 && len(limits.Durations) == 0 && len(limits.Ratios) == 0 && slices.Max(references) == 0 {
-		return fmt.Errorf("limits must declare durations, ratios or reference counts")
+	if limits.MinDuration == 0 && limits.MaxDuration == 0 && len(limits.Durations) == 0 && len(limits.Ratios) == 0 && slices.Max(references) == 0 && limits.MaxPromptLength == 0 {
+		return fmt.Errorf("limits must declare durations, ratios, reference counts or a prompt length")
+	}
+	if limits.MaxPromptLength < 0 || limits.MaxPromptLength > maxModelLimitPromptLength {
+		return fmt.Errorf("maxPromptLength must lie between 1 and %d", maxModelLimitPromptLength)
 	}
 	if slices.Min(references) < 0 || slices.Max(references) > maxModelLimitReferences {
 		return fmt.Errorf("reference counts must lie between 1 and %d", maxModelLimitReferences)
@@ -1584,7 +1592,7 @@ func decodeModelLimits(value any) (map[string]ModelLimits, error) {
 		}
 		for key := range entry {
 			switch key {
-			case "minDuration", "maxDuration", "durations", "ratios", "maxReferenceImages", "maxReferenceVideos", "maxReferenceAudios":
+			case "minDuration", "maxDuration", "durations", "ratios", "maxReferenceImages", "maxReferenceVideos", "maxReferenceAudios", "maxPromptLength":
 			default:
 				return nil, fmt.Errorf("plugin meta modelLimits[%q] has unknown field %q", model, key)
 			}
@@ -1606,7 +1614,10 @@ func decodeModelLimits(value any) (map[string]ModelLimits, error) {
 		if limits.MaxReferenceAudios, err = integerMetaField(entry, "maxReferenceAudios"); err != nil {
 			return nil, err
 		}
-		for _, key := range []string{"maxReferenceImages", "maxReferenceVideos", "maxReferenceAudios"} {
+		if limits.MaxPromptLength, err = integerMetaField(entry, "maxPromptLength"); err != nil {
+			return nil, err
+		}
+		for _, key := range []string{"maxReferenceImages", "maxReferenceVideos", "maxReferenceAudios", "maxPromptLength"} {
 			if count, _ := integerMetaField(entry, key); entry[key] != nil && count < 1 {
 				return nil, fmt.Errorf("plugin meta modelLimits[%q] %s must be at least 1", model, key)
 			}

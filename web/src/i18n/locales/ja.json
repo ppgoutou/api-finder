@@ -8296,6 +8296,9 @@
     "Show the announcement bar": "お知らせバーを表示",
     "One line above the home page header. It hides once the visitor scrolls.": "ホームページのヘッダー上に表示する1行。訪問者がスクロールすると隠れます。",
     "Announcement text": "お知らせの文言",
-    "Announcement text (Chinese)": "お知らせの文言（中国語）"
+    "Announcement text (Chinese)": "お知らせの文言（中国語）",
+    "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "プロンプトがこのモデルの上限を超えています。料金が発生した場合は返金済みです。プロンプトを短くして再送信してください。",
+    "The prompt is too long for this model": "プロンプトがこのモデルには長すぎます",
+    "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "プロンプトは {{length}} 文字です。このモデルは最大 {{max}} 文字までです。短くしてください。"
   }
 }

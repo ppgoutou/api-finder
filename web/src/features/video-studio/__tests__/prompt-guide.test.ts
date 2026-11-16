@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { describe, expect, it } from 'vitest'
 
-import { promptGuide } from '../lib/prompt-guide'
+import { promptGuide, promptLength } from '../lib/prompt-guide'
 
 describe('promptGuide', () => {
   it.each([
@@ -37,4 +37,15 @@ describe('promptGuide', () => {
       expect(guide.hint).toMatch(hint)
     }
   )
+
+  it('takes the limit a plugin declares only when it is lower', () => {
+    expect(promptGuide('seedance2.5-T', 5000).maxLength).toBe(5000)
+    expect(promptGuide('seedance2.5-T', 5000).hint).toMatch(/^Seedance/)
+    expect(promptGuide('H-MiniMax-H3-Fast', 5000).maxLength).toBe(2000)
+    expect(promptGuide('seedance2.5-T', undefined).maxLength).toBe(7500)
+  })
+
+  it('counts the trimmed prompt in Unicode characters', () => {
+    expect(promptLength('  @图片1 跑步 😀 \n')).toBe(9)
+  })
 })

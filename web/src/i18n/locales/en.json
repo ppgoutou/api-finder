@@ -8296,6 +8296,9 @@
     "Show the announcement bar": "Show the announcement bar",
     "One line above the home page header. It hides once the visitor scrolls.": "One line above the home page header. It hides once the visitor scrolls.",
     "Announcement text": "Announcement text",
-    "Announcement text (Chinese)": "Announcement text (Chinese)"
+    "Announcement text (Chinese)": "Announcement text (Chinese)",
+    "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.",
+    "The prompt is too long for this model": "The prompt is too long for this model",
+    "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it."
   }
 }

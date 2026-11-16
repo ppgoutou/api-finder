@@ -8296,6 +8296,9 @@
     "Show the announcement bar": "Afficher la barre d'annonce",
     "One line above the home page header. It hides once the visitor scrolls.": "Une ligne au-dessus de l'en-tête de la page d'accueil. Elle disparaît dès que le visiteur fait défiler.",
     "Announcement text": "Texte de l'annonce",
-    "Announcement text (Chinese)": "Texte de l'annonce (chinois)"
+    "Announcement text (Chinese)": "Texte de l'annonce (chinois)",
+    "The prompt is longer than this model allows. Any charge has been refunded. Please shorten the prompt and submit again.": "Le prompt dépasse la longueur autorisée par ce modèle. Tout montant prélevé a été remboursé. Raccourcissez le prompt et soumettez à nouveau.",
+    "The prompt is too long for this model": "Le prompt est trop long pour ce modèle",
+    "The prompt has {{length}} characters; this model takes up to {{max}}. Please shorten it.": "Le prompt compte {{length}} caractères ; ce modèle en accepte au plus {{max}}. Veuillez le raccourcir."
   }
 }

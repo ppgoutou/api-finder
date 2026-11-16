@@ -50,6 +50,7 @@ import type {
   StudioRatio,
   VideoTaskRequest,
 } from '../types'
+import { promptGuide, promptLength } from './prompt-guide'
 
 /**
  * Models of the public pricing list that the canvas can submit: video models
@@ -101,6 +102,9 @@ export function studioModelsFromPricing(
                 audio: limits?.maxReferenceAudios || REFERENCE_LIMITS.audio,
               },
             }
+          : {}),
+        ...(limits?.maxPromptLength
+          ? { maxPromptLength: limits.maxPromptLength }
           : {}),
       },
     ]
@@ -314,9 +318,15 @@ export function countReferences(
 /** i18n key of the reason the draft cannot be submitted, or null. */
 export function validateDraft(
   draft: StudioDraft,
-  model?: Pick<StudioModel, 'referenceLimits'>
+  model?: Pick<StudioModel, 'referenceLimits' | 'maxPromptLength'> & {
+    name?: string
+  }
 ): string | null {
   if (!draft.prompt.trim()) return 'Describe the video you want'
+  const { maxLength } = promptGuide(model?.name, model?.maxPromptLength)
+  if (promptLength(draft.prompt) > maxLength) {
+    return 'The prompt is too long for this model'
+  }
   const assets =
     draft.mode === 'frames'
       ? [draft.firstFrame, draft.lastFrame].flatMap((asset) =>

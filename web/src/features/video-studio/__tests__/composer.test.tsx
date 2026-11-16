@@ -400,7 +400,7 @@ describe('Composer prompt length guide', () => {
     expect(prompt).toHaveAccessibleDescription(/Seedance works best/)
   })
 
-  it('caps the prompt at 2000 characters with the MiniMax hint when a MiniMax model is picked', () => {
+  it('gives the MiniMax hint and its 2000-character limit when a MiniMax model is picked', () => {
     studioModels.current = [
       {
         name: 'H-MiniMax-H3-Fast',
@@ -412,8 +412,31 @@ describe('Composer prompt length guide', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
-    expect(prompt).toHaveAttribute('maxLength', '2000')
     expect(prompt).toHaveAccessibleDescription(/MiniMax takes up to 2,000/)
+  })
+
+  it('keeps a prompt over the declared limit whole, says so and does not submit it', async () => {
+    studioModels.current = [
+      {
+        name: 'seedance2.5-T',
+        resolutions: ['720p'],
+        duration: [4, 30],
+        ratios: STUDIO_RATIOS,
+        maxPromptLength: 10,
+      },
+    ]
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+    await user.type(prompt, 'a cat runs fast')
+
+    expect(prompt).toHaveValue('a cat runs fast')
+    expect(prompt).toHaveAttribute('aria-invalid', 'true')
+    expect(prompt).toHaveAccessibleDescription(
+      /has 15 characters; this model takes up to 10/
+    )
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+    expect(createMock).not.toHaveBeenCalled()
   })
 
   it('hides the hint from view once the user starts typing', async () => {

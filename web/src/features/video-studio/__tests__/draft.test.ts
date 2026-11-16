@@ -287,6 +287,17 @@ describe('studioModelsFromPricing', () => {
     expect(model.referenceLimits).toBeUndefined()
   })
 
+  it('takes the declared prompt length', () => {
+    const [declared, undeclared] = studioModelsFromPricing([
+      videoModel('seedance2.5-T', ['720p'], {
+        model_limits: { maxPromptLength: 5000 },
+      }),
+      videoModel('seedance2.0-T', ['720p']),
+    ])
+    expect(declared.maxPromptLength).toBe(5000)
+    expect(undeclared.maxPromptLength).toBeUndefined()
+  })
+
   it('offers 9:21 only to a video model whose limits declare it', () => {
     const [model] = studioModelsFromPricing([
       videoModel('seedance2.5-T', ['480p', '720p'], {
@@ -536,6 +547,14 @@ describe('validateDraft', () => {
     const model = { referenceLimits: { image: 30, video: 10, audio: 10 } }
     expect(validateDraft(tenVideos, model)).toBeNull()
     expect(validateDraft(tenVideos)).toBe('Too many reference files')
+  })
+
+  it('rejects a prompt longer than the model declares', () => {
+    const model = { name: 'seedance2.5-T', maxPromptLength: 5 }
+    expect(validateDraft(draft({ prompt: '一二三四五' }), model)).toBeNull()
+    expect(validateDraft(draft({ prompt: '一二三四五六' }), model)).toBe(
+      'The prompt is too long for this model'
+    )
   })
 
   it('rejects one file over the limit the model declares', () => {

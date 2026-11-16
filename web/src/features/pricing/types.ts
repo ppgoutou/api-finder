@@ -171,8 +171,9 @@ export type PricingModel = {
 
 /**
  * Generation limits a task plugin declares for a model: whole-second duration
- * range, optionally the only lengths inside it, W:H aspect ratios, and the most
- * reference images, videos and audio clips one request takes.
+ * range, optionally the only lengths inside it, W:H aspect ratios, the most
+ * reference images, videos and audio clips one request takes, and the longest
+ * prompt in Unicode characters.
  */
 export type ModelLimits = {
   minDuration?: number
@@ -182,6 +183,7 @@ export type ModelLimits = {
   maxReferenceImages?: number
   maxReferenceVideos?: number
   maxReferenceAudios?: number
+  maxPromptLength?: number
 }
 
 /** Input/output modalities supported by a model. */
