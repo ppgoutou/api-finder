@@ -378,6 +378,9 @@ func InitResources() error {
 
 	service.StartAuthArtifactCleanup()
 	service.StartAffRebateSettlementTask()
+	if common.IsMasterNode {
+		model.BackfillTopUpMembership()
+	}
 	service.StartUSDTSyncTask()
 
 	return nil
