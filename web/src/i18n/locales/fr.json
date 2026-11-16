@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "La vérification de sécurité n’est plus valide. Recommencez.",
     "See prices in the model square": "Voir les prix dans la place de marché des modèles",
     "Seed": "Graine",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 est disponible, jusqu'à 30 secondes par clip",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 est disponible · jusqu'à 30 secondes par clip",
     "Seedance AI video · online": "Vidéo IA Seedance · en ligne",
     "Seedance models": "Modèles Seedance",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 prend en charge du 480p à la 4K et 4 à 15 secondes par clip ; seedance-2.5 prend en charge du 480p au 1080p et 4 à 30 secondes par clip.",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "Comparatif des modèles {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Affiché dans une fenêtre contextuelle sous le titre de la catégorie. Markdown pris en charge.",
     "Only this user": "Uniquement cet utilisateur",
-    "View Usage Logs": "Voir les journaux d'utilisation"
+    "View Usage Logs": "Voir les journaux d'utilisation",
+    "Announcement bar": "Barre d'annonce",
+    "Show the announcement bar": "Afficher la barre d'annonce",
+    "One line above the home page header. It hides once the visitor scrolls.": "Une ligne au-dessus de l'en-tête de la page d'accueil. Elle disparaît dès que le visiteur fait défiler.",
+    "Announcement text": "Texte de l'annonce",
+    "Announcement text (Chinese)": "Texte de l'annonce (chinois)"
   }
 }

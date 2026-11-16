@@ -19,11 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 import { describe, expect, it } from 'vitest'
 
 import {
+  EMPTY_PROMO_ANNOUNCEMENT,
   EMPTY_PROMO_POPUP,
   emptyPromoCard,
   getPromoPriceRatio,
   parsePromoPopup,
   type PromoCard,
+  selectPromoAnnouncement,
   selectPromoCards,
   serializePromoPopup,
 } from '../lib/promo-popup'
@@ -62,8 +64,8 @@ describe('promo popup settings', () => {
       tiers: [{ pay: '¥100', bonus: '¥10' }],
     }
     const raw = serializePromoPopup({
+      ...EMPTY_PROMO_POPUP,
       enabled: true,
-      dailyLimit: 1,
       cards: [card],
     })
 
@@ -87,11 +89,7 @@ describe('promo popup daily limit', () => {
   })
 
   it('keeps a changed limit even without cards', () => {
-    const raw = serializePromoPopup({
-      enabled: false,
-      dailyLimit: 3,
-      cards: [],
-    })
+    const raw = serializePromoPopup({ ...EMPTY_PROMO_POPUP, dailyLimit: 3 })
     expect(parsePromoPopup(raw).dailyLimit).toBe(3)
   })
 
@@ -106,7 +104,7 @@ describe('promo card selection', () => {
   it('shows nothing while the popup is disabled', () => {
     expect(
       selectPromoCards(
-        { enabled: false, dailyLimit: 1, cards: [modelCard()] },
+        { ...EMPTY_PROMO_POPUP, enabled: false, cards: [modelCard()] },
         'en',
         today
       )
@@ -120,7 +118,7 @@ describe('promo card selection', () => {
   ])('with last day %j keeps %i cards on the day', (endsAt, expected) => {
     expect(
       selectPromoCards(
-        { enabled: true, dailyLimit: 1, cards: [modelCard({ endsAt })] },
+        { ...EMPTY_PROMO_POPUP, enabled: true, cards: [modelCard({ endsAt })] },
         'en',
         today
       )
@@ -130,7 +128,11 @@ describe('promo card selection', () => {
   it('hides a card without its required content', () => {
     expect(
       selectPromoCards(
-        { enabled: true, dailyLimit: 1, cards: [modelCard({ salePrice: '' })] },
+        {
+          ...EMPTY_PROMO_POPUP,
+          enabled: true,
+          cards: [modelCard({ salePrice: '' })],
+        },
         'en',
         today
       )
@@ -144,14 +146,66 @@ describe('promo card selection', () => {
   ])('in %s uses the title %s', (language, title) => {
     const [card] = selectPromoCards(
       {
+        ...EMPTY_PROMO_POPUP,
         enabled: true,
-        dailyLimit: 1,
         cards: [modelCard({ title: 'Sale', titleZh: '特价' })],
       },
       language,
       today
     )
     expect(card.title).toBe(title)
+  })
+})
+
+describe('promo announcement bar', () => {
+  const announcement = {
+    enabled: true,
+    text: 'Seedance 2.5 is live',
+    textZh: 'Seedance 2.5 已上线',
+    href: '/pricing',
+  }
+
+  it('stores the announcement alone and reads it back', () => {
+    const stored = serializePromoPopup({ ...EMPTY_PROMO_POPUP, announcement })
+    expect(parsePromoPopup(stored).announcement).toEqual(announcement)
+  })
+
+  it('stores nothing when neither the popup nor the bar is set', () => {
+    expect(
+      serializePromoPopup({
+        ...EMPTY_PROMO_POPUP,
+        announcement: EMPTY_PROMO_ANNOUNCEMENT,
+      })
+    ).toBe('')
+  })
+
+  it.each([
+    ['zh-CN', 'Seedance 2.5 已上线'],
+    ['zh-TW', 'Seedance 2.5 已上线'],
+    ['ja', 'Seedance 2.5 is live'],
+  ])('in %s shows %s with its link', (language, text) => {
+    expect(selectPromoAnnouncement(announcement, language)).toEqual({
+      text,
+      href: '/pricing',
+    })
+  })
+
+  it('falls back to the default text when the Chinese text is empty', () => {
+    expect(
+      selectPromoAnnouncement({ ...announcement, textZh: ' ' }, 'zh-CN')?.text
+    ).toBe('Seedance 2.5 is live')
+  })
+
+  it('shows nothing while the bar is off', () => {
+    expect(
+      selectPromoAnnouncement({ ...announcement, enabled: false }, 'en')
+    ).toBeNull()
+  })
+
+  it('shows nothing when the language has no text', () => {
+    expect(
+      selectPromoAnnouncement({ ...announcement, text: '', textZh: '' }, 'en')
+    ).toBeNull()
   })
 })
 

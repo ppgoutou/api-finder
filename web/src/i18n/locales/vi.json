@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "Xác minh bảo mật không còn hợp lệ. Vui lòng xác minh lại.",
     "See prices in the model square": "Xem giá tại chợ mô hình",
     "Seed": "Seed",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 đã ra mắt, tối đa 30 giây mỗi đoạn",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 đã ra mắt · tối đa 30 giây mỗi đoạn",
     "Seedance AI video · online": "Video AI Seedance · trực tuyến",
     "Seedance models": "Mô hình Seedance",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 hỗ trợ 480p đến 4K, 4–15 giây mỗi đoạn; seedance-2.5 hỗ trợ 480p đến 1080p, 4–30 giây mỗi đoạn.",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "So sánh mô hình {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Hiển thị trong cửa sổ bật lên dưới tiêu đề danh mục. Hỗ trợ Markdown.",
     "Only this user": "Chỉ người dùng này",
-    "View Usage Logs": "Xem nhật ký sử dụng"
+    "View Usage Logs": "Xem nhật ký sử dụng",
+    "Announcement bar": "Thanh thông báo",
+    "Show the announcement bar": "Hiển thị thanh thông báo",
+    "One line above the home page header. It hides once the visitor scrolls.": "Một dòng phía trên đầu trang chủ. Dòng này ẩn khi khách cuộn trang.",
+    "Announcement text": "Nội dung thông báo",
+    "Announcement text (Chinese)": "Nội dung thông báo (tiếng Trung)"
   }
 }

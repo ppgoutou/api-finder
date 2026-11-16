@@ -6066,7 +6066,7 @@
     "Security verification is no longer valid. Please verify again.": "Security verification is no longer valid. Please verify again.",
     "See prices in the model square": "See prices in the model square",
     "Seed": "Seed",
-    "Seedance 2.5 is live, up to 30 seconds per clip": "Seedance 2.5 is live, up to 30 seconds per clip",
+    "Seedance 2.5 is live · up to 30 seconds per clip": "Seedance 2.5 is live · up to 30 seconds per clip",
     "Seedance AI video · online": "Seedance AI video · online",
     "Seedance models": "Seedance models",
     "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.": "seedance-2.0 supports 480p to 4K and 4–15 seconds per clip; seedance-2.5 supports 480p to 1080p and 4–30 seconds per clip.",
@@ -8291,6 +8291,11 @@
     "{{name}} model comparison": "{{name}} model comparison",
     "Shown in a popover under the category heading. Supports Markdown.": "Shown in a popover under the category heading. Supports Markdown.",
     "Only this user": "Only this user",
-    "View Usage Logs": "View Usage Logs"
+    "View Usage Logs": "View Usage Logs",
+    "Announcement bar": "Announcement bar",
+    "Show the announcement bar": "Show the announcement bar",
+    "One line above the home page header. It hides once the visitor scrolls.": "One line above the home page header. It hides once the visitor scrolls.",
+    "Announcement text": "Announcement text",
+    "Announcement text (Chinese)": "Announcement text (Chinese)"
   }
 }

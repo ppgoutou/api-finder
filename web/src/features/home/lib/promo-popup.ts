@@ -69,11 +69,21 @@ export type PromoCard = PromoPriceLine & {
   deals: PromoDeal[]
 }
 
+/** One line shown in a bar above the home page header. */
+export type PromoAnnouncement = {
+  enabled: boolean
+  text: string
+  textZh: string
+  /** Same-site path or https link; empty shows the text without a link. */
+  href: string
+}
+
 export type PromoPopupSettings = {
   enabled: boolean
   /** How many times one browser can see the popup per day. */
   dailyLimit: number
   cards: PromoCard[]
+  announcement: PromoAnnouncement
 }
 
 export const PROMO_DEFAULT_HREF: Record<PromoCardKind, string> = {
@@ -82,10 +92,20 @@ export const PROMO_DEFAULT_HREF: Record<PromoCardKind, string> = {
   list: '/pricing',
 }
 
+export const PROMO_ANNOUNCEMENT_MAX_LENGTH = 80
+
+export const EMPTY_PROMO_ANNOUNCEMENT: PromoAnnouncement = {
+  enabled: false,
+  text: '',
+  textZh: '',
+  href: '',
+}
+
 export const EMPTY_PROMO_POPUP: PromoPopupSettings = {
   enabled: false,
   dailyLimit: PROMO_POPUP_DEFAULT_DAILY_LIMIT,
   cards: [],
+  announcement: EMPTY_PROMO_ANNOUNCEMENT,
 }
 
 export function emptyPromoCard(kind: PromoCardKind = 'model'): PromoCard {
@@ -191,21 +211,33 @@ export function parsePromoPopup(
   }
   const source = asRecord(parsed)
   const cards = Array.isArray(source.cards) ? source.cards : []
+  const announcement = asRecord(source.announcement)
   return {
     enabled: source.enabled === true,
     dailyLimit: readDailyLimit(source.daily_limit),
     cards: cards
       .map(readCard)
       .filter((card): card is PromoCard => card !== null),
+    announcement: {
+      enabled: announcement.enabled === true,
+      text: readText(announcement, 'text'),
+      textZh: readText(announcement, 'text_zh'),
+      href: readText(announcement, 'href'),
+    },
   }
 }
 
 /** Stores only the fields the card's kind shows. */
 export function serializePromoPopup(settings: PromoPopupSettings): string {
+  const announcement = settings.announcement
+  const hasAnnouncement =
+    announcement.enabled ||
+    Boolean(announcement.text || announcement.textZh || announcement.href)
   if (
     !settings.enabled &&
     settings.cards.length === 0 &&
-    settings.dailyLimit === PROMO_POPUP_DEFAULT_DAILY_LIMIT
+    settings.dailyLimit === PROMO_POPUP_DEFAULT_DAILY_LIMIT &&
+    !hasAnnouncement
   ) {
     return ''
   }
@@ -242,6 +274,14 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
         })),
       }),
     })),
+    ...(hasAnnouncement && {
+      announcement: {
+        enabled: announcement.enabled,
+        text: announcement.text,
+        text_zh: announcement.textZh,
+        href: announcement.href,
+      },
+    }),
   })
 }
 
@@ -288,6 +328,25 @@ export function selectPromoCards(
         (deal) => deal.modelName.trim() && deal.salePrice.trim()
       ),
     }))
+}
+
+/**
+ * The announcement bar's text in the interface language with its link, or
+ * null while it is off or has no text for this language.
+ */
+export function selectPromoAnnouncement(
+  announcement: PromoAnnouncement,
+  language: string
+): { text: string; href: string } | null {
+  if (!announcement.enabled) return null
+  const interfaceLanguage = normalizeInterfaceLanguage(language)
+  const chinese = interfaceLanguage === 'zhCN' || interfaceLanguage === 'zhTW'
+  const text = (
+    (chinese && announcement.textZh.trim()) ||
+    announcement.text
+  ).trim()
+  if (!text) return null
+  return { text, href: announcement.href.trim() }
 }
 
 /** Reads the number out of display text such as `¥0.12` or `$1,200`. */

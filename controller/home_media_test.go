@@ -229,6 +229,9 @@ func TestValidatePromoPopup(t *testing.T) {
 		{"too many deals", `{"cards":[{"kind":"list","deals":[{},{},{},{},{}]}]}`, false},
 		{"title too long", `{"cards":[{"kind":"model","title":"` + strings.Repeat("长", 61) + `"}]}`, false},
 		{"deal name too long", `{"cards":[{"kind":"list","deals":[{"model_name":"` + strings.Repeat("x", 61) + `"}]}]}`, false},
+		{"announcement bar", `{"announcement":{"enabled":true,"text":"Seedance 2.5 is live","text_zh":"Seedance 2.5 已上线","href":"/pricing"}}`, true},
+		{"announcement text too long", `{"announcement":{"text_zh":"` + strings.Repeat("长", 81) + `"}}`, false},
+		{"announcement javascript link", `{"announcement":{"text":"x","href":"javascript:alert(1)"}}`, false},
 		{"not json", `{"cards":`, false},
 	}
 	for _, tc := range cases {
