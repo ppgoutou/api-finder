@@ -8302,6 +8302,11 @@
     "Turn a script into characters, storyboards and a finished episode in one workspace.": "Biến kịch bản thành nhân vật, phân cảnh và một tập phim hoàn chỉnh trong một không gian làm việc.",
     "E-commerce product images": "Ảnh sản phẩm thương mại điện tử",
     "Make white-background hero images, new scenes and model shots for a whole catalog.": "Tạo ảnh chính nền trắng, bối cảnh mới và ảnh người mẫu cho cả danh mục sản phẩm.",
-    "Make it with our partner PX Show": "Làm với đối tác PX Show"
+    "Make it with our partner PX Show": "Làm với đối tác PX Show",
+    "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.": "Prompt quá dài so với giới hạn của mô hình này. Khoản phí (nếu có) đã được hoàn lại. Vui lòng rút gọn rồi gửi lại.",
+    "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "Khung hình đầu và khung hình cuối phải được cung cấp cùng nhau. Vui lòng thêm khung còn thiếu hoặc bỏ cả hai, rồi gửi lại.",
+    "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "Tư liệu không khớp với chế độ tạo đã chọn (ví dụ ảnh tham chiếu bị xem là khung hình đầu). Khoản phí (nếu có) đã được hoàn lại. Vui lòng kiểm tra chế độ và tư liệu rồi gửi lại.",
+    "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "Tư liệu tải lên không qua được kiểm duyệt nội dung nên chưa bắt đầu tạo. Khoản phí (nếu có) đã được hoàn lại. Vui lòng thay tư liệu đó rồi gửi lại.",
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "Âm thanh được tạo đã bị chặn vì có thể liên quan đến bản quyền âm nhạc. Khoản phí (nếu có) đã được hoàn lại. Hãy tắt tạo âm thanh, hoặc bỏ phần mô tả nhạc, bài hát và lời bài hát khỏi prompt, rồi gửi lại."
   }
 }

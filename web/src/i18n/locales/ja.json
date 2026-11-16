@@ -8302,6 +8302,11 @@
     "Turn a script into characters, storyboards and a finished episode in one workspace.": "1 つのワークスペースで、脚本からキャラクター、絵コンテ、完成した 1 話まで作れます。",
     "E-commerce product images": "EC 商品画像",
     "Make white-background hero images, new scenes and model shots for a whole catalog.": "カタログ全体の白背景メイン画像、新しいシーン、モデル写真を作成できます。",
-    "Make it with our partner PX Show": "パートナーの PX Show で作成"
+    "Make it with our partner PX Show": "パートナーの PX Show で作成",
+    "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.": "プロンプトがこのモデルの上限を超えています。料金が発生していた場合は返金済みです。短くしてから再度送信してください。",
+    "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "最初のフレームと最後のフレームは両方を指定する必要があります。足りない方を追加するか、両方を外してから再度送信してください。",
+    "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "素材が選択した生成モードと一致しません（例：参照画像が最初のフレームとして扱われました）。料金が発生していた場合は返金済みです。モードと素材を確認してから再度送信してください。",
+    "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "アップロードした素材がコンテンツ審査を通過しなかったため、生成は開始されませんでした。料金が発生していた場合は返金済みです。その素材を差し替えてから再度送信してください。",
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "生成された音声は音楽の著作権に関わる可能性があるためブロックされました。料金が発生していた場合は返金済みです。音声生成をオフにするか、プロンプトから音楽・曲・歌詞の記述を削除してから再度送信してください。"
   }
 }

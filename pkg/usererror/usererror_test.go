@@ -42,6 +42,11 @@ func TestClassifyProductionErrors(t *testing.T) {
 		{"local task code", Input{Raw: "failed", ErrorCode: "task_insert_failed", StatusCode: 500}, CodeInternalError},
 		{"settlement failure", Input{Raw: "failed", ErrorCode: "task_billing_settlement_failed", StatusCode: 500}, CodeSettlementError},
 		{"upstream authentication", Input{Raw: "denied", StatusCode: 401}, CodeUpstreamAuth},
+		{"supplier wallet in its own words", Input{Raw: `status_code=400, {"code":"fail_to_fetch_task","message":"{\"code\":400,\"message\":\"余额不足\",\"errors\":null}","data":null}`, ErrorCode: bad, ErrorType: "openai_error", StatusCode: 400}, CodeServiceCannotProcess},
+		{"no line for the spec without a code", Input{Raw: `当前没有线路能接这一单（seedance-2.5 / 1080p / 4 秒）`, StatusCode: 400}, CodeNoLineForSpec},
+		{"first and last frame", Input{Raw: `{"error":{"message":"first_frame and last_frame must be provided together"}}`, StatusCode: 400}, CodeFramesPaired},
+		{"invalid parameter", Input{Raw: `{"error":{"code":"InvalidParameter","message":"请求参数无效：role must be specified for image"}}`, StatusCode: 400}, CodeInvalidFormat},
+		{"prompt too long at submission", Input{Raw: `提示词共 6457 字符，最多允许 5000 字符。`, StatusCode: 400}, CodePromptTooLong},
 		{"unknown text", Input{Raw: "secret supplier group internal-group did something", StatusCode: 400}, CodeFallback},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -61,6 +66,17 @@ func TestClassifyCustomerBalanceCarriesTheirOwnAmounts(t *testing.T) {
 	assert.Equal(t, map[string]any{"remaining": "¥1.500000", "required": "¥2.500000"}, result.Params)
 
 	assert.Equal(t, CodeBalanceInsufficient, Classify(Input{Raw: "x", ErrorCode: "insufficient_user_quota"}).Code)
+
+	// The gateway's own refusal, already in the customer's words.
+	own := Classify(Input{
+		Raw:        "Your balance is too low: ＄0.636928 available, ＄1.244014 needed for this request. Please top up and try again.",
+		ErrorCode:  "bad_response_status_code",
+		ErrorType:  "openai_error",
+		StatusCode: 403,
+	})
+	assert.Equal(t, CodeBalanceInsufficientDetail, own.Code)
+	assert.Equal(t, map[string]any{"remaining": "＄0.636928", "required": "＄1.244014"}, own.Params)
+	assert.Equal(t, CodeBalanceInsufficient, Classify(Input{Raw: "账户余额不足，请充值后再试。", StatusCode: 403}).Code)
 }
 
 func TestClassifyModelParam(t *testing.T) {
@@ -89,6 +105,13 @@ func TestClassifyFailReason(t *testing.T) {
 		"系统有问题，请联系站长修复":                                                     CodeGenerationFailed,
 		"upstream_create_failed: [服务信息已隐藏] service temporarily unavailable": CodeGenerationFailed,
 		"Video generation failed":                                           CodeGenerationFailed,
+		"提示词共 6457 字符，最多允许 5000 字符。":                                        CodePromptTooLong,
+		"The content was blocked by content moderation: The request failed because the output video may contain sensitive information.": CodeModerationOutput,
+		"生成的视频可能涉及版权限制。": CodeModerationOutput,
+		"生成的音频被线路审核拦下，判定可能涉及音乐版权；可关闭生成音频，或去掉提示词里的音乐、歌曲、歌词描述后重新提交":                                                                                                                                              CodeModerationMusicCopyright,
+		"第6张图片未通过内容安全检查，请更换这张图片；尚未提交生成。":                                                                                                                                                                       CodeModerationInput,
+		"视频任务未被受理（请求参数或内容未通过校验），任务未开始生成，预扣费用已原路退回，请检查后重试。上游原因：参考视频：审核判定含不宜内容，请更换参考视频后重新提交":                                                                                                                     CodeModerationInput,
+		"上游生成失败：The parameter `inner_generation__classification` specified in the request is not valid: You requested the reference generation task type, but 上游 classified your task as first-frame-to-video": CodeTaskTypeMismatch,
 	} {
 		assert.Equal(t, want, ClassifyFailReason(reason).Code, reason)
 	}

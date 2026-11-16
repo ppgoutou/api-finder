@@ -122,3 +122,8 @@ user_error.connection_failed: "服務暫時無法連線，本次未扣費，請�
 user_error.internal_error: "系統處理出錯，本次未扣費，請稍後重試。如持續出現，請將請求 ID 提供給客服。"
 user_error.settlement_error: "系統處理出錯，請將請求 ID 提供給客服，我們會核實費用和任務狀態。"
 user_error.fallback: "服務暫時異常，本次未成功，請稍後重試。如持續出現，請將請求 ID 提供給客服。"
+user_error.prompt_too_long: "提示詞超出該模型的長度上限，如已扣費，費用已退回。請精簡提示詞後重新提交。"
+user_error.frames_paired: "首幀和尾幀需要同時提供。請補上缺少的一張，或兩張都移除後重新提交。"
+user_error.task_type_mismatch: "素材與所選生成模式不相符（例如參考圖被當成了首幀）。如已扣費，費用已退回。請檢查生成模式和素材後重新提交。"
+user_error.moderation_input: "上傳的素材未通過內容審核，任務未開始生成，如已扣費，費用已退回。請更換該素材後重新提交。"
+user_error.moderation_music_copyright: "生成的音訊可能涉及音樂版權，已被攔截，如已扣費，費用已退回。請關閉生成音訊，或移除提示詞中的音樂、歌曲、歌詞描述後重新提交。"

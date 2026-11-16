@@ -8302,6 +8302,11 @@
     "Turn a script into characters, storyboards and a finished episode in one workspace.": "Turn a script into characters, storyboards and a finished episode in one workspace.",
     "E-commerce product images": "E-commerce product images",
     "Make white-background hero images, new scenes and model shots for a whole catalog.": "Make white-background hero images, new scenes and model shots for a whole catalog.",
-    "Make it with our partner PX Show": "Make it with our partner PX Show"
+    "Make it with our partner PX Show": "Make it with our partner PX Show",
+    "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.": "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.",
+    "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.",
+    "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.",
+    "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.",
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again."
   }
 }

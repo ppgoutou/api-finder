@@ -8302,6 +8302,11 @@
     "Turn a script into characters, storyboards and a finished episode in one workspace.": "Transformez un scénario en personnages, storyboard et épisode terminé dans un seul espace de travail.",
     "E-commerce product images": "Images produits e-commerce",
     "Make white-background hero images, new scenes and model shots for a whole catalog.": "Créez des visuels sur fond blanc, de nouveaux décors et des photos de mannequin pour tout un catalogue.",
-    "Make it with our partner PX Show": "Le réaliser avec notre partenaire PX Show"
+    "Make it with our partner PX Show": "Le réaliser avec notre partenaire PX Show",
+    "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.": "Le prompt est trop long pour ce modèle. Tout montant débité a été remboursé. Veuillez le raccourcir puis soumettre à nouveau.",
+    "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "La première et la dernière image doivent être fournies ensemble. Ajoutez celle qui manque ou retirez les deux, puis soumettez à nouveau.",
+    "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "Les ressources ne correspondent pas au mode de génération choisi (par exemple, des images de référence ont été traitées comme première image). Tout montant débité a été remboursé. Vérifiez le mode et les ressources, puis soumettez à nouveau.",
+    "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "Une ressource importée n'a pas passé la vérification de contenu, la génération n'a donc pas commencé. Tout montant débité a été remboursé. Remplacez cette ressource puis soumettez à nouveau.",
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "L'audio généré a été bloqué car il pourrait enfreindre des droits d'auteur musicaux. Tout montant débité a été remboursé. Désactivez la génération audio ou retirez du prompt les descriptions de musique, de chansons et de paroles, puis soumettez à nouveau."
   }
 }
