@@ -563,8 +563,10 @@ func getSupplierDashboard(ctx context.Context, baseURL, path, token string, data
 		return err
 	}
 	defer response.Body.Close()
+	// Errors name the route without its query, which can carry the channel key.
+	route, _, _ := strings.Cut(path, "?")
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("supplier %s returned HTTP %d", path, response.StatusCode)
+		return fmt.Errorf("supplier %s returned HTTP %d", route, response.StatusCode)
 	}
 	var body struct {
 		Success bool            `json:"success"`
@@ -572,10 +574,10 @@ func getSupplierDashboard(ctx context.Context, baseURL, path, token string, data
 		Data    json.RawMessage `json:"data"`
 	}
 	if err := common.DecodeJson(io.LimitReader(response.Body, onboardingPriceMaxResponseBytes), &body); err != nil {
-		return fmt.Errorf("invalid supplier %s response: %w", path, err)
+		return fmt.Errorf("invalid supplier %s response: %w", route, err)
 	}
 	if !body.Success {
-		return fmt.Errorf("supplier %s failed: %s", path, body.Message)
+		return fmt.Errorf("supplier %s failed: %s", route, body.Message)
 	}
 	return common.Unmarshal(body.Data, data)
 }
@@ -817,6 +819,7 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 		err          error
 	}
 	results := make([]fetched, len(rows))
+	previous := readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)
 	var wg sync.WaitGroup
 	for i, row := range rows {
 		token := strings.TrimSpace(tokens[strconv.Itoa(row.ID)])
@@ -840,6 +843,16 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 						channelKey = keys[0]
 					}
 					keyGroup, err = fetchUpstreamKeyGroup(ctx, row.BaseURL, token, channelKey, group)
+					// The supplier rate-limits token search, and channels on one
+					// supplier account share that limit. A key keeps its group,
+					// so a failed lookup reuses the last known group at the
+					// ratio just fetched.
+					if known := previous[strconv.Itoa(row.ID)].LatestKeyGroup; err != nil && known != nil {
+						if ratio, ok := group[known.Name].(float64); ok && ratio > 0 {
+							common.SysLog(common.LogText("channel %d supplier key group lookup failed, reusing group %s: %s", row.ID, known.Name, err.Error()))
+							keyGroup, err = &upstreamKeyGroup{Name: known.Name, Ratio: ratio}, nil
+						}
+					}
 				}
 			}
 			results[i] = fetched{models: models, group: group, descriptions: descriptions, currency: currency, keyGroup: keyGroup, err: err}
