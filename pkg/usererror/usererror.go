@@ -18,9 +18,12 @@ const (
 	CodeBalanceInsufficient       = "balance_insufficient"
 	CodeBalanceInsufficientDetail = "balance_insufficient_detail"
 	CodePromptRequired            = "prompt_required"
+	CodePromptTooLong             = "prompt_too_long"
 	CodeModelRequired             = "model_required"
 	CodeRefImageRequired          = "ref_image_required"
 	CodeRatioRequired             = "ratio_required"
+	CodeFramesPaired              = "frames_paired"
+	CodeTaskTypeMismatch          = "task_type_mismatch"
 	CodeInvalidDuration           = "invalid_duration"
 	CodeInvalidResolution         = "invalid_resolution"
 	CodeInvalidFormat             = "invalid_format"
@@ -32,6 +35,8 @@ const (
 	CodeMaterialPixels            = "material_pixels"
 	CodeMaterialRequirements      = "material_requirements"
 	CodeModerationRealPerson      = "moderation_real_person"
+	CodeModerationInput           = "moderation_input"
+	CodeModerationMusicCopyright  = "moderation_music_copyright"
 	CodeModerationCopyright       = "moderation_copyright"
 	CodeModerationOutput          = "moderation_output"
 	CodeModerationPrompt          = "moderation_prompt"
@@ -65,9 +70,12 @@ var messages = map[string]string{
 	CodeBalanceInsufficient:       "Your balance is too low. Please top up and try again.",
 	CodeBalanceInsufficientDetail: "Your balance is too low: {{remaining}} available, {{required}} needed for this request. Please top up and try again.",
 	CodePromptRequired:            "Please enter a prompt.",
+	CodePromptTooLong:             "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.",
 	CodeModelRequired:             "Please select a model.",
 	CodeRefImageRequired:          "This model needs at least 1 reference image. Please upload one and submit again.",
 	CodeRatioRequired:             "Please select a video aspect ratio.",
+	CodeFramesPaired:              "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.",
+	CodeTaskTypeMismatch:          "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.",
 	CodeInvalidDuration:           "This model does not support this duration. Please choose another one as shown on the page.",
 	CodeInvalidResolution:         "This model does not support this resolution or size. Please choose another one.",
 	CodeInvalidFormat:             "The request format is invalid. Please check it and submit again.",
@@ -79,6 +87,8 @@ var messages = map[string]string{
 	CodeMaterialPixels:            "An asset's resolution is too low or too high. Please adjust it and upload again.",
 	CodeMaterialRequirements:      "An asset does not meet the requirements: images must be wider than 300 pixels, and reference audio or video must be 2-15 seconds each and at most 15 seconds in total. Any charge has been refunded. Please adjust and submit again.",
 	CodeModerationRealPerson:      "An asset may contain a real person's face or private information and did not pass the content review, so generation did not start. Any charge has been refunded. Please use another asset or edit the prompt, then submit again.",
+	CodeModerationInput:           "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.",
+	CodeModerationMusicCopyright:  "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.",
 	CodeModerationCopyright:       "An asset may be subject to copyright restrictions and did not pass review. Please use another asset and try again.",
 	CodeModerationOutput:          "The generated content did not pass review. Your charge has been refunded. Please change the prompt or assets and try again.",
 	CodeModerationPrompt:          "The prompt did not pass review. Please change it and try again.",
@@ -166,25 +176,44 @@ var codeRules = map[string]string{
 	"channel:no_available_key":       CodeUpstreamAuth,
 }
 
+// Shared by the submission and fail reason rules. Moderation of an uploaded
+// asset names the asset; moderation of the result names the output, and a
+// generated video blocked for copyright is a result, not an asset.
+var (
+	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long"}
+	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as"}
+	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核"}
+	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}
+	// Checked after copyright, which names an asset: these name neither side,
+	// and a supplier uses them for the result.
+	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation"}
+)
+
 // Patterns are lower case and checked in order; the first match wins. Specific
 // supplier codes come before the generic text they can be nested in.
 var textRules = []rule{
-	{CodeServiceCannotProcess, []string{"insufficient_balance", "insufficient_credits", "平台积分不足"}},
+	{CodeServiceCannotProcess, []string{"insufficient_balance", "insufficient_credits", "平台积分不足", "余额不足"}},
 	{CodeViolationFee, []string{"violation_fee"}},
 	{CodeNoReferenceVideo, []string{"line_no_refvideo"}},
 	{CodeLineNoDuration, []string{"line_no_seconds"}},
-	{CodeNoLineForSpec, []string{"no_line_for_request"}},
+	{CodeNoLineForSpec, []string{"no_line_for_request", "没有线路能接这一单"}},
 	{CodeModelUnavailable, []string{"model_not_found", "no available channel", "无可用渠道", "無可用管道", "可用渠道不存在"}},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
-	{CodeModerationCopyright, []string{"copyright"}},
-	{CodeModerationOutput, []string{"审核判定", "敏感画面"}},
+	{CodeModerationMusicCopyright, []string{"音乐版权"}},
+	{CodeModerationInput, inputModerationPatterns},
+	{CodeModerationOutput, outputModerationPatterns},
+	{CodeModerationCopyright, []string{"copyright", "版权"}},
+	{CodeModerationOutput, generalModerationPatterns},
 	{CodeModerationPrompt, []string{"prompt_blocked", "sensitive_words_detected", "datainspectionfailed"}},
+	{CodePromptTooLong, promptTooLongPatterns},
+	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeMaterialDownloadTimeout, []string{"外部素材下载超时"}},
 	{CodeMaterialUnreachable, []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败"}},
 	{CodeMaterialPublicURL, []string{"public http(s) url", "media_url_required", "公网 http", "仅接受 http(s)"}},
 	{CodeMaterialFrameRate, []string{"frame rate must"}},
 	{CodeMaterialPixels, []string{"pixel count must"}},
-	{CodeMaterialRequirements, []string{"请检查上传素材", "inner_generation__classification"}},
+	{CodeMaterialRequirements, []string{"请检查上传素材"}},
+	{CodeFramesPaired, []string{"must be provided together"}},
 	{CodePromptRequired, []string{"prompt is required", "missing `prompt`", "prompt 不能为空"}},
 	{CodeModelRequired, []string{"model field is required", "model_name_required"}},
 	{CodeRefImageRequired, []string{"at least one reference image"}},
@@ -201,6 +230,7 @@ var textRules = []rule{
 	{CodeBadResponse, []string{"upstream returned an empty response", "task_id is empty", "task adaptor returned an empty response"}},
 	{CodeInternalError, []string{"failed to persist task", "task submission returned no result"}},
 	{CodeSettlementError, []string{"failed to settle task billing"}},
+	{CodeInvalidFormat, []string{"invalidparameter"}},
 	{CodeServiceUnavailable, []string{"video_request_failed", "暂时不可用", "error code: 502", "error code: 503", "error code: 504"}},
 }
 
@@ -213,14 +243,19 @@ var failReasonRules = []rule{
 	{CodeTaskCancelledByAdmin, []string{"按管理员要求驳回"}},
 	{CodeTaskResultUnavailable, []string{"upstream task not found", "failed to query the upstream task status"}},
 	{CodeGenerationMaybeContent, []string{"请检查提示词和素材"}},
+	{CodePromptTooLong, promptTooLongPatterns},
+	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
-	{CodeModerationCopyright, []string{"copyright"}},
-	{CodeModerationOutput, []string{"审核判定", "敏感画面"}},
+	{CodeModerationMusicCopyright, []string{"音乐版权"}},
+	{CodeModerationInput, inputModerationPatterns},
+	{CodeModerationOutput, outputModerationPatterns},
+	{CodeModerationCopyright, []string{"copyright", "版权"}},
+	{CodeModerationOutput, generalModerationPatterns},
 	{CodeMaterialDownloadTimeout, []string{"外部素材下载超时"}},
 	{CodeMaterialUnreachable, []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败"}},
 	{CodeMaterialFrameRate, []string{"frame rate must"}},
 	{CodeMaterialPixels, []string{"pixel count must"}},
-	{CodeMaterialRequirements, []string{"请检查上传素材", "inner_generation__classification"}},
+	{CodeMaterialRequirements, []string{"请检查上传素材"}},
 }
 
 var (
@@ -243,7 +278,9 @@ func isQuotaRefusal(input Input, text string) bool {
 	if input.ErrorCode == "insufficient_user_quota" || strings.Contains(text, "insufficient_user_quota") {
 		return true
 	}
-	for _, pattern := range []string{"not enough quota", "预扣费额度失败", "預扣費額度失敗", "用户额度不足", "insufficient quota"} {
+	// The last five are the gateway's own quota.* messages in en, zh-CN, zh-TW.
+	for _, pattern := range []string{"not enough quota", "预扣费额度失败", "預扣費額度失敗", "用户额度不足", "insufficient quota",
+		"your balance is too low", "账户余额不足，请充值", "余额不足：当前余额", "帳戶餘額不足，請儲值", "餘額不足：目前餘額"} {
 		if strings.Contains(text, pattern) {
 			return true
 		}

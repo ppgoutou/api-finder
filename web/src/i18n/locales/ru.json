@@ -8302,6 +8302,11 @@
     "Turn a script into characters, storyboards and a finished episode in one workspace.": "Превратите сценарий в персонажей, раскадровку и готовую серию в одном рабочем пространстве.",
     "E-commerce product images": "Изображения товаров для e-commerce",
     "Make white-background hero images, new scenes and model shots for a whole catalog.": "Создавайте главные фото на белом фоне, новые сцены и снимки с моделями для всего каталога.",
-    "Make it with our partner PX Show": "Создать у нашего партнёра PX Show"
+    "Make it with our partner PX Show": "Создать у нашего партнёра PX Show",
+    "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again.": "Промпт слишком длинный для этой модели. Списанные средства возвращены. Сократите его и отправьте снова.",
+    "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "Первый и последний кадр нужно указывать вместе. Добавьте недостающий или уберите оба, затем отправьте снова.",
+    "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "Материалы не соответствуют выбранному режиму генерации (например, референсные изображения были распознаны как первый кадр). Списанные средства возвращены. Проверьте режим и материалы, затем отправьте снова.",
+    "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "Загруженный материал не прошёл проверку контента, поэтому генерация не началась. Списанные средства возвращены. Замените этот материал и отправьте снова.",
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "Сгенерированное аудио заблокировано: возможно нарушение авторских прав на музыку. Списанные средства возвращены. Отключите генерацию аудио или уберите из промпта описания музыки, песен и текстов, затем отправьте снова."
   }
 }

@@ -121,3 +121,8 @@ user_error.connection_failed: "The service could not be reached. You were not ch
 user_error.internal_error: "A system error occurred. You were not charged. Please try again later. If it keeps happening, send the request ID to support."
 user_error.settlement_error: "A system error occurred. Please send the request ID to support, and we will check the charge and task status."
 user_error.fallback: "The service is temporarily unusual and this request did not succeed. Please try again later. If it keeps happening, send the request ID to support."
+user_error.prompt_too_long: "The prompt is too long for this model. Any charge has been refunded. Please shorten it and submit again."
+user_error.frames_paired: "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again."
+user_error.task_type_mismatch: "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again."
+user_error.moderation_input: "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again."
+user_error.moderation_music_copyright: "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again."

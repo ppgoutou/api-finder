@@ -1785,7 +1785,7 @@ func TestServeTaskPluginImageProtocolSubmissionErrorUsesOpenAIEnvelope(t *testin
 	var response map[string]any
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
 	errorBody := response["error"].(map[string]any)
-	assert.Equal(t, usererror.CodeFallback, errorBody["code"])
+	assert.Equal(t, usererror.CodeInvalidFormat, errorBody["code"])
 	assert.Equal(t, "invalid_request_error", errorBody["type"])
 	assert.NotContains(t, errorBody["message"], "n must be 1")
 	assert.NotEmpty(t, errorBody["message_key"])
