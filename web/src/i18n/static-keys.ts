@@ -26,6 +26,8 @@ export const STATIC_I18N_KEYS = [
   'Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).',
   'Wan handles long, detailed prompts (up to {{max}} characters).',
   'Up to {{max}} characters.',
+  // PROMPT_TOO_LONG in video-studio/lib/prompt-guide
+  'The prompt is too long. Shorten it to {{max}} characters or fewer.',
   // EVENT_FIELDS labels in x-pixel-settings-section
   'Sign-up event ID',
   'Top-up event ID',

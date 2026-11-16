@@ -140,3 +140,31 @@ func TestTaskDurationBounds(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTaskPromptLength(t *testing.T) {
+	atLimit := strings.Repeat("猫", MaxTaskPromptLength)
+	for _, tc := range []struct {
+		name    string
+		request any
+		wantErr bool
+	}{
+		{"legacy request at the limit", TaskSubmitReq{Prompt: atLimit}, false},
+		{"legacy request one over", TaskSubmitReq{Prompt: atLimit + "猫"}, true},
+		{"decoded body one over", map[string]any{"prompt": atLimit + "a"}, true},
+		{"surrounding spaces are not counted", map[string]any{"prompt": "  " + atLimit + "\n"}, false},
+		{"body without a prompt", map[string]any{"model": "m"}, false},
+		{"no request", nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			taskErr := ValidateTaskPromptLength(tc.request)
+			if !tc.wantErr {
+				assert.Nil(t, taskErr)
+				return
+			}
+			require.NotNil(t, taskErr)
+			assert.Equal(t, "prompt_too_long", taskErr.Code)
+			assert.Equal(t, http.StatusBadRequest, taskErr.StatusCode)
+			assert.True(t, taskErr.LocalError)
+		})
+	}
+}

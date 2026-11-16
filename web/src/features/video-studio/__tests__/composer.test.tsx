@@ -392,15 +392,14 @@ describe('Composer balance check', () => {
 })
 
 describe('Composer prompt length guide', () => {
-  it('describes the empty prompt with the Seedance advice and caps it at 7500 characters', () => {
+  it('describes the empty prompt with the Seedance advice and the 5000-character limit', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
-    expect(prompt).toHaveAttribute('maxLength', '7500')
-    expect(prompt).toHaveAccessibleDescription(/Seedance works best/)
+    expect(prompt).toHaveAccessibleDescription(/Seedance works best.*5,000/)
   })
 
-  it('caps the prompt at 2000 characters with the MiniMax hint when a MiniMax model is picked', () => {
+  it('describes the 2000-character limit with the MiniMax hint when a MiniMax model is picked', () => {
     studioModels.current = [
       {
         name: 'H-MiniMax-H3-Fast',
@@ -412,21 +411,32 @@ describe('Composer prompt length guide', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
-    expect(prompt).toHaveAttribute('maxLength', '2000')
     expect(prompt).toHaveAccessibleDescription(/MiniMax takes up to 2,000/)
   })
 
-  it('hides the hint from view once the user starts typing', async () => {
+  it('replaces the hint with a character counter once the user starts typing', async () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
-    const hint = screen.getByText(/Seedance works best/)
-    expect(hint).not.toHaveClass('sr-only')
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
 
-    await user.type(
-      screen.getByRole('textbox', { name: 'Video prompt' }),
-      'a cat'
-    )
+    await user.type(prompt, 'a cat')
 
-    expect(hint).toHaveClass('sr-only')
+    expect(prompt).toHaveAccessibleDescription('5 / 5,000 characters')
+    expect(prompt).toHaveAttribute('aria-invalid', 'false')
+  })
+
+  it('keeps a pasted prompt over the limit whole, marks it invalid and does not submit it', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+
+    await user.click(prompt)
+    await user.paste('猫'.repeat(5001))
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    expect(prompt).toHaveValue('猫'.repeat(5001))
+    expect(prompt).toHaveAttribute('aria-invalid', 'true')
+    expect(prompt).toHaveAccessibleDescription('5,001 / 5,000 characters')
+    expect(createMock).not.toHaveBeenCalled()
   })
 })

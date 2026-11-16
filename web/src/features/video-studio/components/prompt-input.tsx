@@ -24,7 +24,11 @@ import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-import type { PromptGuide } from '../lib/prompt-guide'
+import {
+  PROMPT_INPUT_CAP,
+  promptLength,
+  type PromptGuide,
+} from '../lib/prompt-guide'
 
 export interface MentionOption {
   token: string
@@ -57,6 +61,8 @@ export function PromptInput(props: PromptInputProps) {
   const [mentionAt, setMentionAt] = useState<number | null>(null)
   const [highlighted, setHighlighted] = useState(0)
   const menuOpen = mentionAt !== null
+  const length = promptLength(props.value)
+  const tooLong = length > props.guide.maxLength
 
   const closeMenu = () => {
     setMentionAt(null)
@@ -110,8 +116,9 @@ export function PromptInput(props: PromptInputProps) {
         value={props.value}
         placeholder={props.placeholder}
         aria-label={props.label ?? t('Video prompt')}
-        maxLength={props.guide.maxLength}
+        maxLength={PROMPT_INPUT_CAP}
         aria-describedby={hintId}
+        aria-invalid={tooLong}
         rows={3}
         className='min-h-20 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent'
         onChange={(event) => {
@@ -130,17 +137,22 @@ export function PromptInput(props: PromptInputProps) {
         onKeyDown={handleKeyDown}
         onBlur={() => closeMenu()}
       />
-      {/* Shown until the user starts typing; screen readers keep it. */}
+      {/* The advice until the user types, then a character counter. */}
       <p
         id={hintId}
         className={cn(
           'text-muted-foreground px-1 text-[11px]',
-          props.value && 'sr-only'
+          tooLong && 'text-destructive'
         )}
       >
-        {t(props.guide.hint, {
-          max: formatNumber(props.guide.maxLength, locale),
-        })}
+        {props.value
+          ? t('{{count}} / {{max}} characters', {
+              count: formatNumber(length, locale),
+              max: formatNumber(props.guide.maxLength, locale),
+            })
+          : t(props.guide.hint, {
+              max: formatNumber(props.guide.maxLength, locale),
+            })}
       </p>
       {menuOpen && (
         <div

@@ -171,6 +171,7 @@ var codeRules = map[string]string{
 	"plugin_submit_response_invalid": CodeBadResponse,
 	"get_channel_failed":             CodeModelUnavailable,
 	"prompt_blocked":                 CodeModerationPrompt,
+	"prompt_too_long":                CodePromptTooLong,
 	"sensitive_words_detected":       CodeModerationPrompt,
 	"channel:invalid_key":            CodeUpstreamAuth,
 	"channel:no_available_key":       CodeUpstreamAuth,
@@ -180,7 +181,7 @@ var codeRules = map[string]string{
 // asset names the asset; moderation of the result names the output, and a
 // generated video blocked for copyright is a result, not an asset.
 var (
-	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long"}
+	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long", "characters, at most"}
 	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as"}
 	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核"}
 	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}

@@ -17,8 +17,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-/** Longest prompt the studio accepts for any model. */
-export const STUDIO_PROMPT_MAX_LENGTH = 7500
+/**
+ * Longest prompt the studio accepts for any model, in Unicode characters.
+ * The gateway rejects longer task prompts with the same number
+ * (MaxTaskPromptLength in relay/common/relay_utils.go).
+ */
+export const STUDIO_PROMPT_MAX_LENGTH = 5000
+
+/**
+ * Longest text the prompt box keeps. It is above every model limit so a
+ * pasted prompt stays whole and the counter shows how much to cut, instead
+ * of the box dropping the end silently.
+ */
+export const PROMPT_INPUT_CAP = 20000
+
+/** Prompt length as the gateway counts it: Unicode characters, trimmed. */
+export function promptLength(prompt: string): number {
+  return [...prompt.trim()].length
+}
+
+/** Problem shown when the prompt is over the model's limit; {{max}} is it. */
+export const PROMPT_TOO_LONG =
+  'The prompt is too long. Shorten it to {{max}} characters or fewer.'
 
 export interface PromptGuide {
   /** Longest prompt the selected model accepts. */

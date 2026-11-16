@@ -231,6 +231,10 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 	if taskErr := adaptor.ValidateRequestAndSetAction(c, info); taskErr != nil {
 		return nil, taskErr
 	}
+	taskRequest, _ := c.Get("task_request")
+	if taskErr := relaycommon.ValidateTaskPromptLength(taskRequest); taskErr != nil {
+		return nil, taskErr
+	}
 
 	// 2. 确定模型名称
 	modelName := info.OriginModelName

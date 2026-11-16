@@ -46,6 +46,7 @@ func TestClassifyProductionErrors(t *testing.T) {
 		{"no line for the spec without a code", Input{Raw: `当前没有线路能接这一单（seedance-2.5 / 1080p / 4 秒）`, StatusCode: 400}, CodeNoLineForSpec},
 		{"first and last frame", Input{Raw: `{"error":{"message":"first_frame and last_frame must be provided together"}}`, StatusCode: 400}, CodeFramesPaired},
 		{"invalid parameter", Input{Raw: `{"error":{"code":"InvalidParameter","message":"请求参数无效：role must be specified for image"}}`, StatusCode: 400}, CodeInvalidFormat},
+		{"prompt over the gateway limit", Input{Raw: "prompt has 5001 characters, at most 5000 are allowed", ErrorCode: "prompt_too_long", StatusCode: 400}, CodePromptTooLong},
 		{"prompt too long at submission", Input{Raw: `提示词共 6457 字符，最多允许 5000 字符。`, StatusCode: 400}, CodePromptTooLong},
 		{"unknown text", Input{Raw: "secret supplier group internal-group did something", StatusCode: 400}, CodeFallback},
 	} {

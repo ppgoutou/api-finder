@@ -8307,6 +8307,8 @@
     "The first frame and last frame must be provided together. Please add the missing one or remove both, then submit again.": "首幀和尾幀需要同時提供。請補上缺少的一張，或兩張都移除後重新提交。",
     "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again.": "素材與所選生成模式不相符（例如參考圖被當成了首幀）。如已扣費，費用已退回。請檢查生成模式和素材後重新提交。",
     "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.": "上傳的素材未通過內容審核，任務未開始生成，如已扣費，費用已退回。請更換該素材後重新提交。",
-    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "生成的音訊可能涉及音樂版權，已被攔截，如已扣費，費用已退回。請關閉生成音訊，或移除提示詞中的音樂、歌曲、歌詞描述後重新提交。"
+    "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.": "生成的音訊可能涉及音樂版權，已被攔截，如已扣費，費用已退回。請關閉生成音訊，或移除提示詞中的音樂、歌曲、歌詞描述後重新提交。",
+    "{{count}} / {{max}} characters": "{{count}} / {{max}} 字元",
+    "The prompt is too long. Shorten it to {{max}} characters or fewer.": "提示詞過長，請精簡到 {{max}} 個字元以內。"
   }
 }

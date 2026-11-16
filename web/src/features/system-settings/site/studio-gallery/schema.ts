@@ -20,7 +20,10 @@ import * as z from 'zod'
 
 import { HOME_MEDIA_URL_PREFIX } from '@/features/home/lib/home-showcase'
 import { parseGallerySpec } from '@/features/video-studio/lib/gallery-draft'
-import { promptGuide } from '@/features/video-studio/lib/prompt-guide'
+import {
+  promptGuide,
+  promptLength,
+} from '@/features/video-studio/lib/prompt-guide'
 import { STUDIO_GALLERY_MAX_ITEMS } from '@/features/video-studio/lib/studio-gallery'
 
 const mediaUrl = z
@@ -48,11 +51,11 @@ const galleryItemSchema = z
   // the model it names or "Use prompt" would load a prompt it refuses.
   .superRefine((item, ctx) => {
     const max = promptGuide(parseGallerySpec(item.spec).model).maxLength
-    if (item.prompt.length > max) {
+    if (promptLength(item.prompt) > max) {
       ctx.addIssue({
         code: 'custom',
         path: ['prompt'],
-        // 'At most 2000 characters' / 'At most 7500 characters'
+        // 'At most 2000 characters' / 'At most 5000 characters'
         message: `At most ${max} characters`,
       })
     }
