@@ -55,6 +55,17 @@ export function getCardVipRatios(
   const groups = Array.isArray(model.enable_groups) ? model.enable_groups : []
   if (!groups.includes(vip.group)) return null
   const ratios = model.group_ratio ?? {}
+  // The page's own VIP ratio shares the prices' scale: administrators read
+  // base prices with raw ratios, everyone else published ones. The membership
+  // ratio is always published, so it only stands in when the page has none,
+  // as for visitors who cannot use the VIP group.
+  const pageVipRatio = ratios[vip.group]
+  const vipRatio =
+    typeof pageVipRatio === 'number' &&
+    Number.isFinite(pageVipRatio) &&
+    pageVipRatio > 0
+      ? pageVipRatio
+      : vip.displayRatio
 
   let standardRatio = Number.POSITIVE_INFINITY
   const filtered =
@@ -69,14 +80,14 @@ export function getCardVipRatios(
       standardRatio = Math.min(standardRatio, ratio)
     }
   }
-  if (!Number.isFinite(standardRatio) || vip.displayRatio >= standardRatio) {
+  if (!Number.isFinite(standardRatio) || vipRatio >= standardRatio) {
     return null
   }
-  const savingPercent = Math.round((1 - vip.displayRatio / standardRatio) * 100)
+  const savingPercent = Math.round((1 - vipRatio / standardRatio) * 100)
   if (savingPercent <= 0) return null
   return {
     standardRatio,
-    vipRatio: vip.displayRatio,
+    vipRatio,
     savingPercent,
     isVip: vip.isVip,
   }
