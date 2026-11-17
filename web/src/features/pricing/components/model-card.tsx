@@ -208,9 +208,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   if (videoPricing) {
     const optionDefinition =
       props.model.billing_usage_schema?.[videoPricing.optionField]
+    // With a VIP price beside it, the standard price is the cheapest non-VIP
+    // group's, never the VIP group a VIP viewer can also use.
     const formatSecondPrice = (price: number) =>
       formatTaskUsageUnitPrice(price, {
         ...dynamicPriceOptions,
+        ...(vipRatios && { groupRatioMultiplier: vipRatios.standardRatio }),
         fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
       })
     const lowestRow = videoPricing.rows.reduce((lowest, row) =>
@@ -243,11 +246,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           </span>
           {showVip && (
             <CardVipSaving
-              standardPrice={formatTaskUsageUnitPrice(lowestRow.secondPrice, {
-                ...dynamicPriceOptions,
-                groupRatioMultiplier: vipRatios.standardRatio,
-                fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
-              })}
+              standardPrice={formatSecondPrice(lowestRow.secondPrice)}
               savingPercent={vipRatios.savingPercent}
             />
           )}
@@ -471,8 +470,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
         <RollingPrice
           value={
-            showVipRequestPrice && showVip
-              ? formatRequestPriceAt(vipRatios.vipRatio)
+            showVipRequestPrice
+              ? formatRequestPriceAt(
+                  showVip ? vipRatios.vipRatio : vipRatios.standardRatio
+                )
               : formatRequestPrice(
                   props.model,
                   showRechargePrice,

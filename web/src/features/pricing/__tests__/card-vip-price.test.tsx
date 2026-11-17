@@ -118,6 +118,26 @@ describe('card VIP price', () => {
     expect(screen.queryByText('Save 10%')).not.toBeInTheDocument()
   })
 
+  it('shows a VIP user the standard price of the cheapest non-VIP group after default is pressed', async () => {
+    const user = userEvent.setup()
+    render(
+      <ModelCard
+        model={videoModel({ group_ratio: { default: 1.3, vip: 1.2 } })}
+        vip={{ ...visitorVip, displayRatio: 0.923077, isVip: true }}
+        onClick={vi.fn()}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Show standard prices' })
+    )
+
+    // 0.04 × 1.3 and 0.09 × 1.3, not the VIP group's 0.048 and 0.108.
+    expect(screen.getAllByText('$0.05').length).toBeGreaterThan(0)
+    expect(screen.getByText('$0.12')).toBeInTheDocument()
+    expect(screen.queryByText('$0.11')).not.toBeInTheDocument()
+  })
+
   it('switches every card together when one card is switched', async () => {
     const user = userEvent.setup()
     render(
