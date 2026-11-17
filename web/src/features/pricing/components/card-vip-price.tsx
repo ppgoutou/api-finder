@@ -16,58 +16,64 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Crown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-interface CardVipPriceProps {
-  /** VIP price, already formatted. */
-  vipPrice: string
-  /** Price before the VIP saving, already formatted; shown to VIP users. */
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+interface CardVipSavingProps {
+  /** Price before the VIP saving, already formatted. */
   standardPrice: string
-  /** Billing unit after the price, such as "/s" or "/ request". */
-  unit: string
   savingPercent: number
-  /** VIP users see their saving; everyone else sees the VIP price. */
-  isVip: boolean
+}
+
+/** Beside a card's VIP headline: the standard price it replaces. */
+export function CardVipSaving(props: CardVipSavingProps) {
+  const { t } = useTranslation()
+  return (
+    <span className='inline-flex items-center gap-1.5 pb-0.5 text-xs'>
+      <span className='sr-only'>{t('Standard price')}</span>
+      <s className='text-muted-foreground font-mono tabular-nums'>
+        {props.standardPrice}
+      </s>
+      <span className='rounded-full bg-amber-700 px-1.5 py-px font-semibold text-amber-50 dark:bg-amber-500 dark:text-amber-950'>
+        {t('Save {{percent}}%', { percent: props.savingPercent })}
+      </span>
+    </span>
+  )
+}
+
+interface CardVipToggleProps {
+  /** Whether the card currently shows VIP prices. */
+  showVip: boolean
+  onShowVipChange: (showVip: boolean) => void
 }
 
 /**
- * The VIP line under a model card's headline price. Standard users see what
- * the model costs as VIP; VIP users, whose headline already is the VIP
- * price, see the standard price it replaces.
+ * Switches a card between standard and VIP prices. The button names the
+ * group it switches to: "VIP" while standard prices show, "default" while
+ * VIP prices show.
  */
-export function CardVipPrice(props: CardVipPriceProps) {
+export function CardVipToggle(props: CardVipToggleProps) {
   const { t } = useTranslation()
-  if (props.isVip) {
-    return (
-      <p className='col-span-full flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs'>
-        <span className='inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-800 dark:text-amber-300'>
-          <Crown aria-hidden className='size-3' />
-          {t('VIP price')}
-        </span>
-        <span className='sr-only'>{t('Standard price')}</span>
-        <s className='text-muted-foreground font-mono tabular-nums'>
-          {props.standardPrice}
-        </s>
-        <span className='text-muted-foreground'>
-          {t('You save {{percent}}%', { percent: props.savingPercent })}
-        </span>
-      </p>
-    )
-  }
   return (
-    <p className='col-span-full flex min-w-0 items-center gap-1.5 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-800 dark:text-amber-300'>
-      <Crown aria-hidden className='size-3.5 shrink-0' />
-      <span className='min-w-0'>
-        {t('VIP price')}{' '}
-        <span className='font-mono font-bold tabular-nums'>
-          {props.vipPrice}
-        </span>
-        {props.unit}
-      </span>
-      <span className='ml-auto shrink-0 font-semibold'>
-        {t('Save {{percent}}%', { percent: props.savingPercent })}
-      </span>
-    </p>
+    <Button
+      type='button'
+      size='xs'
+      aria-pressed={props.showVip}
+      aria-label={
+        props.showVip ? t('Show standard prices') : t('Show VIP prices')
+      }
+      onClick={() => props.onShowVipChange(!props.showVip)}
+      className={cn(
+        'shrink-0 rounded-full px-2.5 font-semibold',
+        props.showVip
+          ? 'border-brand/40 bg-card text-brand hover:bg-brand-soft border'
+          : 'bg-amber-700 text-amber-50 hover:bg-amber-800 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400'
+      )}
+    >
+      {/* Group names, shown as is in every language. */}
+      {props.showVip ? 'default' : 'VIP'}
+    </Button>
   )
 }

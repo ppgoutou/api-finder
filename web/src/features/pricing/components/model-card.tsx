@@ -34,6 +34,7 @@ import { studioImageModelsFromPricing } from '@/features/video-studio/lib/image-
 import type { StudioKind } from '@/features/video-studio/types'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
+import { usePricingPreferencesStore } from '@/stores/pricing-preferences-store'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
@@ -72,14 +73,19 @@ import type {
   PriceType,
   TokenUnit,
 } from '../types'
-import { CardVipPrice } from './card-vip-price'
+import { CardVipSaving, CardVipToggle } from './card-vip-price'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
+import { RollingPrice } from './rolling-price'
 
 // Brand color shared by the cheapest tier and the details action; a stable
 // card takes its success color instead.
 const CARD_ACCENT_CLASS = 'border-brand bg-brand text-white'
 const STABLE_CARD_ACCENT_CLASS =
   'border-success bg-success text-success-foreground'
+// VIP prices take amber, matching the VIP badge elsewhere.
+const VIP_ACCENT_CLASS =
+  'border-amber-700 bg-amber-700 text-amber-50 dark:border-amber-500 dark:bg-amber-500 dark:text-amber-950'
+const VIP_PRICE_TEXT_CLASS = 'text-amber-800 dark:text-amber-300'
 
 export interface ModelCardProps {
   model: PricingModel
@@ -160,6 +166,21 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     () => getCardVipRatios(props.model, props.selectedGroup, props.vip),
     [props.model, props.selectedGroup, props.vip]
   )
+  // One choice for every card: VIP prices by default for VIP viewers,
+  // standard prices for everyone else, until the viewer switches.
+  const vipPriceView = usePricingPreferencesStore((state) => state.vipPriceView)
+  const setVipPriceView = usePricingPreferencesStore(
+    (state) => state.setVipPriceView
+  )
+  const showVip =
+    vipRatios !== null &&
+    (vipPriceView === null ? vipRatios.isVip : vipPriceView === 'vip')
+  const vipToggle = vipRatios && (
+    <CardVipToggle
+      showVip={showVip}
+      onShowVipChange={(next) => setVipPriceView(next ? 'vip' : 'standard')}
+    />
+  )
   const videoPricing = useMemo(
     () => getVideoPricing(props.model) ?? getTokenVideoPricing(props.model),
     [props.model]
@@ -181,6 +202,9 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     props.model.unavailable_reason?.trim() ||
     t('Temporarily unavailable. Try another model for now.')
   let priceSummary: ReactNode
+  // Only the video and per-request summaries price VIP; the toggle and the
+  // VIP panel colors appear on those alone.
+  let pricesVip = false
   if (videoPricing) {
     const optionDefinition =
       props.model.billing_usage_schema?.[videoPricing.optionField]
@@ -199,33 +223,35 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         groupRatioMultiplier: vipRatios?.vipRatio,
         fractionDigits: VIP_VIDEO_PRICE_FRACTION_DIGITS,
       })
-    const formatShownSecondPrice = vipRatios?.isVip
+    pricesVip = vipRatios !== null
+    const formatShownSecondPrice = showVip
       ? formatVipSecondPrice
       : formatSecondPrice
     priceSummary = (
       <>
         <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
-          <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
-            {formatShownSecondPrice(lowestRow.secondPrice)}
-          </span>
+          <RollingPrice
+            value={formatShownSecondPrice(lowestRow.secondPrice)}
+            className={cn(
+              'font-mono text-4xl leading-none font-bold tracking-tight tabular-nums',
+              showVip && VIP_PRICE_TEXT_CLASS
+            )}
+          />
           <span className='text-muted-foreground pb-0.5 text-xs'>
             {t('/s from')} ·{' '}
             {taskEnumLabel(optionDefinition, lowestRow.option, i18n.language)}
           </span>
+          {showVip && (
+            <CardVipSaving
+              standardPrice={formatTaskUsageUnitPrice(lowestRow.secondPrice, {
+                ...dynamicPriceOptions,
+                groupRatioMultiplier: vipRatios.standardRatio,
+                fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
+              })}
+              savingPercent={vipRatios.savingPercent}
+            />
+          )}
         </p>
-        {vipRatios && (
-          <CardVipPrice
-            isVip={vipRatios.isVip}
-            vipPrice={formatVipSecondPrice(lowestRow.secondPrice)}
-            standardPrice={formatTaskUsageUnitPrice(lowestRow.secondPrice, {
-              ...dynamicPriceOptions,
-              groupRatioMultiplier: vipRatios.standardRatio,
-              fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
-            })}
-            unit={t('/s')}
-            savingPercent={vipRatios.savingPercent}
-          />
-        )}
         <dl
           aria-label={t('Video billing (per second)')}
           className='col-span-full flex flex-wrap gap-1.5'
@@ -234,15 +260,15 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             <div
               key={row.option}
               className={cn(
-                'border-border flex min-w-0 items-baseline gap-1 rounded-full border-[1.5px] px-2.5 py-0.5',
-                row === lowestRow && accentClass
+                'border-border bg-card flex min-w-0 items-baseline gap-1 rounded-full border-[1.5px] px-2.5 py-0.5',
+                row === lowestRow && (showVip ? VIP_ACCENT_CLASS : accentClass)
               )}
             >
               <dt className='shrink-0 text-xs'>
                 {taskEnumLabel(optionDefinition, row.option, i18n.language)}
               </dt>
               <dd className='truncate font-mono text-xs font-bold tabular-nums'>
-                {formatShownSecondPrice(row.secondPrice)}
+                <RollingPrice value={formatShownSecondPrice(row.secondPrice)} />
               </dd>
             </div>
           ))}
@@ -440,11 +466,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       })
     const showVipRequestPrice =
       vipRatios !== null && props.model.quota_type === QUOTA_TYPE_VALUES.REQUEST
+    pricesVip = showVipRequestPrice
     priceSummary = (
-      <>
-        <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
-          <span className='font-mono text-4xl leading-none font-bold tracking-tight tabular-nums'>
-            {showVipRequestPrice && vipRatios.isVip
+      <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
+        <RollingPrice
+          value={
+            showVipRequestPrice && showVip
               ? formatRequestPriceAt(vipRatios.vipRatio)
               : formatRequestPrice(
                   props.model,
@@ -452,22 +479,23 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                   priceRate,
                   usdExchangeRate,
                   props.selectedGroup
-                )}
-          </span>
-          <span className='text-muted-foreground pb-0.5 text-xs'>
-            / {t('request')}
-          </span>
-        </p>
-        {showVipRequestPrice && (
-          <CardVipPrice
-            isVip={vipRatios.isVip}
-            vipPrice={formatRequestPriceAt(vipRatios.vipRatio)}
+                )
+          }
+          className={cn(
+            'font-mono text-4xl leading-none font-bold tracking-tight tabular-nums',
+            showVipRequestPrice && showVip && VIP_PRICE_TEXT_CLASS
+          )}
+        />
+        <span className='text-muted-foreground pb-0.5 text-xs'>
+          / {t('request')}
+        </span>
+        {showVipRequestPrice && showVip && (
+          <CardVipSaving
             standardPrice={formatRequestPriceAt(vipRatios.standardRatio)}
-            unit={` / ${t('request')}`}
             savingPercent={vipRatios.savingPercent}
           />
         )}
-      </>
+      </p>
     )
   }
 
@@ -605,12 +633,19 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         <div
           role='group'
           aria-label={t('Pricing')}
+          data-vip-prices={(pricesVip && showVip) || undefined}
           className={cn(
-            'flex min-w-0 flex-col gap-1.5',
+            'flex min-w-0 flex-col gap-1.5 rounded-xl border p-3 transition-colors duration-300',
+            pricesVip && showVip
+              ? 'border-amber-500/30 bg-amber-500/10'
+              : 'border-brand/20 bg-brand-soft/60',
             unavailable && 'opacity-50'
           )}
         >
-          <ModelBillingModeBadge model={props.model} appearance='caption' />
+          <div className='flex min-w-0 items-center justify-between gap-2'>
+            <ModelBillingModeBadge model={props.model} appearance='caption' />
+            {pricesVip && vipToggle}
+          </div>
           {dynamicSummary?.providerCount && (
             <span className='text-muted-foreground text-xs break-words'>
               {t('{{count}} providers', {

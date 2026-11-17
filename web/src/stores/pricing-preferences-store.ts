@@ -21,9 +21,15 @@ import { persist } from 'zustand/middleware'
 
 export type PricingCurrencyPreference = 'USD' | 'site'
 
+/** Which prices model cards show when a model has a VIP price. */
+export type PricingVipPriceView = 'vip' | 'standard'
+
 type PricingPreferences = {
   currency: PricingCurrencyPreference
   setCurrency: (currency: PricingCurrencyPreference) => void
+  /** Null until the viewer switches; cards then follow their membership. */
+  vipPriceView: PricingVipPriceView | null
+  setVipPriceView: (view: PricingVipPriceView) => void
 }
 
 export const usePricingPreferencesStore = create<PricingPreferences>()(
@@ -31,10 +37,15 @@ export const usePricingPreferencesStore = create<PricingPreferences>()(
     (set) => ({
       currency: 'USD',
       setCurrency: (currency) => set({ currency }),
+      vipPriceView: null,
+      setVipPriceView: (vipPriceView) => set({ vipPriceView }),
     }),
     {
       name: 'model-pricing-preferences',
-      partialize: (state) => ({ currency: state.currency }),
+      partialize: (state) => ({
+        currency: state.currency,
+        vipPriceView: state.vipPriceView,
+      }),
     }
   )
 )

@@ -8345,9 +8345,8 @@
     "You are VIP: the prices below already include your {{percent}}% saving.": "Вы VIP: цены ниже уже включают вашу скидку {{percent}}%.",
     "Your VIP prices apply to every request automatically.": "VIP-цены автоматически применяются к каждому запросу.",
     "{{amount}} more to become VIP": "Ещё {{amount}} до VIP",
-    "VIP price": "Цена VIP",
+    "Show VIP prices": "Показать цены VIP",
     "Save {{percent}}%": "−{{percent}}%",
-    "You save {{percent}}%": "Экономия {{percent}}%",
-    "/s": "/с"
+    "Show standard prices": "Показать обычные цены"
   }
 }

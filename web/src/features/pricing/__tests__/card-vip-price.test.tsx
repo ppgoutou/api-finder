@@ -17,8 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { usePricingPreferencesStore } from '@/stores/pricing-preferences-store'
 import {
   DEFAULT_CURRENCY_CONFIG,
   useSystemConfigStore,
@@ -55,6 +57,7 @@ const visitorVip: VipPriceContext = {
 }
 
 beforeEach(() => {
+  usePricingPreferencesStore.setState({ vipPriceView: null })
   useSystemConfigStore.getState().setConfig({
     currency: { ...DEFAULT_CURRENCY_CONFIG, quotaDisplayType: 'USD' },
   })
@@ -66,17 +69,37 @@ afterEach(() => {
 })
 
 describe('card VIP price', () => {
-  it('shows a standard user the VIP price with three decimals under the current price', () => {
+  it('shows a standard user standard prices and a VIP switch', () => {
     render(
       <ModelCard model={videoModel()} vip={visitorVip} onClick={vi.fn()} />
     )
 
     expect(screen.getAllByText('$0.04').length).toBeGreaterThan(0)
-    expect(screen.getByText('$0.036')).toBeInTheDocument()
-    expect(screen.getByText('Save 10%')).toBeInTheDocument()
+    expect(screen.queryByText('$0.036')).not.toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: 'Show VIP prices' })
+    expect(toggle).toHaveTextContent('VIP')
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('shows a VIP user the VIP price as the headline and strikes the standard price', () => {
+  it('switches a standard user to VIP prices with three decimals when VIP is pressed', async () => {
+    const user = userEvent.setup()
+    render(
+      <ModelCard model={videoModel()} vip={visitorVip} onClick={vi.fn()} />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Show VIP prices' }))
+
+    expect(screen.getAllByText('$0.036').length).toBeGreaterThan(0)
+    expect(screen.getByText('$0.081')).toBeInTheDocument()
+    expect(screen.getByText('$0.04').tagName).toBe('S')
+    expect(screen.getByText('Save 10%')).toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: 'Show standard prices' })
+    expect(toggle).toHaveTextContent('default')
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('shows a VIP user VIP prices first and standard prices after default is pressed', async () => {
+    const user = userEvent.setup()
     render(
       <ModelCard
         model={videoModel({ group_ratio: { default: 1, vip: 0.9 } })}
@@ -84,14 +107,42 @@ describe('card VIP price', () => {
         onClick={vi.fn()}
       />
     )
-
     expect(screen.getAllByText('$0.036').length).toBeGreaterThan(0)
-    expect(screen.getByText('$0.081')).toBeInTheDocument()
-    expect(screen.getByText('$0.04').tagName).toBe('S')
-    expect(screen.getByText('You save 10%')).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Show standard prices' })
+    )
+
+    expect(screen.queryByText('$0.036')).not.toBeInTheDocument()
+    expect(screen.getAllByText('$0.04').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Save 10%')).not.toBeInTheDocument()
   })
 
-  it('adds the VIP price to a per-request model', () => {
+  it('switches every card together when one card is switched', async () => {
+    const user = userEvent.setup()
+    render(
+      <>
+        <ModelCard model={videoModel()} vip={visitorVip} onClick={vi.fn()} />
+        <ModelCard
+          model={videoModel({ id: 2, model_name: 'seedance-lite' })}
+          vip={visitorVip}
+          onClick={vi.fn()}
+        />
+      </>
+    )
+
+    await user.click(
+      screen.getAllByRole('button', { name: 'Show VIP prices' })[0]
+    )
+
+    expect(
+      screen.getAllByRole('button', { name: 'Show standard prices' })
+    ).toHaveLength(2)
+    expect(usePricingPreferencesStore.getState().vipPriceView).toBe('vip')
+  })
+
+  it('switches a per-request model to its VIP price', async () => {
+    const user = userEvent.setup()
     render(
       <ModelCard
         model={videoModel({
@@ -105,14 +156,19 @@ describe('card VIP price', () => {
         onClick={vi.fn()}
       />
     )
+    expect(screen.queryByText('$0.045')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Show VIP prices' }))
 
     expect(screen.getByText('$0.045')).toBeInTheDocument()
   })
 
-  it('leaves the card unchanged without VIP pricing', () => {
+  it('leaves the card without a switch when there is no VIP pricing', () => {
     render(<ModelCard model={videoModel()} onClick={vi.fn()} />)
 
-    expect(screen.queryByText('VIP price')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Show VIP prices' })
+    ).not.toBeInTheDocument()
   })
 })
 
