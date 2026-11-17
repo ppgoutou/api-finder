@@ -8347,6 +8347,10 @@
     "{{amount}} more to become VIP": "あと {{amount}} でVIP",
     "Show VIP prices": "VIP価格を表示",
     "Save {{percent}}%": "{{percent}}% お得",
-    "Show standard prices": "通常価格を表示"
+    "Show standard prices": "通常価格を表示",
+    "More standard and VIP groups": "その他の通常グループと VIP グループ",
+    "No other group pairs. Add a row for each standard group that has its own VIP group.": "他のグループペアはありません。独自の VIP グループを持つ通常グループごとに行を追加してください。",
+    "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "各通常グループのユーザーは対応する VIP グループに移り、返金後は元のグループに戻ります。各 VIP グループはグループ倍率に存在する必要があります。",
+    "Enter a group name for every row": "各行にグループ名を入力してください"
   }
 }

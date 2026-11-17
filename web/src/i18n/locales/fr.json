@@ -8347,6 +8347,10 @@
     "{{amount}} more to become VIP": "Encore {{amount}} pour devenir VIP",
     "Show VIP prices": "Afficher les prix VIP",
     "Save {{percent}}%": "−{{percent}} %",
-    "Show standard prices": "Afficher les prix standard"
+    "Show standard prices": "Afficher les prix standard",
+    "More standard and VIP groups": "Autres groupes standard et VIP",
+    "No other group pairs. Add a row for each standard group that has its own VIP group.": "Aucune autre paire de groupes. Ajoutez une ligne pour chaque groupe standard qui a son propre groupe VIP.",
+    "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Les utilisateurs de chaque groupe standard passent à son groupe VIP, puis y reviennent après un remboursement. Chaque groupe VIP doit exister dans les ratios de groupe.",
+    "Enter a group name for every row": "Saisissez un nom de groupe sur chaque ligne"
   }
 }

@@ -8347,6 +8347,10 @@
     "{{amount}} more to become VIP": "Còn {{amount}} để lên VIP",
     "Show VIP prices": "Hiện giá VIP",
     "Save {{percent}}%": "Tiết kiệm {{percent}}%",
-    "Show standard prices": "Hiện giá thường"
+    "Show standard prices": "Hiện giá thường",
+    "More standard and VIP groups": "Thêm nhóm thường và nhóm VIP",
+    "No other group pairs. Add a row for each standard group that has its own VIP group.": "Chưa có cặp nhóm nào khác. Thêm một dòng cho mỗi nhóm thường có nhóm VIP riêng.",
+    "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Người dùng mỗi nhóm thường chuyển sang nhóm VIP tương ứng và quay lại nhóm đó sau khi hoàn tiền. Mỗi nhóm VIP phải có trong tỷ lệ nhóm.",
+    "Enter a group name for every row": "Nhập tên nhóm cho mọi dòng"
   }
 }

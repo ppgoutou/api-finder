@@ -17,9 +17,10 @@ func setupMembershipTest(t *testing.T) {
 	require.NoError(t, DB.AutoMigrate(&Redemption{}, &Option{}))
 	original := *operation_setting.GetMembershipSetting()
 	originalRatio := ratio_setting.GroupRatio2JSONString()
-	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1,"vip":0.85,"svip":0.7}`))
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1,"vip":0.85,"svip":0.7,"overseas":1.2,"vip-overseas":1.1}`))
 	*operation_setting.GetMembershipSetting() = operation_setting.MembershipSetting{
 		Enabled: true, BaseGroup: "default", VipGroup: "vip",
+		ExtraGroupPairs: map[string]string{"overseas": "vip-overseas"},
 		TotalTopUpUSD: 1000, SingleTopUpUSD: 500, DowngradeOnReversal: true,
 	}
 	t.Cleanup(func() {
@@ -67,6 +68,7 @@ func TestTopUpMembershipUpgrade(t *testing.T) {
 		{name: "single order reaches 500", group: "default", orders: []float64{500}, want: "vip"},
 		{name: "orders add up to 1000", group: "default", orders: []float64{400, 400, 200}, want: "vip"},
 		{name: "administrator group is kept", group: "svip", orders: []float64{1000}, want: "svip"},
+		{name: "overseas user moves to the overseas VIP group", group: "overseas", orders: []float64{500}, want: "vip-overseas"},
 	}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -117,6 +119,15 @@ func TestTopUpMembershipStripeReversal(t *testing.T) {
 	_, err = RestoreDisputedStripeTopUp("member-stripe", "127.0.0.1")
 	require.NoError(t, err)
 	assert.Equal(t, "vip", membershipGroup(t, 300))
+
+	// An overseas VIP goes back to the overseas group, not the main one.
+	insertMembershipUser(t, 303, "overseas")
+	insertPendingTopUp(t, "member-overseas", 303, PaymentProviderStripe, 600)
+	require.NoError(t, Recharge("member-overseas", "", "127.0.0.1"))
+	require.Equal(t, "vip-overseas", membershipGroup(t, 303))
+	_, err = ReverseStripeTopUp("member-overseas", common.TopUpStatusRefunded, "127.0.0.1")
+	require.NoError(t, err)
+	assert.Equal(t, "overseas", membershipGroup(t, 303))
 
 	// Still qualified by the remaining orders: stays VIP.
 	insertMembershipUser(t, 301, "default")

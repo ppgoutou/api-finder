@@ -8347,6 +8347,10 @@
     "{{amount}} more to become VIP": "再儲值 {{amount}} 即可升級 VIP",
     "Show VIP prices": "顯示 VIP 價",
     "Save {{percent}}%": "省 {{percent}}%",
-    "Show standard prices": "顯示一般價"
+    "Show standard prices": "顯示一般價",
+    "More standard and VIP groups": "更多一般分組與 VIP 分組",
+    "No other group pairs. Add a row for each standard group that has its own VIP group.": "暫無其他分組對。每個有自己 VIP 分組的一般分組新增一列。",
+    "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "各一般分組的使用者升級到對應的 VIP 分組，退款後降回原分組。每個 VIP 分組都必須在分組倍率中存在。",
+    "Enter a group name for every row": "每一列都要填寫分組名稱"
   }
 }

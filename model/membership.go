@@ -1,6 +1,8 @@
 package model
 
 import (
+	"slices"
+
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
@@ -83,31 +85,77 @@ func MembershipThresholdQuota(usd float64) int64 {
 	return membershipThresholdQuota(usd)
 }
 
-// upgradeMembershipTx moves a user in the base group to the VIP group when
-// their successful top-ups reach a threshold. Users in any other group
-// (set by an administrator or a subscription) are left alone.
-func upgradeMembershipTx(tx *gorm.DB, userId int) (*MembershipChange, error) {
+// MembershipGroupPairs returns the standard-to-VIP group pairs whose VIP
+// group exists in the group ratios, or nothing while the program is off.
+func MembershipGroupPairs() []operation_setting.MembershipGroupPair {
 	setting := operation_setting.GetMembershipSetting()
-	if !setting.Enabled || setting.VipGroup == "" || !ratio_setting.ContainsGroupRatio(setting.VipGroup) {
+	if !setting.Enabled {
+		return nil
+	}
+	var pairs []operation_setting.MembershipGroupPair
+	for _, pair := range setting.GroupPairs() {
+		if ratio_setting.ContainsGroupRatio(pair.Vip) {
+			pairs = append(pairs, pair)
+		}
+	}
+	return pairs
+}
+
+// userGroupTx reads a user's group; a missing user has none, so a payment
+// for a deleted account still settles.
+func userGroupTx(tx *gorm.DB, userId int) (string, error) {
+	var user User
+	if err := tx.Select(commonGroupCol).Where("id = ?", userId).Limit(1).Find(&user).Error; err != nil {
+		return "", err
+	}
+	return user.Group, nil
+}
+
+// upgradeMembershipTx moves a user in a standard group to that group's VIP
+// group when their successful top-ups reach a threshold. Users in any other
+// group (set by an administrator or a subscription) are left alone.
+func upgradeMembershipTx(tx *gorm.DB, userId int) (*MembershipChange, error) {
+	pairs := MembershipGroupPairs()
+	if len(pairs) == 0 {
+		return nil, nil
+	}
+	group, err := userGroupTx(tx, userId)
+	if err != nil {
+		return nil, err
+	}
+	index := slices.IndexFunc(pairs, func(pair operation_setting.MembershipGroupPair) bool { return pair.Base == group })
+	if index < 0 {
 		return nil, nil
 	}
 	totals, err := paidTopUpTotals(tx, userId)
 	if err != nil {
 		return nil, err
 	}
-	if !qualifiesForVip(setting, totals) {
+	if !qualifiesForVip(operation_setting.GetMembershipSetting(), totals) {
 		return nil, nil
 	}
-	return moveMembershipGroupTx(tx, userId, setting.BaseGroup, setting.VipGroup, true)
+	return moveMembershipGroupTx(tx, userId, group, pairs[index].Vip, true)
 }
 
 // downgradeMembershipTx runs after a top-up of reversedQuota stopped
-// counting. It moves a VIP back to the base group only when that order was
-// part of what qualified them, so VIPs appointed by an administrator keep
-// their group.
+// counting. It moves a VIP back to the standard group their VIP group pairs
+// with, and only when that order was part of what qualified them, so VIPs
+// appointed by an administrator keep their group.
 func downgradeMembershipTx(tx *gorm.DB, userId int, reversedQuota int) (*MembershipChange, error) {
 	setting := operation_setting.GetMembershipSetting()
-	if !setting.Enabled || !setting.DowngradeOnReversal || setting.VipGroup == "" || setting.BaseGroup == "" {
+	if !setting.DowngradeOnReversal {
+		return nil, nil
+	}
+	pairs := MembershipGroupPairs()
+	if len(pairs) == 0 {
+		return nil, nil
+	}
+	group, err := userGroupTx(tx, userId)
+	if err != nil {
+		return nil, err
+	}
+	index := slices.IndexFunc(pairs, func(pair operation_setting.MembershipGroupPair) bool { return pair.Vip == group })
+	if index < 0 {
 		return nil, nil
 	}
 	totals, err := paidTopUpTotals(tx, userId)
@@ -121,7 +169,7 @@ func downgradeMembershipTx(tx *gorm.DB, userId int, reversedQuota int) (*Members
 	if !qualifiesForVip(setting, before) {
 		return nil, nil
 	}
-	return moveMembershipGroupTx(tx, userId, setting.VipGroup, setting.BaseGroup, false)
+	return moveMembershipGroupTx(tx, userId, group, pairs[index].Base, false)
 }
 
 func moveMembershipGroupTx(tx *gorm.DB, userId int, from string, to string, vip bool) (*MembershipChange, error) {
