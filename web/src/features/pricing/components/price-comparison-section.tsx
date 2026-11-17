@@ -52,6 +52,12 @@ import type { PricingModel } from '../types'
 /** Ratios this close to 1 read as the official price. */
 const SAME_PRICE_TOLERANCE = 0.005
 
+/**
+ * Models shown with a trailing "(D)" have no official price to compare a
+ * reference-video order against; their with-video rows show dashes instead.
+ */
+const NO_REFERENCE_OFFICIAL_SUFFIX = /\(D\)\s*$/
+
 type PriceComparisonSectionProps = {
   model: PricingModel
   comparison: PriceComparison
@@ -195,6 +201,11 @@ function GroupComparisonTables(
   const rows = props.comparison.rows
   // Without reference-video prices there is no condition to tell apart.
   const hasReferenceRows = rows.some((row) => row.withVideo)
+  const hidesReferenceOfficial = NO_REFERENCE_OFFICIAL_SUFFIX.test(
+    props.model.display_name || props.model.model_name
+  )
+  const showsOfficial = (row: PriceComparisonRow) =>
+    !(row.withVideo && hidesReferenceOfficial)
 
   // Languages with short condition words name both conditions in the header
   // and keep the rows short; the others spell the condition out per row.
@@ -282,7 +293,7 @@ function GroupComparisonTables(
       className: headClass,
       cellClassName: cn(cellClass, priceCellClass, 'text-muted-foreground'),
       cell: (row) => {
-        const value = row.official?.[unit]
+        const value = showsOfficial(row) ? row.official?.[unit] : undefined
         return value === undefined ? '-' : format(value, official)
       },
     },
@@ -292,7 +303,13 @@ function GroupComparisonTables(
       className: headClass,
       cellClassName: cellClass,
       cell: (row) => (
-        <DiscountBadge ratio={rowPriceRatio(row, unit, props.ratio)} />
+        <DiscountBadge
+          ratio={
+            showsOfficial(row)
+              ? rowPriceRatio(row, unit, props.ratio)
+              : undefined
+          }
+        />
       ),
     },
   ]
