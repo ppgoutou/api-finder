@@ -105,7 +105,8 @@ func MembershipGroupPairs() []operation_setting.MembershipGroupPair {
 // for a deleted account still settles.
 func userGroupTx(tx *gorm.DB, userId int) (string, error) {
 	var user User
-	if err := tx.Select(commonGroupCol).Where("id = ?", userId).Limit(1).Find(&user).Error; err != nil {
+	// GORM quotes the reserved column for each database.
+	if err := tx.Select("group").Where("id = ?", userId).Limit(1).Find(&user).Error; err != nil {
 		return "", err
 	}
 	return user.Group, nil
@@ -176,7 +177,7 @@ func moveMembershipGroupTx(tx *gorm.DB, userId int, from string, to string, vip 
 	if from == to {
 		return nil, nil
 	}
-	result := tx.Model(&User{}).Where("id = ? AND "+commonGroupCol+" = ?", userId, from).Update("group", to)
+	result := tx.Model(&User{}).Where("id = ?", userId).Where(map[string]any{"group": from}).Update("group", to)
 	if result.Error != nil {
 		return nil, result.Error
 	}

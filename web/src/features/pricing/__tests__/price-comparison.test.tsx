@@ -31,7 +31,10 @@ import {
 
 import en from '@/i18n/locales/en.json'
 
-import { ModelDetailsContent } from '../components/model-details'
+import {
+  ModelDetailsContent,
+  type ModelDetailsContentProps,
+} from '../components/model-details'
 import {
   comparisonOrderCost,
   getPriceComparison,
@@ -70,7 +73,10 @@ const tokenVideoModel: PricingModel = {
   },
 }
 
-function renderDetails(model: PricingModel) {
+function renderDetails(
+  model: PricingModel,
+  extra: Partial<ModelDetailsContentProps> = {}
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -85,6 +91,7 @@ function renderDetails(model: PricingModel) {
         priceRate={1}
         usdExchangeRate={1}
         tokenUnit='M'
+        {...extra}
       />
     </QueryClientProvider>
   )
@@ -278,6 +285,72 @@ describe('price comparison overview', () => {
     expect(within(examples).getByText('720p · 5s (+4s video)')).toHaveClass(
       'text-destructive'
     )
+  })
+
+  it('labels no video condition when a model has no reference-video price', () => {
+    renderDetails({
+      ...tokenVideoModel,
+      billing_expr:
+        'u("resolution") == "480p" ? tier("480p", u("tokens") * 5 / 1000000) : ' +
+        'tier("720p", u("tokens") * 5 / 1000000)',
+      billing_usage_schema: {
+        resolution: { enum: ['480p', '720p'] },
+        tokens: { type: 'number', unit: 'token' },
+      },
+    })
+
+    const perSecond = screen.getByRole('region', { name: 'Per-second prices' })
+    expect(within(perSecond).getAllByRole('columnheader')[0]).toHaveTextContent(
+      /^Resolution$/
+    )
+    const rows = within(perSecond).getAllByRole('row').slice(1)
+    expect(within(rows[0]).getAllByRole('cell')[0]).toHaveTextContent(/^480p$/)
+  })
+
+  it('shows VIP prices as one vip group when the VIP view is on', () => {
+    renderDetails(
+      {
+        ...tokenVideoModel,
+        enable_groups: ['default', 'overseas', 'vip', 'vip-overseas'],
+      },
+      {
+        usableGroup: {
+          default: { desc: '', ratio: 1 },
+          overseas: { desc: '', ratio: 1 },
+          vip: { desc: '', ratio: 0.5 },
+          'vip-overseas': { desc: '', ratio: 0.5 },
+        },
+        groupRatio: { default: 1, overseas: 1, vip: 0.5, 'vip-overseas': 0.5 },
+        vip: {
+          pairs: [
+            {
+              baseGroup: 'default',
+              vipGroup: 'vip',
+              baseRatio: 1,
+              vipRatio: 0.5,
+            },
+            {
+              baseGroup: 'overseas',
+              vipGroup: 'vip-overseas',
+              baseRatio: 1,
+              vipRatio: 0.5,
+            },
+          ],
+          viewerVipGroup: 'vip',
+          isVip: true,
+        },
+      }
+    )
+
+    const section = screen.getByRole('region', { name: 'Price comparison' })
+    expect(within(section).getByText('vip')).toBeVisible()
+    expect(within(section).queryByText('vip-overseas')).toBeNull()
+    expect(within(section).queryByText('default')).toBeNull()
+    // 480p at the VIP ratio: 0.5 × $0.0502 ≈ $0.0251 against $0.07 is 64% off.
+    const perSecond = within(section).getByRole('region', {
+      name: 'Per-second prices',
+    })
+    expect(within(perSecond).getAllByText('64% off').length).toBeGreaterThan(0)
   })
 
   it('no longer shows the model type, group and endpoint block', () => {
