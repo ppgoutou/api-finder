@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { JsonEditor } from '@/components/json-editor'
 import {
   Form,
   FormControl,
@@ -47,6 +48,10 @@ const schema = z.object({
   enabled: z.boolean(),
   baseGroup: z.string().trim().min(1),
   vipGroup: z.string().trim().min(1),
+  // A JSON object of standard group to VIP group; empty for none.
+  extraGroupPairs: z.string().refine(isGroupPairsJson, {
+    message: 'Enter a group name for every row',
+  }),
   totalTopUpUsd: z.coerce.number().min(0),
   singleTopUpUsd: z.coerce.number().min(0),
   downgradeOnReversal: z.boolean(),
@@ -60,19 +65,50 @@ const OPTION_KEYS: Record<keyof Values, string> = {
   enabled: 'membership_setting.enabled',
   baseGroup: 'membership_setting.base_group',
   vipGroup: 'membership_setting.vip_group',
+  extraGroupPairs: 'membership_setting.extra_group_pairs',
   totalTopUpUsd: 'membership_setting.total_topup_usd',
   singleTopUpUsd: 'membership_setting.single_topup_usd',
   downgradeOnReversal: 'membership_setting.downgrade_on_reversal',
   vipSupportTelegram: 'membership_setting.vip_support_telegram',
 }
 
+function isGroupPairsJson(value: string): boolean {
+  if (!value.trim()) return true
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return false
+    }
+    return Object.entries(parsed).every(
+      ([base, vip]) =>
+        base.trim() !== '' && typeof vip === 'string' && vip.trim() !== ''
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The saved extra group pairs as the form edits them: empty when there are
+ * none, so an untouched form compares equal.
+ */
+function normalizeGroupPairs(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  if (trimmed === '' || trimmed === 'null' || trimmed === '{}') return ''
+  return trimmed
+}
+
 export function MembershipSettingsSection(props: { defaultValues: Values }) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
 
+  const defaultValues: Values = {
+    ...props.defaultValues,
+    extraGroupPairs: normalizeGroupPairs(props.defaultValues.extraGroupPairs),
+  }
   const form = useForm<Values>({
     resolver: zodResolver(schema) as unknown as Resolver<Values>,
-    defaultValues: props.defaultValues,
+    defaultValues,
   })
 
   const { isDirty, isSubmitting } = form.formState
@@ -81,17 +117,19 @@ export function MembershipSettingsSection(props: { defaultValues: Values }) {
 
   async function onSubmit(values: Values) {
     const changed = (Object.keys(OPTION_KEYS) as Array<keyof Values>).filter(
-      (field) => values[field] !== props.defaultValues[field]
+      (field) => values[field] !== defaultValues[field]
     )
     if (changed.length === 0) {
       toast.info(t('No changes to save'))
       return
     }
     for (const field of changed) {
-      await updateOption.mutateAsync({
-        key: OPTION_KEYS[field],
-        value: String(values[field]),
-      })
+      // An empty map must still be sent as JSON, or the old pairs stay.
+      const value =
+        field === 'extraGroupPairs'
+          ? values.extraGroupPairs.trim() || '{}'
+          : String(values[field])
+      await updateOption.mutateAsync({ key: OPTION_KEYS[field], value })
     }
     form.reset(values)
   }
@@ -201,6 +239,35 @@ export function MembershipSettingsSection(props: { defaultValues: Values }) {
                   t('VIP group'),
                   t('Must exist in the group ratios')
                 )}
+                <FormField
+                  control={form.control}
+                  name='extraGroupPairs'
+                  render={({ field }) => (
+                    <FormItem className='sm:col-span-2'>
+                      <FormLabel>{t('More standard and VIP groups')}</FormLabel>
+                      <FormControl>
+                        <JsonEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={busy}
+                          keyLabel={t('Standard group')}
+                          valueLabel={t('VIP group')}
+                          keyPlaceholder='overseas'
+                          valuePlaceholder='vip-overseas'
+                          emptyMessage={t(
+                            'No other group pairs. Add a row for each standard group that has its own VIP group.'
+                          )}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 {renderInput(
                   'vipSupportTelegram',
                   t('VIP support Telegram'),

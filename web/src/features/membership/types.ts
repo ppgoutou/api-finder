@@ -16,6 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+/** A standard group and its VIP group, ratios on /api/pricing's scale. */
+export interface MembershipVipPair {
+  base_group: string
+  vip_group: string
+  base_ratio: number
+  vip_ratio: number
+}
+
 export interface MembershipInfo {
   /** Whether automatic VIP upgrades are on and the VIP group exists. */
   enabled: boolean
@@ -25,10 +33,14 @@ export interface MembershipInfo {
   single_threshold_quota: number
   /** VIP price as a share of the standard price, 1 when not cheaper. */
   vip_price_rate: number
-  /** Group VIP users are moved to. */
+  /** The viewer's standard group, or the main one for everyone else. */
+  base_group?: string
+  /** The VIP group that standard group moves to. */
   vip_group?: string
-  /** VIP group ratio scaled like /api/pricing group ratios; 0 when off. */
+  /** That VIP group's ratio on /api/pricing's scale; 0 when off. */
   vip_display_group_ratio?: number
+  /** Every standard-to-VIP pair, the main pair first. */
+  vip_pairs?: MembershipVipPair[]
   signed_in: boolean
   is_vip?: boolean
   paid_total_quota?: number

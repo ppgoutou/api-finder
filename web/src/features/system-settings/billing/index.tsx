@@ -120,6 +120,7 @@ const defaultBillingSettings: BillingSettings = {
   'membership_setting.enabled': true,
   'membership_setting.base_group': 'default',
   'membership_setting.vip_group': 'vip',
+  'membership_setting.extra_group_pairs': '',
   'membership_setting.total_topup_usd': 1000,
   'membership_setting.single_topup_usd': 500,
   'membership_setting.downgrade_on_reversal': true,

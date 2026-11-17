@@ -372,6 +372,7 @@ export type BillingSettings = {
   'membership_setting.enabled': boolean
   'membership_setting.base_group': string
   'membership_setting.vip_group': string
+  'membership_setting.extra_group_pairs': string
   'membership_setting.total_topup_usd': number
   'membership_setting.single_topup_usd': number
   'membership_setting.downgrade_on_reversal': boolean

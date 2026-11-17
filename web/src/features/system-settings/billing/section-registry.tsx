@@ -210,6 +210,7 @@ const BILLING_SECTIONS = [
           enabled: settings['membership_setting.enabled'],
           baseGroup: settings['membership_setting.base_group'],
           vipGroup: settings['membership_setting.vip_group'],
+          extraGroupPairs: settings['membership_setting.extra_group_pairs'],
           totalTopUpUsd: settings['membership_setting.total_topup_usd'],
           singleTopUpUsd: settings['membership_setting.single_topup_usd'],
           downgradeOnReversal:

@@ -51,9 +51,24 @@ function videoModel(overrides: Partial<PricingModel> = {}): PricingModel {
 }
 
 const visitorVip: VipPriceContext = {
-  group: 'vip',
-  displayRatio: 0.9,
+  pairs: [
+    { baseGroup: 'default', vipGroup: 'vip', baseRatio: 1, vipRatio: 0.9 },
+  ],
+  viewerVipGroup: 'vip',
   isVip: false,
+}
+
+const mainPair = {
+  baseGroup: 'default',
+  vipGroup: 'vip',
+  baseRatio: 1.3,
+  vipRatio: 1.2,
+}
+const overseasPair = {
+  baseGroup: 'overseas',
+  vipGroup: 'vip-overseas',
+  baseRatio: 1.5,
+  vipRatio: 1.35,
 }
 
 beforeEach(() => {
@@ -118,12 +133,12 @@ describe('card VIP price', () => {
     expect(screen.queryByText('Save 10%')).not.toBeInTheDocument()
   })
 
-  it('shows a VIP user the standard price of the cheapest non-VIP group after default is pressed', async () => {
+  it('shows a VIP user the standard group price after default is pressed', async () => {
     const user = userEvent.setup()
     render(
       <ModelCard
-        model={videoModel({ group_ratio: { default: 1.3, vip: 1.2 } })}
-        vip={{ ...visitorVip, displayRatio: 0.923077, isVip: true }}
+        model={videoModel()}
+        vip={{ pairs: [mainPair], viewerVipGroup: 'vip', isVip: true }}
         onClick={vi.fn()}
       />
     )
@@ -193,39 +208,38 @@ describe('card VIP price', () => {
 })
 
 describe('card VIP ratios', () => {
-  it('compares against the cheapest non-VIP group the model offers', () => {
+  const allGroups = ['default', 'overseas', 'vip', 'vip-overseas']
+  const pairs = [mainPair, overseasPair]
+
+  it("compares the viewer's own pair when the model offers it", () => {
     const ratios = getCardVipRatios(
-      videoModel({
-        enable_groups: ['default', 'overseas', 'vip'],
-        group_ratio: { default: 1.28, overseas: 1.25, vip: 1.2 },
-      }),
+      videoModel({ enable_groups: allGroups }),
       undefined,
-      { group: 'vip', displayRatio: 1.2, isVip: true }
+      { pairs, viewerVipGroup: 'vip-overseas', isVip: false }
     )
 
-    expect(ratios).toMatchObject({ standardRatio: 1.25, savingPercent: 4 })
+    expect(ratios).toMatchObject({
+      standardRatio: 1.5,
+      vipRatio: 1.35,
+      savingPercent: 10,
+    })
   })
 
-  it('compares against the group the viewer filtered by', () => {
+  it('compares the overseas pair for an overseas-only model', () => {
     const ratios = getCardVipRatios(
-      videoModel({
-        enable_groups: ['default', 'overseas', 'vip'],
-        group_ratio: { default: 1.28, overseas: 1.25 },
-      }),
+      videoModel({ enable_groups: ['overseas', 'vip', 'vip-overseas'] }),
+      undefined,
+      { pairs, viewerVipGroup: 'vip', isVip: true }
+    )
+
+    expect(ratios).toMatchObject({ standardRatio: 1.5, vipRatio: 1.35 })
+  })
+
+  it('compares the pair of the group the viewer filtered by', () => {
+    const ratios = getCardVipRatios(
+      videoModel({ enable_groups: allGroups }),
       'default',
-      { ...visitorVip, displayRatio: 1.2 }
-    )
-
-    expect(ratios).toMatchObject({ standardRatio: 1.28, savingPercent: 6 })
-  })
-
-  it('uses the page VIP ratio when its prices are unscaled base prices', () => {
-    // An administrator reads base prices with raw ratios (default 1.3,
-    // vip 1.2) while the membership ratio stays published (1.2 / 1.3).
-    const ratios = getCardVipRatios(
-      videoModel({ group_ratio: { default: 1.3, vip: 1.2 } }),
-      undefined,
-      { ...visitorVip, displayRatio: 0.923077 }
+      { pairs, viewerVipGroup: 'vip-overseas', isVip: false }
     )
 
     expect(ratios).toMatchObject({
@@ -235,20 +249,29 @@ describe('card VIP ratios', () => {
     })
   })
 
-  it('falls back to the membership VIP ratio when the page has none', () => {
-    const ratios = getCardVipRatios(
-      videoModel({ group_ratio: { default: 1 } }),
-      undefined,
-      { ...visitorVip, displayRatio: 0.923077 }
-    )
-
-    expect(ratios).toMatchObject({ vipRatio: 0.923077, savingPercent: 8 })
+  it.each([
+    [
+      'the model lacks the VIP group of every pair',
+      videoModel({ enable_groups: ['overseas', 'vip'] }),
+    ],
+    ['the model has no VIP group', videoModel({ enable_groups: ['default'] })],
+  ])('returns nothing when %s', (_, model) => {
+    expect(
+      getCardVipRatios(model, undefined, {
+        pairs,
+        viewerVipGroup: 'vip',
+        isVip: false,
+      })
+    ).toBeNull()
   })
 
-  it.each([
-    ['the model has no VIP group', videoModel({ enable_groups: ['default'] })],
-    ['VIP is not cheaper', videoModel({ group_ratio: { default: 0.8 } })],
-  ])('returns nothing when %s', (_, model) => {
-    expect(getCardVipRatios(model, undefined, visitorVip)).toBeNull()
+  it('returns nothing when VIP is not cheaper', () => {
+    expect(
+      getCardVipRatios(videoModel(), undefined, {
+        pairs: [{ ...mainPair, vipRatio: 1.4 }],
+        viewerVipGroup: 'vip',
+        isVip: false,
+      })
+    ).toBeNull()
   })
 })

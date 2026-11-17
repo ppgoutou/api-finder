@@ -60,12 +60,15 @@ export function Pricing() {
   const { t } = useTranslation()
   const { data: membership } = useMembership()
   const vipPrice = useMemo((): VipPriceContext | undefined => {
-    if (!membership?.enabled || !membership.vip_group) return undefined
-    const displayRatio = membership.vip_display_group_ratio ?? 0
-    if (!(displayRatio > 0)) return undefined
+    if (!membership?.enabled || !membership.vip_pairs?.length) return undefined
     return {
-      group: membership.vip_group,
-      displayRatio,
+      pairs: membership.vip_pairs.map((pair) => ({
+        baseGroup: pair.base_group,
+        vipGroup: pair.vip_group,
+        baseRatio: pair.base_ratio,
+        vipRatio: pair.vip_ratio,
+      })),
+      viewerVipGroup: membership.vip_group ?? '',
       isVip: membership.is_vip === true,
     }
   }, [membership])

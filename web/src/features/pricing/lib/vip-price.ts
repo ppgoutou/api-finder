@@ -22,12 +22,20 @@ import type { PricingModel } from '../types'
 /** VIP prices on the cards: VIP prices keep this many decimals. */
 export const VIP_VIDEO_PRICE_FRACTION_DIGITS = 3
 
+/** A standard group, its VIP group, and both ratios on the page's scale. */
+export interface VipGroupPair {
+  baseGroup: string
+  vipGroup: string
+  baseRatio: number
+  vipRatio: number
+}
+
 /** What the pricing page knows about VIP pricing for the viewer. */
 export interface VipPriceContext {
-  /** Group VIP users bill in. */
-  group: string
-  /** VIP group ratio, scaled like the page's other group ratios. */
-  displayRatio: number
+  /** Every standard-to-VIP pair, the main pair first. */
+  pairs: VipGroupPair[]
+  /** The VIP group of the viewer's own pair, compared first. */
+  viewerVipGroup: string
   /** Whether the viewer is VIP. */
   isVip: boolean
 }
@@ -41,53 +49,39 @@ export interface CardVipRatios {
 }
 
 /**
- * The standard and VIP group ratios for one model card. The standard ratio is
- * the cheapest non-VIP group the model offers the viewer, or the group the
- * viewer filtered by. Returns null when the model has no VIP group or VIP is
- * not cheaper.
+ * The standard and VIP group ratios for one model card, from the pair the
+ * model offers both groups of: the pair of the group the viewer filtered by,
+ * else the viewer's own pair, else the first one. Returns null when no pair
+ * fits or its VIP group is not cheaper.
  */
 export function getCardVipRatios(
   model: PricingModel,
   selectedGroup: string | undefined,
   vip: VipPriceContext | undefined
 ): CardVipRatios | null {
-  if (!vip || !(vip.displayRatio > 0)) return null
+  if (!vip) return null
   const groups = Array.isArray(model.enable_groups) ? model.enable_groups : []
-  if (!groups.includes(vip.group)) return null
-  const ratios = model.group_ratio ?? {}
-  // The page's own VIP ratio shares the prices' scale: administrators read
-  // base prices with raw ratios, everyone else published ones. The membership
-  // ratio is always published, so it only stands in when the page has none,
-  // as for visitors who cannot use the VIP group.
-  const pageVipRatio = ratios[vip.group]
-  const vipRatio =
-    typeof pageVipRatio === 'number' &&
-    Number.isFinite(pageVipRatio) &&
-    pageVipRatio > 0
-      ? pageVipRatio
-      : vip.displayRatio
-
-  let standardRatio = Number.POSITIVE_INFINITY
-  const filtered =
-    selectedGroup !== undefined &&
-    selectedGroup !== FILTER_ALL &&
-    selectedGroup !== vip.group &&
-    groups.includes(selectedGroup)
-  for (const group of filtered ? [selectedGroup] : groups) {
-    const ratio = ratios[group]
-    if (group === vip.group || typeof ratio !== 'number') continue
-    if (Number.isFinite(ratio) && ratio > 0) {
-      standardRatio = Math.min(standardRatio, ratio)
-    }
+  const offered = vip.pairs.filter(
+    (pair) =>
+      groups.includes(pair.baseGroup) &&
+      groups.includes(pair.vipGroup) &&
+      pair.vipRatio > 0 &&
+      pair.vipRatio < pair.baseRatio
+  )
+  let pair: VipGroupPair | undefined
+  if (selectedGroup !== undefined && selectedGroup !== FILTER_ALL) {
+    pair = offered.find(
+      (p) => p.baseGroup === selectedGroup || p.vipGroup === selectedGroup
+    )
+  } else {
+    pair = offered.find((p) => p.vipGroup === vip.viewerVipGroup) ?? offered[0]
   }
-  if (!Number.isFinite(standardRatio) || vipRatio >= standardRatio) {
-    return null
-  }
-  const savingPercent = Math.round((1 - vipRatio / standardRatio) * 100)
+  if (!pair) return null
+  const savingPercent = Math.round((1 - pair.vipRatio / pair.baseRatio) * 100)
   if (savingPercent <= 0) return null
   return {
-    standardRatio,
-    vipRatio,
+    standardRatio: pair.baseRatio,
+    vipRatio: pair.vipRatio,
     savingPercent,
     isVip: vip.isVip,
   }
