@@ -8351,6 +8351,8 @@
     "More standard and VIP groups": "Другие обычные и VIP-группы",
     "No other group pairs. Add a row for each standard group that has its own VIP group.": "Других пар групп нет. Добавьте строку для каждой обычной группы со своей VIP-группой.",
     "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Пользователи каждой обычной группы переходят в её VIP-группу и возвращаются в неё после возврата платежа. Каждая VIP-группа должна быть в коэффициентах групп.",
-    "Enter a group name for every row": "Укажите название группы в каждой строке"
+    "Enter a group name for every row": "Укажите название группы в каждой строке",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Официальная цена учитывает и секунды референсного видео, поэтому её нельзя сравнить за выходную секунду",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Цены указаны за секунду выходного видео. Отрицательная корректировка снижает цену. Клиенты платят итоговую цену; новый коэффициент группы не меняет корректировку."
   }
 }

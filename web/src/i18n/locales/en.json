@@ -8351,6 +8351,8 @@
     "More standard and VIP groups": "More standard and VIP groups",
     "No other group pairs. Add a row for each standard group that has its own VIP group.": "No other group pairs. Add a row for each standard group that has its own VIP group.",
     "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.",
-    "Enter a group name for every row": "Enter a group name for every row"
+    "Enter a group name for every row": "Enter a group name for every row",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Official pricing also bills reference video seconds, so it does not compare per output second",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged."
   }
 }

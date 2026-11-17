@@ -8351,6 +8351,8 @@
     "More standard and VIP groups": "Autres groupes standard et VIP",
     "No other group pairs. Add a row for each standard group that has its own VIP group.": "Aucune autre paire de groupes. Ajoutez une ligne pour chaque groupe standard qui a son propre groupe VIP.",
     "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Les utilisateurs de chaque groupe standard passent à son groupe VIP, puis y reviennent après un remboursement. Chaque groupe VIP doit exister dans les ratios de groupe.",
-    "Enter a group name for every row": "Saisissez un nom de groupe sur chaque ligne"
+    "Enter a group name for every row": "Saisissez un nom de groupe sur chaque ligne",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Le tarif officiel facture aussi les secondes de la vidéo de référence ; il ne se compare donc pas par seconde produite",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Les prix sont par seconde de vidéo produite. Un ajustement négatif baisse le prix. Les clients paient le prix final ; un nouveau ratio de groupe ne change pas l'ajustement."
   }
 }

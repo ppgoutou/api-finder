@@ -50,6 +50,28 @@ const tokenExpr =
   'u("resolution") == "720p" && u("video_input") == "none" ? tier("720p·none", u("tokens") * 28 / 1000000) : ' +
   'tier("720p·video", u("tokens") * 16 / 1000000)'
 
+const secondSchema: BillingUsageSchema = {
+  seconds: { type: 'number', unit: 'second' },
+  resolution: { enum: ['480p', '720p'] },
+  video_input: { enum: ['none', 'video'] },
+}
+
+const secondExpr =
+  'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.13) : ' +
+  'tier("480p", u("seconds") * 0.1)'
+
+const officialTable: PricingCategory[] = [
+  {
+    id: 'seedance',
+    name: 'Seedance',
+    models: ['video'],
+    official_price: {
+      kind: 'video',
+      rows: [{ option: '480p', second: 0.5, reference_second: 0.3 }],
+    },
+  },
+]
+
 function pricingEntry(
   expression: string,
   extra?: Partial<ModelPricingEntry>
@@ -219,6 +241,25 @@ describe('officialSecondPrice', () => {
   })
 })
 
+describe('officialSecondPrice for per-second tiers', () => {
+  const official = onboardingOfficialPricing(
+    'video',
+    '',
+    secondSchema,
+    undefined,
+    officialTable
+  )
+  const rows = markupRows(secondExpr, secondSchema, undefined)
+
+  it('compares a plain per-second tier with the official second price', () => {
+    expect(officialSecondPrice(rows[1], official)).toBe(0.5)
+  })
+
+  it('leaves a per-second reference tier without an official price', () => {
+    expect(officialSecondPrice(rows[0], official)).toBeUndefined()
+  })
+})
+
 describe('batchAdjustment', () => {
   it.each([
     ['add', 0.1, 0.1],
@@ -322,6 +363,32 @@ describe('OnboardingMarkupTable', () => {
     expect(
       within(plain).queryByText('Per second of output plus reference video')
     ).toBeNull()
+  })
+
+  it('explains why a per-second reference row has no official share', () => {
+    renderTable(
+      undefined,
+      {
+        configured: {
+          'billing_setting.billing_mode': 'tiered_expr',
+          'billing_setting.billing_expr': secondExpr,
+        },
+        usage_schema: secondSchema,
+      },
+      { categories: officialTable }
+    )
+    const note =
+      'Official pricing also bills reference video seconds, so it does not compare per output second'
+    const reference = markupInput('480p·video').closest('tr') as HTMLElement
+    const plain = markupInput('480p$').closest('tr') as HTMLElement
+
+    expect(within(reference).getByText('—')).toBeTruthy()
+    expect(within(reference).getByText(note)).toBeTruthy()
+    expect(within(plain).queryByText(note)).toBeNull()
+    expect(within(plain).getByText('24% of official')).toBeTruthy()
+    expect(
+      screen.getByText(/^Prices are per second of output video\./)
+    ).toBeTruthy()
   })
 
   it('saves the typed markups for the model', async () => {
