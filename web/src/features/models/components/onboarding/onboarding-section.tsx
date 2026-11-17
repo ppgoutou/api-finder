@@ -119,6 +119,23 @@ export function OnboardingSection() {
       ),
     [options.data]
   )
+  const groupRatios = useMemo(() => {
+    const value = options.data?.data.find(
+      (option) => option.key === 'GroupRatio'
+    )?.value
+    try {
+      const parsed: unknown = JSON.parse(value || '{}')
+      if (!parsed || typeof parsed !== 'object') return {}
+      return Object.fromEntries(
+        Object.entries(parsed).filter(
+          (entry): entry is [string, number] =>
+            typeof entry[1] === 'number' && Number.isFinite(entry[1])
+        )
+      )
+    } catch {
+      return {}
+    }
+  }, [options.data])
   const priced = useMemo(() => {
     if (!pricing.data) return undefined
     return new Set(
@@ -449,6 +466,7 @@ export function OnboardingSection() {
             }
             markup={upstreamPrices.data?.markups?.[current.item.model_name]}
             priceFactor={upstreamPrices.data?.price_factor ?? 1}
+            groupRatios={groupRatios}
             applyingUpstreamPrice={applyPrice.isPending}
             onApplyUpstreamPrice={() =>
               applyPrice.mutate(current.item.model_name)

@@ -22,13 +22,18 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { ModelPricingEntry } from '@/features/model-pricing/api'
-import type { BillingUsageSchema } from '@/features/pricing/types'
+import type {
+  BillingUsageSchema,
+  PricingCategory,
+} from '@/features/pricing/types'
 import { api } from '@/lib/api'
 
 import { OnboardingMarkupTable } from '../components/onboarding/onboarding-markup-table'
 import {
   batchAdjustment,
   markupRows,
+  officialSecondPrice,
+  onboardingOfficialPricing,
   tierMarkups,
 } from '../lib/onboarding-markup'
 import type { OnboardingMarkup } from '../types'
@@ -64,7 +69,11 @@ function pricingEntry(
 
 function renderTable(
   markup?: OnboardingMarkup,
-  extra?: Partial<ModelPricingEntry>
+  extra?: Partial<ModelPricingEntry>,
+  context?: {
+    groupRatios?: Record<string, number>
+    categories?: PricingCategory[]
+  }
 ) {
   const queryClient = new QueryClient()
   render(
@@ -73,6 +82,8 @@ function renderTable(
         entry={pricingEntry(markup?.base_expr ?? tokenExpr, extra)}
         markup={markup}
         priceFactor={1.2}
+        groupRatios={context?.groupRatios ?? { default: 1.2 }}
+        categories={context?.categories ?? []}
       />
     </QueryClientProvider>
   )
@@ -162,6 +173,52 @@ describe('markupRows', () => {
   })
 })
 
+describe('officialSecondPrice', () => {
+  const official = onboardingOfficialPricing(
+    'video',
+    tokenExpr.replaceAll('* 28 /', '* 40 /').replaceAll('* 16 /', '* 20 /'),
+    schema,
+    undefined,
+    []
+  )
+
+  it('prices plain and reference rows per second at the row token rate', () => {
+    const rows = markupRows(tokenExpr, schema, undefined)
+
+    expect(officialSecondPrice(rows[0], official)).toBeCloseTo(
+      (40 * 10044) / 1_000_000
+    )
+    expect(officialSecondPrice(rows[3], official)).toBeCloseTo(
+      (20 * 21600) / 1_000_000
+    )
+  })
+
+  it('falls back to the category official table when the model has none', () => {
+    const fromCategory = onboardingOfficialPricing(
+      'video',
+      '',
+      schema,
+      undefined,
+      [
+        {
+          id: 'seedance',
+          name: 'Seedance',
+          models: ['video'],
+          official_price: {
+            kind: 'video',
+            rows: [{ option: '480p', second: 0.5, reference_second: 0.3 }],
+          },
+        },
+      ]
+    )
+    const rows = markupRows(tokenExpr, schema, undefined)
+
+    expect(officialSecondPrice(rows[0], fromCategory)).toBe(0.5)
+    expect(officialSecondPrice(rows[1], fromCategory)).toBe(0.3)
+    expect(officialSecondPrice(rows[2], fromCategory)).toBeUndefined()
+  })
+})
+
 describe('batchAdjustment', () => {
   it.each([
     ['add', 0.1, 0.1],
@@ -192,6 +249,51 @@ describe('OnboardingMarkupTable', () => {
     expect(
       within(row).getByText(`$${(supply * 1.2 + 0.1).toFixed(4)}/s`)
     ).toBeTruthy()
+  })
+
+  it('prices another group by its ratio, adjustment included, with its profit', async () => {
+    renderTable(undefined, undefined, {
+      groupRatios: { default: 1.2, vip: 2.4 },
+    })
+    await userEvent.type(markupInput('480p·none'), '0.1')
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Group' }))
+    await userEvent.click(await screen.findByRole('option', { name: /vip/ }))
+
+    const row = markupInput('480p·none').closest('tr') as HTMLElement
+    const supply = (28 * 10044) / 1_000_000
+    const final = (supply * 1.2 + 0.1) * 2
+    expect(
+      within(row).getByText(`$${(supply * 2.4).toFixed(4)}/s`)
+    ).toBeTruthy()
+    expect(within(row).getByText(`$${final.toFixed(4)}/s`)).toBeTruthy()
+    expect(
+      within(row).getByText(`$${(final - supply).toFixed(4)}/s`)
+    ).toBeTruthy()
+  })
+
+  it('shows the final price as a share of the category official price', () => {
+    renderTable(undefined, undefined, {
+      categories: [
+        {
+          id: 'seedance',
+          name: 'Seedance',
+          models: ['video'],
+          official_price: {
+            kind: 'video',
+            rows: [{ option: '480p', second: 0.5 }],
+          },
+        },
+      ],
+    })
+    const row = markupInput('480p·none').closest('tr') as HTMLElement
+    const share = (((28 * 10044) / 1_000_000) * 1.2) / 0.5
+
+    expect(
+      within(row).getByText(`${Number((share * 100).toFixed(1))}% of official`)
+    ).toBeTruthy()
+    const missing = markupInput('720p·none').closest('tr') as HTMLElement
+    expect(within(missing).getByText('—')).toBeTruthy()
   })
 
   it('uses the model plugin example rate when the entry has no plugin variants', () => {
@@ -373,6 +475,8 @@ describe('OnboardingMarkupTable', () => {
           }}
           markup={undefined}
           priceFactor={1.25}
+          groupRatios={{ default: 1.25 }}
+          categories={[]}
         />
       </QueryClientProvider>
     )
@@ -407,6 +511,8 @@ describe('OnboardingMarkupTable', () => {
           }}
           markup={{ tiers: null, base_price: 0.3, per_request: 0.05 }}
           priceFactor={1.25}
+          groupRatios={{ default: 1.25 }}
+          categories={[]}
         />
       </QueryClientProvider>
     )

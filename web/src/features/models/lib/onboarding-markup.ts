@@ -19,12 +19,16 @@ For commercial licensing, please contact support@quantumnous.com
 import type { ParsedTaskTier } from '@/features/pricing/lib/billing-expr'
 import { getTaskPricingDisplayTiers } from '@/features/pricing/lib/task-matrix-display'
 import {
+  getOfficialVideoPricing,
   VIDEO_TOKENS_PER_SECOND,
   videoTokensPerSecond,
+  type VideoPricing,
 } from '@/features/pricing/lib/video-pricing'
 import type {
   BillingUsageExample,
   BillingUsageSchema,
+  PricingCategory,
+  PricingModel,
 } from '@/features/pricing/types'
 
 import type { TierMarkup } from '../types'
@@ -175,4 +179,68 @@ export function batchAdjustment(
     : value
   const signed = operation.startsWith('subtract') ? -amount : amount
   return Number(signed.toFixed(4)) || 0
+}
+
+/**
+ * The vendor's official video price of a model, in USD per second by option:
+ * the model's own official expression, else its category's official table or
+ * expression, as the pricing page inherits it. Null when none applies.
+ */
+export function onboardingOfficialPricing(
+  modelName: string,
+  officialExpr: unknown,
+  schema: BillingUsageSchema | undefined,
+  examples: BillingUsageExample[] | undefined,
+  categories: PricingCategory[]
+): VideoPricing | null {
+  const own = typeof officialExpr === 'string' ? officialExpr.trim() : ''
+  const category = own
+    ? undefined
+    : categories.find(
+        (item) =>
+          item.models.includes(modelName) &&
+          (item.official_price || item.official_price_expr?.trim())
+      )
+  // A category table wins over the category expression.
+  const categoryExpr = category?.official_price
+    ? undefined
+    : category?.official_price_expr
+  const model = {
+    model_name: modelName,
+    billing_usage_schema: schema,
+    billing_usage_examples: examples,
+    official_price_expr: own || categoryExpr,
+    official_price: category?.official_price,
+  } as PricingModel
+  return getOfficialVideoPricing(model)
+}
+
+/**
+ * The official price of one row, in USD per second: the plain or
+ * reference-order price of the row's option. Undefined when the official price
+ * does not cover the row.
+ */
+export function officialSecondPrice(
+  row: MarkupRow,
+  official: VideoPricing | null
+): number | undefined {
+  if (!official || !row.source) return undefined
+  const option =
+    row.source.conditions.find(
+      (condition) => condition.field === official.optionField
+    )?.value ??
+    (official.rows.length === 1 ? official.rows[0].option : undefined)
+  const match = official.rows.find((item) => item.option === option)
+  if (!match) return undefined
+  const reference = row.source.conditions.some(
+    (condition) =>
+      condition.field === 'video_input' &&
+      condition.value !== 'none' &&
+      condition.value !== 'false'
+  )
+  if (!reference) return match.secondPrice > 0 ? match.secondPrice : undefined
+  if (match.referenceSecondPrice) return match.referenceSecondPrice
+  const tokensPerSecond = row.tokensPerSecond ?? match.tokensPerSecond
+  if (!match.referencePricePerMillion || !tokensPerSecond) return undefined
+  return (match.referencePricePerMillion * tokensPerSecond) / 1_000_000
 }
