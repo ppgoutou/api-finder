@@ -34,7 +34,11 @@ import { modelPricingDisplay } from '@/features/model-pricing/pricing'
 import { DynamicPricingBreakdown } from '@/features/pricing/components/dynamic-pricing-breakdown'
 import { ModelPriceCell } from '@/features/pricing/components/model-price-cell'
 import { isDynamicPricingModel } from '@/features/pricing/lib/dynamic-price'
-import type { BillingUsageSchema, PricingModel } from '@/features/pricing/types'
+import type {
+  BillingUsageSchema,
+  PricingCategory,
+  PricingModel,
+} from '@/features/pricing/types'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { checkUpstreamPrices } from '../../api'
@@ -55,6 +59,8 @@ export function OnboardingPriceCard(props: {
   upstream: UpstreamModelPrice | undefined
   markup: OnboardingMarkup | undefined
   priceFactor: number
+  groupRatios: Record<string, number>
+  categories: PricingCategory[]
   applying: boolean
   onApply: () => void
   acknowledging: boolean
@@ -181,6 +187,8 @@ export function OnboardingPriceCard(props: {
             entry={entry}
             markup={props.markup}
             priceFactor={props.priceFactor}
+            groupRatios={props.groupRatios}
+            categories={props.categories}
           />
         )}
       </div>

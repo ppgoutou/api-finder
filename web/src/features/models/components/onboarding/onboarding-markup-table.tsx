@@ -33,8 +33,16 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { ModelPricingEntry } from '@/features/model-pricing/api'
 import { taskTierConditions } from '@/features/pricing/lib/task-price-display'
+import type { PricingCategory } from '@/features/pricing/types'
 import { getCurrencyDisplay } from '@/lib/currency'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -45,6 +53,8 @@ import {
   FIXED_PRICE_ROW,
   fixedPriceRows,
   markupRows,
+  officialSecondPrice,
+  onboardingOfficialPricing,
   tierMarkups,
   type BatchOperation,
   type MarkupRow,
@@ -63,12 +73,19 @@ const MAX_ADJUSTMENT = 1000
  * The adjustment is a fixed amount customers pay on top of the group-ratio
  * price, or below it when negative; the server folds it into the charged
  * expression. A final price under the supply price is flagged but allowed.
+ * The prices of another group follow its ratio: the stored price is the
+ * default-group final price divided by the price factor, so the adjustment
+ * scales with the group's ratio too. Each row also shows the profit over the
+ * supply price and the final price as a share of the official price.
  * Admin only: it shows supply prices.
  */
 export function OnboardingMarkupTable(props: {
   entry: ModelPricingEntry
   markup: OnboardingMarkup | undefined
   priceFactor: number
+  /** Every group's ratio, keyed by group name. */
+  groupRatios: Record<string, number>
+  categories: PricingCategory[]
 }) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
@@ -97,6 +114,35 @@ export function OnboardingMarkupTable(props: {
     props.markup?.base_price,
   ])
   const perImage = rows.length === 1 && rows[0].tier === FIXED_PRICE_ROW
+  const official = useMemo(
+    () =>
+      onboardingOfficialPricing(
+        props.entry.model_name,
+        props.entry.configured['billing_setting.official_price_expr'],
+        props.entry.usage_schema,
+        examples,
+        props.categories
+      ),
+    [
+      props.entry.model_name,
+      props.entry.configured,
+      props.entry.usage_schema,
+      examples,
+      props.categories,
+    ]
+  )
+  const groups = Object.keys(props.groupRatios).sort()
+  // The price factor is the default group's ratio, else the lowest one.
+  const factorGroup =
+    props.groupRatios.default === props.priceFactor
+      ? 'default'
+      : groups.find((name) => props.groupRatios[name] === props.priceFactor)
+  const [pickedGroup, setPickedGroup] = useState<string>()
+  const group =
+    pickedGroup && pickedGroup in props.groupRatios ? pickedGroup : factorGroup
+  const groupRatio =
+    group === undefined ? props.priceFactor : props.groupRatios[group]
+  const groupScale = groupRatio / props.priceFactor
   const unit = perImage ? t('image') : t('s')
 
   // Inputs hold display-currency text; saved markups are USD.
@@ -160,6 +206,8 @@ export function OnboardingMarkupTable(props: {
 
   if (rows.length === 0) return null
   const price = (usd: number) => `${symbol}${(usd * rate).toFixed(4)}/${unit}`
+  const groupFinal = (row: MarkupRow) =>
+    (row.supply * props.priceFactor + (amounts[row.tier] ?? 0)) * groupScale
   const inScope = (onlySelected: boolean) =>
     rows.filter((row) => !onlySelected || selected.has(row.tier))
   const applyBatch = (
@@ -242,9 +290,9 @@ export function OnboardingMarkupTable(props: {
     },
     {
       id: 'ratio',
-      header: t('Group ratio price (×{{ratio}})', { ratio: props.priceFactor }),
+      header: t('Group ratio price (×{{ratio}})', { ratio: groupRatio }),
       cellClassName: 'font-mono',
-      cell: (row) => price(row.supply * props.priceFactor),
+      cell: (row) => price(row.supply * groupRatio),
     },
     {
       id: 'markup',
@@ -289,7 +337,7 @@ export function OnboardingMarkupTable(props: {
       header: t('Final price'),
       cellClassName: 'font-mono font-medium',
       cell: (row) => {
-        const final = row.supply * props.priceFactor + (amounts[row.tier] ?? 0)
+        const final = groupFinal(row)
         if (final >= row.supply) return price(final)
         return (
           <div className='text-destructive space-y-0.5'>
@@ -301,13 +349,81 @@ export function OnboardingMarkupTable(props: {
         )
       },
     },
+    {
+      id: 'profit',
+      header: perImage ? t('Profit per image') : t('Profit per second'),
+      cellClassName: 'font-mono',
+      cell: (row) => {
+        const profit = groupFinal(row) - row.supply
+        return (
+          <span
+            className={
+              profit < 0
+                ? 'text-destructive'
+                : 'text-green-600 dark:text-green-500'
+            }
+          >
+            {price(profit)}
+          </span>
+        )
+      },
+    },
+    {
+      id: 'official',
+      header: t('Share of official price'),
+      cell: (row) => {
+        const officialPrice = officialSecondPrice(row, official)
+        if (!officialPrice) {
+          return <span className='text-muted-foreground'>—</span>
+        }
+        const share = groupFinal(row) / officialPrice
+        return (
+          <div className='space-y-0.5'>
+            <div className='font-medium'>
+              {t('{{percent}}% of official', {
+                percent: Number((share * 100).toFixed(1)),
+                discount: Number((share * 10).toFixed(2)),
+              })}
+            </div>
+            <div className='text-muted-foreground font-mono text-xs'>
+              {t('Official {{price}}', { price: price(officialPrice) })}
+            </div>
+          </div>
+        )
+      },
+    },
   ]
 
   return (
     <section className='space-y-2'>
-      <h4 className='text-sm font-medium'>
-        {perImage ? t('Price per image') : t('Price per second')}
-      </h4>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <h4 className='text-sm font-medium'>
+          {perImage ? t('Price per image') : t('Price per second')}
+        </h4>
+        {groups.length > 1 && (
+          <Select
+            value={group ?? null}
+            items={groups.map((name) => ({
+              value: name,
+              label: `${name} ×${props.groupRatios[name]}`,
+            }))}
+            onValueChange={(value) => {
+              if (value) setPickedGroup(value)
+            }}
+          >
+            <SelectTrigger size='sm' className='w-48' aria-label={t('Group')}>
+              <SelectValue placeholder={t('Group')} />
+            </SelectTrigger>
+            <SelectContent>
+              {groups.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name} ×{props.groupRatios[name]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
       <OnboardingMarkupBatch
         symbol={symbol}
         unit={unit}
@@ -331,6 +447,14 @@ export function OnboardingMarkupTable(props: {
               'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
             )}
       </p>
+      {group !== factorGroup && (
+        <p className='text-muted-foreground text-xs'>
+          {t(
+            'Adjustments are entered for the {{base}} group; the {{group}} group pays them scaled by its ratio.',
+            { base: factorGroup ?? 'default', group }
+          )}
+        </p>
+      )}
       {badInput.size > 0 && (
         <p role='alert' className='text-destructive text-sm'>
           {t('Enter a valid adjustment amount')}
