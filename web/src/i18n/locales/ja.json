@@ -8345,9 +8345,8 @@
     "You are VIP: the prices below already include your {{percent}}% saving.": "あなたはVIPです。以下の料金は {{percent}}% の割引適用済みです。",
     "Your VIP prices apply to every request automatically.": "すべてのリクエストにVIP料金が自動で適用されます。",
     "{{amount}} more to become VIP": "あと {{amount}} でVIP",
-    "VIP price": "VIP価格",
+    "Show VIP prices": "VIP価格を表示",
     "Save {{percent}}%": "{{percent}}% お得",
-    "You save {{percent}}%": "{{percent}}% お得になっています",
-    "/s": "/秒"
+    "Show standard prices": "通常価格を表示"
   }
 }
