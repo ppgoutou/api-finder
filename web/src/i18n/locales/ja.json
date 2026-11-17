@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "あと {{amount}} でVIP",
     "Show VIP prices": "VIP価格を表示",
     "Save {{percent}}%": "{{percent}}% お得",
-    "Show standard prices": "通常価格を表示"
+    "Show standard prices": "通常価格を表示",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "公式価格は参照動画の秒数も課金するため、出力秒あたりでは比較できません",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "価格は出力動画1秒あたりです。負の値は値下げです。顧客は最終価格を支払い、グループ倍率を変えても調整額は変わりません。"
   }
 }

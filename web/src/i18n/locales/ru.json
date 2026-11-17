@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "Ещё {{amount}} до VIP",
     "Show VIP prices": "Показать цены VIP",
     "Save {{percent}}%": "−{{percent}}%",
-    "Show standard prices": "Показать обычные цены"
+    "Show standard prices": "Показать обычные цены",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Официальная цена учитывает и секунды референсного видео, поэтому её нельзя сравнить за выходную секунду",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Цены указаны за секунду выходного видео. Отрицательная корректировка снижает цену. Клиенты платят итоговую цену; новый коэффициент группы не меняет корректировку."
   }
 }

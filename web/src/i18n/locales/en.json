@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "{{amount}} more to become VIP",
     "Show VIP prices": "Show VIP prices",
     "Save {{percent}}%": "Save {{percent}}%",
-    "Show standard prices": "Show standard prices"
+    "Show standard prices": "Show standard prices",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Official pricing also bills reference video seconds, so it does not compare per output second",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged."
   }
 }

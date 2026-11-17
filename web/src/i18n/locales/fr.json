@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "Encore {{amount}} pour devenir VIP",
     "Show VIP prices": "Afficher les prix VIP",
     "Save {{percent}}%": "−{{percent}} %",
-    "Show standard prices": "Afficher les prix standard"
+    "Show standard prices": "Afficher les prix standard",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Le tarif officiel facture aussi les secondes de la vidéo de référence ; il ne se compare donc pas par seconde produite",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Les prix sont par seconde de vidéo produite. Un ajustement négatif baisse le prix. Les clients paient le prix final ; un nouveau ratio de groupe ne change pas l'ajustement."
   }
 }

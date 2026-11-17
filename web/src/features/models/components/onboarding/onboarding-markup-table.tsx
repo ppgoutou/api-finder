@@ -55,6 +55,7 @@ import {
   markupRows,
   officialSecondPrice,
   onboardingOfficialPricing,
+  referenceTier,
   tierMarkups,
   type BatchOperation,
   type MarkupRow,
@@ -374,7 +375,23 @@ export function OnboardingMarkupTable(props: {
       cell: (row) => {
         const officialPrice = officialSecondPrice(row, official)
         if (!officialPrice) {
-          return <span className='text-muted-foreground'>—</span>
+          const outputSecondsOnly =
+            official &&
+            row.source &&
+            !row.tokensPerSecond &&
+            referenceTier(row.source)
+          return (
+            <div className='text-muted-foreground space-y-0.5'>
+              <div>—</div>
+              {outputSecondsOnly && (
+                <div className='text-xs'>
+                  {t(
+                    'Official pricing also bills reference video seconds, so it does not compare per output second'
+                  )}
+                </div>
+              )}
+            </div>
+          )
         }
         const share = groupFinal(row) / officialPrice
         return (
@@ -393,6 +410,19 @@ export function OnboardingMarkupTable(props: {
       },
     },
   ]
+
+  let footnote = t(
+    'Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
+  )
+  if (perImage) {
+    footnote = t(
+      'Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.'
+    )
+  } else if (rows.some((row) => row.tokensPerSecond)) {
+    footnote = t(
+      'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
+    )
+  }
 
   return (
     <section className='space-y-2'>
@@ -438,15 +468,7 @@ export function OnboardingMarkupTable(props: {
         getRowKey={(row) => row.tier}
         columns={columns}
       />
-      <p className='text-muted-foreground text-xs'>
-        {perImage
-          ? t(
-              'Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.'
-            )
-          : t(
-              'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
-            )}
-      </p>
+      <p className='text-muted-foreground text-xs'>{footnote}</p>
       {group !== factorGroup && (
         <p className='text-muted-foreground text-xs'>
           {t(

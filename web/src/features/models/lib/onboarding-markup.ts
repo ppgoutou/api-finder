@@ -102,12 +102,7 @@ export function markupRows(
       field,
       tokensPerSecond,
       supply: (price * tokensPerSecond) / 1_000_000,
-      reference: tier.conditions.some(
-        (condition) =>
-          condition.field === 'video_input' &&
-          condition.value !== 'none' &&
-          condition.value !== 'false'
-      ),
+      reference: referenceTier(tier),
     })
   }
   return rows
@@ -215,10 +210,21 @@ export function onboardingOfficialPricing(
   return getOfficialVideoPricing(model)
 }
 
+/** Whether a tier prices requests that carry a reference video. */
+export function referenceTier(tier: ParsedTaskTier): boolean {
+  return tier.conditions.some(
+    (condition) =>
+      condition.field === 'video_input' &&
+      condition.value !== 'none' &&
+      condition.value !== 'false'
+  )
+}
+
 /**
  * The official price of one row, in USD per second: the plain or
  * reference-order price of the row's option. Undefined when the official price
- * does not cover the row.
+ * does not cover the row, or when a reference row is priced per output second
+ * (see referenceTier).
  */
 export function officialSecondPrice(
   row: MarkupRow,
@@ -232,15 +238,14 @@ export function officialSecondPrice(
     (official.rows.length === 1 ? official.rows[0].option : undefined)
   const match = official.rows.find((item) => item.option === option)
   if (!match) return undefined
-  const reference = row.source.conditions.some(
-    (condition) =>
-      condition.field === 'video_input' &&
-      condition.value !== 'none' &&
-      condition.value !== 'false'
-  )
-  if (!reference) return match.secondPrice > 0 ? match.secondPrice : undefined
+  if (!referenceTier(row.source)) {
+    return match.secondPrice > 0 ? match.secondPrice : undefined
+  }
+  // A tier priced per second bills output seconds only, while the official
+  // reference price also bills the reference video's seconds: the two do not
+  // compare per second.
+  if (!row.tokensPerSecond) return undefined
   if (match.referenceSecondPrice) return match.referenceSecondPrice
-  const tokensPerSecond = row.tokensPerSecond ?? match.tokensPerSecond
-  if (!match.referencePricePerMillion || !tokensPerSecond) return undefined
-  return (match.referencePricePerMillion * tokensPerSecond) / 1_000_000
+  if (!match.referencePricePerMillion) return undefined
+  return (match.referencePricePerMillion * row.tokensPerSecond) / 1_000_000
 }
