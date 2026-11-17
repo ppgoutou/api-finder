@@ -231,6 +231,22 @@ describe('price comparison overview', () => {
     ).toBeNull()
   })
 
+  it('shows dashes for the with-video official price and discount of a (D) model', () => {
+    renderDetails({ ...tokenVideoModel, display_name: 'Seedance line (D)' })
+
+    const perSecond = screen.getByRole('region', { name: 'Per-second prices' })
+    const rows = within(perSecond).getAllByRole('row').slice(1)
+    const cellsOf = (index: number) =>
+      within(rows[index])
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent)
+    // Rows: 480p without, 480p with, 720p without, 720p with.
+    expect(cellsOf(1).slice(2)).toEqual(['-', '-'])
+    expect(cellsOf(3).slice(2)).toEqual(['-', '-'])
+    expect(cellsOf(0)[3]).toBe('28% off')
+    expect(cellsOf(0)[2]).not.toBe('-')
+  })
+
   it('names both video conditions in the English header and keeps each row on one label', () => {
     renderDetails(tokenVideoModel)
 
