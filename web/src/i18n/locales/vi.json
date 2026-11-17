@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "Còn {{amount}} để lên VIP",
     "Show VIP prices": "Hiện giá VIP",
     "Save {{percent}}%": "Tiết kiệm {{percent}}%",
-    "Show standard prices": "Hiện giá thường"
+    "Show standard prices": "Hiện giá thường",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "Giá chính thức tính cả số giây video tham chiếu nên không so sánh được theo giây đầu ra",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Giá tính theo mỗi giây video đầu ra. Điều chỉnh âm sẽ giảm giá. Khách hàng trả giá cuối; đổi hệ số nhóm không làm thay đổi điều chỉnh."
   }
 }

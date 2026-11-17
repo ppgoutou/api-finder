@@ -8347,6 +8347,8 @@
     "{{amount}} more to become VIP": "再儲值 {{amount}} 即可升級 VIP",
     "Show VIP prices": "顯示 VIP 價",
     "Save {{percent}}%": "省 {{percent}}%",
-    "Show standard prices": "顯示一般價"
+    "Show standard prices": "顯示一般價",
+    "Official pricing also bills reference video seconds, so it does not compare per output second": "官方另按參考影片時長計費，無法按輸出秒比較",
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "價格按每秒輸出影片計算。負數表示降價。客戶支付最終價；修改分組倍率後調整金額保持不變。"
   }
 }
