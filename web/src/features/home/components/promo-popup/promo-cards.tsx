@@ -181,20 +181,21 @@ function RechargePromoCard(props: PromoCardProps) {
   const bonusShare = headline ? getPromoBonusShare(headline) : null
   return (
     <article className={CARD_CLASS}>
-      <div className={cn(MEDIA_CLASS, 'h-[248px] bg-brand max-sm:h-[196px]')}>
+      <div className={cn(MEDIA_CLASS, 'bg-brand')}>
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
           <span className='text-brand-hover rounded-full bg-white px-2.5 py-1 text-xs font-semibold'>
             {t('Top-up offer')}
           </span>
           {endLabel && <span className='text-[13px]'>{endLabel}</span>}
         </div>
-        {headline && (
-          <p className='mt-4 truncate text-[44px] leading-13 font-bold max-sm:mt-3 max-sm:text-[28px] max-sm:leading-9'>
-            {t('Pay {{pay}}, get {{bonus}} free', headline)}
-          </p>
+        {/* The admin's title wins; otherwise the first tier is the headline. */}
+        {(card.title || headline) && (
+          <h3 className='mt-4 line-clamp-2 text-[32px] leading-10 font-bold max-sm:mt-3 max-sm:text-[24px] max-sm:leading-8'>
+            {card.title || t('Pay {{pay}}, get {{bonus}} free', headline)}
+          </h3>
         )}
         {bonusShare !== null && (
-          <div className='mt-auto'>
+          <div className='mt-6 max-sm:mt-4'>
             <div className='flex h-3 gap-1'>
               <span className='flex-1 rounded-l-full rounded-r-sm bg-white' />
               <span
@@ -210,29 +211,36 @@ function RechargePromoCard(props: PromoCardProps) {
         )}
       </div>
       <div className={BODY_CLASS}>
-        {card.tiers.length > 1 && (
-          <ul className='grid grid-cols-3 gap-2.5'>
-            {card.tiers.map((tier) => (
-              <li
-                key={`${tier.pay}-${tier.bonus}`}
-                className='bg-surface-muted dark:bg-muted min-w-0 rounded-xl p-3 max-sm:p-2'
-              >
-                <p className='truncate text-base font-bold max-sm:text-sm'>
-                  {tier.pay}
-                </p>
-                <p className='text-brand-hover dark:text-brand-on-dark mt-0.5 truncate text-[13px]'>
-                  {t('+{{bonus}} free', { bonus: tier.bonus })}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        {card.description && (
-          <p className='text-muted-foreground mt-3.5 line-clamp-2 text-sm leading-[22px] whitespace-pre-line'>
-            {card.description}
-          </p>
-        )}
-        <div className='mt-auto flex'>
+        <div className='min-h-0 flex-1 overflow-y-auto'>
+          {card.tiers.length > 1 && (
+            <ul className='grid grid-cols-3 gap-2.5'>
+              {card.tiers.map((tier) => (
+                <li
+                  key={`${tier.pay}-${tier.bonus}`}
+                  className='bg-surface-muted dark:bg-muted min-w-0 rounded-xl p-3 max-sm:p-2'
+                >
+                  <p className='truncate text-base font-bold max-sm:text-sm'>
+                    {tier.pay}
+                  </p>
+                  <p className='text-brand-hover dark:text-brand-on-dark mt-0.5 truncate text-[13px]'>
+                    {t('+{{bonus}} free', { bonus: tier.bonus })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          {card.description && (
+            <p
+              className={cn(
+                'text-muted-foreground text-sm leading-[22px] whitespace-pre-line',
+                card.tiers.length > 1 && 'mt-3.5'
+              )}
+            >
+              {card.description}
+            </p>
+          )}
+        </div>
+        <div className='mt-4 flex shrink-0'>
           <PromoLink
             href={card.href || PROMO_DEFAULT_HREF.recharge}
             onNavigate={props.onNavigate}

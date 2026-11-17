@@ -222,6 +222,51 @@ describe('home promotion popup', () => {
     ).toBeVisible()
   })
 
+  it('shows the admin title of a recharge card as its headline', async () => {
+    mockSettings(
+      JSON.stringify({
+        enabled: true,
+        cards: [
+          {
+            kind: 'recharge',
+            title: 'Top up $500, get VIP',
+            tiers: [{ pay: '$500', bonus: 'VIP' }],
+          },
+        ],
+      })
+    )
+    renderPopup()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Top up $500, get VIP' })
+    ).toBeVisible()
+    expect(screen.queryByText('Pay $500, get VIP free')).not.toBeInTheDocument()
+  })
+
+  it('shows every line of a recharge description without clamping', async () => {
+    const description = 'Line one\nLine two\nLine three'
+    mockSettings(
+      JSON.stringify({
+        enabled: true,
+        cards: [
+          {
+            kind: 'recharge',
+            description,
+            tiers: [{ pay: '$500', bonus: 'VIP' }],
+          },
+        ],
+      })
+    )
+    renderPopup()
+
+    const text = await screen.findByText(
+      (_content, element) =>
+        element?.tagName === 'P' && element.textContent === description
+    )
+    expect(text).not.toHaveClass('line-clamp-2')
+    expect(text.parentElement).toHaveClass('overflow-y-auto')
+  })
+
   it('keeps the line breaks the admin typed in a description', async () => {
     const description = 'Seedance (F) at 39% of list\nOfficial channel at 75%'
     mockSettings(
