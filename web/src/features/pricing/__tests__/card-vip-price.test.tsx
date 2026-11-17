@@ -199,6 +199,32 @@ describe('card VIP ratios', () => {
     expect(ratios).toMatchObject({ standardRatio: 1.28, savingPercent: 6 })
   })
 
+  it('uses the page VIP ratio when its prices are unscaled base prices', () => {
+    // An administrator reads base prices with raw ratios (default 1.3,
+    // vip 1.2) while the membership ratio stays published (1.2 / 1.3).
+    const ratios = getCardVipRatios(
+      videoModel({ group_ratio: { default: 1.3, vip: 1.2 } }),
+      undefined,
+      { ...visitorVip, displayRatio: 0.923077 }
+    )
+
+    expect(ratios).toMatchObject({
+      standardRatio: 1.3,
+      vipRatio: 1.2,
+      savingPercent: 8,
+    })
+  })
+
+  it('falls back to the membership VIP ratio when the page has none', () => {
+    const ratios = getCardVipRatios(
+      videoModel({ group_ratio: { default: 1 } }),
+      undefined,
+      { ...visitorVip, displayRatio: 0.923077 }
+    )
+
+    expect(ratios).toMatchObject({ vipRatio: 0.923077, savingPercent: 8 })
+  })
+
   it.each([
     ['the model has no VIP group', videoModel({ enable_groups: ['default'] })],
     ['VIP is not cheaper', videoModel({ group_ratio: { default: 0.8 } })],
