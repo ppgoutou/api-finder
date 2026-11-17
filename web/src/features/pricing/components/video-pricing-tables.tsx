@@ -59,6 +59,8 @@ type VideoPricingTablesProps = {
   priceRate: number
   usdExchangeRate: number
   showRechargePrice: boolean
+  /** Decimals of the group prices; video prices keep two unless set. */
+  fractionDigits?: number
 }
 
 type GroupRow = VideoPricingRow & { group: string; ratio: number }
@@ -70,18 +72,22 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const optionDefinition =
     props.model.billing_usage_schema?.[props.pricing.optionField]
-  const priceOptions = (ratio: number): DynamicPriceOptions => ({
+  const priceOptions = (
+    ratio: number,
+    fractionDigits = VIDEO_PRICE_FRACTION_DIGITS
+  ): DynamicPriceOptions => ({
     tokenUnit: 'M',
     showRechargePrice: props.showRechargePrice,
     priceRate: props.priceRate,
     usdExchangeRate: props.usdExchangeRate,
     groupRatioMultiplier: ratio,
-    fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
+    fractionDigits,
   })
 
   function columns<TRow extends VideoPricingRow>(
     pricing: VideoPricing,
-    ratioOf: (row: TRow) => number
+    ratioOf: (row: TRow) => number,
+    fractionDigits?: number
   ): StaticDataTableColumn<TRow>[] {
     const range = pricing.durationRange
     const list: StaticDataTableColumn<TRow>[] = [
@@ -96,7 +102,10 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
         header: t('Price per second'),
         cellClassName: 'font-mono tabular-nums',
         cell: (row) =>
-          formatTaskUsageUnitPrice(row.secondPrice, priceOptions(ratioOf(row))),
+          formatTaskUsageUnitPrice(
+            row.secondPrice,
+            priceOptions(ratioOf(row), fractionDigits)
+          ),
       },
     ]
     if (pricing.hasReferencePricing) {
@@ -109,7 +118,7 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
               <span className='font-mono tabular-nums'>
                 {formatTaskUsageUnitPrice(
                   row.referenceSecondPrice,
-                  priceOptions(ratioOf(row))
+                  priceOptions(ratioOf(row), fractionDigits)
                 )}
                 {t('/second')}
               </span>
@@ -122,7 +131,7 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
                 {t('{{price}} / 1M tokens', {
                   price: formatDynamicUnitPrice(
                     row.referencePricePerMillion,
-                    priceOptions(ratioOf(row))
+                    priceOptions(ratioOf(row), fractionDigits)
                   ),
                 })}
               </span>
@@ -148,7 +157,7 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
             ? '-'
             : formatTaskUsageUnitPrice(
                 row.inputVideoSecondPrice,
-                priceOptions(ratioOf(row))
+                priceOptions(ratioOf(row), fractionDigits)
               ),
       })
     }
@@ -163,7 +172,7 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
               <span className='font-mono tabular-nums'>
                 {formatTaskUsageUnitPrice(
                   row.inputImagePrice,
-                  priceOptions(ratioOf(row))
+                  priceOptions(ratioOf(row), fractionDigits)
                 )}
               </span>
               {Boolean(row.freeInputImages) && (
@@ -258,7 +267,11 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
                 header: t('Group'),
                 cell: (row) => <GroupBadge group={row.group} size='sm' />,
               },
-              ...columns<GroupRow>(props.pricing, (row) => row.ratio),
+              ...columns<GroupRow>(
+                props.pricing,
+                (row) => row.ratio,
+                props.fractionDigits
+              ),
             ]}
           />
           {props.pricing.hasReferencePricing && referenceNotes(props.pricing)}
@@ -275,7 +288,8 @@ export function VideoPricingTables(props: VideoPricingTablesProps) {
           {example &&
             props.groups.map((group) => {
               const options = priceOptions(
-                getConfiguredGroupRatio(props.groupRatio, group)
+                getConfiguredGroupRatio(props.groupRatio, group),
+                props.fractionDigits
               )
               return (
                 <p

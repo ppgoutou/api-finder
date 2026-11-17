@@ -60,6 +60,8 @@ type PriceComparisonSectionProps = {
   priceRate: number
   usdExchangeRate: number
   showRechargePrice: boolean
+  /** Decimals of our prices; video prices keep two unless set. */
+  fractionDigits?: number
 }
 
 /** Equal-width, centered columns; a phone keeps them within the screen. */
@@ -123,7 +125,10 @@ export function PriceComparisonSection(props: PriceComparisonSectionProps) {
     >
       {groups.map((group) => (
         <div key={group} className='space-y-5'>
-          {props.groups.length > 1 && <GroupBadge group={group} size='sm' />}
+          {/* A lone default group needs no label. */}
+          {(props.groups.length > 1 || group !== 'default') && (
+            <GroupBadge group={group} size='sm' />
+          )}
           <GroupComparisonTables
             {...props}
             ratio={getConfiguredGroupRatio(props.groupRatio, group)}
@@ -174,24 +179,33 @@ function GroupComparisonTables(
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const optionDefinition =
     props.model.billing_usage_schema?.[props.comparison.optionField]
-  const options = (ratio: number): DynamicPriceOptions => ({
+  const options = (
+    ratio: number,
+    fractionDigits = VIDEO_PRICE_FRACTION_DIGITS
+  ): DynamicPriceOptions => ({
     tokenUnit: 'M',
     showRechargePrice: props.showRechargePrice,
     priceRate: props.priceRate,
     usdExchangeRate: props.usdExchangeRate,
     groupRatioMultiplier: ratio,
-    fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
+    fractionDigits,
   })
-  const ours = options(props.ratio)
+  const ours = options(props.ratio, props.fractionDigits)
   const official = options(1)
   const rows = props.comparison.rows
+  // Without reference-video prices there is no condition to tell apart.
+  const hasReferenceRows = rows.some((row) => row.withVideo)
 
   // Languages with short condition words name both conditions in the header
   // and keep the rows short; the others spell the condition out per row.
-  const headerWithout = t('Resolution header without video')
-  const headerWith = t('Resolution header with video')
-  const rowCondition = (row: PriceComparisonRow) =>
-    row.withVideo ? t('Row with video') : t('Row without video')
+  const headerWithout = hasReferenceRows
+    ? t('Resolution header without video')
+    : ''
+  const headerWith = hasReferenceRows ? t('Resolution header with video') : ''
+  const rowCondition = (row: PriceComparisonRow) => {
+    if (!hasReferenceRows) return ''
+    return row.withVideo ? t('Row with video') : t('Row without video')
+  }
   const conditionColumn: StaticDataTableColumn<PriceComparisonRow> = {
     id: 'condition',
     header: (
@@ -210,20 +224,22 @@ function GroupComparisonTables(
         <span className='inline-block font-medium'>
           {taskEnumLabel(optionDefinition, row.option, i18n.language)}
         </span>
-        <span
-          className={cn(
-            'inline-block whitespace-nowrap',
-            // Latin brackets read with a space before them; CJK ones carry
-            // their own.
-            rowCondition(row).startsWith('(') && 'ms-1'
-          )}
-        >
-          {row.withVideo ? (
-            <VideoText>{rowCondition(row)}</VideoText>
-          ) : (
-            rowCondition(row)
-          )}
-        </span>
+        {hasReferenceRows && (
+          <span
+            className={cn(
+              'inline-block whitespace-nowrap',
+              // Latin brackets read with a space before them; CJK ones carry
+              // their own.
+              rowCondition(row).startsWith('(') && 'ms-1'
+            )}
+          >
+            {row.withVideo ? (
+              <VideoText>{rowCondition(row)}</VideoText>
+            ) : (
+              rowCondition(row)
+            )}
+          </span>
+        )}
       </>
     ),
   }
@@ -303,7 +319,10 @@ function GroupComparisonTables(
           headerRowClassName='hover:bg-transparent'
           data={rows}
           getRowKey={(row) => row.key}
-          columns={[conditionColumn, ...priceColumns('second', formatTaskUsageUnitPrice)]}
+          columns={[
+            conditionColumn,
+            ...priceColumns('second', formatTaskUsageUnitPrice),
+          ]}
         />
       </ComparisonTable>
 

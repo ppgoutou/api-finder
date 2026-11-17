@@ -16,11 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { PricingVipPriceView } from '@/stores/pricing-preferences-store'
+
 import { FILTER_ALL } from '../constants'
 import type { PricingModel } from '../types'
 
 /** VIP prices on the cards: VIP prices keep this many decimals. */
 export const VIP_VIDEO_PRICE_FRACTION_DIGITS = 3
+
+/** Every VIP group is shown to visitors under this one name. */
+export const VIP_DISPLAY_GROUP = 'vip'
 
 /** A standard group, its VIP group, and both ratios on the page's scale. */
 export interface VipGroupPair {
@@ -85,4 +90,15 @@ export function getCardVipRatios(
     savingPercent,
     isVip: vip.isVip,
   }
+}
+
+/**
+ * Whether a model with a VIP price shows it: the viewer's switch once they
+ * used it, else VIP prices for VIP viewers only.
+ */
+export function showsVipPrices(
+  ratios: CardVipRatios,
+  view: PricingVipPriceView | null
+): boolean {
+  return view === null ? ratios.isVip : view === 'vip'
 }

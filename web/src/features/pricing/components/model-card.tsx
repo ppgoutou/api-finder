@@ -64,6 +64,7 @@ import {
 } from '../lib/video-pricing'
 import {
   getCardVipRatios,
+  showsVipPrices,
   VIP_VIDEO_PRICE_FRACTION_DIGITS,
   type VipPriceContext,
 } from '../lib/vip-price'
@@ -172,9 +173,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const setVipPriceView = usePricingPreferencesStore(
     (state) => state.setVipPriceView
   )
-  const showVip =
-    vipRatios !== null &&
-    (vipPriceView === null ? vipRatios.isVip : vipPriceView === 'vip')
+  const showVip = vipRatios !== null && showsVipPrices(vipRatios, vipPriceView)
   const vipToggle = vipRatios && (
     <CardVipToggle
       showVip={showVip}

@@ -61,6 +61,7 @@ import { ROLE } from '@/lib/roles'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
+import { usePricingPreferencesStore } from '@/stores/pricing-preferences-store'
 
 import { DEFAULT_TOKEN_UNIT } from '../constants'
 import { usePricingData } from '../hooks/use-pricing-data'
@@ -105,6 +106,13 @@ import {
   getPerVideoPricing,
   getVideoPricing,
 } from '../lib/video-pricing'
+import {
+  getCardVipRatios,
+  showsVipPrices,
+  VIP_DISPLAY_GROUP,
+  VIP_VIDEO_PRICE_FRACTION_DIGITS,
+  type VipPriceContext,
+} from '../lib/vip-price'
 import type {
   ModelCapability,
   PriceType,
@@ -1231,11 +1239,38 @@ export interface ModelDetailsContentProps {
   usdExchangeRate: number
   tokenUnit: TokenUnit
   showRechargePrice?: boolean
+  /** The pricing page's group filter, which picks the VIP pair like the cards do. */
+  selectedGroup?: string
+  /** VIP pricing for the viewer; video prices follow the cards' VIP switch. */
+  vip?: VipPriceContext
 }
 
 export function ModelDetailsContent(props: ModelDetailsContentProps) {
   const { t } = useTranslation()
   const showRechargePrice = props.showRechargePrice ?? false
+
+  // Video prices follow the cards' VIP switch. VIP prices show as one "vip"
+  // group whichever VIP group they come from; standard prices leave the VIP
+  // groups out.
+  const vipRatios = getCardVipRatios(
+    props.model,
+    props.selectedGroup,
+    props.vip
+  )
+  const vipPriceView = usePricingPreferencesStore((state) => state.vipPriceView)
+  const showVip = vipRatios !== null && showsVipPrices(vipRatios, vipPriceView)
+  const vipGroups = new Set(props.vip?.pairs.map((pair) => pair.vipGroup))
+  const videoGroups = showVip
+    ? [VIP_DISPLAY_GROUP]
+    : getAvailableGroups(props.model, props.usableGroup).filter(
+        (group) => vipRatios === null || !vipGroups.has(group)
+      )
+  const videoGroupRatio = showVip
+    ? { [VIP_DISPLAY_GROUP]: vipRatios.vipRatio }
+    : props.groupRatio
+  const videoFractionDigits = showVip
+    ? VIP_VIDEO_PRICE_FRACTION_DIGITS
+    : undefined
 
   const videoPricing = getVideoPricing(props.model)
   // Video models with an official price show one table of both prices.
@@ -1276,8 +1311,9 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
               <PriceComparisonSection
                 model={props.model}
                 comparison={priceComparison}
-                groups={getAvailableGroups(props.model, props.usableGroup)}
-                groupRatio={props.groupRatio}
+                groups={videoGroups}
+                groupRatio={videoGroupRatio}
+                fractionDigits={videoFractionDigits}
                 priceRate={props.priceRate}
                 usdExchangeRate={props.usdExchangeRate}
                 showRechargePrice={showRechargePrice}
@@ -1288,8 +1324,9 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
                 model={props.model}
                 pricing={videoPricing}
                 officialPricing={getOfficialVideoPricing(props.model)}
-                groups={getAvailableGroups(props.model, props.usableGroup)}
-                groupRatio={props.groupRatio}
+                groups={videoGroups}
+                groupRatio={videoGroupRatio}
+                fractionDigits={videoFractionDigits}
                 priceRate={props.priceRate}
                 usdExchangeRate={props.usdExchangeRate}
                 showRechargePrice={showRechargePrice}
