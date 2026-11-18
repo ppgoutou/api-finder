@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -253,23 +254,78 @@ func TestTaskMediaRetentionTellsOwnerHowLongTheVideoLasts(t *testing.T) {
 		task          *model.Task
 		storeEnabled  bool
 		retentionDays int
-		wantKept      bool
 		wantExpiresAt int64
 	}{
-		{"stored copy kept forever", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 0, true, 0},
-		{"stored copy ends with retention", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 30, false, finishedAt + 30*day},
-		{"copy pending reports nothing", succeeded(nil, finishedAt), true, 0, false, 0},
-		{"storage off uses upstream link", succeeded(nil, finishedAt), false, 0, false, finishedAt + day},
-		{"copy gave up uses upstream link", succeeded(&model.TaskStoredMedia{GaveUp: true}, finishedAt), true, 0, false, finishedAt + day},
-		{"copy window passed uses upstream link", succeeded(nil, now-3*day), true, 0, false, now - 2*day},
-		{"unfinished task reports nothing", &model.Task{Status: model.TaskStatusInProgress}, true, 0, false, 0},
+		{"stored copy shown for 15 days", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 0, finishedAt + 15*day},
+		{"shorter storage retention wins", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 7, finishedAt + 7*day},
+		{"longer storage retention keeps 15 days", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 30, finishedAt + 15*day},
+		{"copy pending reports nothing", succeeded(nil, finishedAt), true, 0, 0},
+		{"storage off uses upstream link", succeeded(nil, finishedAt), false, 0, finishedAt + day},
+		{"copy gave up uses upstream link", succeeded(&model.TaskStoredMedia{GaveUp: true}, finishedAt), true, 0, finishedAt + day},
+		{"copy window passed uses upstream link", succeeded(nil, now-3*day), true, 0, now - 2*day},
+		{"unfinished task reports nothing", &model.Task{Status: model.TaskStatusInProgress}, true, 0, 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			settings.RetentionDays = tc.retentionDays
-			kept, expiresAt := taskMediaRetention(tc.task, tc.storeEnabled)
-			assert.Equal(t, tc.wantKept, kept)
-			assert.Equal(t, tc.wantExpiresAt, expiresAt)
+			assert.Equal(t, tc.wantExpiresAt, taskMediaRetention(tc.task, tc.storeEnabled))
 		})
 	}
+}
+
+func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	allowPrivateTaskMediaTest(t)
+	pngBytes := append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(pngBytes)
+	}))
+	defer upstream.Close()
+	overseas, overseasServer := newFakeMediaBucket(t)
+	mainland, mainlandServer := newFakeMediaBucket(t)
+	configureMediaStorageTest(t, overseasServer.URL, mainlandServer.URL)
+
+	serve := func(status int, body any) *httptest.ResponseRecorder {
+		engine := gin.New()
+		engine.POST("/pg/images/generations", StorePlaygroundImages, func(c *gin.Context) {
+			c.JSON(status, body)
+		})
+		recorder := httptest.NewRecorder()
+		engine.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/pg/images/generations", nil))
+		return recorder
+	}
+
+	recorder := serve(http.StatusOK, gin.H{
+		"created": 1790000000,
+		"data": []gin.H{
+			{"url": upstream.URL + "/a.png"},
+			{"b64_json": base64.StdEncoding.EncodeToString(pngBytes)},
+		},
+	})
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var response struct {
+		Created int64 `json:"created"`
+		Data    []struct {
+			URL            string `json:"url"`
+			B64JSON        string `json:"b64_json"`
+			MediaExpiresAt int64  `json:"media_expires_at"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Equal(t, int64(1790000000), response.Created)
+	require.Len(t, response.Data, 2)
+	for _, item := range response.Data {
+		assert.True(t, strings.HasPrefix(item.URL, "https://cn-media.example.com/images/"), item.URL)
+		assert.True(t, strings.HasSuffix(item.URL, ".png"), item.URL)
+		assert.Empty(t, item.B64JSON)
+		assert.InDelta(t, time.Now().Unix()+15*86400, item.MediaExpiresAt, 5)
+	}
+	assert.Len(t, mainland.objects, 2)
+	assert.Empty(t, overseas.objects)
+
+	// Failed generations reach the client untouched.
+	recorder = serve(http.StatusBadRequest, gin.H{"error": gin.H{"message": "bad prompt"}})
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+	assert.JSONEq(t, `{"error":{"message":"bad prompt"}}`, recorder.Body.String())
 }

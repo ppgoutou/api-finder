@@ -74,8 +74,8 @@ beforeEach(() => {
   window.localStorage.clear()
   useStudioImageWorks.setState({ works: [] })
   generateMock.mockResolvedValue([
-    'https://cdn.example/a.png',
-    'https://cdn.example/b.png',
+    { url: 'https://cdn.example/a.png', expiresAt: 1_900_000_000 },
+    { url: 'https://cdn.example/b.png' },
   ])
 })
 
@@ -114,6 +114,9 @@ describe('ImageComposer', () => {
     expect(
       await screen.findAllByRole('img', { name: 'a red fox' })
     ).toHaveLength(2)
+    expect(
+      useStudioImageWorks.getState().works.map((work) => work.expiresAt)
+    ).toEqual([1_900_000_000, undefined])
   })
 
   it('does not submit without a prompt', async () => {

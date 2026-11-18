@@ -55,11 +55,8 @@ type TaskDto struct {
 	// ResultDiscarded marks a synchronous result that was returned inline and
 	// never persisted; the UI must not offer artifact retrieval for it.
 	ResultDiscarded bool `json:"result_discarded,omitempty"`
-	// MediaKept is set once this site holds its own copy of the video, which
-	// stays available. MediaExpiresAt is set instead when no copy will be
-	// made: the video then lives only at the upstream link, which stops
-	// working around that time (Unix seconds).
-	MediaKept      bool            `json:"media_kept,omitempty"`
+	// MediaExpiresAt is when the owner is told the video stops being
+	// available (Unix seconds); 0 while that is not known yet.
 	MediaExpiresAt int64           `json:"media_expires_at,omitempty"`
 	SubmitTime     int64           `json:"submit_time"`
 	StartTime      int64           `json:"start_time"`

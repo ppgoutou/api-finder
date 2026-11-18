@@ -28,15 +28,14 @@ export const EXPIRY_REMINDER_SECONDS = 3 * 24 * 60 * 60
 
 /**
  * How long a work stays available:
- * - `kept`: saved for good;
  * - `expiring`: expires within the reminder window, download it soon;
  * - `scheduled`: expires later than the reminder window;
  * - `expired`: its link no longer works.
  */
-export type WorkRetention =
-  | { state: 'kept' }
-  | { state: 'expiring' | 'scheduled'; expiresAt: number }
-  | { state: 'expired'; expiresAt: number }
+export interface WorkRetention {
+  state: 'expiring' | 'scheduled' | 'expired'
+  expiresAt: number
+}
 
 function retentionUntil(expiresAt: number, now: number): WorkRetention {
   if (expiresAt <= now) return { state: 'expired', expiresAt }
@@ -55,19 +54,20 @@ export function videoRetention(
   task: TaskLog,
   now: number
 ): WorkRetention | null {
-  if (task.media_kept) return { state: 'kept' }
   if (!task.media_expires_at) return null
   return retentionUntil(task.media_expires_at, now)
 }
 
 /**
- * Retention of an image generated in this browser. An inline image lives in
- * the browser as long as the work does; a linked one expires with its link.
+ * Retention of an image generated in this browser: until the expiry of the
+ * server's copy, else as long as the upstream link. An inline image lives in
+ * the browser as long as the work does.
  */
 export function imageRetention(
   image: StudioImage,
   now: number
 ): WorkRetention | null {
+  if (image.expiresAt) return retentionUntil(image.expiresAt, now)
   if (image.url.startsWith('data:')) return null
   return retentionUntil(image.createdAt + IMAGE_LINK_LIFETIME_SECONDS, now)
 }
