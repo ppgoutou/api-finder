@@ -20,17 +20,15 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Footer } from '@/components/layout/components/footer'
+import { getSavedInterfaceLanguage } from '@/i18n/languages'
 
 import { LandingContacts } from './components/landing-contacts'
 import { LandingHero } from './components/landing-hero'
 import { LandingPricing } from './components/landing-pricing'
 
-/** Set once the landing page has applied its English default. */
-const LANDING_LANGUAGE_DEFAULTED_KEY = 'landing_language_defaulted'
-
 /**
- * Standalone Seedance campaign page: always dark, English on a visitor's
- * first visit, with one link to the main site and no site navigation.
+ * Standalone Seedance campaign page: always dark, English unless the
+ * visitor picked a language, with one link to the main site and no site navigation.
  */
 export function Landing() {
   const { i18n } = useTranslation()
@@ -46,20 +44,19 @@ export function Landing() {
     }
   }, [])
 
-  // The detector caches every detected language, so a stored language cannot
-  // tell a choice from a browser default; default to English once instead.
+  // The campaign page is English unless the visitor picked a language; leaving
+  // it hands the rest of the site back to the browser language.
   useEffect(() => {
-    try {
-      if (localStorage.getItem(LANDING_LANGUAGE_DEFAULTED_KEY)) return
-      localStorage.setItem(LANDING_LANGUAGE_DEFAULTED_KEY, '1')
-    } catch {
-      return
-    }
+    if (getSavedInterfaceLanguage()) return
     void i18n.changeLanguage('en')
+    return () => {
+      if (getSavedInterfaceLanguage()) return
+      void i18n.changeLanguage()
+    }
   }, [i18n])
 
   return (
-    <div className='relative flex min-h-svh flex-col overflow-hidden bg-ink text-white/85'>
+    <div className='bg-ink relative flex min-h-svh flex-col overflow-hidden text-white/85'>
       <div
         aria-hidden
         className='pointer-events-none absolute inset-0 [background-image:linear-gradient(rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.07)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] [background-size:32px_32px]'

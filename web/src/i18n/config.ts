@@ -16,11 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import i18n from 'i18next'
+import i18n, { type InitOptions } from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 
-import { convertDetectedLanguage } from './languages'
+import {
+  convertDetectedLanguage,
+  INTERFACE_LANGUAGE_STORAGE_KEY,
+  toIntlLocale,
+} from './languages'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import ja from './locales/ja.json'
@@ -39,26 +43,41 @@ export const resources = {
   zhTW,
 } as const
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'en',
-    supportedLngs: ['en', 'zhCN', 'fr', 'ru', 'ja', 'vi', 'zhTW'],
-    load: 'currentOnly',
-    nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
-    debug: import.meta.env.DEV,
-    interpolation: {
-      escapeValue: false, // not needed for react as it escapes by default
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
-      // Browsers report `zh-CN`/`zh-TW`/`zh`; map them onto our `zhCN`/`zhTW`
-      // codes (non-Chinese codes pass through for normal supportedLngs matching).
-      convertDetectedLanguage,
-    },
-  })
+// The detector used to cache every detected language under `i18nextLng`, which
+// froze a visitor on whatever language their first visit resolved to. Drop that
+// cache so the browser language applies again; only explicit picks are stored.
+try {
+  localStorage.removeItem('i18nextLng')
+} catch {
+  // Storage blocked: nothing was cached either.
+}
+
+i18n.on('languageChanged', (language) => {
+  document.documentElement.lang = toIntlLocale(language) ?? 'en'
+})
+
+export const i18nOptions: InitOptions = {
+  resources,
+  fallbackLng: 'en',
+  supportedLngs: ['en', 'zhCN', 'fr', 'ru', 'ja', 'vi', 'zhTW'],
+  load: 'currentOnly',
+  nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
+  debug: import.meta.env.DEV,
+  interpolation: {
+    escapeValue: false, // not needed for react as it escapes by default
+  },
+  detection: {
+    // A language the visitor picked wins; otherwise follow the browser's
+    // language list, and fall back to English when none is supported.
+    order: ['localStorage', 'navigator'],
+    lookupLocalStorage: INTERFACE_LANGUAGE_STORAGE_KEY,
+    caches: [],
+    // Browsers report `zh-CN`/`zh-TW`/`zh`; map them onto our `zhCN`/`zhTW`
+    // codes (non-Chinese codes pass through for normal supportedLngs matching).
+    convertDetectedLanguage,
+  },
+}
+
+i18n.use(LanguageDetector).use(initReactI18next).init(i18nOptions)
 
 export default i18n
