@@ -400,6 +400,8 @@ export type UpstreamPriceReport = {
   markups?: Record<string, OnboardingMarkup>
   /** The default group ratio customers pay. */
   price_factor?: number
+  /** Group ratios models have of their own, keyed by model then group. */
+  model_group_ratios?: Record<string, Record<string, number>>
 }
 
 export interface UpstreamPriceReportResponse {

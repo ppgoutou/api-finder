@@ -14,9 +14,12 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
+	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 
@@ -1129,4 +1132,56 @@ func TestSupplierChargesMatchesTheNameWhenTheSupplierReportsNoTokenIds(t *testin
 
 	require.NoError(t, err)
 	assert.Equal(t, int64(400), quota)
+}
+
+func TestModelGroupRatioReplacesTheGroupRatioForOneModel(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	previousRatios := ratio_setting.GroupRatio2JSONString()
+	previousSpecial := ratio_setting.GroupGroupRatio2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(previousRatios))
+		require.NoError(t, ratio_setting.UpdateGroupGroupRatioByJSONString(previousSpecial))
+		require.NoError(t, types.LoadFromJsonString(ratio_setting.GetGroupRatioSetting().ModelGroupRatio, "{}"))
+	})
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1.3,"vip":1.2}`))
+	require.NoError(t, ratio_setting.UpdateGroupGroupRatioByJSONString(`{"partner":{"vip":0.5}}`))
+	setRatios := func(body string) bool {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		context, _ := gin.CreateTestContext(recorder)
+		context.Request = httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
+		SetOnboardingModelGroupRatio(context)
+		var response struct {
+			Success bool `json:"success"`
+		}
+		require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+		return response.Success
+	}
+	billedRatio := func(modelName, userGroup, group string) float64 {
+		t.Helper()
+		context, _ := gin.CreateTestContext(httptest.NewRecorder())
+		info := &relaycommon.RelayInfo{OriginModelName: modelName, UserGroup: userGroup, UsingGroup: group}
+		return helper.HandleGroupRatio(context, info).GroupRatio
+	}
+
+	assert.False(t, setRatios(`{"model_name":"video","ratios":{"svip":1.1}}`), "a group without a group ratio is rejected")
+	assert.False(t, setRatios(`{"model_name":"video","ratios":{"vip":-1}}`), "a negative ratio is rejected")
+	require.True(t, setRatios(`{"model_name":"video","ratios":{"default":1.25,"vip":1.1}}`))
+
+	assert.Equal(t, 1.25, billedRatio("video", "default", "default"))
+	assert.Equal(t, 1.1, billedRatio("video", "default", "vip"))
+	assert.Equal(t, 1.2, billedRatio("other", "default", "vip"), "other models keep the group ratio")
+	assert.Equal(t, 0.5, billedRatio("video", "partner", "vip"), "a user group's special ratio still wins")
+
+	pricing := []model.Pricing{{ModelName: "video"}, {ModelName: "other"}}
+	attachModelGroupRatios(pricing, map[string]string{"default": "", "vip": ""}, "default", false)
+	assert.InDelta(t, 1.25/1.3, pricing[0].ModelGroupRatio["default"], 1e-6, "visitors see the ratio on the published scale")
+	assert.InDelta(t, 1.1/1.3, pricing[0].ModelGroupRatio["vip"], 1e-6)
+	assert.Nil(t, pricing[1].ModelGroupRatio)
+	pricing = []model.Pricing{{ModelName: "video"}}
+	attachModelGroupRatios(pricing, map[string]string{"default": ""}, "partner", true)
+	assert.Equal(t, map[string]float64{"default": 1.25}, pricing[0].ModelGroupRatio, "only usable groups, admins see raw ratios")
+
+	require.True(t, setRatios(`{"model_name":"video","ratios":{}}`))
+	assert.Equal(t, 1.3, billedRatio("video", "default", "default"), "clearing restores the group ratio")
 }

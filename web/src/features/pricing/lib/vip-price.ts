@@ -66,7 +66,14 @@ export function getCardVipRatios(
 ): CardVipRatios | null {
   if (!vip) return null
   const groups = Array.isArray(model.enable_groups) ? model.enable_groups : []
-  const offered = vip.pairs.filter(
+  // A model's own group ratios replace the pair's.
+  const ownRatios = model.model_group_ratio ?? {}
+  const pairs = vip.pairs.map((pair) => ({
+    ...pair,
+    baseRatio: ownRatios[pair.baseGroup] ?? pair.baseRatio,
+    vipRatio: ownRatios[pair.vipGroup] ?? pair.vipRatio,
+  }))
+  const offered = pairs.filter(
     (pair) =>
       groups.includes(pair.baseGroup) &&
       groups.includes(pair.vipGroup) &&

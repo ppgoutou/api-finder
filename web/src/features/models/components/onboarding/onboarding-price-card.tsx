@@ -60,6 +60,8 @@ export function OnboardingPriceCard(props: {
   markup: OnboardingMarkup | undefined
   priceFactor: number
   groupRatios: Record<string, number>
+  /** Group ratios this model has of its own. */
+  modelGroupRatios: Record<string, number> | undefined
   categories: PricingCategory[]
   applying: boolean
   onApply: () => void
@@ -188,6 +190,7 @@ export function OnboardingPriceCard(props: {
             markup={props.markup}
             priceFactor={props.priceFactor}
             groupRatios={props.groupRatios}
+            modelGroupRatios={props.modelGroupRatios}
             categories={props.categories}
           />
         )}

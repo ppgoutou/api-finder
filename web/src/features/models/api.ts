@@ -327,6 +327,21 @@ export async function applyUpstreamPrice(request: {
 }
 
 /**
+ * Replace the group ratios one model has of its own. A group left out pays
+ * its group ratio again; an empty map clears them all.
+ */
+export async function setModelGroupRatios(request: {
+  model_name: string
+  ratios: Record<string, number>
+}): Promise<UpstreamPriceReportResponse> {
+  const res = await api.put(
+    '/api/models/onboarding/upstream_prices/group_ratio',
+    request
+  )
+  return res.data
+}
+
+/**
  * Set or clear the markups of one model: per-second tiers of an expression
  * price (no tiers clears), or one per-request amount of a fixed price (0
  * clears)

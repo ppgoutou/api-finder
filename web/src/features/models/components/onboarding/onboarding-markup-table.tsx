@@ -27,6 +27,7 @@ import {
 } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import {
   InputGroup,
   InputGroupAddon,
@@ -48,7 +49,7 @@ import { formatPercent } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import { setPriceMarkup } from '../../api'
+import { setModelGroupRatios, setPriceMarkup } from '../../api'
 import {
   batchAdjustment,
   FIXED_PRICE_ROW,
@@ -64,6 +65,9 @@ import {
 import { modelsQueryKeys } from '../../lib/query-keys'
 import type { OnboardingMarkup } from '../../types'
 import { OnboardingMarkupBatch } from './onboarding-markup-batch'
+
+// The server bounds a model's own group ratio.
+const MAX_MODEL_GROUP_RATIO = 100
 
 // The server bounds one adjustment, in USD per second or per request, either
 // way.
@@ -87,6 +91,8 @@ export function OnboardingMarkupTable(props: {
   priceFactor: number
   /** Every group's ratio, keyed by group name. */
   groupRatios: Record<string, number>
+  /** Group ratios this model has of its own, replacing the group's. */
+  modelGroupRatios?: Record<string, number>
   categories: PricingCategory[]
 }) {
   const { t, i18n } = useTranslation()
@@ -134,6 +140,8 @@ export function OnboardingMarkupTable(props: {
     ]
   )
   const groups = Object.keys(props.groupRatios).sort()
+  const ownRatios = props.modelGroupRatios ?? {}
+  const ratioOf = (name: string) => ownRatios[name] ?? props.groupRatios[name]
   // The price factor is the default group's ratio, else the lowest one.
   const factorGroup =
     props.groupRatios.default === props.priceFactor
@@ -142,8 +150,25 @@ export function OnboardingMarkupTable(props: {
   const [pickedGroup, setPickedGroup] = useState<string>()
   const group =
     pickedGroup && pickedGroup in props.groupRatios ? pickedGroup : factorGroup
+  // This model's own ratio for the shown group, as display text.
+  const savedOwnRatio =
+    group !== undefined && ownRatios[group] !== undefined
+      ? String(ownRatios[group])
+      : ''
+  const [ownRatioText, setOwnRatioText] = useState(savedOwnRatio)
+  useEffect(() => setOwnRatioText(savedOwnRatio), [savedOwnRatio])
+  const [targetShareText, setTargetShareText] = useState('')
+  const ownRatioValue = Number(ownRatioText.trim())
+  const ownRatioInvalid =
+    ownRatioText.trim() !== '' &&
+    (!Number.isFinite(ownRatioValue) ||
+      ownRatioValue < 0 ||
+      ownRatioValue > MAX_MODEL_GROUP_RATIO)
+  // A valid unsaved ratio previews its prices.
+  const draftRatio =
+    ownRatioText.trim() !== '' && !ownRatioInvalid ? ownRatioValue : undefined
   const groupRatio =
-    group === undefined ? props.priceFactor : props.groupRatios[group]
+    group === undefined ? props.priceFactor : (draftRatio ?? ratioOf(group))
   const groupScale = groupRatio / props.priceFactor
   const unit = perImage ? t('image') : t('s')
 
@@ -181,6 +206,28 @@ export function OnboardingMarkupTable(props: {
   const dirty = rows.some(
     (row) => (draft[row.tier]?.trim() ?? '') !== (savedText[row.tier] ?? '')
   )
+
+  const saveOwnRatio = useMutation({
+    mutationFn: async (ratio: number | null) => {
+      const ratios = { ...ownRatios }
+      if (group === undefined) return undefined
+      if (ratio === null) delete ratios[group]
+      else ratios[group] = ratio
+      return requireServerSuccess(
+        await setModelGroupRatios({
+          model_name: props.entry.model_name,
+          ratios,
+        })
+      ).data
+    },
+    onSuccess: async (report) => {
+      if (report) {
+        queryClient.setQueryData(modelsQueryKeys.upstreamPrices(), report)
+      }
+      await queryClient.invalidateQueries({ queryKey: ['pricing'] })
+      toast.success(t('Model group ratio saved'))
+    },
+  })
 
   const save = useMutation({
     mutationFn: async () =>
@@ -224,6 +271,25 @@ export function OnboardingMarkupTable(props: {
       next[row.tier] = amount === 0 ? '' : String(amount)
     }
     setDraft(next)
+  }
+  // The ratio that puts this group's final price at the target share of the
+  // official price, averaged over the tiers with an official price.
+  const ratioForShare = (share: number) => {
+    const ratios = rows.flatMap((row) => {
+      const officialPrice = officialSecondPrice(row, official)
+      const atFactor = row.supply * props.priceFactor + (amounts[row.tier] ?? 0)
+      if (!officialPrice || atFactor <= 0) return []
+      return [(share * officialPrice * props.priceFactor) / atFactor]
+    })
+    if (ratios.length === 0) return undefined
+    const mean = ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length
+    return Number(mean.toFixed(6))
+  }
+  const fillRatioFromShare = () => {
+    const share = Number(targetShareText.trim()) / 100
+    if (!Number.isFinite(share) || share <= 0) return
+    const ratio = ratioForShare(share)
+    if (ratio !== undefined) setOwnRatioText(String(ratio))
   }
   const clearBatch = (onlySelected: boolean) => {
     const next = { ...draft }
@@ -457,7 +523,7 @@ export function OnboardingMarkupTable(props: {
             value={group ?? null}
             items={groups.map((name) => ({
               value: name,
-              label: `${name} ×${props.groupRatios[name]}`,
+              label: `${name} ×${ratioOf(name)}`,
             }))}
             onValueChange={(value) => {
               if (value) setPickedGroup(value)
@@ -469,13 +535,81 @@ export function OnboardingMarkupTable(props: {
             <SelectContent>
               {groups.map((name) => (
                 <SelectItem key={name} value={name}>
-                  {name} ×{props.groupRatios[name]}
+                  {name} ×{ratioOf(name)}
+                  {ownRatios[name] !== undefined && ` (${t('This model')})`}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
       </div>
+      {group !== undefined && (
+        <div className='bg-muted/30 flex flex-wrap items-end gap-2 rounded-md border p-2'>
+          <label className='space-y-1 text-xs'>
+            <span className='text-muted-foreground block'>
+              {t("This model's ratio in {{group}}", { group })}
+            </span>
+            <Input
+              inputMode='decimal'
+              className='h-8 w-28 font-mono'
+              aria-invalid={ownRatioInvalid}
+              placeholder={String(props.groupRatios[group])}
+              value={ownRatioText}
+              onChange={(event) => setOwnRatioText(event.target.value)}
+            />
+          </label>
+          <label className='space-y-1 text-xs'>
+            <span className='text-muted-foreground block'>
+              {t('Target share of official price (%)')}
+            </span>
+            <div className='flex gap-1'>
+              <Input
+                inputMode='decimal'
+                className='h-8 w-20 font-mono'
+                placeholder='83'
+                value={targetShareText}
+                onChange={(event) => setTargetShareText(event.target.value)}
+              />
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={!official || !targetShareText.trim()}
+                onClick={fillRatioFromShare}
+              >
+                {t('Calculate ratio')}
+              </Button>
+            </div>
+          </label>
+          <Button
+            size='sm'
+            disabled={
+              ownRatioInvalid ||
+              ownRatioText.trim() === '' ||
+              ownRatioText.trim() === savedOwnRatio ||
+              saveOwnRatio.isPending
+            }
+            onClick={() => saveOwnRatio.mutate(ownRatioValue)}
+          >
+            {t('Save model ratio')}
+          </Button>
+          {ownRatios[group] !== undefined && (
+            <Button
+              size='sm'
+              variant='ghost'
+              disabled={saveOwnRatio.isPending}
+              onClick={() => saveOwnRatio.mutate(null)}
+            >
+              {t('Use group ratio')}
+            </Button>
+          )}
+          <p className='text-muted-foreground basis-full text-xs'>
+            {t(
+              'Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.',
+              { ratio: props.groupRatios[group] }
+            )}
+          </p>
+        </div>
+      )}
       <OnboardingMarkupBatch
         symbol={symbol}
         unit={unit}
