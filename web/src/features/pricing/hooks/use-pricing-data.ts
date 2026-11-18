@@ -83,9 +83,7 @@ export function usePricingData(enabled = true, live = false, quiet = false) {
         vendor_description: vendor?.description
           ? selectLanguageBlock(vendor.description, language)
           : vendor?.description,
-        group_ratio: model.model_group_ratio
-          ? { ...data.group_ratio, ...model.model_group_ratio }
-          : data.group_ratio,
+        group_ratio: data.group_ratio,
       }
     })
   }, [data, language])

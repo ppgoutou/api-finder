@@ -8471,14 +8471,6 @@
     "How to become VIP": "Cách trở thành VIP",
     "VIP FAQ": "Câu hỏi về VIP",
     "Ready to pay less and run more?": "Sẵn sàng trả ít hơn, chạy nhiều hơn?",
-    "No fee": "Miễn phí",
-    "Model group ratio saved": "Đã lưu hệ số nhóm của mô hình",
-    "This model": "Mô hình này",
-    "This model's ratio in {{group}}": "Hệ số của mô hình này trong {{group}}",
-    "Target share of official price (%)": "Tỷ lệ mục tiêu so với giá chính thức (%)",
-    "Calculate ratio": "Tính hệ số",
-    "Save model ratio": "Lưu hệ số mô hình",
-    "Use group ratio": "Dùng hệ số nhóm",
-    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "Chỉ áp dụng cho mô hình này trong nhóm này và thay thế hệ số nhóm ×{{ratio}}. Để trống sẽ dùng hệ số nhóm. Giá bên dưới xem trước hệ số trước khi lưu."
+    "No fee": "Miễn phí"
   }
 }

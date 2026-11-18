@@ -94,7 +94,6 @@ function renderTable(
   extra?: Partial<ModelPricingEntry>,
   context?: {
     groupRatios?: Record<string, number>
-    modelGroupRatios?: Record<string, number>
     categories?: PricingCategory[]
   }
 ) {
@@ -106,7 +105,6 @@ function renderTable(
         markup={markup}
         priceFactor={1.2}
         groupRatios={context?.groupRatios ?? { default: 1.2 }}
-        modelGroupRatios={context?.modelGroupRatios}
         categories={context?.categories ?? []}
       />
     </QueryClientProvider>
@@ -610,45 +608,5 @@ describe('OnboardingMarkupTable', () => {
       within(input.closest('tr') as HTMLElement).getByText('$0.3000/image')
     ).toBeTruthy()
     expect(saveButton()).toHaveProperty('disabled', true)
-  })
-
-  it("prices a group at the model's own ratio and solves it from a target share of the official price", async () => {
-    const put = vi.spyOn(api, 'put').mockResolvedValue({
-      data: { success: true, data: { channels: [], changes: [] } },
-    })
-    renderTable(
-      { base_expr: secondExpr, tiers: null },
-      { usage_schema: secondSchema },
-      { modelGroupRatios: { default: 1.5 }, categories: officialTable }
-    )
-    const ratio = screen.getByRole<HTMLInputElement>('textbox', {
-      name: /This model's ratio in default/,
-    })
-    const row = screen
-      .getByRole('textbox', { name: 'Price adjustment per second for 480p' })
-      .closest('tr') as HTMLElement
-
-    expect(ratio.value).toBe('1.5')
-    expect(within(row).getAllByText('$0.1500/s').length).toBeGreaterThan(0)
-
-    // 83% of the $0.5 official price over the $0.1 supply price.
-    await userEvent.type(
-      screen.getByRole('textbox', { name: /Target share of official price/ }),
-      '83'
-    )
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Calculate ratio' })
-    )
-
-    expect(ratio.value).toBe('4.15')
-    expect(within(row).getByText('83% of official')).toBeTruthy()
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Save model ratio' })
-    )
-    await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
-    expect(put).toHaveBeenCalledWith(
-      '/api/models/onboarding/upstream_prices/group_ratio',
-      { model_name: 'video', ratios: { default: 4.15 } }
-    )
   })
 })

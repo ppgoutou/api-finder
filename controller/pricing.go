@@ -35,35 +35,6 @@ func filterPricingByUsableGroups(pricing []model.Pricing, usableGroup map[string
 	return filtered
 }
 
-// attachModelGroupRatios gives each listed model the group ratios it has of
-// its own for the groups the viewer can use, as the response's group_ratio
-// would show them. A group where the viewer's user group has a special ratio
-// keeps that ratio, as billing does.
-func attachModelGroupRatios(pricing []model.Pricing, usableGroup map[string]string, userGroup string, seesBasePrices bool) {
-	for i := range pricing {
-		own := ratio_setting.GetModelGroupRatios(pricing[i].ModelName)
-		if len(own) == 0 {
-			continue
-		}
-		shown := make(map[string]float64, len(own))
-		for group, ratio := range own {
-			if _, ok := usableGroup[group]; !ok {
-				continue
-			}
-			if _, special := ratio_setting.GetGroupGroupRatio(userGroup, group); special {
-				continue
-			}
-			if !seesBasePrices {
-				ratio = ratio_setting.PublicGroupRatio(ratio)
-			}
-			shown[group] = ratio
-		}
-		if len(shown) > 0 {
-			pricing[i].ModelGroupRatio = shown
-		}
-	}
-}
-
 // VisitorPricing is the model list the pricing page shows a visitor who is
 // not signed in.
 func VisitorPricing() []model.Pricing {
@@ -103,7 +74,6 @@ func GetPricing(c *gin.Context) {
 	pricing = filterPricingByUsableGroups(pricing, usableGroup)
 	categories := savedPricingCategories()
 	inheritCategoryOfficialPrices(pricing, categories)
-	attachModelGroupRatios(pricing, usableGroup, group, seesBasePrices)
 	// check groupRatio contains usableGroup
 	for group := range ratio_setting.GetGroupRatioCopy() {
 		if _, ok := usableGroup[group]; !ok {
