@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { CHANNEL_TYPE_TASK_PLUGIN } from '../constants'
+
 /**
  * Hosts an administrator should look at twice before sending a channel key to
  * them: loopback, RFC 1918 and CGNAT ranges, link-local (including the cloud
@@ -94,4 +96,18 @@ export function nextTaskPluginBaseUrl(
   }
   if (current === normalizeBaseUrlValue(nextDefault)) return null
   return nextDefault
+}
+
+/**
+ * Whether the Base URL field should warn about a trailing /v1. Built-in
+ * channels append /v1/... themselves, so a /v1 base doubles it. A task plugin
+ * builds every request path from the base URL it is given, so a vendor whose
+ * API lives under /v1 must keep it there.
+ */
+export function shouldWarnBaseUrlV1Suffix(
+  channelType: number | undefined,
+  baseUrl: string | undefined
+): boolean {
+  if (channelType === CHANNEL_TYPE_TASK_PLUGIN) return false
+  return Boolean(baseUrl?.endsWith('/v1'))
 }

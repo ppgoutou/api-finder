@@ -20,9 +20,12 @@ import assert from 'node:assert/strict'
 
 import { describe, test } from 'vitest'
 
+import { CHANNEL_TYPE_TASK_PLUGIN } from '../../constants'
+
 import {
   assessBaseUrlTrust,
   nextTaskPluginBaseUrl,
+  shouldWarnBaseUrlV1Suffix,
 } from '../task-plugin-base-url'
 
 describe('assessBaseUrlTrust', () => {
@@ -109,5 +112,35 @@ describe('nextTaskPluginBaseUrl', () => {
 
   test('changes nothing when the field already holds the new default', () => {
     assert.equal(nextTaskPluginBaseUrl(`${pluginB}/`, pluginA, pluginB), null)
+  })
+})
+
+describe('shouldWarnBaseUrlV1Suffix', () => {
+  const openAiType = 1
+
+  test('warns when a built-in channel base URL ends with /v1', () => {
+    assert.equal(
+      shouldWarnBaseUrlV1Suffix(openAiType, 'https://api.example.com/v1'),
+      true
+    )
+  })
+
+  test('does not warn for a task plugin whose API lives under /v1', () => {
+    assert.equal(
+      shouldWarnBaseUrlV1Suffix(
+        CHANNEL_TYPE_TASK_PLUGIN,
+        'https://vendor.example/open/v1'
+      ),
+      false
+    )
+  })
+
+  test('does not warn for an empty base URL or one without /v1', () => {
+    assert.equal(shouldWarnBaseUrlV1Suffix(openAiType, ''), false)
+    assert.equal(shouldWarnBaseUrlV1Suffix(openAiType, undefined), false)
+    assert.equal(
+      shouldWarnBaseUrlV1Suffix(openAiType, 'https://api.example.com'),
+      false
+    )
   })
 })

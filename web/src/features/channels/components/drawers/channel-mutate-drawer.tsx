@@ -205,6 +205,7 @@ import {
 import {
   assessBaseUrlTrust,
   nextTaskPluginBaseUrl,
+  shouldWarnBaseUrlV1Suffix,
 } from '../../lib/task-plugin-base-url'
 import type { Channel } from '../../types'
 import { ChannelPluginExtensions } from '../channel-plugin-extensions'
@@ -1120,7 +1121,7 @@ export function ChannelMutateDrawer({
 
   // Validate base_url - warn if it ends with /v1
   useEffect(() => {
-    if (!currentBaseUrl || !currentBaseUrl.endsWith('/v1')) return
+    if (!shouldWarnBaseUrlV1Suffix(currentType, currentBaseUrl)) return
 
     // Show warning toast
     const timer = setTimeout(() => {
