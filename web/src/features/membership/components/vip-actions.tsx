@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
-import { VIP_GOLD_FILL, VIP_LIME_FILL, VIP_LIME_TEXT } from '../lib/vip-style'
+import { VIP_LIME_TEXT } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipActionsProps {
@@ -48,9 +48,8 @@ interface VipActionsProps {
 export function VipActions(props: VipActionsProps) {
   const { t } = useTranslation()
   const info = props.info
-  const primaryClassName = props.night
-    ? cn('h-11 rounded-xl px-5 font-semibold', VIP_LIME_FILL)
-    : cn('px-4 font-semibold', VIP_GOLD_FILL)
+  const primaryVariant = props.night ? 'night' : 'vip'
+  const buttonSize = props.night ? 'xl' : 'lg'
   const follow = (target: string) => {
     trackEvent('vip_cta_click', { source: props.source, target })
     props.onNavigate?.()
@@ -58,8 +57,8 @@ export function VipActions(props: VipActionsProps) {
 
   let primary = (
     <Button
-      size='lg'
-      className={primaryClassName}
+      variant={primaryVariant}
+      size={buttonSize}
       render={<Link to='/sign-up' onClick={() => follow('sign-up')} />}
     >
       <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
@@ -69,8 +68,8 @@ export function VipActions(props: VipActionsProps) {
   if (info?.signed_in) {
     primary = (
       <Button
-        size='lg'
-        className={primaryClassName}
+        variant={primaryVariant}
+        size={buttonSize}
         render={<Link to='/wallet' onClick={() => follow('wallet')} />}
       >
         <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
@@ -84,10 +83,10 @@ export function VipActions(props: VipActionsProps) {
         className={
           props.night
             ? cn(
-                'inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#d1fe17]/30 bg-[#d1fe17]/10 px-5 text-sm font-semibold',
+                'rounded-control border-accent-night/30 bg-accent-night/10 inline-flex h-11 items-center gap-1.5 border px-5 text-sm font-semibold',
                 VIP_LIME_TEXT
               )
-            : 'inline-flex h-9 items-center gap-1.5 rounded-lg border border-amber-500/40 px-4 text-sm font-semibold text-amber-700 dark:text-amber-300'
+            : 'rounded-control border-vip/40 text-vip inline-flex h-10 items-center gap-1.5 border px-4 text-sm font-semibold'
         }
       >
         <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
@@ -101,12 +100,11 @@ export function VipActions(props: VipActionsProps) {
       {primary}
       {props.showLearnMore && (
         <Button
-          size='lg'
+          size={buttonSize}
           variant='outline'
           className={cn(
-            'px-4',
             props.night &&
-              'h-11 rounded-xl border-white/15 bg-white/5 px-5 text-white hover:bg-white/10'
+              'border-white/15 bg-white/5 text-white hover:bg-white/10'
           )}
           render={<Link to='/vip' onClick={() => follow('vip-page')} />}
         >

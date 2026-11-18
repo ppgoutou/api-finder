@@ -60,8 +60,8 @@ export function VipTierCards(props: VipTierCardsProps) {
 
   let standardAction = (
     <Button
-      size='lg'
-      className='h-11 w-full rounded-xl bg-white font-semibold text-[#111214] hover:bg-white/90'
+      size='xl'
+      className='w-full bg-white font-semibold text-[#111214] hover:bg-white/90'
       render={
         <Link
           to='/sign-up'
@@ -79,7 +79,7 @@ export function VipTierCards(props: VipTierCardsProps) {
   )
   if (info.signed_in) {
     standardAction = (
-      <span className='flex h-11 w-full items-center justify-center rounded-xl border border-white/10 text-sm text-white/55'>
+      <span className='rounded-control flex h-11 w-full items-center justify-center border border-white/10 text-sm text-white/55'>
         {info.is_vip ? t('Included in VIP') : t('Your current tier')}
       </span>
     )
@@ -120,7 +120,7 @@ export function VipTierCards(props: VipTierCardsProps) {
         </ul>
       </article>
 
-      <article className='relative flex flex-col overflow-hidden rounded-[32px] border border-[#d1fe17]/45 bg-[#11130a] p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
+      <article className='border-accent-night/45 relative flex flex-col overflow-hidden rounded-[32px] border bg-[#11130a] p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
         <div
           aria-hidden
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,rgba(209,254,23,0.26),transparent_62%)]'
@@ -161,7 +161,7 @@ export function VipTierCards(props: VipTierCardsProps) {
           night
           className='relative mt-8 [&>*]:w-full'
         />
-        <ul className='relative mt-8 space-y-1 border-t border-[#d1fe17]/20 pt-6'>
+        <ul className='border-accent-night/20 relative mt-8 space-y-1 border-t pt-6'>
           {benefits.map((benefit) => (
             <li key={benefit.id} className='flex min-h-14 gap-3'>
               <HugeiconsIcon

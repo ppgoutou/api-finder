@@ -8493,6 +8493,22 @@
     "Save on every model": "全モデルが割引",
     "Both tiers are free. Your top-ups unlock VIP.": "どちらのランクも無料。チャージで VIP が解放されます。",
     "Your current tier": "現在のランク",
-    "Included in VIP": "VIP に含まれます"
+    "Included in VIP": "VIP に含まれます",
+    "Design system": "デザインシステム",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "全ページで使う文字サイズ、色、角丸、ボタン。具体的な値ではなく、これらの名前を使ってください。",
+    "Type scale": "文字サイズ",
+    "Marketing pages": "マーケティングページ",
+    "Colors": "カラー",
+    "Buttons": "ボタン",
+    "Brand": "ブランド",
+    "VIP": "VIP",
+    "Neutrals": "ニュートラル",
+    "Charts": "グラフ",
+    "Controls": "コントロール",
+    "Cards": "カード",
+    "Dialogs and panels": "ダイアログとパネル",
+    "Button": "ボタン",
+    "Every model, one API": "すべてのモデルをひとつの API で",
+    "Badges": "バッジ"
   }
 }

@@ -8493,6 +8493,22 @@
     "Save on every model": "Tiết kiệm trên mọi mô hình",
     "Both tiers are free. Your top-ups unlock VIP.": "Cả hai hạng đều miễn phí. Nạp tiền để mở khóa VIP.",
     "Your current tier": "Hạng hiện tại của bạn",
-    "Included in VIP": "Đã bao gồm trong VIP"
+    "Included in VIP": "Đã bao gồm trong VIP",
+    "Design system": "Hệ thống thiết kế",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "Thang chữ, màu sắc, bo góc và nút cho mọi trang. Hãy dùng các tên này thay vì giá trị cụ thể.",
+    "Type scale": "Thang chữ",
+    "Marketing pages": "Trang tiếp thị",
+    "Colors": "Màu sắc",
+    "Buttons": "Nút",
+    "Brand": "Thương hiệu",
+    "VIP": "VIP",
+    "Neutrals": "Màu trung tính",
+    "Charts": "Biểu đồ",
+    "Controls": "Điều khiển",
+    "Cards": "Thẻ",
+    "Dialogs and panels": "Hộp thoại và bảng",
+    "Button": "Nút",
+    "Every model, one API": "Mọi mô hình, một API",
+    "Badges": "Huy hiệu"
   }
 }

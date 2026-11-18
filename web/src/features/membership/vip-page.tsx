@@ -177,7 +177,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
         />
         <div className='mx-auto max-w-4xl text-center'>
           <span className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-white/70 uppercase'>
-            <span className='size-1.5 rounded-full bg-[#d1fe17] shadow-[0_0_10px_#d1fe17]' />
+            <span className='bg-accent-night size-1.5 rounded-full shadow-[0_0_10px_#d1fe17]' />
             {t('VIP membership')}
           </span>
           {savingPercent > 0 ? (
@@ -339,7 +339,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
       </section>
 
       <section className='px-6 pt-8 pb-20 md:pb-28'>
-        <div className='relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden rounded-[32px] border border-[#d1fe17]/35 bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
+        <div className='border-accent-night/35 relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden rounded-[32px] border bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
           <div
             aria-hidden
             className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(209,254,23,0.22),transparent_65%)]'

@@ -96,8 +96,9 @@ export function VipCompareTable(props: VipCompareTableProps) {
           VIP
         </span>
       ),
-      className: 'bg-[#d1fe17]/[0.08]',
-      cellClassName: 'bg-[#d1fe17]/[0.05] py-2.5 align-top whitespace-normal',
+      className: 'bg-accent-night/[0.08]',
+      cellClassName:
+        'bg-accent-night/[0.05] py-2.5 align-top whitespace-normal',
       cell: (row) => (
         <span
           className={cn(
