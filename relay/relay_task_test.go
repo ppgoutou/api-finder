@@ -104,6 +104,40 @@ func TestTaskModel2DtoNormalizesLegacyAction(t *testing.T) {
 	assert.Equal(t, "firstTailGenerate", task.Action)
 }
 
+func TestTaskModel2OwnerDtoHidesTheSupplier(t *testing.T) {
+	config.GlobalConfig.Get("system_setting")
+	task := &model.Task{
+		TaskID:    "task_public",
+		Platform:  "fenglang",
+		ChannelId: 11,
+		Status:    model.TaskStatusSuccess,
+		Data:      []byte(`{"id":"upstream-1","video_url":"https://supplier.example/v.mp4"}`),
+		Properties: model.Properties{
+			Input:             "a cat",
+			OriginModelName:   "seedance-2.5-YH",
+			UpstreamModelName: "seedance2.5-T",
+		},
+		PrivateData: model.TaskPrivateData{ResultURL: "https://supplier.example/v.mp4"},
+	}
+
+	owner := TaskModel2OwnerDto(task)
+
+	assert.Empty(t, owner.Platform)
+	assert.Zero(t, owner.ChannelId)
+	assert.Nil(t, owner.Data)
+	assert.Equal(t, model.Properties{Input: "a cat", OriginModelName: "seedance-2.5-YH"}, owner.Properties)
+	assert.True(t, strings.HasSuffix(owner.ResultURL, "/v1/videos/task_public/content"), owner.ResultURL)
+
+	task.Status = model.TaskStatusFailure
+	task.FailReason = "The video could not be generated."
+	assert.Empty(t, TaskModel2OwnerDto(task).ResultURL)
+
+	task.Platform = constant.TaskPlatformSuno
+	suno := TaskModel2OwnerDto(task)
+	assert.Equal(t, string(constant.TaskPlatformSuno), suno.Platform)
+	assert.NotNil(t, suno.Data)
+}
+
 const mappingOrderSubmitPlugin = `
 export const meta = {apiVersion:1,key:"maporder",name:"Map Order",version:"1.0.0",author:{name:"Test"},models:["declared-model"],fetchMode:"per_task"};
 export function buildSubmitRequest(ctx) {

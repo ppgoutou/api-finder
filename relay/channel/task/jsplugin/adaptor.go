@@ -958,6 +958,7 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	view.Data = service.HideUpstreamResultURL(task, view.Data)
 	encodedView, err := common.Marshal(view)
 	if err != nil {
 		return nil, err
@@ -987,6 +988,16 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 		rendered["completed_at"] = host.CompletedAt
 	} else {
 		delete(rendered, "completed_at")
+	}
+	// A plugin may quote the supplier's own error; a failed task's client gets
+	// the classified reason the caller put on the task instead.
+	if task.Status == model.TaskStatusFailure && task.FailReason != "" {
+		failure := map[string]any{"code": "video_generation_failed"}
+		if previous, ok := rendered["error"].(map[string]any); ok {
+			maps.Copy(failure, previous)
+		}
+		failure["message"] = task.FailReason
+		rendered["error"] = failure
 	}
 	return common.Marshal(rendered)
 }

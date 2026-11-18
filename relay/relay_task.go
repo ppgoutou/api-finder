@@ -520,7 +520,7 @@ func videoFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 	// 通用 TaskDto 格式
 	respBody, err = common.Marshal(dto.TaskResponse[any]{
 		Code: "success",
-		Data: TaskModel2Dto(originTask),
+		Data: TaskModel2OwnerDto(originTask),
 	})
 	if err != nil {
 		taskResp = service.TaskErrorWrapper(err, "marshal_response_failed", http.StatusInternalServerError)
@@ -646,6 +646,31 @@ func mapTaskStatusToSimple(status model.TaskStatus) string {
 	default:
 		return "processing"
 	}
+}
+
+// TaskModel2OwnerDto is the task as its owner fetches it with an API key: no
+// channel, no task plugin or channel-type platform (they name the supplier),
+// no upstream model name and no raw upstream body, which carries the
+// supplier's task IDs and URLs. A finished result is read through this site's
+// /v1/videos/{id}/content proxy. Suno keeps its platform and body because its
+// clips are only described there.
+func TaskModel2OwnerDto(task *model.Task) *dto.TaskDto {
+	item := TaskModel2Dto(task)
+	item.ChannelId = 0
+	item.Properties = model.Properties{
+		Input:           task.Properties.Input,
+		OriginModelName: task.Properties.OriginModelName,
+	}
+	if task.Platform == constant.TaskPlatformSuno {
+		return item
+	}
+	item.Platform = ""
+	item.Data = nil
+	item.ResultURL = ""
+	if task.Status == model.TaskStatusSuccess && !task.PrivateData.ResultDiscarded {
+		item.ResultURL = taskcommon.BuildProxyURL(task.TaskID)
+	}
+	return item
 }
 
 func TaskModel2Dto(task *model.Task) *dto.TaskDto {

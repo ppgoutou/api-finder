@@ -6,6 +6,7 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/usererror"
+	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	"github.com/QuantumNous/new-api/relaykit/types"
 
 	"github.com/gin-gonic/gin"
@@ -59,7 +60,43 @@ func BuildClientTaskPluginView(c *gin.Context, task *model.Task) (dto.TaskView, 
 		return view, err
 	}
 	view.FailReason = UserFacingFailReason(c, view.FailReason)
+	view.Data = HideUpstreamResultURL(task, view.Data)
 	return view, nil
+}
+
+// HideUpstreamResultURL replaces the task's upstream result URL, the
+// supplier's storage address, with this site's proxy for it wherever data
+// holds it, so a client reads the result through this site.
+func HideUpstreamResultURL(task *model.Task, data any) any {
+	upstream := task.PrivateData.ResultURL
+	proxy := taskcommon.BuildProxyURL(task.TaskID)
+	if task.Status != model.TaskStatusSuccess || task.PrivateData.ResultDiscarded || upstream == "" || upstream == proxy {
+		return data
+	}
+	return replaceStringValue(data, upstream, proxy)
+}
+
+// replaceStringValue replaces every string in value that equals from.
+func replaceStringValue(value any, from, to string) any {
+	switch typed := value.(type) {
+	case string:
+		if typed == from {
+			return to
+		}
+		return typed
+	case []any:
+		for index, item := range typed {
+			typed[index] = replaceStringValue(item, from, to)
+		}
+		return typed
+	case map[string]any:
+		for key, item := range typed {
+			typed[key] = replaceStringValue(item, from, to)
+		}
+		return typed
+	default:
+		return value
+	}
 }
 
 // UserFacingError is the customer-facing form of a relay error. It is nil for
