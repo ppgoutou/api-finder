@@ -475,7 +475,7 @@ func redirectToCanonicalHost(c *gin.Context) bool {
 var spaRouteRoots = map[string]bool{
 	"401": true, "403": true, "404": true, "500": true, "503": true,
 	"about": true, "channels": true, "chat": true, "chat2link": true,
-	"console": true, "dashboard": true, "docs": true, "errors": true,
+	"console": true, "dashboard": true, "design": true, "docs": true, "errors": true,
 	"forgot-password": true, "keys": true, "landing": true, "login": true,
 	"models": true, "my-works": true, "oauth": true, "otp": true, "playground": true,
 	"pricing": true, "privacy-policy": true, "profile": true,
@@ -502,6 +502,7 @@ var robotsDisallow = []string{
 	"/profile", "/security", "/system-settings", "/channels", "/users",
 	"/models", "/redemption-codes", "/subscriptions", "/task-plugins",
 	"/playground", "/chat", "/video-studio", "/my-works", "/setup", "/oauth",
+	"/design",
 }
 
 func serveRobotsTxt(c *gin.Context) {
