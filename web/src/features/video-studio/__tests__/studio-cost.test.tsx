@@ -30,7 +30,7 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }))
 vi.mock('@/features/membership', () => ({
-  VipCompareButton: (props: { label?: string }) => (
+  VipCompareButton: (props: { label?: ReactNode }) => (
     <button type='button'>{props.label}</button>
   ),
 }))
@@ -45,9 +45,11 @@ describe('studio cost', () => {
     )
 
     expect(screen.getByText('¥1.00')).toBeInTheDocument()
-    expect(screen.getByText(/VIP price ¥0\.85/)).toBeInTheDocument()
+    expect(screen.getByText('Estimated fee')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Top up to become VIP' })
+      screen.getByRole('button', {
+        name: /VIP price\s*¥0\.85.*Top up to upgrade/,
+      })
     ).toBeInTheDocument()
   })
 
