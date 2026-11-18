@@ -47,7 +47,7 @@ describe('studio cost', () => {
     expect(screen.getByText('¥1.00')).toBeInTheDocument()
     expect(screen.getByText(/VIP price ¥0\.85/)).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Become VIP' })
+      screen.getByRole('button', { name: 'Top up to become VIP' })
     ).toBeInTheDocument()
   })
 
