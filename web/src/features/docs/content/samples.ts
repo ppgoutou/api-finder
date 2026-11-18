@@ -29,7 +29,7 @@ export const DOC_SAMPLES = {
     '  -H "Authorization: Bearer $API_KEY" \\',
     '  -H "Content-Type: application/json" \\',
     "  -d '{",
-    '    "model": "seedance2.0-T",',
+    '    "model": "seedance-2.0-YH",',
     '    "prompt": "A red sports car drifts through a rainy neon street at night, low tracking shot",',
     '    "seconds": 5,',
     '    "resolution": "720p",',
@@ -57,7 +57,7 @@ export const DOC_SAMPLES = {
 
   createFull: JSON.stringify(
     {
-      model: 'seedance2.0-T',
+      model: 'seedance-2.0-YH',
       prompt:
         'The woman in the first image turns to the camera and smiles, soft morning light',
       seconds: 8,
@@ -71,7 +71,7 @@ export const DOC_SAMPLES = {
 
   firstLastFrame: JSON.stringify(
     {
-      model: 'seedance2.0-T',
+      model: 'seedance-2.0-YH',
       prompt: 'The flower slowly blooms, camera stays still',
       seconds: 5,
       resolution: '720p',
@@ -82,10 +82,11 @@ export const DOC_SAMPLES = {
     2
   ),
 
-  dfybReference: JSON.stringify(
+  referenceMedia: JSON.stringify(
     {
-      model: 'seedance-2.0-dfyb',
-      prompt: '@图1 中的女孩跟着 @音频1 的音乐，按 @视频1 的动作跳舞',
+      model: 'seedance-2.5-YH',
+      prompt:
+        'The girl in the reference image dances to the reference music, following the moves in the reference video',
       seconds: 10,
       resolution: '720p',
       ratio: '9:16',
@@ -132,7 +133,7 @@ export const DOC_SAMPLES = {
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance2.0-T',
+      model: 'seedance-2.0-YH',
       status: 'queued',
       progress: 0,
       created_at: 1761000000,
@@ -145,7 +146,7 @@ export const DOC_SAMPLES = {
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance2.0-T',
+      model: 'seedance-2.0-YH',
       status: 'completed',
       progress: 100,
       created_at: 1761000000,
@@ -159,7 +160,7 @@ export const DOC_SAMPLES = {
     {
       id: 'video_abc123',
       object: 'video',
-      model: 'seedance2.0-T',
+      model: 'seedance-2.0-YH',
       status: 'failed',
       progress: 0,
       created_at: 1761000000,
@@ -255,7 +256,7 @@ task = requests.post(
     f"{BASE_URL}/v1/videos",
     headers=HEADERS,
     json={
-        "model": "seedance2.0-T",
+        "model": "seedance-2.0-YH",
         "prompt": "A red sports car drifts through a rainy neon street at night",
         "seconds": 5,
         "resolution": "720p",
@@ -299,7 +300,7 @@ let task = await fetch(\`\${BASE_URL}/v1/videos\`, {
   method: 'POST',
   headers: { ...headers, 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    model: 'seedance2.0-T',
+    model: 'seedance-2.0-YH',
     prompt: 'A red sports car drifts through a rainy neon street at night',
     seconds: 5,
     resolution: '720p',
