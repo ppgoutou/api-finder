@@ -1241,6 +1241,50 @@ func TestScalePricesMultipliesTheCharge(t *testing.T) {
 	}
 }
 
+func TestPublishPricesFoldsEachUsagePrice(t *testing.T) {
+	factor := decimal.RequireFromString("2.5")
+	for _, tc := range []struct {
+		name, expression, want string
+	}{
+		{"supply price, markup and rate fold into one price", `u("resolution") == "480p" ? tier("480p", u("seconds") * 0.4 * 1.3 / 6.5) : tier("720p", u("seconds") * 0.8 * 1.3 / 6.5)`, `u("resolution") == "480p" ? tier("480p", u("seconds") * 0.2) : tier("720p", u("seconds") * 0.4)`},
+		{"divisors fold, per million stays", `tier("base", u("tokens") * 34 / 7 / 1000000)`, `tier("base", u("tokens") * 12.142857142857 / 1000000)`},
+		{"coefficient before usage", `tier("base", 0.4 * u("seconds") * 2)`, `tier("base", 2 * u("seconds"))`},
+		{"bracketed product", `tier("base", u("seconds") * (0.4 * 2))`, `tier("base", u("seconds") * (2))`},
+		{"bracketed lone number keeps the literal rule", `tier("base", u("seconds") * 2 * (0.4))`, `tier("base", u("seconds") * 2 * (1))`},
+		{"single prices as ScalePrices", `tier("base", p * 2 + c * 8) * (header("x-fast") == "1" ? 6 : 1)`, `tier("base", p * 5 + c * 20) * (header("x-fast") == "1" ? 6 : 1)`},
+		{"free allowance stays", `tier("base", u("seconds") * 0.4 + max(u("input_images") - 3, 0) * 0.2)`, `tier("base", u("seconds") * 1 + max(u("input_images") - 3, 0) * 0.5)`},
+		{"fixed price and image count", `tier("image", fixed(0.04)) * image_count`, `tier("image", fixed(0.1)) * image_count`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := billingexpr.PublishPrices(tc.expression, factor)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestPublishPricesKeepsTheCharge(t *testing.T) {
+	const expression = `u("resolution") == "480p" ? tier("480p", u("seconds") * 0.4 * 1.29 / 6.8) : u("resolution") == "720p" ? tier("720p", u("tokens") * 9.25 / 1000000) : tier("1080p", u("seconds") * 1.1 * 1.31 / 6.8)`
+	factor := decimal.RequireFromString("1.3")
+	scaled, err := billingexpr.PublishPrices(expression, factor)
+	require.NoError(t, err)
+	assert.NotContains(t, scaled, "6.8")
+	assert.NotContains(t, scaled, "1.29")
+	for _, usage := range []map[string]any{
+		{"resolution": "480p", "seconds": 5.0, "tokens": 0.0},
+		{"resolution": "720p", "seconds": 5.0, "tokens": 108000.0},
+		{"resolution": "1080p", "seconds": 12.0, "tokens": 0.0},
+	} {
+		request := billingexpr.RequestInput{Usage: usage}
+		original, originalTrace, err := billingexpr.RunExprWithRequest(expression, billingexpr.TokenParams{}, request)
+		require.NoError(t, err)
+		published, publishedTrace, err := billingexpr.RunExprWithRequest(scaled, billingexpr.TokenParams{}, request)
+		require.NoError(t, err)
+		assert.InDelta(t, original*1.3, published, original*1e-9)
+		assert.Equal(t, originalTrace.MatchedTier, publishedTrace.MatchedTier)
+	}
+}
+
 func TestScalePricesRejectsExpressionsItCannotLocatePricesIn(t *testing.T) {
 	for _, expression := range []string{
 		`tier("base", u("seconds"))`,

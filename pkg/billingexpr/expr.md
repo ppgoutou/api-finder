@@ -496,6 +496,10 @@ Frontend: Detects `billing_mode === "tiered_expr"`, decodes `expr_b64`, parses t
 published group ratios are divided by it, so `price × group ratio` is unchanged. Only the numbers inside `tier()` that
 carry money change; a term with no coefficient has no literal to rewrite, so that model's expression is withheld from
 these viewers. Billing never reads this view. Write every priced term with a coefficient, e.g. `u("seconds") * 1`.
+The public view uses `billingexpr.PublishPrices`, which also folds a usage term whose price is a product of several
+numbers (`u("seconds") * 0.39 * 1.3 / 6.8`) into one unit price, keeping only a `/ 1000000` per-million divisor, so the
+published expression shows neither the supply price, the markup nor the exchange rate. `ScalePrices`, used to turn a
+supplier's prices into supply drafts, keeps the expression's numbers as written.
 
 ---
 
