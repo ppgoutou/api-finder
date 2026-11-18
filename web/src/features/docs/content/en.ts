@@ -22,7 +22,7 @@ import { DOC_SAMPLES } from './samples'
 export const EN_DOCS: DocContent = {
   title: 'API documentation',
   intro:
-    'Call Seedance video models and GPT image models through OpenAI-compatible APIs: a video takes three endpoints (create a task, check its progress, download it), and an image comes back from a single request.',
+    'Call Seedance and Wan video models and GPT image models through OpenAI-compatible APIs: a video takes three endpoints (create a task, check its progress, download it), and an image comes back from a single request.',
   sections: [
     {
       id: 'overview',
@@ -96,36 +96,33 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
       blocks: [
         {
           type: 'markdown',
-          text: `Video models come in three groups. **All of them take the same request parameters**, see Creating a task; the few extras of the official models are in Official model notes.
+          text: `Video models come in two groups. **All of them take the same request parameters**, see Creating a task; the few extras of the official models are in Official model notes.
 
 | Model | Resolution | Duration | Billing |
 | --- | --- | --- | --- |
-| \`seedance2.0-T\` | 480p–1080p | 4–15 s | Per second |
-| \`seedance2.0-fast-T\` | 480p–720p | 4–15 s | Per second |
-| \`seedance2.0-mini-T\` | 480p–720p | 4–15 s | Per second |
-| \`seedance2.5-T\` | 480p–1080p | 4–30 s | Per second |
-| \`seedance-2.0-dfyb\` | 480p–1080p | 4–15 s | Per second |
-| \`seedance-2.5-dfyb\` | 480p–720p | 4–30 s | Per second |
+| \`seedance-2.0-YH\` | 480p–1080p | 4–15 s | Per second |
+| \`seedance-2.0-fast-YH\` | 480p–720p | 4–15 s | Per second |
+| \`seedance-2.0-mini-YH\` | 480p–720p | 4–15 s | Per second |
+| \`seedance-2.5-YH\` | 480p–1080p | 4–30 s | Per second |
+| \`seedance-2.5-stable-YH\` | 480p–1080p | 4–30 s | Per second |
+| \`seedance-2.5-flash-YH\` | 480p–720p | 4–30 s | Per second |
+| \`wan3-YH\` | 480p–720p | 2–30 s | Per second |
 | \`doubao-seedance-2-0-261111\` | 480p–4k | 4–15 s | Per token |
 | \`doubao-seedance-2-0-fast-261111\` | 480p–720p | 4–15 s | Per token |
 | \`doubao-seedance-2-0-mini-261111\` | 480p–720p | 4–15 s | Per token |
 | \`doubao-seedance-2-5-261111\` | 480p–1080p | 4–30 s | Per token |
-| \`dreamina-seedance-2-0-261111\` | 480p–4k | 4–15 s | Per token |
-| \`dreamina-seedance-2-0-fast-261111\` | 480p–720p | 4–15 s | Per token |
-| \`dreamina-seedance-2-0-mini-261111\` | 480p–720p | 4–15 s | Per token |
-| \`dreamina-seedance-2-5-261111\` | 480p–1080p | 4–30 s | Per token |
 
-**Reference limits**: the Seedance 2.0 models take up to 9 images, 3 videos and 3 audios; the Seedance 2.5 models up to 30 images, 10 videos and 10 audios; \`seedance-2.0-dfyb\` takes at most 12 files in all and \`seedance-2.5-dfyb\` at most 50.
+**Reference limits**: the Seedance 2.0 models take up to 9 images, 3 videos and 3 audios; \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` up to 30 images, 10 videos and 10 audios; \`seedance-2.5-flash-YH\` and \`wan3-YH\` up to 10 images, 5 videos and 5 audios.
 
 **Which one to pick**
 
-- **4K**: only the official \`doubao-seedance-2-0-261111\` and \`dreamina-seedance-2-0-261111\`;
-- **Long videos**: the Seedance 2.5 models go up to 30 seconds per clip;
-- **Faster and cheaper**: models with \`fast\` or \`mini\` in the name;
-- **Many references**: the Seedance 2.5 models take up to 30 reference images, 10 reference videos and 10 reference audios;
-- **Official models**: \`doubao-\` models run on ByteDance Volcano Engine, \`dreamina-\` models on BytePlus outside China; both can generate sound.
+- **4K**: only the official \`doubao-seedance-2-0-261111\`;
+- **Long videos**: the Seedance 2.5 models and \`wan3-YH\` go up to 30 seconds per clip;
+- **Faster and cheaper**: models with \`fast\`, \`mini\` or \`flash\` in the name;
+- **Many references**: \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` take up to 30 reference images, 10 reference videos and 10 reference audios;
+- **Official models**: \`doubao-\` models run on ByteDance Volcano Engine and can generate sound.
 
-**Aspect ratios**: the \`-T\` models take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\`, \`21:9\` and \`9:21\`; the \`dfyb\` models take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the official models take \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\` and \`9:16\`, and Seedance 2.5 also takes \`adaptive\`. Without a ratio, a \`-T\` model with a first frame or reference image follows the media.`,
+**Aspect ratios**: \`seedance-2.5-stable-YH\` and \`seedance-2.5-flash-YH\` take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the other \`-YH\` models also take \`9:21\`; the official models take \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\` and \`9:16\`, and Seedance 2.5 also takes \`adaptive\`.`,
         },
       ],
     },
@@ -140,9 +137,9 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | \`model\` | \`string\` | Yes | Model name, see Choosing a model |
-| \`prompt\` | \`string\` | Yes | Video description, not empty |
-| \`seconds\` | \`integer\` | Recommended | Duration in whole seconds, within the model's range |
-| \`resolution\` | \`string\` | Recommended | \`480p\`, \`720p\` or \`1080p\`, one the model supports; the \`-T\` models default to 720p |
+| \`prompt\` | \`string\` | Yes | Video description, not empty, at most 5000 characters |
+| \`seconds\` | \`integer\` | Recommended | Duration in whole seconds, within the model's range; the \`-YH\` models default to 5 s |
+| \`resolution\` | \`string\` | Recommended | \`480p\`, \`720p\` or \`1080p\`, one the model supports; the \`-YH\` models default to 720p |
 | \`ratio\` | \`string\` | No | Aspect ratio such as \`16:9\`, \`9:16\` or \`1:1\`, see Choosing a model |
 | \`images\` | \`string[]\` | No | Public URLs of reference images |
 | \`videos\` | \`string[]\` | No | Public URLs of reference videos |
@@ -152,7 +149,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
 
 **Each task produces one video**, so do not send \`n\`. Parameters not listed here are not guaranteed to take effect.
 
-A duration or resolution outside the model's range is rejected at submission, and nothing is charged.`,
+A duration or resolution outside the model's range, or a prompt that is too long, is rejected at submission, and nothing is charged.`,
         },
         {
           type: 'code',
@@ -181,12 +178,7 @@ A duration or resolution outside the model's range is rejected at submission, an
 - **Reference media**: pass reference images, videos and audios in \`images\`, \`videos\` and \`audios\`, and describe in the prompt how they appear in the video;
 - **First/last frames**: set the first frame with \`first_image_url\`, optionally the last with \`last_image_url\`, and the model generates the motion in between.
 
-**Extra rules for the \`dfyb\` models**:
-
-- Reference each file in the prompt as \`@图N\`, \`@视频N\` or \`@音频N\` (image, video, audio), numbered from 1 in array order;
-- First/last-frame mode needs both the first and the last frame;
-- \`seedance-2.0-dfyb\`: each reference video 1.8–15 s and 15 s in all, each audio 2–15 s; \`seedance-2.5-dfyb\`: reference videos 30 s in all, each audio 2–30 s;
-- Media must be HTTPS links of at most 100 MB each.
+\`wan3-YH\` takes reference media only, not first/last frames.
 
 **Media requirements**: every file must be a public HTTP(S) link that can be fetched directly, not an address behind a login or a local path. See Choosing a model for the count limits.`,
         },
@@ -197,8 +189,8 @@ A duration or resolution outside the model's range is rejected at submission, an
         },
         {
           type: 'code',
-          label: 'Example: dfyb reference media referenced in the prompt',
-          code: DOC_SAMPLES.dfybReference,
+          label: 'Example: reference image + reference video + reference audio',
+          code: DOC_SAMPLES.referenceMedia,
         },
       ],
     },
@@ -208,7 +200,7 @@ A duration or resolution outside the model's range is rejected at submission, an
       blocks: [
         {
           type: 'markdown',
-          text: `The 8 official models starting with \`doubao-\` or \`dreamina-\` take the same parameters as the other models (see Creating a task and Reference media and first/last frames), plus:
+          text: `The 4 official models starting with \`doubao-\` take the same parameters as the other models (see Creating a task and Reference media and first/last frames), plus:
 
 | Parameter | Description |
 | --- | --- |
@@ -226,7 +218,8 @@ A duration or resolution outside the model's range is rejected at submission, an
         },
         {
           type: 'code',
-          label: 'Example: reference image, video and audio, length chosen by the model',
+          label:
+            'Example: reference image, video and audio, length chosen by the model',
           code: DOC_SAMPLES.officialReference,
         },
       ],
@@ -344,11 +337,12 @@ If the download is slow, download it over several connections: the endpoint supp
 
 | Billing | Calculation | Models |
 | --- | --- | --- |
-| Per second | Video length in seconds × the per-second price of the resolution | \`-T\` models (same price with or without a reference video), \`dfyb\` models (higher price with a reference video) |
-| Per token | Tokens × token price; tokens = (output seconds + reference video seconds) × width × height × 24 ÷ 1024, at a lower price with a reference video | Official models (\`doubao-\`, \`dreamina-\`) |
+| Per second | Video length in seconds × the per-second price of the resolution | \`-YH\` models (same price with or without reference media) |
+| Per token | Tokens × token price; tokens = (output seconds + reference video seconds) × width × height × 24 ÷ 1024, at a lower price with a reference video | Official models (\`doubao-\`) |
 | Per image | Images returned × price per image, regardless of size or quality | Image models |
 
 - A video is charged when the task is created; per-token models settle the actual usage on completion;
+- VIP users pay VIP prices; switch to them on the Model Square to compare;
 - **A failed video task is refunded automatically**, and a failed image request is not charged. See charges and refunds on the Billing Records page of the console;
 - A submission is rejected when the balance is too low; top up on the Wallet page first.`,
         },
@@ -375,6 +369,7 @@ If the download is slow, download it over several connections: the endpoint supp
 | --- | --- | --- |
 | \`balance_insufficient\` | Balance too low | Top up on the Wallet page, then submit again |
 | \`prompt_required\` | No prompt | Send a \`prompt\` |
+| \`prompt_too_long\` | Prompt too long (over 5000 characters) | Shorten the prompt and submit again |
 | \`invalid_duration\` | Duration not supported by the model | Adjust \`seconds\` per Choosing a model |
 | \`invalid_resolution\` | Resolution or size not supported | Adjust the resolution per Choosing a model |
 | \`request_too_large\` | Request too large | Send fewer or smaller files |
