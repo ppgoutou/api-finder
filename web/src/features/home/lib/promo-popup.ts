@@ -440,3 +440,21 @@ export function dismissPromoPopupForDay(today: string): void {
     // Without storage the popup simply shows again next time.
   }
 }
+
+export type PromoTextSize = 'large' | 'medium' | 'small'
+
+/**
+ * Picks the type size of a card's description so short copy fills the card
+ * and long copy still fits. A CJK character counts as a full width, other
+ * characters as about half, and each line break as a short line.
+ */
+export function getPromoDescriptionSize(text: string): PromoTextSize {
+  let width = 0
+  for (const char of text) {
+    if (char === '\n') width += 12
+    else width += (char.codePointAt(0) ?? 0) >= 0x2e80 ? 1 : 0.55
+  }
+  if (width <= 80) return 'large'
+  if (width <= 140) return 'medium'
+  return 'small'
+}

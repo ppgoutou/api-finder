@@ -27,9 +27,11 @@ import { cn } from '@/lib/utils'
 
 import {
   getPromoBonusShare,
+  getPromoDescriptionSize,
   getPromoPriceRatio,
   PROMO_DEFAULT_HREF,
   type PromoCard,
+  type PromoTextSize,
 } from '../../lib/promo-popup'
 import { getPriceDiscount } from '../../lib/video-home'
 
@@ -47,6 +49,13 @@ const BODY_CLASS =
 const DEAL_PILL_CLASS =
   'rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-400'
 const SALE_TEXT_CLASS = 'text-amber-700 dark:text-amber-400'
+// Titles keep the admin's line breaks and balance the lines they wrap.
+const TITLE_CLASS = 'whitespace-pre-line text-balance'
+const DESCRIPTION_SIZE_CLASS: Record<PromoTextSize, string> = {
+  large: 'text-lg leading-8 max-sm:text-base max-sm:leading-7',
+  medium: 'text-base leading-7 max-sm:text-[15px] max-sm:leading-6',
+  small: 'text-sm leading-[22px]',
+}
 
 function useEndDateLabel(endsAt: string): string {
   const { i18n, t } = useTranslation()
@@ -85,7 +94,12 @@ function PromoCopy(props: { card: PromoCard }) {
   return (
     <>
       {props.card.title && (
-        <h3 className='truncate text-[22px] leading-[30px] font-bold max-sm:text-lg'>
+        <h3
+          className={cn(
+            'line-clamp-2 text-[22px] leading-[30px] font-bold max-sm:text-lg',
+            TITLE_CLASS
+          )}
+        >
           {props.card.title}
         </h3>
       )}
@@ -190,7 +204,12 @@ function RechargePromoCard(props: PromoCardProps) {
         </div>
         {/* The admin's title wins; otherwise the first tier is the headline. */}
         {(card.title || headline) && (
-          <h3 className='mt-4 line-clamp-2 text-[32px] leading-10 font-bold max-sm:mt-3 max-sm:text-[24px] max-sm:leading-8'>
+          <h3
+            className={cn(
+              'mt-4 line-clamp-3 text-[32px] leading-10 font-bold max-sm:mt-3 max-sm:text-[24px] max-sm:leading-8',
+              TITLE_CLASS
+            )}
+          >
             {card.title || t('Pay {{pay}}, get {{bonus}} free', headline)}
           </h3>
         )}
@@ -232,7 +251,13 @@ function RechargePromoCard(props: PromoCardProps) {
           {card.description && (
             <p
               className={cn(
-                'text-muted-foreground text-sm leading-[22px] whitespace-pre-line',
+                'text-muted-foreground whitespace-pre-line',
+                // Tier tiles take the room, so a description beside them stays small.
+                DESCRIPTION_SIZE_CLASS[
+                  card.tiers.length > 1
+                    ? 'small'
+                    : getPromoDescriptionSize(card.description)
+                ],
                 card.tiers.length > 1 && 'mt-3.5'
               )}
             >
@@ -270,7 +295,12 @@ function ListPromoCard(props: PromoCardProps) {
             <span className='text-[13px] text-white/70'>{endLabel}</span>
           )}
         </div>
-        <h3 className='mt-2.5 line-clamp-2 text-2xl leading-8 font-bold max-sm:mt-1.5 max-sm:text-lg max-sm:leading-7 sm:truncate'>
+        <h3
+          className={cn(
+            'mt-2.5 line-clamp-2 text-2xl leading-8 font-bold max-sm:mt-1.5 max-sm:text-lg max-sm:leading-7',
+            TITLE_CLASS
+          )}
+        >
           {card.title || t('These models are on sale')}
         </h3>
         {card.description && (

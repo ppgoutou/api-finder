@@ -8360,6 +8360,7 @@
     "Supply cost": "仕入れコスト",
     "Gross profit": "粗利",
     "Gross margin {{percent}}": "粗利率 {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "仕入れコスト {{supply}}、粗利 {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "仕入れコスト {{supply}}、粗利 {{profit}}",
+    "Press Enter to start a new line": "Enter キーで改行"
   }
 }

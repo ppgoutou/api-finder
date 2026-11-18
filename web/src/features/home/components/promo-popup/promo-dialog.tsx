@@ -108,7 +108,7 @@ export function PromoDialog(props: PromoDialogProps) {
     >
       <DialogContent
         showCloseButton={false}
-        className='max-w-[560px] grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden rounded-[20px] p-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-w-full max-sm:translate-y-0 max-sm:rounded-b-none sm:max-w-[560px]'
+        className='max-w-[560px] grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden rounded-[20px] p-0 max-sm:top-auto max-sm:bottom-[calc(1rem+env(safe-area-inset-bottom))] max-sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-bottom))] max-sm:max-w-[calc(100%-1.5rem)] max-sm:translate-y-0 sm:max-w-[560px]'
       >
         <DialogTitle className='sr-only'>
           {t('Limited-time offers')}

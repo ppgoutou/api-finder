@@ -8360,6 +8360,7 @@
     "Supply cost": "Supply cost",
     "Gross profit": "Gross profit",
     "Gross margin {{percent}}": "Gross margin {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "Supply cost {{supply}}, gross profit {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "Supply cost {{supply}}, gross profit {{profit}}",
+    "Press Enter to start a new line": "Press Enter to start a new line"
   }
 }

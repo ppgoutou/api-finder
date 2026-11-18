@@ -36,6 +36,8 @@ type TextFieldProps<T extends FieldValues> = {
   /** Literal example text, not translated. */
   placeholder?: string
   multiline?: boolean
+  /** Visible lines of a multiline field; 3 when unset. */
+  rows?: number
   description?: string
   disabled?: boolean
 }
@@ -53,7 +55,11 @@ export function ShowcaseTextField<T extends FieldValues>(
           <FormLabel>{props.label}</FormLabel>
           <FormControl>
             {props.multiline ? (
-              <Textarea rows={3} placeholder={props.placeholder} {...field} />
+              <Textarea
+                rows={props.rows ?? 3}
+                placeholder={props.placeholder}
+                {...field}
+              />
             ) : (
               <Input
                 placeholder={props.placeholder}

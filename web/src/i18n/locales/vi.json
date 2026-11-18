@@ -8360,6 +8360,7 @@
     "Supply cost": "Chi phí nhập",
     "Gross profit": "Lợi nhuận gộp",
     "Gross margin {{percent}}": "Biên lợi nhuận gộp {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "Chi phí nhập {{supply}}, lợi nhuận gộp {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "Chi phí nhập {{supply}}, lợi nhuận gộp {{profit}}",
+    "Press Enter to start a new line": "Nhấn Enter để xuống dòng"
   }
 }

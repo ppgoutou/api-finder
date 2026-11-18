@@ -243,6 +243,30 @@ describe('home promotion popup', () => {
     expect(screen.queryByText('Pay $500, get VIP free')).not.toBeInTheDocument()
   })
 
+  it('keeps the line break the admin typed in a recharge title', async () => {
+    const title = 'Top up $500 for VIP\n8% off everything'
+    mockSettings(
+      JSON.stringify({
+        enabled: true,
+        cards: [
+          {
+            kind: 'recharge',
+            title,
+            tiers: [{ pay: '$500', bonus: 'VIP' }],
+          },
+        ],
+      })
+    )
+    renderPopup()
+
+    const heading = await screen.findByRole('heading', {
+      name: (name) =>
+        name.replace(/\s+/g, ' ') === 'Top up $500 for VIP 8% off everything',
+    })
+    expect(heading.textContent).toBe(title)
+    expect(heading).toHaveClass('whitespace-pre-line')
+  })
+
   it('shows every line of a recharge description without clamping', async () => {
     const description = 'Line one\nLine two\nLine three'
     mockSettings(

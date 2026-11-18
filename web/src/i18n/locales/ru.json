@@ -8360,6 +8360,7 @@
     "Supply cost": "Закупочная стоимость",
     "Gross profit": "Валовая прибыль",
     "Gross margin {{percent}}": "Валовая маржа {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "Закупочная стоимость {{supply}}, валовая прибыль {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "Закупочная стоимость {{supply}}, валовая прибыль {{profit}}",
+    "Press Enter to start a new line": "Нажмите Enter, чтобы начать новую строку"
   }
 }
