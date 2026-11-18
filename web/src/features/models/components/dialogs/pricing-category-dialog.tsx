@@ -194,6 +194,9 @@ export function PricingCategoryDialog(props: {
                   {t(
                     'Shown in a popover under the category heading. Supports Markdown.'
                   )}{' '}
+                  {t(
+                    'Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.'
+                  )}{' '}
                   {t(LANGUAGE_BLOCKS_HINT)}
                 </FormDescription>
                 <FormMessage />

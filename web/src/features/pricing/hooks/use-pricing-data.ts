@@ -25,6 +25,7 @@ import { selectLanguageBlock } from '@/lib/language-blocks'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { getPricing } from '../api'
+import { comparisonForModels } from '../lib/categories'
 import type { PricingCategory } from '../types'
 
 const EMPTY_CATEGORIES: PricingCategory[] = []
@@ -90,13 +91,23 @@ export function usePricingData(enabled = true, live = false, quiet = false) {
 
   const categories = useMemo(() => {
     if (!data?.categories) return EMPTY_CATEGORIES
+    const byName = new Map(
+      (data.data ?? []).map((model) => [model.model_name, model])
+    )
     return data.categories.map((category) => ({
       ...category,
       description: category.description
         ? selectLanguageBlock(category.description, language)
         : category.description,
+      // The server lists only the models this visitor can see, so the
+      // comparison keeps only the entries about them.
       comparison: category.comparison
-        ? selectLanguageBlock(category.comparison, language)
+        ? comparisonForModels(
+            selectLanguageBlock(category.comparison, language),
+            category.models.flatMap(
+              (name) => byName.get(name) ?? { model_name: name }
+            )
+          )
         : category.comparison,
     }))
   }, [data, language])

@@ -8311,6 +8311,7 @@
     "Model comparison": "模型對比說明",
     "{{name}} model comparison": "{{name}} 模型對比",
     "Shown in a popover under the category heading. Supports Markdown.": "顯示在類目標題下方的彈窗中，支援 Markdown。",
+    "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.": "以粗體模型名稱開頭的清單項目（如 **Seedance 2.0 (F)**）只對能看到該模型的使用者顯示。",
     "Only this user": "只看該使用者",
     "View Usage Logs": "查看使用日誌",
     "Announcement bar": "公告條",

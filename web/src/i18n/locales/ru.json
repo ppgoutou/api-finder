@@ -8311,6 +8311,7 @@
     "Model comparison": "Сравнение моделей",
     "{{name}} model comparison": "Сравнение моделей {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Показывается во всплывающем окне под заголовком категории. Поддерживается Markdown.",
+    "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.": "Пункт списка, начинающийся с названия модели жирным шрифтом, например **Seedance 2.0 (F)**, видят только посетители, которым доступна эта модель.",
     "Only this user": "Только этот пользователь",
     "View Usage Logs": "Журнал использования",
     "Announcement bar": "Строка объявления",
