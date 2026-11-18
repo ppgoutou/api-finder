@@ -1,0 +1,88 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
+import type { TaskLog } from '@/features/usage-logs/types'
+
+import type { StudioImage } from '../types'
+
+/** Generated image links from suppliers stop working about a day later. */
+export const IMAGE_LINK_LIFETIME_SECONDS = 24 * 60 * 60
+
+/** Works due to expire within this many seconds are flagged as expiring. */
+export const EXPIRY_REMINDER_SECONDS = 3 * 24 * 60 * 60
+
+/**
+ * How long a work stays available:
+ * - `kept`: saved for good;
+ * - `expiring`: expires within the reminder window, download it soon;
+ * - `scheduled`: expires later than the reminder window;
+ * - `expired`: its link no longer works.
+ */
+export type WorkRetention =
+  | { state: 'kept' }
+  | { state: 'expiring' | 'scheduled'; expiresAt: number }
+  | { state: 'expired'; expiresAt: number }
+
+function retentionUntil(expiresAt: number, now: number): WorkRetention {
+  if (expiresAt <= now) return { state: 'expired', expiresAt }
+  if (expiresAt - now <= EXPIRY_REMINDER_SECONDS) {
+    return { state: 'expiring', expiresAt }
+  }
+  return { state: 'scheduled', expiresAt }
+}
+
+/**
+ * Retention of a video task as the server reports it; null while the task
+ * is unfinished or its copy into media storage is still in progress.
+ * `now` is in Unix seconds.
+ */
+export function videoRetention(
+  task: TaskLog,
+  now: number
+): WorkRetention | null {
+  if (task.media_kept) return { state: 'kept' }
+  if (!task.media_expires_at) return null
+  return retentionUntil(task.media_expires_at, now)
+}
+
+/**
+ * Retention of an image generated in this browser. An inline image lives in
+ * the browser as long as the work does; a linked one expires with its link.
+ */
+export function imageRetention(
+  image: StudioImage,
+  now: number
+): WorkRetention | null {
+  if (image.url.startsWith('data:')) return null
+  return retentionUntil(image.createdAt + IMAGE_LINK_LIFETIME_SECONDS, now)
+}
+
+/** Seconds until expiry as the largest whole unit: days, hours or minutes. */
+export function remainingParts(
+  expiresAt: number,
+  now: number
+): { value: number; unit: 'day' | 'hour' | 'minute' } {
+  const seconds = Math.max(0, expiresAt - now)
+  if (seconds >= 24 * 60 * 60) {
+    return { value: Math.floor(seconds / (24 * 60 * 60)), unit: 'day' }
+  }
+  if (seconds >= 60 * 60) {
+    return { value: Math.floor(seconds / (60 * 60)), unit: 'hour' }
+  }
+  return { value: Math.max(1, Math.ceil(seconds / 60)), unit: 'minute' }
+}

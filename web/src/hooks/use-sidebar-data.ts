@@ -24,6 +24,7 @@ import {
   CreditCard,
   FileText,
   FlaskConical,
+  GalleryVerticalEnd,
   Key,
   LayoutDashboard,
   ListTodo,
@@ -42,6 +43,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { useExpiringWorks } from '@/features/video-studio/hooks/use-expiring-works'
 import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -55,6 +57,7 @@ export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
   const userRole = useAuthStore((state) => state.auth.user?.role)
   const isAdmin = Boolean(userRole && userRole >= ROLE.ADMIN)
+  const expiringWorks = useExpiringWorks()
 
   return {
     navGroups: [
@@ -66,6 +69,13 @@ export function useSidebarData(): SidebarData {
             title: t('Video Creation'),
             url: '/video-studio',
             icon: Clapperboard,
+          },
+          {
+            title: t('My works'),
+            url: '/my-works',
+            icon: GalleryVerticalEnd,
+            badge:
+              expiringWorks.total > 0 ? String(expiringWorks.total) : undefined,
           },
           {
             title: t('Playground'),

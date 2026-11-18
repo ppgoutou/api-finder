@@ -33,14 +33,18 @@ import { useModelDisplayName } from '@/features/pricing/hooks'
 import { formatTimestamp } from '@/lib/format'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
+import { useUnixNow } from '../hooks/use-expiring-works'
 import { restoredAssets } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
+import { imageRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
+import { WorkRetentionBadge } from './work-retention-badge'
 
 /**
  * Images generated in this browser, newest first. With `onEdit`, each image
  * offers to load its prompt, model, size and references into the composer.
  * Deleting an image, after a confirmation, removes it from this browser.
+ * Each linked image shows how long its link keeps working.
  */
 export function ImageWorksList(props: {
   onEdit?: (draft: Partial<StudioDraft>, size: string) => void
@@ -51,6 +55,7 @@ export function ImageWorksList(props: {
   const works = useStudioImageWorks((state) => state.works)
   const removeWork = useStudioImageWorks((state) => state.remove)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const now = useUnixNow()
 
   if (works.length === 0) {
     return (
@@ -83,6 +88,10 @@ export function ImageWorksList(props: {
                 alt={work.prompt}
                 loading='lazy'
                 className='size-full object-contain'
+              />
+              <WorkRetentionBadge
+                retention={imageRetention(work, now)}
+                now={now}
               />
               <Button
                 variant='secondary'

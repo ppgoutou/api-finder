@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -155,5 +155,54 @@ describe('WorksList', () => {
       screen.getByRole('button', { name: 'Edit again' })
     ).toBeInTheDocument()
     expect(screen.queryByText('No videos yet')).not.toBeInTheDocument()
+  })
+
+  it('shows how long a finished video stays available', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...failedTask('task_1', 'seedance-2.0'),
+            status: 'SUCCESS',
+            fail_reason: '',
+            media_expires_at: now + 5 * 60 * 60 + 600,
+          },
+        ],
+      },
+    } as never)
+    renderList(vi.fn())
+
+    expect(await screen.findByText('Expires in 5 hours')).toBeInTheDocument()
+  })
+
+  it('loads the next page of works when Load more is clicked', async () => {
+    vi.mocked(getUserTaskLogs).mockImplementation(async (params) => {
+      const items =
+        params.page_size === 12
+          ? [failedTask('task_1', 'seedance-2.0')]
+          : [
+              failedTask('task_1', 'seedance-2.0'),
+              failedTask('task_2', 'seedance-2.0'),
+            ]
+      return { data: { items, total: 2 } } as never
+    })
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const user = userEvent.setup()
+    render(
+      <QueryClientProvider client={client}>
+        <WorksList loadMore />
+      </QueryClientProvider>
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Load more' }))
+
+    expect(getUserTaskLogs).toHaveBeenLastCalledWith({ p: 1, page_size: 24 })
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
+    expect(
+      screen.queryByRole('button', { name: 'Load more' })
+    ).not.toBeInTheDocument()
   })
 })

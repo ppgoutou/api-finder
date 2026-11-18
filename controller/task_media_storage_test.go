@@ -232,3 +232,44 @@ func TestTaskMediaCopyRetriesWithGrowingBackoff(t *testing.T) {
 	assert.False(t, taskMediaCopyDue(&model.TaskStoredMedia{Attempts: 2, LastTryAt: now - 200}, now))
 	assert.True(t, taskMediaCopyDue(&model.TaskStoredMedia{Attempts: 2, LastTryAt: now - 240}, now))
 }
+
+func TestTaskMediaRetentionTellsOwnerHowLongTheVideoLasts(t *testing.T) {
+	settings := system_setting.GetMediaStorageSettings()
+	previousRetention := settings.RetentionDays
+	t.Cleanup(func() { settings.RetentionDays = previousRetention })
+
+	now := time.Now().Unix()
+	day := int64(86400)
+	finishedAt := now - 3600
+	succeeded := func(stored *model.TaskStoredMedia, finishTime int64) *model.Task {
+		return &model.Task{
+			Status:      model.TaskStatusSuccess,
+			FinishTime:  finishTime,
+			PrivateData: model.TaskPrivateData{StoredMedia: stored},
+		}
+	}
+	cases := []struct {
+		name          string
+		task          *model.Task
+		storeEnabled  bool
+		retentionDays int
+		wantKept      bool
+		wantExpiresAt int64
+	}{
+		{"stored copy kept forever", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 0, true, 0},
+		{"stored copy ends with retention", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 30, false, finishedAt + 30*day},
+		{"copy pending reports nothing", succeeded(nil, finishedAt), true, 0, false, 0},
+		{"storage off uses upstream link", succeeded(nil, finishedAt), false, 0, false, finishedAt + day},
+		{"copy gave up uses upstream link", succeeded(&model.TaskStoredMedia{GaveUp: true}, finishedAt), true, 0, false, finishedAt + day},
+		{"copy window passed uses upstream link", succeeded(nil, now-3*day), true, 0, false, now - 2*day},
+		{"unfinished task reports nothing", &model.Task{Status: model.TaskStatusInProgress}, true, 0, false, 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			settings.RetentionDays = tc.retentionDays
+			kept, expiresAt := taskMediaRetention(tc.task, tc.storeEnabled)
+			assert.Equal(t, tc.wantKept, kept)
+			assert.Equal(t, tc.wantExpiresAt, expiresAt)
+		})
+	}
+}

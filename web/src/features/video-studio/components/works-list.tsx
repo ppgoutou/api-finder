@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { AlertCircle, Film, PencilLine, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,12 +41,15 @@ import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
+import { useUnixNow } from '../hooks/use-expiring-works'
 import { draftFromVideoRequest } from '../lib/draft'
 import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
 import { recallTaskPrompt } from '../lib/prompt-history'
+import { videoRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
 import { WorkDownloadButton } from './work-download-button'
+import { WorkRetentionBadge } from './work-retention-badge'
 
 const WORKS_PAGE_SIZE = 12
 const POLL_INTERVAL_MS = 5000
@@ -94,6 +97,7 @@ function WorkVideo(props: { task: TaskLog }) {
 
 function WorkCard(props: {
   task: TaskLog
+  now: number
   compact?: boolean
   onEdit?: (draft: Partial<StudioDraft>) => void
   onDelete: () => void
@@ -144,7 +148,15 @@ function WorkCard(props: {
 
   return (
     <article className='bg-card border-border/60 overflow-hidden rounded-xl border'>
-      <div className='bg-muted/40 relative aspect-video'>{media}</div>
+      <div className='bg-muted/40 relative aspect-video'>
+        {media}
+        {!props.compact && (
+          <WorkRetentionBadge
+            retention={videoRetention(task, props.now)}
+            now={props.now}
+          />
+        )}
+      </div>
       <div className={cn('flex flex-col gap-1', props.compact ? 'p-2' : 'p-3')}>
         <p
           className={cn(
@@ -200,20 +212,25 @@ function WorkCard(props: {
 /**
  * The signed-in user's latest video tasks, refreshed while any is running.
  * With `onEdit`, each work offers to load its request back into the composer.
- * Deleting a work, after a confirmation, hides it in this browser.
+ * Deleting a work, after a confirmation, hides it in this browser. Full-size
+ * cards show how long each video stays available. With \`loadMore\`, older
+ * works load a page at a time.
  */
 export function WorksList(props: {
   limit?: number
+  loadMore?: boolean
   /** Up to six small cards per row, as on the dashboard. */
   compact?: boolean
   onEdit?: (draft: Partial<StudioDraft>) => void
 }) {
   const { t } = useTranslation()
-  const pageSize = props.limit ?? WORKS_PAGE_SIZE
+  const firstPageSize = props.limit ?? WORKS_PAGE_SIZE
+  const [pageSize, setPageSize] = useState(firstPageSize)
+  const now = useUnixNow()
   const gridClassName = props.compact
     ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'
     : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
-  const skeletonCount = Math.min(pageSize, props.compact ? 6 : 3)
+  const skeletonCount = Math.min(firstPageSize, props.compact ? 6 : 3)
   const [hidden, setHidden] = useState(readHiddenTasks)
   const [deleting, setDeleting] = useState<string | null>(null)
   const works = useQuery({
@@ -223,10 +240,14 @@ export function WorksList(props: {
         p: 1,
         page_size: pageSize,
       })
-      return (response.data?.items ?? []) as TaskLog[]
+      return {
+        items: (response.data?.items ?? []) as TaskLog[],
+        total: response.data?.total ?? 0,
+      }
     },
+    placeholderData: keepPreviousData,
     refetchInterval: (query) =>
-      query.state.data?.some((task) => !isFinished(task))
+      query.state.data?.items.some((task) => !isFinished(task))
         ? POLL_INTERVAL_MS
         : false,
   })
@@ -240,10 +261,11 @@ export function WorksList(props: {
       </div>
     )
   }
-  const tasks = (works.data ?? []).filter(
-    (task) => !hidden.includes(task.task_id)
-  )
-  if (tasks.length === 0) {
+  const loaded = works.data?.items ?? []
+  const hasMore =
+    Boolean(props.loadMore) && loaded.length < (works.data?.total ?? 0)
+  const tasks = loaded.filter((task) => !hidden.includes(task.task_id))
+  if (tasks.length === 0 && !hasMore) {
     return (
       <Empty className='border'>
         <EmptyHeader>
@@ -267,12 +289,24 @@ export function WorksList(props: {
           <WorkCard
             key={task.task_id}
             task={task}
+            now={now}
             compact={props.compact}
             onEdit={props.onEdit}
             onDelete={() => setDeleting(task.task_id)}
           />
         ))}
       </div>
+      {hasMore && (
+        <Button
+          variant='outline'
+          className='self-center'
+          disabled={works.isFetching}
+          onClick={() => setPageSize((size) => size + firstPageSize)}
+        >
+          {works.isFetching && <Spinner />}
+          {t('Load more')}
+        </Button>
+      )}
       <ConfirmDialog
         destructive
         open={deleting !== null}
