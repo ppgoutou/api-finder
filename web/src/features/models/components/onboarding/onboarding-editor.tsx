@@ -71,8 +71,6 @@ export function OnboardingEditor(props: {
   markup: OnboardingMarkup | undefined
   priceFactor: number
   groupRatios: Record<string, number>
-  /** Group ratios this model has of its own. */
-  modelGroupRatios: Record<string, number> | undefined
   applyingUpstreamPrice: boolean
   onApplyUpstreamPrice: () => void
   acknowledgingUpstreamPrice: boolean
@@ -170,7 +168,6 @@ export function OnboardingEditor(props: {
         markup={props.markup}
         priceFactor={props.priceFactor}
         groupRatios={props.groupRatios}
-        modelGroupRatios={props.modelGroupRatios}
         categories={props.categories}
         applying={props.applyingUpstreamPrice}
         onApply={props.onApplyUpstreamPrice}

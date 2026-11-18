@@ -208,17 +208,6 @@ describe('card VIP price', () => {
 })
 
 describe('card VIP ratios', () => {
-  it("uses a model's own group ratios over the pair's", () => {
-    const ratios = getCardVipRatios(
-      videoModel({ model_group_ratio: { vip: 0.8 } }),
-      undefined,
-      visitorVip
-    )
-
-    expect(ratios?.vipRatio).toBe(0.8)
-    expect(ratios?.savingPercent).toBe(20)
-  })
-
   const allGroups = ['default', 'overseas', 'vip', 'vip-overseas']
   const pairs = [mainPair, overseasPair]
 

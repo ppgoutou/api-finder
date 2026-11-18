@@ -8471,14 +8471,6 @@
     "How to become VIP": "How to become VIP",
     "VIP FAQ": "VIP FAQ",
     "Ready to pay less and run more?": "Ready to pay less and run more?",
-    "No fee": "No fee",
-    "Model group ratio saved": "Model group ratio saved",
-    "This model": "This model",
-    "This model's ratio in {{group}}": "This model's ratio in {{group}}",
-    "Target share of official price (%)": "Target share of official price (%)",
-    "Calculate ratio": "Calculate ratio",
-    "Save model ratio": "Save model ratio",
-    "Use group ratio": "Use group ratio",
-    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving."
+    "No fee": "No fee"
   }
 }

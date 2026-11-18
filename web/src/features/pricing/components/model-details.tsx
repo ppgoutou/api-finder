@@ -1248,10 +1248,6 @@ export interface ModelDetailsContentProps {
 export function ModelDetailsContent(props: ModelDetailsContentProps) {
   const { t } = useTranslation()
   const showRechargePrice = props.showRechargePrice ?? false
-  // The model's own group ratios replace the page's for its groups.
-  const groupRatio = props.model.model_group_ratio
-    ? { ...props.groupRatio, ...props.model.model_group_ratio }
-    : props.groupRatio
 
   // Video prices follow the cards' VIP switch. VIP prices show as one "vip"
   // group whichever VIP group they come from; standard prices leave the VIP
@@ -1271,7 +1267,7 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
       )
   const videoGroupRatio = showVip
     ? { [VIP_DISPLAY_GROUP]: vipRatios.vipRatio }
-    : groupRatio
+    : props.groupRatio
   const videoFractionDigits = showVip
     ? VIP_VIDEO_PRICE_FRACTION_DIGITS
     : undefined
@@ -1342,7 +1338,7 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
                 pricing={officialVideoPricing}
                 officialPricing={officialVideoPricing}
                 groups={[]}
-                groupRatio={groupRatio}
+                groupRatio={props.groupRatio}
                 priceRate={props.priceRate}
                 usdExchangeRate={props.usdExchangeRate}
                 showRechargePrice={showRechargePrice}
@@ -1360,7 +1356,7 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
             {!priceComparison && !videoPricing && (
               <GroupPricingSection
                 model={props.model}
-                groupRatio={groupRatio}
+                groupRatio={props.groupRatio}
                 usableGroup={props.usableGroup}
                 autoGroups={props.autoGroups}
                 priceRate={props.priceRate}

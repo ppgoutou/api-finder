@@ -467,9 +467,6 @@ export function OnboardingSection() {
             markup={upstreamPrices.data?.markups?.[current.item.model_name]}
             priceFactor={upstreamPrices.data?.price_factor ?? 1}
             groupRatios={groupRatios}
-            modelGroupRatios={
-              upstreamPrices.data?.model_group_ratios?.[current.item.model_name]
-            }
             applyingUpstreamPrice={applyPrice.isPending}
             onApplyUpstreamPrice={() =>
               applyPrice.mutate(current.item.model_name)

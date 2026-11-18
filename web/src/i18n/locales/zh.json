@@ -8471,14 +8471,6 @@
     "How to become VIP": "如何成为 VIP",
     "VIP FAQ": "VIP 常见问题",
     "Ready to pay less and run more?": "准备好花更少、跑更多了吗？",
-    "No fee": "免费",
-    "Model group ratio saved": "模型分组倍率已保存",
-    "This model": "本模型",
-    "This model's ratio in {{group}}": "本模型在 {{group}} 分组的倍率",
-    "Target share of official price (%)": "目标官方价占比（%）",
-    "Calculate ratio": "反算倍率",
-    "Save model ratio": "保存模型倍率",
-    "Use group ratio": "恢复分组倍率",
-    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "只对本模型在该分组生效，替代分组倍率 ×{{ratio}}。留空即使用分组倍率。保存前下方价格按输入的倍率预览。"
+    "No fee": "免费"
   }
 }

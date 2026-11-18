@@ -711,8 +711,6 @@ func upstreamPriceReport(rows []upstreamPriceChannel) (gin.H, error) {
 		"channels": rows, "changes": changes, "models": prices,
 		"markups":      readOnboardingOption[map[string]onboardingMarkup](onboardingMarkupOption),
 		"price_factor": ratio_setting.PublicPriceFactor(),
-		// Group ratios models have of their own, keyed by model then group.
-		"model_group_ratios": ratio_setting.ModelGroupRatioCopy(),
 	}, nil
 }
 

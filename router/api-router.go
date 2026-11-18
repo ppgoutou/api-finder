@@ -443,7 +443,6 @@ func SetApiRouter(router *gin.Engine) {
 				upstreamPricesRoute.POST("/acknowledge", controller.AcknowledgeOnboardingUpstreamPrices)
 				upstreamPricesRoute.POST("/apply", controller.ApplyOnboardingUpstreamPrice)
 				upstreamPricesRoute.PUT("/markup", controller.SetOnboardingPriceMarkup)
-				upstreamPricesRoute.PUT("/group_ratio", controller.SetOnboardingModelGroupRatio)
 				upstreamPricesRoute.PUT("/token", controller.SetOnboardingUpstreamPricingToken)
 			}
 			modelsRoute.GET("/", controller.GetAllModelsMeta)

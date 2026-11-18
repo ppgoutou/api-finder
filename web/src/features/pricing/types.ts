@@ -134,13 +134,7 @@ export type PricingModel = {
   tags?: string
   supported_endpoint_types?: string[]
   key?: string
-  /**
-   * Every group's ratio for this model: the page's group ratios with the
-   * model's own ratios on top. Set by usePricingData.
-   */
   group_ratio?: Record<string, number>
-  /** Group ratios this model has of its own, as the pricing API sends them. */
-  model_group_ratio?: Record<string, number>
   /** Billing mode (e.g. "tiered_expr") used to flag dynamic pricing */
   billing_mode?: string
   /** Raw expression describing dynamic / tiered billing */
