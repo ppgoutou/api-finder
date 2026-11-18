@@ -8471,6 +8471,20 @@
     "How to become VIP": "VIP になる方法",
     "VIP FAQ": "VIP のよくある質問",
     "Ready to pay less and run more?": "もっと安く、もっとたくさん作りませんか？",
-    "No fee": "無料"
+    "No fee": "無料",
+    "Off every model": "全モデル割引",
+    "Tasks at once": "タスク同時実行",
+    "Standard: about {{count}}": "スタンダード：約 {{count}} 件",
+    "24/7": "24時間365日",
+    "Dedicated support": "専任サポート",
+    "No membership fee: top up as usual and you are upgraded automatically.": "会費は不要：通常どおりチャージすれば自動で VIP に昇格します。",
+    "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}}で自動的に VIP に昇格。会費は不要です。",
+    "You are VIP. Every benefit below already applies to your account.": "VIP 会員です。以下の特典はすべてご利用のアカウントに適用済みです。",
+    "Standard members": "スタンダード：",
+    "Redemption codes count": "引き換えコードも対象",
+    "Also applies to API calls": "API 呼び出しにも適用",
+    "Every benefit, with what a standard member gets instead.": "各特典をスタンダード会員と比較しています。",
+    "Step {{number}}": "ステップ {{number}}",
+    "No renewal needed": "更新手続き不要"
   }
 }

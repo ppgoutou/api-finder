@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import {
   CrownIcon,
+  Tick02Icon,
   UserAdd01Icon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons'
@@ -39,7 +40,7 @@ import { trackEvent } from '@/lib/analytics'
 import { MembershipCard } from './components/membership-card'
 import { VipActions } from './components/vip-actions'
 import { VipBenefitGrid } from './components/vip-benefit-grid'
-import { VipCompareTable } from './components/vip-compare-table'
+import { VipHighlights } from './components/vip-highlights'
 import { VipSavingsCalculator } from './components/vip-savings-calculator'
 import { useMembership } from './hooks/use-membership'
 import { getVipUpgradeRule } from './lib/benefits'
@@ -149,35 +150,58 @@ function VipPageContent(props: { info: MembershipInfo }) {
     },
   ]
 
+  const promises = [
+    t('Redemption codes count'),
+    t('Also applies to API calls'),
+    t('No renewal needed'),
+  ]
+
   return (
     <>
       <section className='relative z-10 overflow-hidden px-6 pt-28 pb-12 md:pt-36 md:pb-16'>
         <div
           aria-hidden
-          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-amber-400/20 via-amber-300/5 to-transparent'
+          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.22),transparent_65%)]'
         />
         <div className='mx-auto max-w-4xl text-center'>
           <span className='inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200'>
             <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
             {t('VIP membership')}
           </span>
-          <h1 className='mt-5 text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight'>
+          <h1 className='mt-5 text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight text-balance'>
             {headline}
           </h1>
-          <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-base sm:text-lg'>
+          <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-base text-balance sm:text-lg'>
             {rule
               ? t(
-                  'VIP members run more tasks at once on dedicated priority lines. {{rule}} and you are upgraded automatically, with no membership fee.',
+                  '{{rule}} and you are upgraded automatically, with no membership fee.',
                   { rule }
                 )
               : t(
-                  'VIP members run more tasks at once on dedicated priority lines, with no membership fee.'
+                  'No membership fee: top up as usual and you are upgraded automatically.'
                 )}
           </p>
           <VipActions
             info={info}
             source='vip-page-hero'
             className='mt-8 justify-center'
+          />
+          <ul className='text-muted-foreground mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-sm'>
+            {promises.map((promise) => (
+              <li key={promise} className='flex items-center gap-1.5'>
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  className='size-4 text-amber-600 dark:text-amber-300'
+                  aria-hidden
+                />
+                {promise}
+              </li>
+            ))}
+          </ul>
+          <VipHighlights
+            info={info}
+            size='lg'
+            className='mx-auto mt-12 max-w-3xl'
           />
         </div>
         {info.signed_in && (
@@ -187,57 +211,59 @@ function VipPageContent(props: { info: MembershipInfo }) {
 
       <section className='relative z-10 px-6 py-10 md:py-14'>
         <div className='mx-auto max-w-5xl'>
-          <h2 className='text-center text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('What VIP members get')}
-          </h2>
-          <VipBenefitGrid info={info} className='mt-8' />
+          <div className='mx-auto max-w-2xl text-center'>
+            <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
+              {t('What VIP members get')}
+            </h2>
+            <p className='text-muted-foreground mt-3'>
+              {t('Every benefit, with what a standard member gets instead.')}
+            </p>
+          </div>
+          <VipBenefitGrid info={info} limit={6} showStandard className='mt-8' />
         </div>
       </section>
 
       <section className='relative z-10 px-6 py-10 md:py-14'>
-        <div className='mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start'>
+        <div className='mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-start lg:gap-12'>
           <div>
             <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-              {t('Standard vs VIP')}
+              {t('How to become VIP')}
             </h2>
-            <VipCompareTable info={info} className='mt-6' />
+            <ol className='mt-6'>
+              {steps.map((step, index) => (
+                <li
+                  key={step.title}
+                  className='relative flex gap-4 pb-7 last:pb-0'
+                >
+                  {index < steps.length - 1 && (
+                    <span
+                      aria-hidden
+                      className='absolute top-10 bottom-0 left-5 w-px bg-amber-500/30'
+                    />
+                  )}
+                  <span className='flex size-10 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'>
+                    <HugeiconsIcon
+                      icon={step.icon}
+                      className='size-5'
+                      aria-hidden
+                    />
+                  </span>
+                  <div className='min-w-0 pt-1'>
+                    <p className='text-xs font-semibold text-amber-700 dark:text-amber-300'>
+                      {t('Step {{number}}', { number: index + 1 })}
+                    </p>
+                    <h3 className='mt-0.5 font-semibold'>{step.title}</h3>
+                    <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
+                      {step.text}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
           {info.vip_price_rate > 0 && info.vip_price_rate < 1 && (
-            <div className='lg:pt-14'>
-              <VipSavingsCalculator priceRate={info.vip_price_rate} />
-            </div>
+            <VipSavingsCalculator priceRate={info.vip_price_rate} />
           )}
-        </div>
-      </section>
-
-      <section className='relative z-10 px-6 py-10 md:py-14'>
-        <div className='mx-auto max-w-5xl'>
-          <h2 className='text-center text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('How to become VIP')}
-          </h2>
-          <ol className='mt-8 grid gap-4 md:grid-cols-3'>
-            {steps.map((step, index) => (
-              <li
-                key={step.title}
-                className='bg-card border-border/60 rounded-2xl border p-5 shadow-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <span className='flex size-7 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white'>
-                    {index + 1}
-                  </span>
-                  <HugeiconsIcon
-                    icon={step.icon}
-                    className='size-5 text-amber-600 dark:text-amber-300'
-                    aria-hidden
-                  />
-                </div>
-                <h3 className='mt-3 font-semibold'>{step.title}</h3>
-                <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
-                  {step.text}
-                </p>
-              </li>
-            ))}
-          </ol>
         </div>
       </section>
 
@@ -265,14 +291,22 @@ function VipPageContent(props: { info: MembershipInfo }) {
       </section>
 
       <section className='relative z-10 px-6 pt-6 pb-16 md:pb-24'>
-        <div className='mx-auto flex max-w-4xl flex-col items-center gap-5 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-orange-400/10 px-6 py-10 text-center'>
+        <div className='mx-auto flex max-w-4xl flex-col items-center gap-3 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-orange-400/10 px-6 py-12 text-center'>
+          <HugeiconsIcon
+            icon={CrownIcon}
+            className='size-8 text-amber-600 dark:text-amber-300'
+            aria-hidden
+          />
           <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
             {t('Ready to pay less and run more?')}
           </h2>
+          {rule && !info.is_vip && (
+            <p className='text-muted-foreground text-sm'>{rule}</p>
+          )}
           <VipActions
             info={info}
             source='vip-page-bottom'
-            className='justify-center'
+            className='mt-3 justify-center'
           />
         </div>
       </section>

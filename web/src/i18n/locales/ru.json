@@ -8471,6 +8471,20 @@
     "How to become VIP": "Как стать VIP",
     "VIP FAQ": "Вопросы о VIP",
     "Ready to pay less and run more?": "Готовы платить меньше и делать больше?",
-    "No fee": "Бесплатно"
+    "No fee": "Бесплатно",
+    "Off every model": "скидка на все модели",
+    "Tasks at once": "задач одновременно",
+    "Standard: about {{count}}": "Стандарт: около {{count}}",
+    "24/7": "24/7",
+    "Dedicated support": "Персональная поддержка",
+    "No membership fee: top up as usual and you are upgraded automatically.": "Без членского взноса: пополняйте как обычно — статус VIP присвоится автоматически.",
+    "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} — и статус VIP присвоится автоматически, без членского взноса.",
+    "You are VIP. Every benefit below already applies to your account.": "Вы VIP. Все преимущества ниже уже действуют для вашего аккаунта.",
+    "Standard members": "Стандарт:",
+    "Redemption codes count": "Коды активации учитываются",
+    "Also applies to API calls": "Действует и для API-запросов",
+    "Every benefit, with what a standard member gets instead.": "Каждое преимущество в сравнении со стандартным уровнем.",
+    "Step {{number}}": "Шаг {{number}}",
+    "No renewal needed": "Без продления"
   }
 }

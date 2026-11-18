@@ -21,13 +21,15 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
+import { cn } from '@/lib/utils'
 
 import { useMembership } from '../hooks/use-membership'
 import { useVipCompare } from '../hooks/use-vip-compare'
-import { getVipSavingPercent } from '../lib/progress'
-import { VIP_GOLD_TEXT } from '../lib/vip-style'
+import { getVipUpgradeRule } from '../lib/benefits'
+import { VIP_GOLD_FILL } from '../lib/vip-style'
 import { VipActions } from './vip-actions'
 import { VipCompareTable } from './vip-compare-table'
+import { VipHighlights } from './vip-highlights'
 
 /**
  * The standard-vs-VIP dialog every "compare benefits" trigger opens. The root
@@ -41,14 +43,19 @@ export function VipCompareDialog() {
   const { data: info } = useMembership()
   if (!info?.enabled) return null
 
-  const savingPercent = getVipSavingPercent(info)
+  const rule = getVipUpgradeRule(info, t)
   let description = t(
-    'VIP members run more tasks at once on dedicated lines and get 24/7 support.'
+    'No membership fee: top up as usual and you are upgraded automatically.'
   )
-  if (savingPercent > 0) {
+  if (rule) {
     description = t(
-      'VIP members save {{percent}}% on every model, run more tasks at once on dedicated lines and get 24/7 support.',
-      { percent: savingPercent }
+      '{{rule}} and you are upgraded automatically, with no membership fee.',
+      { rule }
+    )
+  }
+  if (info.is_vip) {
+    description = t(
+      'You are VIP. Every benefit below already applies to your account.'
     )
   }
 
@@ -58,17 +65,24 @@ export function VipCompareDialog() {
       onOpenChange={(next) => {
         if (!next) closeCompare()
       }}
+      contentClassName='sm:max-w-xl'
       title={
-        <span className='flex items-center gap-2'>
-          <HugeiconsIcon
-            icon={CrownIcon}
-            className={`size-5 ${VIP_GOLD_TEXT}`}
-            aria-hidden
-          />
-          {t('Standard vs VIP')}
+        <span className='flex items-center gap-2.5'>
+          <span
+            className={cn(
+              'flex size-8 items-center justify-center rounded-lg',
+              VIP_GOLD_FILL
+            )}
+          >
+            <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
+          </span>
+          {t('VIP benefits')}
         </span>
       }
       description={description}
+      descriptionClassName='leading-relaxed'
+      bodyClassName='space-y-4'
+      footerClassName='sm:bg-muted/40 sm:border-t'
       footer={
         <VipActions
           info={info}
@@ -79,6 +93,7 @@ export function VipCompareDialog() {
         />
       }
     >
+      <VipHighlights info={info} />
       <VipCompareTable info={info} />
     </Dialog>
   )
