@@ -8360,6 +8360,7 @@
     "Supply cost": "Coût d'achat",
     "Gross profit": "Marge brute en valeur",
     "Gross margin {{percent}}": "Marge brute {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "Coût d'achat {{supply}}, marge brute {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "Coût d'achat {{supply}}, marge brute {{profit}}",
+    "Press Enter to start a new line": "Appuyez sur Entrée pour aller à la ligne"
   }
 }

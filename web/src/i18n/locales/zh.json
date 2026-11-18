@@ -8360,6 +8360,7 @@
     "Supply cost": "供货成本",
     "Gross profit": "毛利",
     "Gross margin {{percent}}": "毛利率 {{percent}}",
-    "Supply cost {{supply}}, gross profit {{profit}}": "供货成本 {{supply}}，毛利 {{profit}}"
+    "Supply cost {{supply}}, gross profit {{profit}}": "供货成本 {{supply}}，毛利 {{profit}}",
+    "Press Enter to start a new line": "按 Enter 换行"
   }
 }

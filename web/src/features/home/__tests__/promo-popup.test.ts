@@ -22,6 +22,7 @@ import {
   EMPTY_PROMO_ANNOUNCEMENT,
   EMPTY_PROMO_POPUP,
   emptyPromoCard,
+  getPromoDescriptionSize,
   getPromoPriceRatio,
   parsePromoPopup,
   type PromoCard,
@@ -230,5 +231,28 @@ describe('promo price ratio', () => {
 
   it('compares an unmarked original price with a marked sale price', () => {
     expect(getPromoPriceRatio('$0.10', '0.20')).toBe(0.5)
+  })
+})
+
+describe('promo description size', () => {
+  it('uses large type for a few short lines', () => {
+    expect(
+      getPromoDescriptionSize(
+        '✅ 储值到帐后立即生效，不用申请\n✅ 优惠适用于全部模型和分组\n✅ 储值金额全额到账，可随时使用'
+      )
+    ).toBe('large')
+  })
+
+  it('steps down to medium for a paragraph', () => {
+    expect(getPromoDescriptionSize('赠送额度'.repeat(25))).toBe('medium')
+  })
+
+  it('keeps long copy small so it fits the card', () => {
+    expect(getPromoDescriptionSize('赠送额度'.repeat(40))).toBe('small')
+  })
+
+  it('counts Latin letters narrower than CJK characters', () => {
+    expect(getPromoDescriptionSize('a'.repeat(120))).toBe('large')
+    expect(getPromoDescriptionSize('赠'.repeat(120))).toBe('medium')
   })
 })

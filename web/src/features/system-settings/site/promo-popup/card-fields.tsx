@@ -367,11 +367,17 @@ export function PromoCardFields(props: PromoCardFieldsProps) {
           control={props.control}
           name={`cards.${props.index}.title`}
           label={t('Title')}
+          multiline
+          rows={2}
+          description={t('Press Enter to start a new line')}
         />
         <ShowcaseTextField
           control={props.control}
           name={`cards.${props.index}.titleZh`}
           label={t('Title (Chinese)')}
+          multiline
+          rows={2}
+          description={t('Press Enter to start a new line')}
         />
         <ShowcaseTextField
           control={props.control}
