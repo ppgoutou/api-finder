@@ -962,6 +962,9 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 			return err
 		}
 		user.AffCode = affCode
+		if inviterId != 0 {
+			user.InviterId = inviterId
+		}
 
 		// 初始化用户设置
 		if user.Setting == "" {
