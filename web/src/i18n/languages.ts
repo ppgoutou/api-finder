@@ -29,6 +29,30 @@ export const INTERFACE_LANGUAGE_OPTIONS = [
 export type InterfaceLanguageCode =
   (typeof INTERFACE_LANGUAGE_OPTIONS)[number]['code']
 
+/**
+ * localStorage key of the language a visitor picked themselves. Nothing else is
+ * stored there: without a pick, every visit follows the browser language.
+ */
+export const INTERFACE_LANGUAGE_STORAGE_KEY = 'ui_language'
+
+/** Remember a language the visitor picked (switcher, or their account setting). */
+export function saveInterfaceLanguage(code: string): void {
+  try {
+    localStorage.setItem(INTERFACE_LANGUAGE_STORAGE_KEY, code)
+  } catch {
+    // Storage blocked: the pick still applies to this page view.
+  }
+}
+
+/** The language the visitor picked, or `null` when the browser language rules. */
+export function getSavedInterfaceLanguage(): string | null {
+  try {
+    return localStorage.getItem(INTERFACE_LANGUAGE_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function normalizeInterfaceLanguage(value?: string | null): string {
   if (!value) return 'en'
 
