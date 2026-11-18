@@ -16,12 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { VipCompareButton } from '@/features/membership'
+import { VIP_GOLD_SURFACE } from '@/features/membership/lib/vip-style'
 import { VIDEO_PRICE_FRACTION_DIGITS } from '@/features/pricing/lib/video-pricing'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
+import { cn } from '@/lib/utils'
 
 import type { StudioPrice } from '../hooks/use-studio-price'
 
@@ -37,26 +41,44 @@ export function StudioCost(props: StudioCostProps) {
   if (!props.price) return null
 
   return (
-    <div className='flex flex-col items-end gap-0.5 text-xs'>
-      <span className='text-muted-foreground'>
-        {t('Estimated fee')}{' '}
-        <span className='text-foreground font-semibold'>
+    <div className='flex flex-col items-end gap-1'>
+      <span className='flex items-baseline gap-1.5'>
+        <span className='text-muted-foreground text-xs'>
+          {t('Estimated fee')}
+        </span>
+        <span className='text-foreground text-base font-semibold tabular-nums'>
           {props.price.label}
         </span>
       </span>
       {props.price.vipLabel && (
-        <span className='text-amber-700 dark:text-amber-300'>
-          {t('VIP price {{price}}', { price: props.price.vipLabel })}
-          {' · '}
-          <VipCompareButton
-            source='studio-cost'
-            label={t('Top up to become VIP')}
-            standardOnly
-          />
-        </span>
+        <VipCompareButton
+          source='studio-cost'
+          standardOnly
+          className={cn(
+            'gap-1 rounded-full border px-2 py-0.5 text-xs hover:no-underline hover:brightness-95',
+            VIP_GOLD_SURFACE
+          )}
+          label={
+            <>
+              {t('VIP price')}
+              <span className='font-semibold tabular-nums'>
+                {props.price.vipLabel}
+              </span>
+              <span aria-hidden className='opacity-50'>
+                |
+              </span>
+              {t('Top up to upgrade')}
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className='size-3'
+                aria-hidden
+              />
+            </>
+          }
+        />
       )}
       {props.shortfallUSD !== null && (
-        <span role='alert' className='text-destructive'>
+        <span role='alert' className='text-destructive text-xs'>
           {t('Insufficient balance, {{amount}} short.', {
             amount: formatBillingCurrencyFromUSD(props.shortfallUSD, {
               digitsLarge: VIDEO_PRICE_FRACTION_DIGITS,

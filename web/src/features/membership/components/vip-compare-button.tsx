@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { CrownIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -33,7 +34,7 @@ interface VipCompareButtonProps {
   /** "link" reads as inline text; "chip" is a small gold pill. */
   variant?: 'link' | 'chip' | 'outline'
   /** Replaces the default "Compare VIP benefits" label. */
-  label?: string
+  label?: ReactNode
   /** Hide the button from VIP members, for upgrade prompts. */
   standardOnly?: boolean
   className?: string
