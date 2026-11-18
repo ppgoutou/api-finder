@@ -16,8 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { CrownIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -34,6 +36,13 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel'
+import {
+  getVipSavingPercent,
+  useMembership,
+  VIP_GOLD_SURFACE,
+  VIP_GOLD_TEXT,
+  VipCompareButton,
+} from '@/features/membership'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import { cn } from '@/lib/utils'
 
@@ -79,7 +88,17 @@ export function ModelPricing() {
     },
     null
   )
-  const reserveDiscount = headlineDiscount !== null
+  // A VIP member already sees VIP prices, so their cards say so instead of
+  // quoting a second price.
+  const { data: membership } = useMembership()
+  const vipSavingPercent = membership?.enabled
+    ? getVipSavingPercent(membership)
+    : 0
+  const isVipMember = Boolean(
+    membership?.enabled && membership.is_vip && vipSavingPercent > 0
+  )
+  const reserveVip =
+    isVipMember || seriesList.some((series) => series.lowest?.vipPrice)
   const reserveVariants = seriesList.some(
     (series) => series.variants.length > 0
   )
@@ -134,7 +153,9 @@ export function ModelPricing() {
                   <SeriesCard
                     series={series}
                     showOfficialPrice={showOfficialPrice}
-                    reserveDiscount={reserveDiscount}
+                    reserveVip={reserveVip}
+                    isVipMember={isVipMember}
+                    vipSavingPercent={vipSavingPercent}
                     reserveVariants={reserveVariants}
                   />
                 </CarouselItem>
@@ -202,8 +223,12 @@ type SeriesCardProps = {
   series: VideoSeriesPricing
   /** Show the official price and discount columns. */
   showOfficialPrice: boolean
-  /** Keep room for the headline discount even when this card has none. */
-  reserveDiscount: boolean
+  /** Keep room for the VIP price bar even when this card has none. */
+  reserveVip: boolean
+  /** The viewer is VIP, so the prices shown already are VIP prices. */
+  isVipMember: boolean
+  /** Whole-percent saving VIP prices give, for the upgrade link. */
+  vipSavingPercent: number
   /** Keep room for the variants line even when this card has none. */
   reserveVariants: boolean
 }
@@ -265,48 +290,112 @@ function SeriesCard(props: SeriesCardProps) {
       id: 'official',
       header: t('List price'),
       className: HEADER_CELL,
-      cellClassName:
-        'text-muted-foreground px-1 py-2 font-mono whitespace-nowrap tabular-nums',
-      cell: (row) =>
-        row.officialPrice ? (
-          <span className='line-through'>{row.officialPrice}</span>
-        ) : (
-          '—'
-        ),
-    },
-    {
-      id: 'discount',
-      header: t('Discount'),
-      className: HEADER_CELL,
       cellClassName: 'px-1 py-2 whitespace-nowrap',
-      cell: (row) =>
-        row.discount ? (
-          <Badge className='bg-red-600 px-1.5 text-[11px] font-bold text-white dark:bg-red-500'>
-            {t('{{percentOff}}% off', {
-              percentOff: row.discount.percentOff,
-              zhe: row.discount.zhe,
-            })}
-          </Badge>
-        ) : (
-          <span className='text-muted-foreground'>—</span>
-        ),
+      cell: (row) => {
+        if (!row.officialPrice) {
+          return <span className='text-muted-foreground'>—</span>
+        }
+        return (
+          <>
+            <span className='text-muted-foreground font-mono tabular-nums line-through'>
+              {row.officialPrice}
+            </span>
+            {row.discount && (
+              <>
+                {' '}
+                <span className='text-[11px] font-semibold text-red-600 dark:text-red-400'>
+                  {t('{{percentOff}}% off', {
+                    percentOff: row.discount.percentOff,
+                    zhe: row.discount.zhe,
+                  })}
+                </span>
+              </>
+            )}
+          </>
+        )
+      },
     },
   ]
-  // Without any configured official price the two comparison columns would
-  // only hold dashes, so the tables keep resolution and price alone. Image
-  // models have no official price to compare with.
+  // Without any configured official price the comparison column would only
+  // hold dashes, so the tables keep resolution and price alone. Image models
+  // have no official price to compare with.
   const showVip = series.rows.some((row) => row.vipPrice)
   const columns = allColumns.filter((column) => {
     if (column.id === 'vip') return showVip
-    if (column.id === 'official' || column.id === 'discount') {
+    if (column.id === 'official') {
       return props.showOfficialPrice && !isImage
     }
     return true
   })
 
+  const unitLabel = isImage ? t('/ image') : t('/ second')
+  let vipBar: ReactNode = null
+  if (lowest?.vipPrice) {
+    vipBar = (
+      <div
+        className={cn(
+          'mt-3 flex min-h-14 items-center justify-between gap-3 rounded-xl border px-3 py-2',
+          VIP_GOLD_SURFACE
+        )}
+      >
+        <p className={cn('min-w-0', VIP_GOLD_TEXT)}>
+          <span className='flex items-center gap-1 text-xs font-medium'>
+            <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
+            {t('VIP from')}
+          </span>
+          <span className='text-xl font-bold tracking-tight tabular-nums'>
+            {formatPrice({ ...lowest, price: lowest.vipPrice })}
+          </span>{' '}
+          <span className='text-xs'>{unitLabel}</span>
+        </p>
+        <VipCompareButton
+          source='home-pricing-card'
+          label={t('Save {{percent}}% with VIP', {
+            percent: props.vipSavingPercent,
+          })}
+          standardOnly
+          className='shrink-0 text-xs'
+        />
+      </div>
+    )
+  } else if (props.isVipMember) {
+    vipBar = (
+      <p
+        className={cn(
+          'mt-3 flex min-h-14 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold',
+          VIP_GOLD_SURFACE,
+          VIP_GOLD_TEXT
+        )}
+      >
+        <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
+        {t('VIP prices applied, {{percent}}% off', {
+          percent: props.vipSavingPercent,
+        })}
+      </p>
+    )
+  } else if (props.reserveVip) {
+    vipBar = <div aria-hidden='true' className='mt-3 min-h-14' />
+  }
+
   return (
-    <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
-      <div className='flex flex-wrap items-center gap-2'>
+    <article className='bg-card border-border/60 relative flex w-full flex-col overflow-hidden rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
+      {bestDiscount && (
+        <p className='absolute top-0 right-0 flex flex-col items-center rounded-bl-2xl bg-gradient-to-br from-red-600 to-orange-500 px-3 py-1.5 leading-tight text-white shadow-sm shadow-red-500/30'>
+          <span className='text-[11px] font-medium'>{t('List price')}</span>{' '}
+          <span className='text-base font-bold whitespace-nowrap'>
+            {t('{{percentOff}}% off', {
+              percentOff: bestDiscount.percentOff,
+              zhe: bestDiscount.zhe,
+            })}
+          </span>
+        </p>
+      )}
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-2',
+          bestDiscount && 'pe-20'
+        )}
+      >
         <h3 className='text-lg font-semibold tracking-tight sm:text-xl'>
           {series.name}
         </h3>
@@ -328,27 +417,10 @@ function SeriesCard(props: SeriesCardProps) {
           <span className='text-3xl font-bold tracking-tight tabular-nums'>
             {formatPrice(lowest)}
           </span>
-          <span className='text-muted-foreground text-sm'>
-            {isImage ? t('/ image') : t('/ second')}
-          </span>
-          {lowest.vipPrice && (
-            <span className='ms-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-800 tabular-nums dark:text-amber-200'>
-              VIP {formatPrice({ ...lowest, price: lowest.vipPrice })}
-            </span>
-          )}
+          <span className='text-muted-foreground text-sm'>{unitLabel}</span>
         </p>
       )}
-      {!bestDiscount && props.reserveDiscount && (
-        <div aria-hidden='true' className='mt-2 h-7' />
-      )}
-      {bestDiscount && (
-        <p className='mt-2 min-h-7 w-fit max-w-full rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-1 text-sm leading-snug font-bold text-white shadow-sm shadow-red-500/30'>
-          {t('{{percentOff}}% off official prices', {
-            percentOff: bestDiscount.percentOff,
-            zhe: bestDiscount.zhe,
-          })}
-        </p>
-      )}
+      {vipBar}
 
       {specs.length > 0 && (
         <ul className='mt-3 flex flex-wrap gap-1.5'>

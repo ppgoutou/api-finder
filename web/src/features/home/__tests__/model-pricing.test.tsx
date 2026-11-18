@@ -231,9 +231,9 @@ describe('home model pricing', () => {
     renderPricing()
 
     expect(await seriesRows('Seedance 2.0')).toEqual([
-      ['480p', '$0.1', '$0.4', '75% off'],
-      ['720p', '$0.15', '$0.5', '70% off'],
-      ['4K', '$0.5', '—', '—'],
+      ['480p', '$0.1', '$0.4 75% off'],
+      ['720p', '$0.15', '$0.5 70% off'],
+      ['4K', '$0.5', '—'],
     ])
     const card = screen
       .getByRole('heading', { level: 3, name: 'Seedance 2.0' })
@@ -241,7 +241,11 @@ describe('home model pricing', () => {
     expect(
       within(card).getByText('Also in the series: fast · Mini')
     ).toBeVisible()
-    expect(within(card).getByText('75% off official prices')).toBeVisible()
+    // The deepest discount sits in the card's corner tag.
+    expect(
+      within(card).getByText('List price', { selector: 'p > span' })
+    ).toBeVisible()
+    expect(within(card).getAllByText('75% off')).toHaveLength(2)
     expect(within(card).getByText('480p–4K')).toBeVisible()
     expect(within(card).getByText('4–15 seconds')).toBeVisible()
     expect(within(card).getByText('3 ratios')).toBeVisible()
@@ -297,7 +301,7 @@ describe('home model pricing', () => {
     )
     renderPricing()
 
-    expect(await seriesRows('MiniMax-H3')).toEqual([['768p', '$0.1', '—', '—']])
+    expect(await seriesRows('MiniMax-H3')).toEqual([['768p', '$0.1', '—']])
     const carousel = screen.getByRole('region', { name: 'Models and pricing' })
     expect(within(carousel).getAllByRole('group')).toHaveLength(4)
     expect(within(carousel).getAllByRole('heading', { level: 3 })).toHaveLength(
@@ -320,6 +324,16 @@ describe('home model pricing', () => {
       ['480p', '$0.1', '$0.08'],
       ['720p', '$0.2', '$0.16'],
     ])
+    const card = screen
+      .getByRole('heading', { level: 3, name: 'Seedance 2.0' })
+      .closest('article') as HTMLElement
+    expect(within(card).getByText('VIP from')).toBeVisible()
+    expect(
+      within(card).getByText('$0.08', { selector: 'p > span' })
+    ).toBeVisible()
+    expect(
+      within(card).getByRole('button', { name: 'Save 20% with VIP' })
+    ).toBeVisible()
   })
 
   it('leaves the VIP column out for a VIP member, whose prices already are VIP prices', async () => {
@@ -334,6 +348,10 @@ describe('home model pricing', () => {
     expect(await seriesRows('Seedance 2.0')).toEqual([['480p', '$0.1']])
     expect(
       screen.queryByRole('columnheader', { name: 'VIP' })
+    ).not.toBeInTheDocument()
+    expect(await screen.findByText('VIP prices applied, 20% off')).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: /with VIP/ })
     ).not.toBeInTheDocument()
   })
 
