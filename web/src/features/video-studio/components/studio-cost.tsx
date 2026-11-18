@@ -31,7 +31,7 @@ interface StudioCostProps {
   shortfallUSD: number | null
 }
 
-/** Estimated cost next to the generate button, with the top-up gap when the wallet falls short. */
+/** Estimated fee next to the generate button, with the top-up gap when the wallet falls short. */
 export function StudioCost(props: StudioCostProps) {
   const { t } = useTranslation()
   if (!props.price) return null
@@ -39,7 +39,7 @@ export function StudioCost(props: StudioCostProps) {
   return (
     <div className='flex flex-col items-end gap-0.5 text-xs'>
       <span className='text-muted-foreground'>
-        {t('Estimated cost')}{' '}
+        {t('Estimated fee')}{' '}
         <span className='text-foreground font-semibold'>
           {props.price.label}
         </span>
@@ -50,7 +50,7 @@ export function StudioCost(props: StudioCostProps) {
           {' · '}
           <VipCompareButton
             source='studio-cost'
-            label={t('Become VIP')}
+            label={t('Top up to become VIP')}
             standardOnly
           />
         </span>
