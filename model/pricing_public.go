@@ -64,7 +64,7 @@ func publicBillingExpr(modelName, expression string, scale decimal.Decimal) stri
 	if expression == "" {
 		return ""
 	}
-	scaled, err := billingexpr.ScalePrices(expression, scale)
+	scaled, err := billingexpr.PublishPrices(expression, scale)
 	if err != nil {
 		common.SysError(common.LogText("withheld public price of model %s: %s", modelName, err.Error()))
 		return ""
