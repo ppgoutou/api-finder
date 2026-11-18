@@ -44,6 +44,7 @@ import type { ModelPricingEntry } from '@/features/model-pricing/api'
 import { taskTierConditions } from '@/features/pricing/lib/task-price-display'
 import type { PricingCategory } from '@/features/pricing/types'
 import { getCurrencyDisplay } from '@/lib/currency'
+import { formatPercent } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
@@ -365,6 +366,27 @@ export function OnboardingMarkupTable(props: {
             }
           >
             {price(profit)}
+          </span>
+        )
+      },
+    },
+    {
+      id: 'margin',
+      header: t('Gross margin'),
+      cellClassName: 'font-mono',
+      cell: (row) => {
+        const final = groupFinal(row)
+        if (final <= 0) return <span className='text-muted-foreground'>—</span>
+        const margin = (final - row.supply) / final
+        return (
+          <span
+            className={
+              margin < 0
+                ? 'text-destructive'
+                : 'text-green-600 dark:text-green-500'
+            }
+          >
+            {formatPercent(margin * 100)}
           </span>
         )
       },

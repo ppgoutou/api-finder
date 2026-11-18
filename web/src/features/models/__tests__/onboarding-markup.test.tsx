@@ -313,6 +313,22 @@ describe('OnboardingMarkupTable', () => {
     ).toBeTruthy()
   })
 
+  it('shows the gross margin as profit over the final price', async () => {
+    renderTable()
+    const input = markupInput('480p·none')
+    const row = input.closest('tr') as HTMLElement
+
+    await userEvent.type(input, '0.1')
+
+    const supply = (28 * 10044) / 1_000_000
+    const final = supply * 1.2 + 0.1
+    const margin = Intl.NumberFormat(undefined, {
+      style: 'percent',
+      maximumFractionDigits: 2,
+    }).format((final - supply) / final)
+    expect(within(row).getByText(margin)).toBeTruthy()
+  })
+
   it('shows the final price as a share of the category official price', () => {
     renderTable(undefined, undefined, {
       categories: [
