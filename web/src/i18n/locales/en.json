@@ -8485,11 +8485,14 @@
     "No membership fee: top up as usual and you are upgraded automatically.": "No membership fee: top up as usual and you are upgraded automatically.",
     "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} and you are upgraded automatically, with no membership fee.",
     "You are VIP. Every benefit below already applies to your account.": "You are VIP. Every benefit below already applies to your account.",
-    "Standard members": "Standard members",
     "Redemption codes count": "Redemption codes count",
     "Also applies to API calls": "Also applies to API calls",
     "Every benefit, with what a standard member gets instead.": "Every benefit, with what a standard member gets instead.",
     "Step {{number}}": "Step {{number}}",
-    "No renewal needed": "No renewal needed"
+    "No renewal needed": "No renewal needed",
+    "Save on every model": "Save on every model",
+    "Both tiers are free. Your top-ups unlock VIP.": "Both tiers are free. Your top-ups unlock VIP.",
+    "Your current tier": "Your current tier",
+    "Included in VIP": "Included in VIP"
   }
 }

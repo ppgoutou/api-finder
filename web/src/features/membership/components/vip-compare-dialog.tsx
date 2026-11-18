@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 import { useMembership } from '../hooks/use-membership'
 import { useVipCompare } from '../hooks/use-vip-compare'
 import { getVipUpgradeRule } from '../lib/benefits'
-import { VIP_GOLD_FILL } from '../lib/vip-style'
+import { VIP_LIME_FILL, VIP_NIGHT_STAGE } from '../lib/vip-style'
 import { VipActions } from './vip-actions'
 import { VipCompareTable } from './vip-compare-table'
 import { VipHighlights } from './vip-highlights'
@@ -65,13 +65,16 @@ export function VipCompareDialog() {
       onOpenChange={(next) => {
         if (!next) closeCompare()
       }}
-      contentClassName='sm:max-w-xl'
+      contentClassName={cn(
+        VIP_NIGHT_STAGE,
+        'rounded-[28px] border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] sm:max-w-xl'
+      )}
       title={
         <span className='flex items-center gap-2.5'>
           <span
             className={cn(
-              'flex size-8 items-center justify-center rounded-lg',
-              VIP_GOLD_FILL
+              'flex size-9 items-center justify-center rounded-xl',
+              VIP_LIME_FILL
             )}
           >
             <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />
@@ -80,15 +83,17 @@ export function VipCompareDialog() {
         </span>
       }
       description={description}
-      descriptionClassName='leading-relaxed'
+      titleClassName='text-xl font-semibold tracking-tight text-white'
+      descriptionClassName='leading-relaxed text-white/55'
       bodyClassName='space-y-4'
-      footerClassName='sm:bg-muted/40 sm:border-t'
+      footerClassName='border-white/10 sm:border-t sm:bg-white/[0.03]'
       footer={
         <VipActions
           info={info}
           source={`compare-dialog:${source}`}
           showLearnMore
           onNavigate={closeCompare}
+          night
           className='w-full justify-end'
         />
       }

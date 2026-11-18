@@ -8485,11 +8485,14 @@
     "No membership fee: top up as usual and you are upgraded automatically.": "Không mất phí thành viên: nạp tiền như bình thường, đủ ngưỡng sẽ tự động lên VIP.",
     "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} là tự động lên VIP, không mất phí thành viên.",
     "You are VIP. Every benefit below already applies to your account.": "Bạn đã là VIP. Mọi quyền lợi dưới đây đã áp dụng cho tài khoản của bạn.",
-    "Standard members": "Thành viên tiêu chuẩn:",
     "Redemption codes count": "Mã quy đổi cũng được tính",
     "Also applies to API calls": "Áp dụng cả cho lệnh gọi API",
     "Every benefit, with what a standard member gets instead.": "Mỗi quyền lợi kèm so sánh với thành viên tiêu chuẩn.",
     "Step {{number}}": "Bước {{number}}",
-    "No renewal needed": "Không cần gia hạn"
+    "No renewal needed": "Không cần gia hạn",
+    "Save on every model": "Tiết kiệm trên mọi mô hình",
+    "Both tiers are free. Your top-ups unlock VIP.": "Cả hai hạng đều miễn phí. Nạp tiền để mở khóa VIP.",
+    "Your current tier": "Hạng hiện tại của bạn",
+    "Included in VIP": "Đã bao gồm trong VIP"
   }
 }

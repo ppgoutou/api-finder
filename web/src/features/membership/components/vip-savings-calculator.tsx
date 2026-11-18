@@ -27,7 +27,14 @@ import {
   formatLocalCurrencyAmount,
   getCurrencyDisplay,
 } from '@/lib/currency'
+import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
+
+import {
+  VIP_DISPLAY_FONT,
+  VIP_LIME_TEXT,
+  VIP_NIGHT_PANEL,
+} from '../lib/vip-style'
 
 interface VipSavingsCalculatorProps {
   /** VIP price as a share of the standard price, below 1. */
@@ -36,7 +43,10 @@ interface VipSavingsCalculatorProps {
 
 const DEFAULT_MONTHLY_SPEND = 1000
 
-/** Turns a monthly spend into what VIP prices save per month and per year. */
+/**
+ * Turns a monthly spend into what VIP prices save per month and per year,
+ * drawn for the dark VIP page.
+ */
 export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
   const { t } = useTranslation()
   const inputId = useId()
@@ -59,19 +69,18 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
   }
 
   return (
-    <div className='bg-card border-border/60 rounded-2xl border p-5 shadow-sm sm:p-6'>
+    <div className={cn('rounded-[32px] p-6 sm:p-8', VIP_NIGHT_PANEL)}>
       <div className='flex items-center gap-2'>
         <HugeiconsIcon
           icon={Calculator01Icon}
-          className='size-5 text-amber-600 dark:text-amber-300'
+          className={cn('size-5', VIP_LIME_TEXT)}
           aria-hidden
         />
-        <h3 className='font-semibold'>{t('How much would VIP save you?')}</h3>
+        <h3 className='text-lg font-semibold tracking-tight'>
+          {t('How much would VIP save you?')}
+        </h3>
       </div>
-      <label
-        htmlFor={inputId}
-        className='text-muted-foreground mt-4 block text-sm'
-      >
+      <label htmlFor={inputId} className='mt-5 block text-sm text-white/50'>
         {t('Your monthly spend')} ({symbol})
       </label>
       <Input
@@ -82,25 +91,30 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
         step='any'
         value={input}
         onChange={(event) => setInput(event.target.value)}
-        className='mt-1.5 max-w-xs'
+        className='mt-2 h-12 rounded-xl border-white/10 bg-white/5 text-lg tabular-nums'
       />
       <dl className='mt-5 grid grid-cols-2 gap-3'>
-        <div className='rounded-xl bg-amber-500/10 p-3'>
-          <dt className='text-muted-foreground text-xs'>
-            {t('Saved per month')}
-          </dt>
+        <div className='rounded-2xl border border-white/10 bg-black/30 p-4'>
+          <dt className='text-xs text-white/45'>{t('Saved per month')}</dt>
           <dd
-            className='mt-1 text-xl font-bold text-amber-700 tabular-nums dark:text-amber-300'
+            className={cn(
+              'mt-2 text-2xl leading-none tabular-nums',
+              VIP_DISPLAY_FONT,
+              VIP_LIME_TEXT
+            )}
             aria-live='polite'
           >
             {format(monthly)}
           </dd>
         </div>
-        <div className='rounded-xl bg-amber-500/10 p-3'>
-          <dt className='text-muted-foreground text-xs'>
-            {t('Saved per year')}
-          </dt>
-          <dd className='mt-1 text-xl font-bold text-amber-700 tabular-nums dark:text-amber-300'>
+        <div className='rounded-2xl border border-white/10 bg-black/30 p-4'>
+          <dt className='text-xs text-white/45'>{t('Saved per year')}</dt>
+          <dd
+            className={cn(
+              'mt-2 text-2xl leading-none text-white tabular-nums',
+              VIP_DISPLAY_FONT
+            )}
+          >
             {format(monthly * 12)}
           </dd>
         </div>

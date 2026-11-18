@@ -21,13 +21,19 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 import { getVipSavingPercent } from '../lib/progress'
-import { VIP_GOLD_TEXT } from '../lib/vip-style'
+import {
+  VIP_DISPLAY_FONT,
+  VIP_LIME_TEXT,
+  VIP_NIGHT_PANEL,
+} from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipHighlightsProps {
   info: MembershipInfo
   /** Large figures for the VIP page hero, small ones for dialogs. */
   size?: 'sm' | 'lg'
+  /** Leave the saving out, where a headline already shows it. */
+  omitSaving?: boolean
   className?: string
 }
 
@@ -38,7 +44,10 @@ interface Highlight {
   hint?: string
 }
 
-/** The three VIP figures worth a glance: the saving, concurrency, support. */
+/**
+ * The three VIP figures worth a glance: the saving, concurrency, support.
+ * Drawn as glassy tiles for the dark VIP page and dialog.
+ */
 export function VipHighlights(props: VipHighlightsProps) {
   const { t } = useTranslation()
   const info = props.info
@@ -46,7 +55,7 @@ export function VipHighlights(props: VipHighlightsProps) {
   const highlights: Highlight[] = []
 
   const savingPercent = getVipSavingPercent(info)
-  if (savingPercent > 0) {
+  if (savingPercent > 0 && !props.omitSaving) {
     highlights.push({
       id: 'price',
       value: `${savingPercent}%`,
@@ -82,23 +91,25 @@ export function VipHighlights(props: VipHighlightsProps) {
         <div
           key={highlight.id}
           className={cn(
-            'flex min-w-0 flex-col-reverse items-center justify-end rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-2 py-3 text-center',
-            large && 'bg-card/70 rounded-2xl px-3 py-5 shadow-sm sm:py-6'
+            'flex min-w-0 flex-col-reverse items-center justify-end rounded-2xl px-2 py-4 text-center',
+            VIP_NIGHT_PANEL,
+            large && 'rounded-3xl px-3 py-6 sm:py-8'
           )}
         >
-          <dt className='text-muted-foreground mt-1 text-xs leading-snug sm:text-sm'>
+          <dt className='mt-2 text-xs leading-snug text-white/55 sm:text-sm'>
             {highlight.label}
             {highlight.hint && (
-              <span className='text-muted-foreground/80 block text-[11px] sm:text-xs'>
+              <span className='block text-[11px] text-white/35 sm:text-xs'>
                 {highlight.hint}
               </span>
             )}
           </dt>
           <dd
             className={cn(
-              'text-2xl leading-none font-bold tracking-tight tabular-nums',
-              large && 'text-3xl sm:text-5xl',
-              VIP_GOLD_TEXT
+              'text-3xl leading-none tabular-nums',
+              VIP_DISPLAY_FONT,
+              large && 'text-4xl sm:text-6xl',
+              highlight.id === 'price' ? VIP_LIME_TEXT : 'text-white'
             )}
           >
             {highlight.value}

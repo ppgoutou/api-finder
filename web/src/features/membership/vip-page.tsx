@@ -36,15 +36,23 @@ import {
 } from '@/components/ui/accordion'
 import { Skeleton } from '@/components/ui/skeleton'
 import { trackEvent } from '@/lib/analytics'
+import { cn } from '@/lib/utils'
 
 import { MembershipCard } from './components/membership-card'
 import { VipActions } from './components/vip-actions'
 import { VipBenefitGrid } from './components/vip-benefit-grid'
 import { VipHighlights } from './components/vip-highlights'
 import { VipSavingsCalculator } from './components/vip-savings-calculator'
+import { VipTierCards } from './components/vip-tier-cards'
 import { useMembership } from './hooks/use-membership'
 import { getVipUpgradeRule } from './lib/benefits'
 import { getVipSavingPercent } from './lib/progress'
+import {
+  VIP_DISPLAY_FONT,
+  VIP_LIME_TEXT,
+  VIP_NIGHT_PANEL,
+  VIP_NIGHT_STAGE,
+} from './lib/vip-style'
 import type { MembershipInfo } from './types'
 
 /** The public VIP page: benefits, the comparison, how to upgrade and a FAQ. */
@@ -72,9 +80,14 @@ export function VipPage() {
   if (info?.enabled) content = <VipPageContent info={info} />
 
   return (
-    <PublicLayout showMainContainer={false}>
-      {content}
-      <Footer />
+    <PublicLayout
+      showMainContainer={false}
+      headerProps={{ className: 'dark text-foreground' }}
+    >
+      <div className={cn('relative isolate min-h-screen', VIP_NIGHT_STAGE)}>
+        {content}
+        <Footer />
+      </div>
     </PublicLayout>
   )
 }
@@ -84,13 +97,6 @@ function VipPageContent(props: { info: MembershipInfo }) {
   const info = props.info
   const savingPercent = getVipSavingPercent(info)
   const rule = getVipUpgradeRule(info, t)
-
-  let headline = t('Higher concurrency, dedicated lines, 24/7 support')
-  if (savingPercent > 0) {
-    headline = t('Save {{percent}}% on every model as a VIP', {
-      percent: savingPercent,
-    })
-  }
 
   const steps = [
     {
@@ -155,23 +161,50 @@ function VipPageContent(props: { info: MembershipInfo }) {
     t('Also applies to API calls'),
     t('No renewal needed'),
   ]
+  const sectionTitle =
+    'bg-gradient-to-b from-white to-white/70 bg-clip-text text-3xl font-semibold tracking-[-0.04em] text-transparent md:text-4xl'
 
   return (
     <>
-      <section className='relative z-10 overflow-hidden px-6 pt-28 pb-12 md:pt-36 md:pb-16'>
+      <section className='relative overflow-hidden px-6 pt-32 pb-14 md:pt-40 md:pb-20'>
         <div
           aria-hidden
-          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.22),transparent_65%)]'
+          className='pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black,transparent)] bg-[size:72px_72px]'
+        />
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(ellipse_55%_50%_at_50%_20%,rgba(209,254,23,0.16),transparent_70%)]'
         />
         <div className='mx-auto max-w-4xl text-center'>
-          <span className='inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200'>
-            <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
+          <span className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-white/70 uppercase'>
+            <span className='size-1.5 rounded-full bg-[#d1fe17] shadow-[0_0_10px_#d1fe17]' />
             {t('VIP membership')}
           </span>
-          <h1 className='mt-5 text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight text-balance'>
-            {headline}
-          </h1>
-          <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-base text-balance sm:text-lg'>
+          {savingPercent > 0 ? (
+            <h1 className={cn('mt-6 leading-[0.92]', VIP_DISPLAY_FONT)}>
+              <span className='block text-[clamp(2.25rem,6vw,4.25rem)]'>
+                {t('Save on every model')}
+              </span>
+              <span
+                className={cn(
+                  'mt-2 block text-[clamp(5rem,16vw,10rem)] drop-shadow-[0_0_40px_rgba(209,254,23,0.35)]',
+                  VIP_LIME_TEXT
+                )}
+              >
+                {savingPercent}%
+              </span>
+            </h1>
+          ) : (
+            <h1
+              className={cn(
+                'mt-6 text-[clamp(2.25rem,6vw,4.25rem)] leading-[0.95]',
+                VIP_DISPLAY_FONT
+              )}
+            >
+              {t('Higher concurrency, dedicated lines, 24/7 support')}
+            </h1>
+          )}
+          <p className='mx-auto mt-6 max-w-2xl text-base text-balance text-white/60 sm:text-lg'>
             {rule
               ? t(
                   '{{rule}} and you are upgraded automatically, with no membership fee.',
@@ -184,14 +217,15 @@ function VipPageContent(props: { info: MembershipInfo }) {
           <VipActions
             info={info}
             source='vip-page-hero'
+            night
             className='mt-8 justify-center'
           />
-          <ul className='text-muted-foreground mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-sm'>
+          <ul className='mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-sm text-white/50'>
             {promises.map((promise) => (
               <li key={promise} className='flex items-center gap-1.5'>
                 <HugeiconsIcon
                   icon={Tick02Icon}
-                  className='size-4 text-amber-600 dark:text-amber-300'
+                  className={cn('size-4', VIP_LIME_TEXT)}
                   aria-hidden
                 />
                 {promise}
@@ -201,59 +235,67 @@ function VipPageContent(props: { info: MembershipInfo }) {
           <VipHighlights
             info={info}
             size='lg'
-            className='mx-auto mt-12 max-w-3xl'
+            omitSaving
+            className='mx-auto mt-14 max-w-2xl'
           />
         </div>
         {info.signed_in && (
-          <MembershipCard info={info} className='mx-auto mt-10 max-w-4xl' />
+          <MembershipCard
+            info={info}
+            className='mx-auto mt-10 max-w-4xl border-white/10 bg-white/[0.03]'
+          />
         )}
       </section>
 
-      <section className='relative z-10 px-6 py-10 md:py-14'>
+      <section className='px-6 py-12 md:py-16'>
         <div className='mx-auto max-w-5xl'>
-          <div className='mx-auto max-w-2xl text-center'>
-            <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-              {t('What VIP members get')}
-            </h2>
-            <p className='text-muted-foreground mt-3'>
-              {t('Every benefit, with what a standard member gets instead.')}
-            </p>
-          </div>
-          <VipBenefitGrid info={info} limit={6} showStandard className='mt-8' />
+          <h2 className={sectionTitle}>{t('Standard vs VIP')}</h2>
+          <p className='mt-2 text-sm text-white/50'>
+            {t('Both tiers are free. Your top-ups unlock VIP.')}
+          </p>
+          <VipTierCards info={info} className='mt-8' />
         </div>
       </section>
 
-      <section className='relative z-10 px-6 py-10 md:py-14'>
+      <section className='px-6 py-12 md:py-16'>
+        <div className='mx-auto max-w-5xl'>
+          <h2 className={sectionTitle}>{t('What VIP members get')}</h2>
+          <VipBenefitGrid info={info} limit={6} night className='mt-8' />
+        </div>
+      </section>
+
+      <section className='px-6 py-12 md:py-16'>
         <div className='mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-start lg:gap-12'>
           <div>
-            <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-              {t('How to become VIP')}
-            </h2>
-            <ol className='mt-6'>
+            <h2 className={sectionTitle}>{t('How to become VIP')}</h2>
+            <ol className='mt-8 space-y-3'>
               {steps.map((step, index) => (
                 <li
                   key={step.title}
-                  className='relative flex gap-4 pb-7 last:pb-0'
-                >
-                  {index < steps.length - 1 && (
-                    <span
-                      aria-hidden
-                      className='absolute top-10 bottom-0 left-5 w-px bg-amber-500/30'
-                    />
+                  className={cn(
+                    'flex items-start gap-5 rounded-3xl p-5',
+                    VIP_NIGHT_PANEL
                   )}
-                  <span className='flex size-10 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'>
-                    <HugeiconsIcon
-                      icon={step.icon}
-                      className='size-5'
-                      aria-hidden
-                    />
+                >
+                  <span
+                    className={cn(
+                      'text-4xl leading-none text-white/20',
+                      VIP_DISPLAY_FONT,
+                      index === steps.length - 1 && VIP_LIME_TEXT
+                    )}
+                  >
+                    {String(index + 1).padStart(2, '0')}
                   </span>
-                  <div className='min-w-0 pt-1'>
-                    <p className='text-xs font-semibold text-amber-700 dark:text-amber-300'>
-                      {t('Step {{number}}', { number: index + 1 })}
-                    </p>
-                    <h3 className='mt-0.5 font-semibold'>{step.title}</h3>
-                    <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
+                  <div className='min-w-0'>
+                    <h3 className='flex items-center gap-2 font-semibold'>
+                      <HugeiconsIcon
+                        icon={step.icon}
+                        className='size-4 text-white/50'
+                        aria-hidden
+                      />
+                      {step.title}
+                    </h3>
+                    <p className='mt-1 text-sm leading-relaxed text-white/50'>
                       {step.text}
                     </p>
                   </div>
@@ -262,26 +304,32 @@ function VipPageContent(props: { info: MembershipInfo }) {
             </ol>
           </div>
           {info.vip_price_rate > 0 && info.vip_price_rate < 1 && (
-            <VipSavingsCalculator priceRate={info.vip_price_rate} />
+            <div className='lg:pt-[4.5rem]'>
+              <VipSavingsCalculator priceRate={info.vip_price_rate} />
+            </div>
           )}
         </div>
       </section>
 
-      <section className='relative z-10 px-6 py-10 md:py-14'>
+      <section className='px-6 py-12 md:py-16'>
         <div className='mx-auto max-w-3xl'>
-          <h2 className='mb-6 text-center text-2xl font-bold tracking-tight md:text-3xl'>
+          <h2 className={cn('mb-8 text-center', sectionTitle)}>
             {t('VIP FAQ')}
           </h2>
           <Accordion
             defaultValue={['fee']}
-            className='bg-card border-border/60 rounded-2xl border px-5'
+            className={cn('rounded-3xl px-6', VIP_NIGHT_PANEL)}
           >
             {faqs.map((item) => (
-              <AccordionItem key={item.id} value={item.id}>
-                <AccordionTrigger className='py-4 text-base'>
+              <AccordionItem
+                key={item.id}
+                value={item.id}
+                className='border-white/10'
+              >
+                <AccordionTrigger className='py-5 text-base'>
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className='text-muted-foreground pb-4 text-[15px] leading-relaxed'>
+                <AccordionContent className='pb-5 text-[15px] leading-relaxed text-white/55'>
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -290,23 +338,33 @@ function VipPageContent(props: { info: MembershipInfo }) {
         </div>
       </section>
 
-      <section className='relative z-10 px-6 pt-6 pb-16 md:pb-24'>
-        <div className='mx-auto flex max-w-4xl flex-col items-center gap-3 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-orange-400/10 px-6 py-12 text-center'>
+      <section className='px-6 pt-8 pb-20 md:pb-28'>
+        <div className='relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden rounded-[32px] border border-[#d1fe17]/35 bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
+          <div
+            aria-hidden
+            className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(209,254,23,0.22),transparent_65%)]'
+          />
           <HugeiconsIcon
             icon={CrownIcon}
-            className='size-8 text-amber-600 dark:text-amber-300'
+            className={cn('relative size-9', VIP_LIME_TEXT)}
             aria-hidden
           />
-          <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
+          <h2
+            className={cn(
+              'relative text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.05]',
+              VIP_DISPLAY_FONT
+            )}
+          >
             {t('Ready to pay less and run more?')}
           </h2>
           {rule && !info.is_vip && (
-            <p className='text-muted-foreground text-sm'>{rule}</p>
+            <p className='relative text-sm text-white/55'>{rule}</p>
           )}
           <VipActions
             info={info}
             source='vip-page-bottom'
-            className='mt-3 justify-center'
+            night
+            className='relative mt-3 justify-center'
           />
         </div>
       </section>
