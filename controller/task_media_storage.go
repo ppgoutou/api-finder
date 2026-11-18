@@ -11,7 +11,6 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
 	"github.com/QuantumNous/new-api/service"
-	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 )
@@ -32,29 +31,24 @@ const (
 	upstreamVideoLinkLifetime = 24 * time.Hour
 )
 
-// taskMediaRetention tells the task's owner how long its video stays
-// available. A copy in media storage is kept for good, or until the storage
-// retention period ends when one is set. Without a copy to come (storage off,
-// copying gave up, or the copy window passed) the video lasts as long as the
-// upstream link. A copy still in progress reports neither.
-func taskMediaRetention(task *model.Task, storeEnabled bool) (kept bool, expiresAt int64) {
+// taskMediaRetention is when the task's owner is told its video stops being
+// available: MediaRetentionExpiry after it was copied into media storage, or
+// when the upstream link expires if no copy will be made (storage off,
+// copying gave up, or the copy window passed). It is 0 for unfinished tasks
+// and while a copy is still in progress.
+func taskMediaRetention(task *model.Task, storeEnabled bool) int64 {
 	if task.Status != model.TaskStatusSuccess || !task.ResultRetrievable() || task.FinishTime == 0 {
-		return false, 0
+		return 0
 	}
 	stored := task.PrivateData.StoredMedia
 	if stored != nil && stored.StoredAt > 0 {
-		retentionDays := system_setting.GetMediaStorageSettings().RetentionDays
-		if retentionDays <= 0 {
-			return true, 0
-		}
-		return false, stored.StoredAt + int64(retentionDays)*86400
+		return service.MediaRetentionExpiry(stored.StoredAt)
 	}
-	upstreamExpiry := task.FinishTime + int64(upstreamVideoLinkLifetime/time.Second)
 	copyWindowPassed := time.Now().Unix() > task.FinishTime+int64(taskMediaCopyWindow/time.Second)
 	if !storeEnabled || copyWindowPassed || (stored != nil && stored.GaveUp) {
-		return false, upstreamExpiry
+		return task.FinishTime + int64(upstreamVideoLinkLifetime/time.Second)
 	}
-	return false, 0
+	return 0
 }
 
 // StartTaskMediaCopy runs the media copy job forever on the master node.

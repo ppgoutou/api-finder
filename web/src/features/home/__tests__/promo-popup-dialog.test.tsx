@@ -261,7 +261,7 @@ describe('home promotion popup', () => {
 
     const heading = await screen.findByRole('heading', {
       name: (name) =>
-        name.replace(/\s+/g, ' ') === 'Top up $500 for VIP 8% off everything',
+        name.replaceAll(/\s+/g, ' ') === 'Top up $500 for VIP 8% off everything',
     })
     expect(heading.textContent).toBe(title)
     expect(heading).toHaveClass('whitespace-pre-line')
@@ -402,5 +402,52 @@ describe('home promotion popup', () => {
     renderPopup()
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+})
+
+describe('VIP promotion card', () => {
+  const VIP_SETTINGS = JSON.stringify({
+    enabled: true,
+    cards: [{ kind: 'vip' }],
+  })
+  const membershipOf = (isVip: boolean) => ({
+    enabled: true,
+    total_threshold_quota: 400_000_000,
+    single_threshold_quota: 250_000_000,
+    vip_price_rate: 0.85,
+    standard_concurrency: 10,
+    vip_concurrency: 100,
+    signed_in: true,
+    is_vip: isVip,
+  })
+  const mockVipApi = (isVip: boolean) =>
+    vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+      if (url === '/api/membership') {
+        return { data: { success: true, data: membershipOf(isVip) } }
+      }
+      return { data: { success: true, data: VIP_SETTINGS } }
+    })
+
+  it('invites a standard member with the VIP saving and benefits', async () => {
+    mockVipApi(false)
+    renderPopup()
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Save 15% on every model as a VIP',
+      })
+    ).toBeInTheDocument()
+    expect(screen.getByText('High concurrency')).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Learn about VIP' })
+    ).toHaveAttribute('href', '/vip')
+  })
+
+  it('never shows the VIP card to a VIP member', async () => {
+    mockVipApi(true)
+    renderPopup()
+
+    await waitFor(() => expect(api.get).toHaveBeenCalledWith('/api/membership'))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

@@ -35,7 +35,8 @@ func TestGetMembership(t *testing.T) {
 	*operation_setting.GetMembershipSetting() = operation_setting.MembershipSetting{
 		Enabled: true, BaseGroup: "default", VipGroup: "vip",
 		ExtraGroupPairs: map[string]string{"overseas": "vip-overseas"},
-		TotalTopUpUSD: 1000, SingleTopUpUSD: 500, VipSupportTelegram: "vip_desk",
+		TotalTopUpUSD:   1000, SingleTopUpUSD: 500, VipSupportTelegram: "vip_desk",
+		StandardConcurrency: 10, VipConcurrency: 100,
 	}
 	t.Cleanup(func() {
 		model.DB = previousDB
@@ -76,6 +77,9 @@ func TestGetMembership(t *testing.T) {
 	assert.NotContains(t, visitor, "paid_total_quota")
 	assert.Equal(t, "vip", visitor["vip_group"])
 	assert.InDelta(t, ratio_setting.PublicGroupRatio(0.85), visitor["vip_display_group_ratio"], 1e-9)
+	// The concurrency each tier is told about reaches visitors too.
+	assert.InDelta(t, 10, visitor["standard_concurrency"], 0)
+	assert.InDelta(t, 100, visitor["vip_concurrency"], 0)
 
 	standard := call(1, common.RoleCommonUser)
 	assert.Equal(t, false, standard["is_vip"])

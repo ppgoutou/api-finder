@@ -26,6 +26,7 @@ import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { VipHeaderChip } from '@/features/membership'
 import { SystemUpdateAction } from '@/features/system-update/system-update-action'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSystemConfig } from '@/hooks/use-system-config'
@@ -321,6 +322,7 @@ export function PublicHeader(props: PublicHeaderProps) {
               {showAuthButtons && (
                 <>
                   <div className='bg-border/40 mx-1 h-4 w-px' />
+                  {!loading && <VipHeaderChip className='me-1' />}
                   {authContent}
                 </>
               )}
@@ -328,6 +330,7 @@ export function PublicHeader(props: PublicHeaderProps) {
 
             {/* Mobile: compact actions + hamburger */}
             <div className='flex shrink-0 items-center gap-2 lg:hidden'>
+              {showAuthButtons && !loading && <VipHeaderChip compact />}
               {showAuthButtons && !loading && isAuthenticated && (
                 <ProfileDropdown />
               )}

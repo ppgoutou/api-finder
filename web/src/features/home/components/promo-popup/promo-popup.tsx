@@ -18,6 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 
+import { useMembership } from '@/features/membership'
+
 import { usePromoPopup } from '../../hooks/use-promo-popup'
 import {
   dismissPromoPopupForDay,
@@ -33,7 +35,15 @@ const PromoDialog = lazy(() =>
 /** Opens the promotion popup up to the daily limit of this browser. */
 export function PromoPopup() {
   const popup = usePromoPopup()
-  const hasCards = popup.cards.length > 0
+  const { data: membership, isPending: membershipPending } = useMembership()
+  // VIP cards invite standard members only; wait for the tier before deciding.
+  const showVipCards = membership?.enabled === true && !membership.is_vip
+  const cards = popup.cards.filter(
+    (card) => card.kind !== 'vip' || showVipCards
+  )
+  const waitForTier =
+    membershipPending && popup.cards.some((card) => card.kind === 'vip')
+  const hasCards = cards.length > 0 && !waitForTier
   const decided = useRef(false)
   const [shown, setShown] = useState(false)
   const [closed, setClosed] = useState(false)
@@ -54,7 +64,7 @@ export function PromoPopup() {
     <Suspense fallback={null}>
       <PromoDialog
         open={!closed}
-        cards={popup.cards}
+        cards={cards}
         onClose={() => setClosed(true)}
         onDismissToday={() => dismissPromoPopupForDay(toPromoDay(new Date()))}
       />

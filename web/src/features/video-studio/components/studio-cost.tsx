@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { VipCompareButton } from '@/features/membership'
 import { VIDEO_PRICE_FRACTION_DIGITS } from '@/features/pricing/lib/video-pricing'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 
@@ -43,6 +44,17 @@ export function StudioCost(props: StudioCostProps) {
           {props.price.label}
         </span>
       </span>
+      {props.price.vipLabel && (
+        <span className='text-amber-700 dark:text-amber-300'>
+          {t('VIP price {{price}}', { price: props.price.vipLabel })}
+          {' · '}
+          <VipCompareButton
+            source='studio-cost'
+            label={t('Become VIP')}
+            standardOnly
+          />
+        </span>
+      )}
       {props.shortfallUSD !== null && (
         <span role='alert' className='text-destructive'>
           {t('Insufficient balance, {{amount}} short.', {

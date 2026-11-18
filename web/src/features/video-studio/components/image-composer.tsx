@@ -121,12 +121,13 @@ export function ImageComposer(props: ImageComposerProps) {
     setSubmitting(true)
     const body = buildImageRequest(draft)
     try {
-      const urls = await generateImages(body)
+      const images = await generateImages(body)
       const createdAt = Math.floor(Date.now() / 1000)
       addWorks(
-        urls.map((url, index) => ({
+        images.map((image, index) => ({
           id: `${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-          url,
+          url: image.url,
+          ...(image.expiresAt ? { expiresAt: image.expiresAt } : {}),
           prompt: body.prompt,
           model: body.model,
           size: body.size,

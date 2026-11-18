@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useVipUpsellRate } from '@/features/membership/hooks/use-vip-upsell-rate'
 import { QUOTA_TYPE_VALUES } from '@/features/pricing/constants'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import { formatTaskUsageUnitPrice } from '@/features/pricing/lib/dynamic-price'
@@ -55,6 +56,11 @@ export type SeriesPriceRow = {
   officialPrice: string | null
   /** Discount of the price against the official price, if any. */
   discount: PriceDiscount | null
+  /**
+   * The same price at the VIP rate, for a viewer who is not VIP yet; null for
+   * VIP members, whose price already is the VIP one, or while VIP is off.
+   */
+  vipPrice: string | null
 }
 
 export type VideoSeriesPricing = {
@@ -81,7 +87,10 @@ export type VideoSeriesPricing = {
   aspectRatioCount: number
 }
 
-type PriceCandidate = Omit<SeriesPriceRow, 'officialPrice' | 'discount'> & {
+type PriceCandidate = Omit<
+  SeriesPriceRow,
+  'officialPrice' | 'discount' | 'vipPrice'
+> & {
   value: number
 }
 
@@ -147,6 +156,7 @@ function isBetterPrice(
  */
 export function useVideoSeriesPricing(): VideoSeriesPricing[] {
   const pricing = usePricingData()
+  const vipRate = useVipUpsellRate()
   // Prices are formatted in the site currency; re-render when it changes.
   useSystemConfigStore((state) => state.config.currency)
 
@@ -265,6 +275,7 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
         approximate: false,
         officialPrice: null,
         discount: null,
+        vipPrice: vipRate ? formatPrice(candidate.value * vipRate) : null,
       })
       return [
         {
@@ -291,6 +302,7 @@ export function useVideoSeriesPricing(): VideoSeriesPricing[] {
         discount: official
           ? getPriceDiscount(candidate.value / official)
           : null,
+        vipPrice: vipRate ? formatPrice(candidate.value * vipRate) : null,
       }
     }
 

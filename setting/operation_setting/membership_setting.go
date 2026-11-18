@@ -23,6 +23,11 @@ type MembershipSetting struct {
 	// users for round-the-clock support; empty falls back to the site's
 	// regular support account.
 	VipSupportTelegram string `json:"vip_support_telegram"`
+	// StandardConcurrency and VipConcurrency are the rough numbers of
+	// generation tasks each tier can run at once, shown on the VIP pages;
+	// 0 hides the row. They describe the request limits, not enforce them.
+	StandardConcurrency int `json:"standard_concurrency"`
+	VipConcurrency      int `json:"vip_concurrency"`
 }
 
 var membershipSetting = MembershipSetting{
@@ -32,6 +37,8 @@ var membershipSetting = MembershipSetting{
 	TotalTopUpUSD:       1000,
 	SingleTopUpUSD:      500,
 	DowngradeOnReversal: true,
+	StandardConcurrency: 10,
+	VipConcurrency:      100,
 }
 
 func init() {

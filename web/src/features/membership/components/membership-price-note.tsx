@@ -16,57 +16,103 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CrownIcon } from '@hugeicons/core-free-icons'
+import { ArrowRight01Icon, CrownIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { formatQuota } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { trackEvent } from '@/lib/analytics'
+import { cn } from '@/lib/utils'
 
+import { getVipUpgradeRule } from '../lib/benefits'
 import { getVipSavingPercent } from '../lib/progress'
+import { VIP_GOLD_FILL, VIP_GOLD_SURFACE } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
+import { VipCompareButton } from './vip-compare-button'
 
 interface MembershipPriceNoteProps {
   info?: MembershipInfo
 }
 
 /**
- * One line on the pricing page: VIP users learn the prices shown are theirs,
- * everyone else how much VIP saves and how to qualify.
+ * The gold VIP banner at the top of the pricing page: VIP users learn the
+ * prices shown are theirs, everyone else how much VIP saves and how to get it.
  */
 export function MembershipPriceNote(props: MembershipPriceNoteProps) {
   const { t } = useTranslation()
   const info = props.info
   if (!info?.enabled) return null
   const savingPercent = getVipSavingPercent(info)
-  if (savingPercent <= 0) return null
+  const rule = getVipUpgradeRule(info, t)
 
-  let message = t(
-    'VIP members save {{percent}}% on every model. Top up {{total}} in total or {{single}} at once to upgrade automatically.',
-    {
+  let title = t('VIP members get lower prices and higher concurrency')
+  if (savingPercent > 0) {
+    title = t('VIP members save {{percent}}% on every model', {
       percent: savingPercent,
-      total: formatQuota(info.total_threshold_quota),
-      single: formatQuota(info.single_threshold_quota),
-    }
-  )
+    })
+  }
+  let detail = rule
+    ? t('{{rule}} to upgrade automatically. Redemption codes count too.', {
+        rule,
+      })
+    : ''
   if (info.is_vip) {
-    message = t(
-      'You are VIP: the prices below already include your {{percent}}% saving.',
-      {
-        percent: savingPercent,
-      }
-    )
+    title = t('You are VIP')
+    detail =
+      savingPercent > 0
+        ? t('The prices below already include your {{percent}}% saving.', {
+            percent: savingPercent,
+          })
+        : t('Your VIP benefits apply to every request automatically.')
   }
 
   return (
-    <p className='mx-auto mt-3 flex max-w-3xl flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs leading-relaxed text-amber-700 sm:text-sm dark:text-amber-300'>
-      <HugeiconsIcon icon={CrownIcon} className='size-4 shrink-0' aria-hidden />
-      <span>{message}</span>
-      {!info.is_vip && (
-        <Link to='/wallet' className='font-medium underline underline-offset-2'>
-          {t('Top up now')}
-        </Link>
+    <section
+      aria-label={t('VIP membership')}
+      className={cn(
+        'mx-auto mt-4 flex max-w-3xl flex-col gap-3 rounded-2xl border px-4 py-3 text-left sm:flex-row sm:items-center sm:px-5',
+        VIP_GOLD_SURFACE
       )}
-    </p>
+    >
+      <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm shadow-amber-500/40 max-sm:hidden'>
+        <HugeiconsIcon icon={CrownIcon} className='size-5' aria-hidden />
+      </span>
+      <div className='min-w-0 flex-1'>
+        <p className='text-sm font-bold text-amber-800 sm:text-base dark:text-amber-200'>
+          {title}
+        </p>
+        {detail && (
+          <p className='mt-0.5 text-xs text-amber-900/80 sm:text-sm dark:text-amber-100/80'>
+            {detail}
+          </p>
+        )}
+      </div>
+      <div className='flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2'>
+        <VipCompareButton source='pricing-banner' className='text-sm' />
+        <Button
+          size='sm'
+          className={cn('rounded-full px-3 font-semibold', VIP_GOLD_FILL)}
+          render={
+            <Link
+              to='/vip'
+              onClick={() =>
+                trackEvent('vip_cta_click', {
+                  source: 'pricing-banner',
+                  target: 'vip-page',
+                })
+              }
+            />
+          }
+        >
+          {t('Learn about VIP')}
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className='size-3.5'
+            aria-hidden
+          />
+        </Button>
+      </div>
+    </section>
   )
 }

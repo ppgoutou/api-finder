@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { ImageWorksList } from './components/image-works-list'
 import { WorksList } from './components/works-list'
+import { MEDIA_RETENTION_DAYS } from './constants'
 import { useExpiringWorks } from './hooks/use-expiring-works'
 
 type WorksKind = 'video' | 'image'
@@ -54,7 +55,8 @@ export function MyWorks() {
               </h1>
               <p className='text-muted-foreground text-sm'>
                 {t(
-                  'Videos and images you created. Works with a time limit show how long they stay available; download them before they expire.'
+                  'Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.',
+                  { days: MEDIA_RETENTION_DAYS }
                 )}
               </p>
             </div>
@@ -87,7 +89,7 @@ export function MyWorks() {
           >
             <TabsList aria-label={t('Works sections')}>
               <TabsTrigger value='video'>
-                {t('Videos')}
+                {t('Video')}
                 {expiring.videos > 0 && (
                   <span className='rounded-full bg-amber-500 px-1.5 text-[10px] leading-4 text-white'>
                     {expiring.videos}
@@ -95,7 +97,7 @@ export function MyWorks() {
                 )}
               </TabsTrigger>
               <TabsTrigger value='image'>
-                {t('Images')}
+                {t('Image')}
                 {expiring.images > 0 && (
                   <span className='rounded-full bg-amber-500 px-1.5 text-[10px] leading-4 text-white'>
                     {expiring.images}

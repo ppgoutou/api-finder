@@ -59,12 +59,6 @@ function image(url: string, createdAt: number): StudioImage {
 }
 
 describe('videoRetention', () => {
-  it('reports a video the server keeps for good as kept', () => {
-    expect(videoRetention(task({ media_kept: true }), NOW)).toEqual({
-      state: 'kept',
-    })
-  })
-
   it('reports nothing while the server has not decided how long the video lasts', () => {
     expect(videoRetention(task({}), NOW)).toBeNull()
   })
@@ -89,6 +83,18 @@ describe('videoRetention', () => {
 })
 
 describe('imageRetention', () => {
+  it('uses the expiry of the copy the server stored', () => {
+    expect(
+      imageRetention(
+        {
+          ...image('https://media.example/images/a.png', NOW - 2 * DAY),
+          expiresAt: NOW + 13 * DAY,
+        },
+        NOW
+      )
+    ).toEqual({ state: 'scheduled', expiresAt: NOW + 13 * DAY })
+  })
+
   it('gives a linked image one day from its creation', () => {
     expect(
       imageRetention(image('https://cdn.example/a.png', NOW - 2 * HOUR), NOW)

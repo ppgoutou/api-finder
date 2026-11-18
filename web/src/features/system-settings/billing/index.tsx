@@ -125,6 +125,8 @@ const defaultBillingSettings: BillingSettings = {
   'membership_setting.single_topup_usd': 500,
   'membership_setting.downgrade_on_reversal': true,
   'membership_setting.vip_support_telegram': '',
+  'membership_setting.standard_concurrency': 10,
+  'membership_setting.vip_concurrency': 100,
 }
 
 export function BillingSettings() {

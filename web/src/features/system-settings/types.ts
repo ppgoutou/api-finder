@@ -377,6 +377,8 @@ export type BillingSettings = {
   'membership_setting.single_topup_usd': number
   'membership_setting.downgrade_on_reversal': boolean
   'membership_setting.vip_support_telegram': string
+  'membership_setting.standard_concurrency': number
+  'membership_setting.vip_concurrency': number
 }
 
 export type OperationsSettings = {

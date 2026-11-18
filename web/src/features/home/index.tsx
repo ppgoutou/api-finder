@@ -35,6 +35,7 @@ import {
   UseCases,
   VideoCta,
   VideoHero,
+  VipMembership,
 } from './components'
 import { HomePlaybackProvider } from './components/home-playback'
 import { PromoPopup } from './components/promo-popup/promo-popup'
@@ -142,6 +143,7 @@ function HomeContent() {
       </HomePlaybackProvider>
       <UseCases />
       <ModelPricing />
+      <VipMembership />
       <ApiQuickstart />
       <Faq />
       <VideoCta isAuthenticated={isAuthenticated} />

@@ -110,6 +110,8 @@ const cardSchema = z
       if (!card.salePrice) require(['salePrice'])
       return
     }
+    // A VIP card fills itself from the VIP program; every field is optional.
+    if (card.kind === 'vip') return
     if (card.kind === 'recharge') {
       if (!card.tiers.some((tier) => tier.pay && tier.bonus)) {
         require(['tiers', 0, 'pay'])

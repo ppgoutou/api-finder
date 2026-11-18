@@ -91,6 +91,12 @@ export const ASSET_ACCEPT: Readonly<Record<AssetKind, string>> = {
   audio: 'audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a',
 }
 
+/**
+ * Days a generated video or image is shown as kept, mirrored from the server
+ * (service.MediaDisplayRetentionDays).
+ */
+export const MEDIA_RETENTION_DAYS = 15
+
 /** Days an uploaded reference file stays available. */
 export const ASSET_RETENTION_DAYS = 7
 
