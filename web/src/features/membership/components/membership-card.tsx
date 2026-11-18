@@ -27,8 +27,10 @@ import { Progress } from '@/components/ui/progress'
 import { formatQuota } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-import { getMembershipProgress, getVipSavingPercent } from '../lib/progress'
+import { getVipBenefits } from '../lib/benefits'
+import { getMembershipProgress } from '../lib/progress'
 import type { MembershipInfo } from '../types'
+import { VipCompareButton } from './vip-compare-button'
 import { VipSupportContact } from './vip-support-contact'
 
 interface MembershipCardProps {
@@ -46,15 +48,11 @@ export function MembershipCard(props: MembershipCardProps) {
   const { t } = useTranslation()
   const info = props.info
   const isVip = info.is_vip === true
-  const savingPercent = getVipSavingPercent(info)
   const progress = getMembershipProgress(info)
 
-  const benefits = [t('Round-the-clock dedicated support')]
-  if (savingPercent > 0) {
-    benefits.unshift(
-      t('Model prices {{percent}}% off', { percent: savingPercent })
-    )
-  }
+  const benefits = getVipBenefits(info, t)
+    .slice(0, 4)
+    .map((benefit) => benefit.title)
 
   return (
     <Card data-card-hover='false' className={cn('py-0', props.className)}>
@@ -94,6 +92,10 @@ export function MembershipCard(props: MembershipCardProps) {
               </li>
             ))}
           </ul>
+          <VipCompareButton
+            source={isVip ? 'wallet-card-vip' : 'wallet-card'}
+            className='mt-4 text-sm'
+          />
         </div>
 
         <div className='min-w-0'>

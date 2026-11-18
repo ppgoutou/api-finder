@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useVipUpsellRate } from '@/features/membership/hooks/use-vip-upsell-rate'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import { formatTaskUsageUnitPrice } from '@/features/pricing/lib/dynamic-price'
 import { getDisplayGroupRatio } from '@/features/pricing/lib/model-helpers'
@@ -40,6 +41,8 @@ export interface StudioPrice {
   label: string
   /** The same charge in USD, comparable with the wallet balance. */
   costUSD: number
+  /** The charge at VIP prices for a viewer who is not VIP yet, else null. */
+  vipLabel: string | null
 }
 
 /**
@@ -48,6 +51,7 @@ export interface StudioPrice {
  */
 export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
   const pricing = usePricingData()
+  const vipRate = useVipUpsellRate()
   // Prices are formatted in the site currency; re-render when it changes.
   useSystemConfigStore((state) => state.config.currency)
 
@@ -89,16 +93,19 @@ export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
       })
   if (costUSD === null) return null
   const groupRatio = getDisplayGroupRatio(model)
-  return {
-    label: formatTaskUsageUnitPrice(costUSD, {
+  const format = (ratio: number) =>
+    formatTaskUsageUnitPrice(costUSD, {
       tokenUnit: 'M',
       showRechargePrice: false,
       priceRate: pricing.priceRate,
       usdExchangeRate: pricing.usdExchangeRate,
-      groupRatioMultiplier: groupRatio,
+      groupRatioMultiplier: ratio,
       fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
-    }),
+    })
+  return {
+    label: format(groupRatio),
     costUSD: costUSD * groupRatio,
+    vipLabel: vipRate ? format(groupRatio * vipRate) : null,
   }
 }
 
@@ -113,6 +120,7 @@ export function useStudioImagePrice(
   count: number
 ): StudioPrice | null {
   const pricing = usePricingData()
+  const vipRate = useVipUpsellRate()
   useSystemConfigStore((state) => state.config.currency)
 
   const model = pricing.models.find(
@@ -121,15 +129,18 @@ export function useStudioImagePrice(
   const costUSD = model ? estimateImageCostUSD(model, size, count) : null
   if (!model || costUSD === null) return null
   const groupRatio = getDisplayGroupRatio(model)
-  return {
-    label: formatTaskUsageUnitPrice(costUSD, {
+  const format = (ratio: number) =>
+    formatTaskUsageUnitPrice(costUSD, {
       tokenUnit: 'M',
       showRechargePrice: false,
       priceRate: pricing.priceRate,
       usdExchangeRate: pricing.usdExchangeRate,
-      groupRatioMultiplier: groupRatio,
+      groupRatioMultiplier: ratio,
       fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
-    }),
+    })
+  return {
+    label: format(groupRatio),
     costUSD: costUSD * groupRatio,
+    vipLabel: vipRate ? format(groupRatio * vipRate) : null,
   }
 }

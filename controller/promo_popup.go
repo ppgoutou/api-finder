@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -104,7 +105,7 @@ func promoPopupHrefAllowed(href string) bool {
 }
 
 func promoPopupCardAllowed(card promoPopupCard) bool {
-	if card.Kind != "model" && card.Kind != "recharge" && card.Kind != "list" {
+	if !slices.Contains([]string{"model", "recharge", "list", "vip"}, card.Kind) {
 		return false
 	}
 	if card.EndsAt != "" {

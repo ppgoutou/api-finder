@@ -253,6 +253,15 @@ function SeriesCard(props: SeriesCardProps) {
       cell: formatPrice,
     },
     {
+      id: 'vip',
+      header: 'VIP',
+      className: cn(HEADER_CELL, 'text-amber-700! dark:text-amber-300!'),
+      cellClassName:
+        'px-1 py-2 font-mono font-semibold whitespace-nowrap text-amber-700 tabular-nums dark:text-amber-300',
+      cell: (row) =>
+        row.vipPrice ? formatPrice({ ...row, price: row.vipPrice }) : '—',
+    },
+    {
       id: 'official',
       header: t('List price'),
       className: HEADER_CELL,
@@ -286,12 +295,14 @@ function SeriesCard(props: SeriesCardProps) {
   // Without any configured official price the two comparison columns would
   // only hold dashes, so the tables keep resolution and price alone. Image
   // models have no official price to compare with.
-  const columns =
-    props.showOfficialPrice && !isImage
-      ? allColumns
-      : allColumns.filter(
-          (column) => column.id !== 'official' && column.id !== 'discount'
-        )
+  const showVip = series.rows.some((row) => row.vipPrice)
+  const columns = allColumns.filter((column) => {
+    if (column.id === 'vip') return showVip
+    if (column.id === 'official' || column.id === 'discount') {
+      return props.showOfficialPrice && !isImage
+    }
+    return true
+  })
 
   return (
     <article className='bg-card border-border/60 flex w-full flex-col rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
@@ -320,6 +331,11 @@ function SeriesCard(props: SeriesCardProps) {
           <span className='text-muted-foreground text-sm'>
             {isImage ? t('/ image') : t('/ second')}
           </span>
+          {lowest.vipPrice && (
+            <span className='ms-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-800 tabular-nums dark:text-amber-200'>
+              VIP {formatPrice({ ...lowest, price: lowest.vipPrice })}
+            </span>
+          )}
         </p>
       )}
       {!bestDiscount && props.reserveDiscount && (

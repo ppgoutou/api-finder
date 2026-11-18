@@ -49,6 +49,8 @@ function Fixture(props: { extraGroupPairs: string }) {
             singleTopUpUsd: 500,
             downgradeOnReversal: true,
             vipSupportTelegram: '',
+            standardConcurrency: 10,
+            vipConcurrency: 100,
           }}
         />
       </SettingsPageProvider>

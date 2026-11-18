@@ -16,12 +16,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { MouseEventHandler, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { buttonVariants } from '@/components/ui/button'
+import {
+  getVipBenefits,
+  getVipSavingPercent,
+  getVipUpgradeRule,
+  useMembership,
+  useVipCompare,
+} from '@/features/membership'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import { toIntlLocale } from '@/i18n/languages'
+import { trackEvent } from '@/lib/analytics'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
@@ -405,7 +415,109 @@ function ListPromoCard(props: PromoCardProps) {
   )
 }
 
+/**
+ * Invites standard members to VIP with the program's own benefits; the
+ * admin's title and description replace the default copy.
+ */
+function VipPromoCard(props: PromoCardProps) {
+  const { t } = useTranslation()
+  const card = props.card
+  const { data: info } = useMembership()
+  const openCompare = useVipCompare((state) => state.openCompare)
+  const endLabel = useEndDateLabel(card.endsAt)
+  if (!info?.enabled) return null
+  const savingPercent = getVipSavingPercent(info)
+  const rule = getVipUpgradeRule(info, t)
+  const benefits = getVipBenefits(info, t).slice(0, 4)
+  let headline = t('Become VIP and pay less')
+  if (savingPercent > 0) {
+    headline = t('Save {{percent}}% on every model as a VIP', {
+      percent: savingPercent,
+    })
+  }
+  return (
+    <article className={CARD_CLASS}>
+      <div
+        className={cn(
+          MEDIA_CLASS,
+          'bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600'
+        )}
+      >
+        <div className='flex items-center gap-2 pr-10 sm:pr-8'>
+          <span className='rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-700'>
+            {t('VIP membership')}
+          </span>
+          {endLabel && <span className='text-[13px]'>{endLabel}</span>}
+        </div>
+        <h3
+          className={cn(
+            'mt-4 line-clamp-3 text-[32px] leading-10 font-bold max-sm:mt-3 max-sm:text-[24px] max-sm:leading-8',
+            TITLE_CLASS
+          )}
+        >
+          {card.title || headline}
+        </h3>
+        {rule && <p className='mt-2 text-sm text-white/85'>{rule}</p>}
+      </div>
+      <div className={BODY_CLASS}>
+        <div className='min-h-0 flex-1 overflow-y-auto'>
+          {card.description ? (
+            <p
+              className={cn(
+                'text-muted-foreground whitespace-pre-line',
+                DESCRIPTION_SIZE_CLASS[
+                  getPromoDescriptionSize(card.description)
+                ]
+              )}
+            >
+              {card.description}
+            </p>
+          ) : (
+            <ul className='grid gap-2.5'>
+              {benefits.map((benefit) => (
+                <li key={benefit.id} className='flex items-center gap-2'>
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle02Icon}
+                    className='size-4 shrink-0 text-amber-500'
+                    aria-hidden
+                  />
+                  <span className='font-medium'>{benefit.title}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className='mt-4 flex shrink-0 gap-3'>
+          <PromoLink
+            href={card.href || PROMO_DEFAULT_HREF.vip}
+            onNavigate={(event) => {
+              trackEvent('vip_cta_click', {
+                source: 'promo-popup',
+                target: 'vip-page',
+              })
+              props.onNavigate?.(event)
+            }}
+          >
+            {t('Learn about VIP')}
+          </PromoLink>
+          <button
+            type='button'
+            onClick={() => openCompare('promo-popup')}
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'h-11.5 min-w-0 flex-1 rounded-xl text-[15px]'
+            )}
+          >
+            {t('Compare benefits')}
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export function PromoCardView(props: PromoCardProps) {
+  if (props.card.kind === 'vip') return <VipPromoCard {...props} />
   if (props.card.kind === 'model') return <ModelPromoCard {...props} />
   if (props.card.kind === 'recharge') return <RechargePromoCard {...props} />
   return <ListPromoCard {...props} />

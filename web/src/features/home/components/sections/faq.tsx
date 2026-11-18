@@ -25,6 +25,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import {
+  getVipBenefits,
+  getVipUpgradeRule,
+  useMembership,
+  VipCompareButton,
+} from '@/features/membership'
 import { useStatus } from '@/hooks/use-status'
 
 import { useSeedancePricing } from '../../hooks/use-seedance-pricing'
@@ -34,6 +40,8 @@ export function Faq() {
   const { t } = useTranslation()
   const { bestDiscount } = useSeedancePricing()
   const { status } = useStatus()
+  const { data: membership } = useMembership()
+  const vipRule = membership ? getVipUpgradeRule(membership, t) : null
 
   const items = [
     {
@@ -83,6 +91,32 @@ export function Faq() {
         </p>
       ),
     },
+    ...(membership?.enabled
+      ? [
+          {
+            id: 'vip',
+            question: t('What do VIP members get?'),
+            answer: (
+              <>
+                <ul className='list-disc space-y-1 ps-5'>
+                  {getVipBenefits(membership, t)
+                    .slice(0, 4)
+                    .map((benefit) => (
+                      <li key={benefit.id}>{benefit.title}</li>
+                    ))}
+                </ul>
+                <p className='mt-2'>
+                  {vipRule &&
+                    t('{{rule}} to upgrade automatically.', {
+                      rule: vipRule,
+                    })}{' '}
+                  <VipCompareButton source='home-faq' />
+                </p>
+              </>
+            ),
+          },
+        ]
+      : []),
     ...(status?.refund_policy_enabled
       ? [
           {

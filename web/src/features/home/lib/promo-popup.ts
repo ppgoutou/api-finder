@@ -31,7 +31,7 @@ export const PROMO_POPUP_MAX_DEALS = 4
 export const PROMO_POPUP_DEFAULT_DAILY_LIMIT = 1
 export const PROMO_POPUP_MAX_DAILY_LIMIT = 20
 
-export const PROMO_CARD_KINDS = ['model', 'recharge', 'list'] as const
+export const PROMO_CARD_KINDS = ['model', 'recharge', 'list', 'vip'] as const
 export type PromoCardKind = (typeof PROMO_CARD_KINDS)[number]
 
 export type PromoTier = { pay: string; bonus: string }
@@ -90,6 +90,7 @@ export const PROMO_DEFAULT_HREF: Record<PromoCardKind, string> = {
   model: '/video-studio',
   recharge: '/wallet',
   list: '/pricing',
+  vip: '/vip',
 }
 
 export const PROMO_ANNOUNCEMENT_MAX_LENGTH = 80
@@ -287,6 +288,8 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
 
 /** Whether a card has the content its layout needs. */
 export function isPromoCardComplete(card: PromoCard): boolean {
+  // A VIP card's content comes from the VIP program itself.
+  if (card.kind === 'vip') return true
   if (card.kind === 'model') {
     return Boolean(card.modelName.trim() && card.salePrice.trim())
   }

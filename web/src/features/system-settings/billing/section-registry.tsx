@@ -217,6 +217,9 @@ const BILLING_SECTIONS = [
             settings['membership_setting.downgrade_on_reversal'],
           vipSupportTelegram:
             settings['membership_setting.vip_support_telegram'],
+          standardConcurrency:
+            settings['membership_setting.standard_concurrency'],
+          vipConcurrency: settings['membership_setting.vip_concurrency'],
         }}
       />
     ),

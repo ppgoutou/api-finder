@@ -58,6 +58,19 @@ describe('promo popup settings', () => {
     ])
   })
 
+  it('keeps a VIP card, which needs no content of its own', () => {
+    const stored = JSON.stringify({
+      enabled: true,
+      cards: [{ kind: 'vip' }],
+    })
+    const settings = parsePromoPopup(stored)
+
+    expect(settings.cards.map((card) => card.kind)).toEqual(['vip'])
+    expect(
+      selectPromoCards(settings, 'en', '2026-11-18').map((card) => card.kind)
+    ).toEqual(['vip'])
+  })
+
   it('stores only the fields of the card kind and reads them back', () => {
     const card: PromoCard = {
       ...emptyPromoCard('recharge'),

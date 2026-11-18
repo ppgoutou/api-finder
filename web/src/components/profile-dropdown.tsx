@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { CrownIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useNavigate } from '@tanstack/react-router'
 import { User, Wallet, LogOut, Settings, ShieldCheck } from 'lucide-react'
 import { useMemo } from 'react'
@@ -65,7 +67,13 @@ export function ProfileDropdown() {
         <DropdownMenuTrigger
           render={<Button variant='ghost' className='relative size-6 p-0' />}
         >
-          <Avatar className='size-6'>
+          <Avatar
+            className={
+              membership?.is_vip
+                ? 'ring-offset-background size-6 ring-2 ring-amber-500 ring-offset-1'
+                : 'size-6'
+            }
+          >
             <AvatarFallback
               className={`${avatarFallbackClassName} text-[11px]`}
               style={avatarFallbackStyle}
@@ -73,6 +81,16 @@ export function ProfileDropdown() {
               {avatarFallback}
             </AvatarFallback>
           </Avatar>
+          {membership?.is_vip && (
+            <span className='absolute -top-1.5 -right-1.5 flex size-3.5 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm'>
+              <HugeiconsIcon
+                icon={CrownIcon}
+                className='size-2.5'
+                aria-hidden
+              />
+              <span className='sr-only'>VIP</span>
+            </span>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' sideOffset={8} className='w-56'>
           <div className='flex items-center gap-2 px-1.5 py-1.5'>
@@ -129,6 +147,17 @@ export function ProfileDropdown() {
             <DropdownMenuItem onClick={() => navigate({ to: '/wallet' })}>
               <Wallet className='size-4' />
               {t('Wallet')}
+            </DropdownMenuItem>
+          )}
+
+          {membership?.enabled && (
+            <DropdownMenuItem onClick={() => navigate({ to: '/vip' })}>
+              <HugeiconsIcon
+                icon={CrownIcon}
+                className='size-4 text-amber-600 dark:text-amber-300'
+                aria-hidden
+              />
+              {membership.is_vip ? t('My VIP benefits') : t('Upgrade to VIP')}
             </DropdownMenuItem>
           )}
 
