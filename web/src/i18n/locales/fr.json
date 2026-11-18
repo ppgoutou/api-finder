@@ -8493,6 +8493,22 @@
     "Save on every model": "Économisez sur tous les modèles",
     "Both tiers are free. Your top-ups unlock VIP.": "Les deux niveaux sont gratuits. Vos recharges débloquent le VIP.",
     "Your current tier": "Votre niveau actuel",
-    "Included in VIP": "Inclus dans le VIP"
+    "Included in VIP": "Inclus dans le VIP",
+    "Design system": "Système de design",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "Échelle typographique, couleurs, arrondis et boutons pour toutes les pages. Utilisez ces noms plutôt que des valeurs brutes.",
+    "Type scale": "Échelle typographique",
+    "Marketing pages": "Pages marketing",
+    "Colors": "Couleurs",
+    "Buttons": "Boutons",
+    "Brand": "Marque",
+    "VIP": "VIP",
+    "Neutrals": "Neutres",
+    "Charts": "Graphiques",
+    "Controls": "Contrôles",
+    "Cards": "Cartes",
+    "Dialogs and panels": "Boîtes de dialogue et panneaux",
+    "Button": "Bouton",
+    "Every model, one API": "Tous les modèles, une seule API",
+    "Badges": "Badges"
   }
 }

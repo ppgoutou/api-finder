@@ -16,15 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-// The display typeface of the night look; its files load only where used.
-import '@fontsource-variable/space-grotesk'
-
 /** The gold fill of VIP buttons and chips, readable in both themes. */
-export const VIP_GOLD_FILL =
-  'bg-amber-700 text-amber-50 hover:bg-amber-800 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300'
+export const VIP_GOLD_FILL = 'bg-vip text-vip-foreground hover:bg-vip-hover'
 
 /** Gold text on the page background, such as VIP prices. */
-export const VIP_GOLD_TEXT = 'text-amber-700 dark:text-amber-300'
+export const VIP_GOLD_TEXT = 'text-vip'
 
 /** The soft gold panel behind VIP banners and highlighted cells. */
 export const VIP_GOLD_SURFACE =
@@ -35,19 +31,18 @@ export const VIP_GOLD_SURFACE =
  * the site font for text, Space Grotesk for display figures and a lime accent. The
  * `dark` class switches the theme tokens of everything inside to dark.
  */
-export const VIP_NIGHT_STAGE =
-  'dark bg-[#0d0e10] text-white'
+export const VIP_NIGHT_STAGE = 'dark bg-[#0d0e10] text-white'
 
 /** Large figures and headlines on the night stage. */
 export const VIP_DISPLAY_FONT =
-  "font-[family-name:'Space_Grotesk_Variable','PingFang_SC','Microsoft_YaHei',ui-sans-serif,sans-serif] font-bold tracking-[-0.03em] uppercase"
+  'font-display font-bold tracking-[-0.03em] uppercase'
 
 /** The lime call-to-action fill. */
 export const VIP_LIME_FILL =
-  'bg-[#d1fe17] text-[#111214] hover:bg-[#c3f000] focus-visible:ring-[#d1fe17]/50'
+  'bg-accent-night text-accent-night-foreground hover:bg-accent-night/90 focus-visible:ring-accent-night/50'
 
 /** Lime text, such as VIP values and checks. */
-export const VIP_LIME_TEXT = 'text-[#d1fe17]'
+export const VIP_LIME_TEXT = 'text-accent-night'
 
 /** A glassy panel on the night stage. */
 export const VIP_NIGHT_PANEL =

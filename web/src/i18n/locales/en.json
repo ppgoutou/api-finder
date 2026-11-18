@@ -8493,6 +8493,22 @@
     "Save on every model": "Save on every model",
     "Both tiers are free. Your top-ups unlock VIP.": "Both tiers are free. Your top-ups unlock VIP.",
     "Your current tier": "Your current tier",
-    "Included in VIP": "Included in VIP"
+    "Included in VIP": "Included in VIP",
+    "Design system": "Design system",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.",
+    "Type scale": "Type scale",
+    "Marketing pages": "Marketing pages",
+    "Colors": "Colors",
+    "Buttons": "Buttons",
+    "Brand": "Brand",
+    "VIP": "VIP",
+    "Neutrals": "Neutrals",
+    "Charts": "Charts",
+    "Controls": "Controls",
+    "Cards": "Cards",
+    "Dialogs and panels": "Dialogs and panels",
+    "Button": "Button",
+    "Every model, one API": "Every model, one API",
+    "Badges": "Badges"
   }
 }

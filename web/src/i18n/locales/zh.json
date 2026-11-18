@@ -8493,6 +8493,22 @@
     "Save on every model": "全站模型立省",
     "Both tiers are free. Your top-ups unlock VIP.": "两个等级都免费，充值达标即解锁 VIP。",
     "Your current tier": "当前等级",
-    "Included in VIP": "VIP 已包含"
+    "Included in VIP": "VIP 已包含",
+    "Design system": "设计规范",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "全站页面使用的字号、颜色、圆角和按钮。请使用这些名称，不要手写具体数值。",
+    "Type scale": "字号",
+    "Marketing pages": "营销页",
+    "Colors": "颜色",
+    "Buttons": "按钮",
+    "Brand": "品牌色",
+    "VIP": "VIP",
+    "Neutrals": "中性色",
+    "Charts": "图表色",
+    "Controls": "控件",
+    "Cards": "卡片",
+    "Dialogs and panels": "弹窗和面板",
+    "Button": "按钮",
+    "Every model, one API": "一个 API，调用所有模型",
+    "Badges": "标签"
   }
 }

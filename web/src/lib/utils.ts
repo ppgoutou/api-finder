@@ -17,7 +17,38 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { extendTailwindMerge } from 'tailwind-merge'
+
+/*
+ * tailwind-merge only knows Tailwind's built-in scales. The theme's named
+ * sizes and radii (theme.css) are registered here so that, for example,
+ * `text-body text-muted-foreground` keeps both classes instead of reading
+ * `text-body` as a colour.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: [
+        'display',
+        'heading-1',
+        'heading-2',
+        'heading-3',
+        'lead',
+        'body-lg',
+        'eyebrow',
+        'page-title',
+        'section-title',
+        'card-title',
+        'body',
+        'body-sm',
+        'caption',
+        'micro',
+        'metric',
+      ],
+      radius: ['control', 'card', 'panel'],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -36,7 +67,7 @@ export function sleep(ms: number = 1000) {
 export function sanitizeCssVariableName(name: string): string {
   // 将点号、空格、斜杠替换为连字符
   // 移除其他不允许在 CSS 变量名中的特殊字符
-  return name.replace(/[.\s/]/g, '-').replace(/[^\w-]/g, '')
+  return name.replaceAll(/[.\s/]/g, '-').replaceAll(/[^\w-]/g, '')
 }
 
 /**

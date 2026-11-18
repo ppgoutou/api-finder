@@ -8493,6 +8493,22 @@
     "Save on every model": "Экономия на всех моделях",
     "Both tiers are free. Your top-ups unlock VIP.": "Оба уровня бесплатны. Пополнения открывают VIP.",
     "Your current tier": "Ваш текущий уровень",
-    "Included in VIP": "Входит в VIP"
+    "Included in VIP": "Входит в VIP",
+    "Design system": "Дизайн-система",
+    "Type scale, colors, radii and buttons for every page. Use these names instead of raw values.": "Шрифтовая шкала, цвета, скругления и кнопки для всех страниц. Используйте эти названия вместо конкретных значений.",
+    "Type scale": "Шрифтовая шкала",
+    "Marketing pages": "Маркетинговые страницы",
+    "Colors": "Цвета",
+    "Buttons": "Кнопки",
+    "Brand": "Бренд",
+    "VIP": "VIP",
+    "Neutrals": "Нейтральные",
+    "Charts": "Графики",
+    "Controls": "Элементы управления",
+    "Cards": "Карточки",
+    "Dialogs and panels": "Диалоги и панели",
+    "Button": "Кнопка",
+    "Every model, one API": "Все модели — один API",
+    "Badges": "Значки"
   }
 }
