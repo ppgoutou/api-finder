@@ -16,8 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-// The night look's typefaces; their files load only where they are used.
-import '@fontsource-variable/inter'
+// The display typeface of the night look; its files load only where used.
 import '@fontsource-variable/space-grotesk'
 
 /** The gold fill of VIP buttons and chips, readable in both themes. */
@@ -33,11 +32,11 @@ export const VIP_GOLD_SURFACE =
 
 /*
  * The night look of the VIP page and the compare dialog: a near-black stage,
- * Inter for text, Space Grotesk for display figures and a lime accent. The
+ * the site font for text, Space Grotesk for display figures and a lime accent. The
  * `dark` class switches the theme tokens of everything inside to dark.
  */
 export const VIP_NIGHT_STAGE =
-  "dark bg-[#0d0e10] font-[family-name:'Inter_Variable','PingFang_SC','Microsoft_YaHei',ui-sans-serif,sans-serif] text-white"
+  'dark bg-[#0d0e10] text-white'
 
 /** Large figures and headlines on the night stage. */
 export const VIP_DISPLAY_FONT =

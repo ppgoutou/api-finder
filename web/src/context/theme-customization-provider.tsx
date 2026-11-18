@@ -134,7 +134,7 @@ export function ThemeCustomizationProvider(props: {
     )
   }, [preset])
 
-  // Resolve Auto into the preset font or the browser's sans-serif while
+  // Resolve Auto into the preset font or the Inter + CJK sans stack while
   // keeping an explicit Sans choice distinct from that browser fallback.
   useEffect(() => {
     applyAttribute('data-theme-font', resolveThemeFont(font, preset))

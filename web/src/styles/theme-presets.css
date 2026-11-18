@@ -617,7 +617,7 @@ For commercial licensing, please contact support@quantumnous.com
  * presets may set `--font-body` (Anthropic → serif), and the user's
  * explicit Font choice wins because these blocks sit AFTER preset blocks.
  *
- * Auto resolves to the browser's sans-serif unless a preset specifies a
+ * Auto resolves to Inter with the system CJK sans unless a preset sets a
  * font. Explicit Sans also updates `font-sans` utilities to Public Sans. */
 [data-theme-font='system'] {
   --font-body: var(--font-ui-sans);

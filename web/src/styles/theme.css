@@ -107,9 +107,13 @@ For commercial licensing, please contact support@quantumnous.com
   --app-header-height: 3rem;
   /* Static build-channel fallback consumed when JS hasn't booted yet. */
   --app-rev: '2k6e8r7p';
-  /* Auto starts with the browser font, including before JS applies the
-   * saved preference. Explicit Sans selects Public Sans in theme-presets.css. */
-  --font-ui-sans: sans-serif;
+  /* Auto uses Inter for Latin text and the system CJK sans (PingFang /
+   * Microsoft YaHei) for Chinese and Japanese, including before JS applies
+   * the saved preference. Explicit Sans selects Public Sans in
+   * theme-presets.css. */
+  --font-ui-sans:
+    'Inter Variable', 'PingFang SC', 'PingFang TC', 'Hiragino Sans',
+    'Microsoft YaHei', 'Microsoft JhengHei', 'Noto Sans CJK SC', sans-serif;
   --font-body: var(--font-ui-sans);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
