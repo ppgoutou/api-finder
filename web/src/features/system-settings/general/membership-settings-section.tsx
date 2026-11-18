@@ -56,6 +56,8 @@ const schema = z.object({
   singleTopUpUsd: z.coerce.number().min(0),
   downgradeOnReversal: z.boolean(),
   vipSupportTelegram: z.string().trim(),
+  standardConcurrency: z.coerce.number().int().min(0),
+  vipConcurrency: z.coerce.number().int().min(0),
 })
 
 type Values = z.infer<typeof schema>
@@ -70,6 +72,8 @@ const OPTION_KEYS: Record<keyof Values, string> = {
   singleTopUpUsd: 'membership_setting.single_topup_usd',
   downgradeOnReversal: 'membership_setting.downgrade_on_reversal',
   vipSupportTelegram: 'membership_setting.vip_support_telegram',
+  standardConcurrency: 'membership_setting.standard_concurrency',
+  vipConcurrency: 'membership_setting.vip_concurrency',
 }
 
 function isGroupPairsJson(value: string): boolean {
@@ -166,7 +170,9 @@ export function MembershipSettingsSection(props: { defaultValues: Values }) {
       | 'vipGroup'
       | 'totalTopUpUsd'
       | 'singleTopUpUsd'
-      | 'vipSupportTelegram',
+      | 'vipSupportTelegram'
+      | 'standardConcurrency'
+      | 'vipConcurrency',
     label: string,
     description: string,
     numeric?: boolean
@@ -268,6 +274,22 @@ export function MembershipSettingsSection(props: { defaultValues: Values }) {
                     </FormItem>
                   )}
                 />
+                {renderInput(
+                  'standardConcurrency',
+                  t('Standard concurrency shown'),
+                  t(
+                    'Rough number of tasks a standard member runs at once, shown on the VIP pages; 0 hides the row'
+                  ),
+                  true
+                )}
+                {renderInput(
+                  'vipConcurrency',
+                  t('VIP concurrency shown'),
+                  t(
+                    'Rough number of tasks a VIP member runs at once. Keep it in line with the request limits of the VIP group'
+                  ),
+                  true
+                )}
                 {renderInput(
                   'vipSupportTelegram',
                   t('VIP support Telegram'),

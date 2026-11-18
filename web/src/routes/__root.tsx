@@ -35,6 +35,7 @@ import { ThemeCustomizationProvider } from '@/context/theme-customization-provid
 import { saveAffiliateCode } from '@/features/auth/lib/storage'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
+import { VipCelebration, VipCompareDialog } from '@/features/membership'
 import { getSetupStatus } from '@/features/setup/api'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import {
@@ -100,6 +101,8 @@ function RootComponent() {
       <NavigationProgress />
       <Outlet />
       <SupportWidget />
+      <VipCompareDialog />
+      <VipCelebration />
       <Toaster closeButton duration={5000} position='top-center' richColors />
       {import.meta.env.MODE === 'development' && (
         <>

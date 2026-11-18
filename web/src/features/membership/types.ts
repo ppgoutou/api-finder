@@ -41,6 +41,10 @@ export interface MembershipInfo {
   vip_display_group_ratio?: number
   /** Every standard-to-VIP pair, the main pair first. */
   vip_pairs?: MembershipVipPair[]
+  /** Rough concurrent generation tasks of a standard user; 0 hides it. */
+  standard_concurrency?: number
+  /** Rough concurrent generation tasks of a VIP user; 0 hides it. */
+  vip_concurrency?: number
   signed_in: boolean
   is_vip?: boolean
   paid_total_quota?: number

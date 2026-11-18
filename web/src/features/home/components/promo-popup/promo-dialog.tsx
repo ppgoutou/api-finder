@@ -97,6 +97,7 @@ export function PromoDialog(props: PromoDialogProps) {
     model: t('Limited-time price'),
     recharge: t('Top-up offer'),
     list: t('Limited-time deals'),
+    vip: t('VIP membership'),
   }
 
   return (

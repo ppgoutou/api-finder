@@ -337,6 +337,9 @@ export function PromoCardFields(props: PromoCardFieldsProps) {
                   <NativeSelectOption value='list'>
                     {t('List of model prices')}
                   </NativeSelectOption>
+                  <NativeSelectOption value='vip'>
+                    {t('VIP membership')}
+                  </NativeSelectOption>
                 </NativeSelect>
               </FormControl>
               <FormMessage />

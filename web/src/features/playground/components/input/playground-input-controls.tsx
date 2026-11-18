@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { PromptInputButton } from '@/components/ai-elements/prompt-input'
 import { ModelGroupSelector } from '@/components/model-group-selector'
+import { VipCompareButton } from '@/features/membership'
 
 import { getInputControlState } from '../../lib'
 import type { GroupOption, ModelOption } from '../../types'
@@ -117,6 +118,12 @@ export function PlaygroundInputControls({
       </div>
 
       <div className='hidden min-w-0 items-center gap-2 md:flex'>
+        <VipCompareButton
+          source='playground'
+          label={t('VIP pays less')}
+          standardOnly
+          className='shrink-0 text-xs'
+        />
         {renderSelector()}
         {renderSubmitButton()}
       </div>

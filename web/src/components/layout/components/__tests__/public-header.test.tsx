@@ -63,6 +63,9 @@ vi.mock('@/components/notification-popover', () => ({
 vi.mock('@/components/profile-dropdown', () => ({
   ProfileDropdown: () => null,
 }))
+vi.mock('@/features/membership', () => ({
+  VipHeaderChip: () => null,
+}))
 vi.mock('@/features/system-update/system-update-action', () => ({
   SystemUpdateAction: () => null,
 }))

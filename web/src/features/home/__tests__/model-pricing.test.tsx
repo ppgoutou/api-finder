@@ -17,7 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -105,9 +111,13 @@ const PER_VIDEO: PricingModel = {
 
 function mockPricingApi(
   models: PricingModel[],
-  categories: { name: string; models: string[] }[]
+  categories: { name: string; models: string[] }[],
+  membership?: Record<string, unknown>
 ) {
   vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+    if (url === '/api/membership' && membership) {
+      return { data: { success: true, data: membership } }
+    }
     if (url === '/api/pricing') {
       return {
         data: {
@@ -293,6 +303,38 @@ describe('home model pricing', () => {
     expect(within(carousel).getAllByRole('heading', { level: 3 })).toHaveLength(
       4
     )
+  })
+
+  it('adds a VIP price column for a viewer who is not VIP yet', async () => {
+    mockPricingApi(
+      [secondModel('E-seedance-2.0', { '480p': 0.2, '720p': 0.4 })],
+      [{ name: 'Seedance 2.0', models: ['E-seedance-2.0'] }],
+      { enabled: true, vip_price_rate: 0.8, signed_in: false }
+    )
+    renderPricing()
+
+    expect(
+      await screen.findByRole('columnheader', { name: 'VIP' })
+    ).toBeVisible()
+    expect(await seriesRows('Seedance 2.0')).toEqual([
+      ['480p', '$0.1', '$0.08'],
+      ['720p', '$0.2', '$0.16'],
+    ])
+  })
+
+  it('leaves the VIP column out for a VIP member, whose prices already are VIP prices', async () => {
+    mockPricingApi(
+      [secondModel('E-seedance-2.0', { '480p': 0.2 })],
+      [{ name: 'Seedance 2.0', models: ['E-seedance-2.0'] }],
+      { enabled: true, vip_price_rate: 0.8, signed_in: true, is_vip: true }
+    )
+    renderPricing()
+
+    await waitFor(() => expect(api.get).toHaveBeenCalledWith('/api/membership'))
+    expect(await seriesRows('Seedance 2.0')).toEqual([['480p', '$0.1']])
+    expect(
+      screen.queryByRole('columnheader', { name: 'VIP' })
+    ).not.toBeInTheDocument()
   })
 
   it('keeps the exact price when a token-billed model displays the same price', async () => {

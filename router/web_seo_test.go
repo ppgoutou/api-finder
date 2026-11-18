@@ -11,6 +11,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -125,6 +126,15 @@ func TestRobotsAndSitemapListOnlyConfiguredPublicPages(t *testing.T) {
 	assert.Contains(t, sitemap, "<loc>https://video.example.com/pricing/seedance-2.5</loc>")
 	assert.NotContains(t, sitemap, "/refund-policy")
 	assert.NotContains(t, sitemap, "/about")
+
+	// The VIP page is listed only while the VIP program runs.
+	membership := operation_setting.GetMembershipSetting()
+	previousEnabled := membership.Enabled
+	t.Cleanup(func() { membership.Enabled = previousEnabled })
+	membership.Enabled = true
+	assert.Contains(t, getBody(t, engine, "/sitemap.xml"), "<loc>https://video.example.com/vip</loc>")
+	membership.Enabled = false
+	assert.NotContains(t, getBody(t, engine, "/sitemap.xml"), "/vip")
 }
 
 func TestIndexPageStatusIsNotFoundOutsideAppRoutes(t *testing.T) {

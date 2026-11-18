@@ -67,6 +67,8 @@ func GetMembership(c *gin.Context) {
 		"vip_display_group_ratio": vipDisplayRatio,
 		"vip_pairs":               pairData,
 		"signed_in":               false,
+		"standard_concurrency":    max(setting.StandardConcurrency, 0),
+		"vip_concurrency":         max(setting.VipConcurrency, 0),
 	}
 	if user != nil {
 		total, single, err := model.PaidTopUpQuota(user.Id)

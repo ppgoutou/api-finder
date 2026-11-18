@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/controller"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 )
@@ -49,6 +50,10 @@ var seoPages = map[string]seoPage{
 	"/pricing": {
 		Title:       "Seedance AI Video Pricing per Second",
 		Description: "Per-second prices for Seedance 2.0 text-to-video, image-to-video and reference-video generation, below official list prices. Pay as you go with no subscription or minimum spend.",
+	},
+	"/vip": {
+		Title:       "VIP Membership: Lower Prices, Higher Concurrency",
+		Description: "VIP members pay less on every model, run more generation tasks at once on dedicated priority lines and get 24/7 support. Upgrade automatically once your top-ups reach the threshold.",
 	},
 	"/docs": {
 		Title:       "Seedance Video API Documentation",
@@ -302,6 +307,9 @@ func readSEOSnapshot(c *gin.Context) seoSnapshot {
 	if snap.hasAbout {
 		snap.sitemapURLs = append(snap.sitemapURLs, "/about")
 	}
+	if operation_setting.GetMembershipSetting().Enabled {
+		snap.sitemapURLs = append(snap.sitemapURLs, "/vip")
+	}
 	for _, link := range snap.legalLinks {
 		snap.sitemapURLs = append(snap.sitemapURLs, link.Href)
 	}
@@ -476,7 +484,7 @@ var spaRouteRoots = map[string]bool{
 	"sign-in": true, "sign-up": true, "subscriptions": true,
 	"system-info": true, "system-settings": true, "task-plugins": true,
 	"usage-logs": true, "user": true, "user-agreement": true, "users": true,
-	"video-studio": true, "wallet": true,
+	"video-studio": true, "vip": true, "wallet": true,
 }
 
 // indexPageStatus is the HTTP status for the app shell served at path.
