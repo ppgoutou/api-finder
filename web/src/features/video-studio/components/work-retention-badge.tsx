@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Clock, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { Clock, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
@@ -39,8 +39,10 @@ export function WorkRetentionBadge(props: {
 
   let content = (
     <>
-      <ShieldCheck aria-hidden />
-      {t('Saved long-term')}
+      <Clock aria-hidden />
+      {t('Kept until {{date}}', {
+        date: dayjs(retention.expiresAt * 1000).format('YYYY-MM-DD'),
+      })}
     </>
   )
   let className = 'bg-background/85 text-foreground backdrop-blur'
@@ -72,16 +74,6 @@ export function WorkRetentionBadge(props: {
       <>
         <Clock aria-hidden />
         {remainingText}
-      </>
-    )
-  }
-  if (retention.state === 'scheduled') {
-    content = (
-      <>
-        <Clock aria-hidden />
-        {t('Kept until {{date}}', {
-          date: dayjs(retention.expiresAt * 1000).format('YYYY-MM-DD'),
-        })}
       </>
     )
   }

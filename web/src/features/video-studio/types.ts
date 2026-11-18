@@ -76,10 +76,21 @@ export interface ImageGenerationRequest {
   image?: string[]
 }
 
+/** One generated image; media_expires_at is set once the server stored it. */
+export interface GeneratedImageItem {
+  url?: string
+  b64_json?: string
+  media_expires_at?: number
+}
+
 export interface ImageGenerationResponse {
-  data?:
-    | { url?: string; b64_json?: string }[]
-    | { url?: string; b64_json?: string }
+  data?: GeneratedImageItem[] | GeneratedImageItem
+}
+
+/** A generated image as the studio keeps it. */
+export interface GeneratedImage {
+  url: string
+  expiresAt?: number
 }
 
 /** A generated image kept in this browser's works list. */
@@ -94,6 +105,11 @@ export interface StudioImage {
   references?: string[]
   /** Unix seconds. */
   createdAt: number
+  /**
+   * Unix seconds when the image stops being available, set when the server
+   * kept its own copy; otherwise the upstream link lasts about a day.
+   */
+  expiresAt?: number
 }
 
 /** Request body of POST /pg/videos. */

@@ -20,6 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { api } from '@/lib/api'
 
 import type {
+  GeneratedImage,
   ImageGenerationRequest,
   ImageGenerationResponse,
   VideoAssetUploadResponse,
@@ -62,11 +63,12 @@ export async function uploadVideoAsset(
 
 /**
  * Generates images with the signed-in session, charged to the wallet.
- * Returns each image as a URL, turning inline base64 images into data URLs.
+ * Returns each image as a URL, turning inline base64 images into data URLs,
+ * with its expiry when the server stored a copy.
  */
 export async function generateImages(
   body: ImageGenerationRequest
-): Promise<string[]> {
+): Promise<GeneratedImage[]> {
   const res = await api.post<ImageGenerationResponse>(
     '/pg/images/generations',
     body,
@@ -74,13 +76,16 @@ export async function generateImages(
   )
   const data = res.data.data ?? []
   const items = Array.isArray(data) ? data : [data]
-  const urls = items.flatMap((item) => {
-    if (item.url) return [item.url]
-    if (item.b64_json) return [`data:image/png;base64,${item.b64_json}`]
-    return []
+  const images = items.flatMap((item): GeneratedImage[] => {
+    const expiresAt = item.media_expires_at
+    let url = ''
+    if (item.url) url = item.url
+    else if (item.b64_json) url = `data:image/png;base64,${item.b64_json}`
+    if (!url) return []
+    return [expiresAt ? { url, expiresAt } : { url }]
   })
-  if (urls.length === 0) throw new Error('Image generation failed')
-  return urls
+  if (images.length === 0) throw new Error('Image generation failed')
+  return images
 }
 
 /**

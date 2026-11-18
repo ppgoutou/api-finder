@@ -90,7 +90,11 @@ describe('useSidebarData my works entry', () => {
       data: {
         items: [
           { task_id: 'a', status: 'SUCCESS', media_expires_at: now + 3600 },
-          { task_id: 'b', status: 'SUCCESS', media_kept: true },
+          {
+            task_id: 'b',
+            status: 'SUCCESS',
+            media_expires_at: now + 10 * 24 * 3600,
+          },
         ],
       },
     } as never)

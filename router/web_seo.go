@@ -469,7 +469,7 @@ var spaRouteRoots = map[string]bool{
 	"about": true, "channels": true, "chat": true, "chat2link": true,
 	"console": true, "dashboard": true, "docs": true, "errors": true,
 	"forgot-password": true, "keys": true, "landing": true, "login": true,
-	"models": true, "oauth": true, "otp": true, "playground": true,
+	"models": true, "my-works": true, "oauth": true, "otp": true, "playground": true,
 	"pricing": true, "privacy-policy": true, "profile": true,
 	"rankings": true, "redemption-codes": true, "refund-policy": true,
 	"register": true, "reset": true, "security": true, "setup": true,
@@ -493,7 +493,7 @@ var robotsDisallow = []string{
 	"/api/", "/v1/", "/dashboard", "/keys", "/wallet", "/usage-logs",
 	"/profile", "/security", "/system-settings", "/channels", "/users",
 	"/models", "/redemption-codes", "/subscriptions", "/task-plugins",
-	"/playground", "/chat", "/video-studio", "/setup", "/oauth",
+	"/playground", "/chat", "/video-studio", "/my-works", "/setup", "/oauth",
 }
 
 func serveRobotsTxt(c *gin.Context) {

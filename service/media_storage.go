@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -226,13 +227,63 @@ func putMediaObject(ctx context.Context, target system_setting.MediaStorageTarge
 // apart from the generated videos under ObjectPrefix.
 const videoAssetObjectDir = "video-assets"
 
+// generatedImageObjectDir holds images generated from the web console, kept
+// as long as generated videos (see MediaRetentionExpiry).
+const generatedImageObjectDir = "images"
+
+var generatedImageExtensions = map[string]string{
+	"image/png":  ".png",
+	"image/jpeg": ".jpg",
+	"image/webp": ".webp",
+}
+
+// GeneratedImageExtension returns the object extension for an image content
+// type, or "" when the type is not an image this store keeps.
+func GeneratedImageExtension(mimeType string) string {
+	mimeType, _, _ = strings.Cut(strings.ToLower(strings.TrimSpace(mimeType)), ";")
+	return generatedImageExtensions[strings.TrimSpace(mimeType)]
+}
+
+// MediaDisplayRetentionDays is how long users are told a stored video or
+// image stays available.
+const MediaDisplayRetentionDays = 15
+
+// MediaRetentionExpiry is when users are told a copy stored at storedAt
+// expires: MediaDisplayRetentionDays later, or sooner when the storage
+// retention period is shorter.
+func MediaRetentionExpiry(storedAt int64) int64 {
+	days := MediaDisplayRetentionDays
+	if retentionDays := system_setting.GetMediaStorageSettings().RetentionDays; retentionDays > 0 {
+		days = min(days, retentionDays)
+	}
+	return storedAt + int64(days)*86400
+}
+
 // StoreVideoAsset copies a reference file a user uploaded into object storage
 // and returns its public URL, so upstream video services fetch it from the
-// CDN instead of this server. The Bangkok COS bucket (mainland target) is
-// tried first because it shares the server's region and uploads over the
-// internal network; the overseas bucket is the fallback. It returns "" with
-// no error when media storage is off.
+// CDN instead of this server. It returns "" with no error when media storage
+// is off.
 func StoreVideoAsset(ctx context.Context, content io.ReadSeeker, name, mimeType string, size int64) (string, error) {
+	return storeMediaObject(ctx, videoAssetObjectDir, content, name, mimeType, size)
+}
+
+// StoreGeneratedImage copies an image generated from the web console into
+// object storage under a random name and returns its public URL, or "" with
+// no error when media storage is off.
+func StoreGeneratedImage(ctx context.Context, content []byte, mimeType string) (string, error) {
+	extension := GeneratedImageExtension(mimeType)
+	if extension == "" {
+		return "", fmt.Errorf("unsupported image type %q", mimeType)
+	}
+	name := common.GetUUID() + extension
+	return storeMediaObject(ctx, generatedImageObjectDir, bytes.NewReader(content), name, mimeType, int64(len(content)))
+}
+
+// storeMediaObject uploads content to dir/YYYY/MM/name and returns its public
+// URL. The Bangkok COS bucket (mainland target) is tried first because it
+// shares the server's region and uploads over the internal network; the
+// overseas bucket is the fallback.
+func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, name, mimeType string, size int64) (string, error) {
 	settings := system_setting.GetMediaStorageSettings()
 	targets := settings.UploadTargets()
 	if len(targets) == 0 {
@@ -246,7 +297,7 @@ func StoreVideoAsset(ctx context.Context, content io.ReadSeeker, name, mimeType 
 		return "", err
 	}
 	payloadHash := hex.EncodeToString(hash.Sum(nil))
-	objectKey := videoAssetObjectDir + "/" + time.Now().UTC().Format("2006/01") + "/" + name
+	objectKey := dir + "/" + time.Now().UTC().Format("2006/01") + "/" + name
 
 	var uploadErrs []error
 	for i := len(targets) - 1; i >= 0; i-- {
@@ -259,8 +310,8 @@ func StoreVideoAsset(ctx context.Context, content io.ReadSeeker, name, mimeType 
 			uploadErrs = append(uploadErrs, fmt.Errorf("%s: %w", targets[i], err))
 			continue
 		}
-		common.SysLog(common.LogText("video asset upload to %s: %d bytes in %s",
-			targets[i], size, time.Since(uploadStart).Round(time.Millisecond)))
+		common.SysLog(common.LogText("media upload of %s to %s: %d bytes in %s",
+			dir, targets[i], size, time.Since(uploadStart).Round(time.Millisecond)))
 		return strings.TrimRight(strings.TrimSpace(target.PublicURL), "/") + "/" + objectKey, nil
 	}
 	return "", errors.Join(uploadErrs...)
