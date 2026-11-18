@@ -8474,6 +8474,20 @@
     "How to become VIP": "How to become VIP",
     "VIP FAQ": "VIP FAQ",
     "Ready to pay less and run more?": "Ready to pay less and run more?",
-    "No fee": "No fee"
+    "No fee": "No fee",
+    "Off every model": "Off every model",
+    "Tasks at once": "Tasks at once",
+    "Standard: about {{count}}": "Standard: about {{count}}",
+    "24/7": "24/7",
+    "Dedicated support": "Dedicated support",
+    "No membership fee: top up as usual and you are upgraded automatically.": "No membership fee: top up as usual and you are upgraded automatically.",
+    "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} and you are upgraded automatically, with no membership fee.",
+    "You are VIP. Every benefit below already applies to your account.": "You are VIP. Every benefit below already applies to your account.",
+    "Standard members": "Standard members",
+    "Redemption codes count": "Redemption codes count",
+    "Also applies to API calls": "Also applies to API calls",
+    "Every benefit, with what a standard member gets instead.": "Every benefit, with what a standard member gets instead.",
+    "Step {{number}}": "Step {{number}}",
+    "No renewal needed": "No renewal needed"
   }
 }

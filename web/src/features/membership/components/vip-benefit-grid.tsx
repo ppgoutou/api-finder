@@ -29,6 +29,8 @@ interface VipBenefitGridProps {
   info: MembershipInfo
   /** Show only the first few benefits, such as on the home page. */
   limit?: number
+  /** Add what a standard member gets under each benefit, for the VIP page. */
+  showStandard?: boolean
   className?: string
 }
 
@@ -55,11 +57,19 @@ export function VipBenefitGrid(props: VipBenefitGridProps) {
               aria-hidden
             />
           </span>
-          <div className='min-w-0'>
+          <div className='flex min-w-0 flex-1 flex-col'>
             <h3 className='font-semibold'>{benefit.title}</h3>
             <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
               {benefit.description}
             </p>
+            {props.showStandard && (
+              <div className='mt-auto pt-4'>
+                <p className='text-muted-foreground border-border/60 flex gap-1.5 border-t border-dashed pt-3 text-xs'>
+                  <span className='shrink-0'>{t('Standard members')}</span>
+                  <span className='text-foreground/70'>{benefit.standard}</span>
+                </p>
+              </div>
+            )}
           </div>
         </li>
       ))}

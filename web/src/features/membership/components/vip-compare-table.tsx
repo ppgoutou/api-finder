@@ -16,7 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CrownIcon } from '@hugeicons/core-free-icons'
+import {
+  CrownIcon,
+  MinusSignIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,77 +30,101 @@ import {
 } from '@/components/data-table'
 import { cn } from '@/lib/utils'
 
-import { getVipBenefits, getVipUpgradeRule } from '../lib/benefits'
+import { VIP_BENEFIT_ICONS } from '../lib/benefit-icons'
+import { getVipBenefits, type VipBenefit } from '../lib/benefits'
 import { VIP_GOLD_TEXT } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
-
-interface CompareRow {
-  id: string
-  label: string
-  standard: string
-  vip: string
-}
 
 interface VipCompareTableProps {
   info: MembershipInfo
   className?: string
 }
 
-/** Standard and VIP side by side, one benefit per row. */
+/**
+ * Standard and VIP side by side, one benefit per row. The membership fee row
+ * is left out: both tiers are free, which the surrounding copy already says.
+ */
 export function VipCompareTable(props: VipCompareTableProps) {
   const { t } = useTranslation()
-  const rows: CompareRow[] = getVipBenefits(props.info, t).map((benefit) => ({
-    id: benefit.id,
-    label: benefit.label,
-    standard: benefit.standard,
-    vip: benefit.vip,
-  }))
-  const rule = getVipUpgradeRule(props.info, t)
-  if (rule) {
-    rows.push({
-      id: 'how',
-      label: t('How to get it'),
-      standard: t('Every account after sign-up'),
-      vip: t('{{rule}}, upgraded automatically', { rule }),
-    })
-  }
+  const rows = getVipBenefits(props.info, t).filter(
+    (benefit) => benefit.id !== 'no-fee'
+  )
 
-  const columns: StaticDataTableColumn<CompareRow>[] = [
+  const columns: StaticDataTableColumn<VipBenefit>[] = [
     {
       id: 'label',
       header: t('Benefit'),
-      cellClassName: 'text-muted-foreground py-2.5 align-top whitespace-normal',
-      cell: (row) => row.label,
+      className: 'text-muted-foreground w-[24%] text-xs sm:w-[26%]',
+      cellClassName: 'py-2.5 align-top whitespace-normal',
+      cell: (row) => (
+        <span className='text-muted-foreground flex items-center gap-2'>
+          <HugeiconsIcon
+            icon={VIP_BENEFIT_ICONS[row.id]}
+            className='hidden size-4 shrink-0 sm:block'
+            aria-hidden
+          />
+          {row.label}
+        </span>
+      ),
     },
     {
       id: 'standard',
       header: t('Standard'),
+      className: 'text-muted-foreground w-[33%] text-xs sm:w-[34%]',
       cellClassName: 'py-2.5 align-top whitespace-normal',
-      cell: (row) => row.standard,
+      cell: (row) => (
+        <span className='text-muted-foreground flex items-start gap-1.5'>
+          <HugeiconsIcon
+            icon={MinusSignIcon}
+            className='mt-0.5 hidden size-3.5 shrink-0 opacity-60 sm:block'
+            aria-hidden
+          />
+          {row.standard}
+        </span>
+      ),
     },
     {
       id: 'vip',
       header: (
-        <span className={cn('inline-flex items-center gap-1', VIP_GOLD_TEXT)}>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 text-xs font-semibold',
+            VIP_GOLD_TEXT
+          )}
+        >
           <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
           VIP
         </span>
       ),
       className: 'bg-amber-500/10',
-      cellClassName: cn(
-        'bg-amber-500/10 py-2.5 align-top font-semibold whitespace-normal',
-        VIP_GOLD_TEXT
+      cellClassName: 'bg-amber-500/[0.07] py-2.5 align-top whitespace-normal',
+      cell: (row) => (
+        <span
+          className={cn(
+            'flex items-start gap-1.5 font-semibold',
+            VIP_GOLD_TEXT
+          )}
+        >
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            className='mt-0.5 size-3.5 shrink-0'
+            aria-hidden
+          />
+          {row.vip}
+        </span>
       ),
-      cell: (row) => row.vip,
     },
   ]
 
   return (
     <StaticDataTable
-      className={props.className}
+      className={cn('border-border/60 rounded-xl', props.className)}
+      tableClassName='table-fixed text-sm'
+      headerRowClassName='hover:bg-transparent'
       columns={columns}
       data={rows}
       getRowKey={(row) => row.id}
+      getRowClassName={() => 'hover:bg-transparent'}
     />
   )
 }

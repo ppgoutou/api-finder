@@ -118,6 +118,43 @@ describe('VIP compare dialog', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows the saving, concurrency and support figures above the table', async () => {
+    renderWithTrigger(visitor)
+    act(() => useVipCompare.getState().openCompare('test'))
+
+    const dialog = await screen.findByRole('dialog')
+    const figures = within(dialog).getAllByRole('definition')
+    expect(figures.map((figure) => figure.textContent)).toEqual([
+      '15%',
+      '100',
+      '24/7',
+    ])
+  })
+
+  it('states the upgrade rule to a standard member and leaves the fee row out of the table', async () => {
+    renderWithTrigger({ ...visitor, signed_in: true, is_vip: false })
+    act(() => useVipCompare.getState().openCompare('test'))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByText(/upgraded automatically, with no membership fee/)
+    ).toBeInTheDocument()
+    const table = within(dialog).getByRole('table')
+    expect(within(table).queryByText('Membership fee')).not.toBeInTheDocument()
+  })
+
+  it('tells a VIP member the benefits already apply', async () => {
+    renderWithTrigger({ ...visitor, signed_in: true, is_vip: true })
+    act(() => useVipCompare.getState().openCompare('test'))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByText(
+        'You are VIP. Every benefit below already applies to your account.'
+      )
+    ).toBeInTheDocument()
+  })
+
   it('renders no trigger while the VIP program is off', () => {
     renderWithTrigger({ ...visitor, enabled: false })
 

@@ -8474,6 +8474,20 @@
     "How to become VIP": "Cách trở thành VIP",
     "VIP FAQ": "Câu hỏi về VIP",
     "Ready to pay less and run more?": "Sẵn sàng trả ít hơn, chạy nhiều hơn?",
-    "No fee": "Miễn phí"
+    "No fee": "Miễn phí",
+    "Off every model": "giảm cho mọi mô hình",
+    "Tasks at once": "tác vụ chạy cùng lúc",
+    "Standard: about {{count}}": "Tiêu chuẩn: khoảng {{count}}",
+    "24/7": "24/7",
+    "Dedicated support": "Hỗ trợ riêng",
+    "No membership fee: top up as usual and you are upgraded automatically.": "Không mất phí thành viên: nạp tiền như bình thường, đủ ngưỡng sẽ tự động lên VIP.",
+    "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} là tự động lên VIP, không mất phí thành viên.",
+    "You are VIP. Every benefit below already applies to your account.": "Bạn đã là VIP. Mọi quyền lợi dưới đây đã áp dụng cho tài khoản của bạn.",
+    "Standard members": "Thành viên tiêu chuẩn:",
+    "Redemption codes count": "Mã quy đổi cũng được tính",
+    "Also applies to API calls": "Áp dụng cả cho lệnh gọi API",
+    "Every benefit, with what a standard member gets instead.": "Mỗi quyền lợi kèm so sánh với thành viên tiêu chuẩn.",
+    "Step {{number}}": "Bước {{number}}",
+    "No renewal needed": "Không cần gia hạn"
   }
 }

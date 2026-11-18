@@ -8474,6 +8474,20 @@
     "How to become VIP": "如何成为 VIP",
     "VIP FAQ": "VIP 常见问题",
     "Ready to pay less and run more?": "准备好花更少、跑更多了吗？",
-    "No fee": "免费"
+    "No fee": "免费",
+    "Off every model": "全站模型优惠",
+    "Tasks at once": "个任务同时运行",
+    "Standard: about {{count}}": "标准会员约 {{count}} 个",
+    "24/7": "7×24",
+    "Dedicated support": "小时专属客服",
+    "No membership fee: top up as usual and you are upgraded automatically.": "无需会员费：正常充值，达标自动升级。",
+    "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} 即自动升级，无需会员费。",
+    "You are VIP. Every benefit below already applies to your account.": "您已是 VIP，以下权益已对您的账号生效。",
+    "Standard members": "标准会员：",
+    "Redemption codes count": "兑换码同样计入",
+    "Also applies to API calls": "API 调用同样生效",
+    "Every benefit, with what a standard member gets instead.": "每项权益都附上标准会员的对比。",
+    "Step {{number}}": "第 {{number}} 步",
+    "No renewal needed": "无需续费"
   }
 }
