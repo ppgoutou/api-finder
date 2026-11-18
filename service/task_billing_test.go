@@ -1814,3 +1814,74 @@ func TestSettle_TokenRecalcFallsBackToCompletionTokens(t *testing.T) {
 		})
 	}
 }
+
+func TestRecalculateTaskQuotaRecordsAdminGrossMargin(t *testing.T) {
+	charged := `tier("720P", u("seconds") * 0.12)`
+	tests := []struct {
+		name        string
+		markups     string
+		snapshot    bool
+		actualQuota int
+		groupRatio  float64
+		wantSupply  any
+	}{
+		{name: "expression without markup is charged its supply price", snapshot: true, actualQuota: 900, groupRatio: 1.5, wantSupply: float64(600)},
+		{name: "expression markup is taken out of the supply price", markups: `{"test-model":{"base_expr":"tier(\"720P\", u(\"seconds\") * 0.1)"}}`, snapshot: true, actualQuota: 900, groupRatio: 1.5, wantSupply: float64(500)},
+		{name: "fixed price markup is taken out of the supply price", markups: `{"test-model":{"base_price":0.015}}`, actualQuota: 300, groupRatio: 1, wantSupply: float64(225)},
+		{name: "markup without a matching supplier price records no margin", markups: `{"test-model":{"base_price":0.015}}`, snapshot: true, actualQuota: 900, groupRatio: 1.5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			truncate(t)
+			common.OptionMapRWMutex.Lock()
+			if common.OptionMap == nil {
+				common.OptionMap = map[string]string{}
+			}
+			previous, hadPrevious := common.OptionMap[model.OnboardingMarkupOption]
+			common.OptionMap[model.OnboardingMarkupOption] = tt.markups
+			common.OptionMapRWMutex.Unlock()
+			t.Cleanup(func() {
+				common.OptionMapRWMutex.Lock()
+				defer common.OptionMapRWMutex.Unlock()
+				if hadPrevious {
+					common.OptionMap[model.OnboardingMarkupOption] = previous
+				} else {
+					delete(common.OptionMap, model.OnboardingMarkupOption)
+				}
+			})
+
+			const userID = 41
+			seedUser(t, userID, 10_000)
+			task := makeTask(userID, 0, 100, 0, BillingSourceWallet, 0)
+			task.PrivateData.BillingContext.GroupRatio = tt.groupRatio
+			if tt.snapshot {
+				task.PrivateData.BillingContext.TieredSnapshot = &billingexpr.BillingSnapshot{
+					BillingMode:      "tiered_expr",
+					ModelName:        "test-model",
+					ExprString:       charged,
+					ExprHash:         billingexpr.ExprHashString(charged),
+					GroupRatio:       tt.groupRatio,
+					QuotaPerUnit:     1000,
+					ExprVersion:      1,
+					TaskUsageBilling: true,
+					UsageFacts:       map[string]any{"seconds": float64(5)},
+					EstimatedTier:    "720P",
+				}
+			}
+
+			RecalculateTaskQuota(context.Background(), task, tt.actualQuota, common.NewMessage("adaptor adjustment"))
+
+			log := getLastLog(t)
+			require.NotNil(t, log)
+			var other map[string]any
+			require.NoError(t, common.UnmarshalJsonStr(log.Other, &other))
+			assert.NotContains(t, other, "gross_margin", "the margin must only live under admin_info")
+			adminInfo, _ := other["admin_info"].(map[string]any)
+			if tt.wantSupply == nil {
+				assert.NotContains(t, adminInfo, "gross_margin")
+				return
+			}
+			assert.Equal(t, map[string]any{"revenue_quota": float64(tt.actualQuota), "supply_quota": tt.wantSupply}, adminInfo["gross_margin"])
+		})
+	}
+}

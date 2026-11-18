@@ -78,6 +78,11 @@ func LogTaskConsumption(c *gin.Context, info *relaycommon.RelayInfo, task *model
 	}
 	appendTaskLogInfo(task, other)
 	attachQuotaSaturation(c, info, other)
+	taskModelPrice := 0.0
+	if info.PriceData.UsePrice {
+		taskModelPrice = info.PriceData.ModelPrice
+	}
+	attachTaskGrossMargin(other, info.OriginModelName, info.PriceData.Quota, info.PriceData.GroupRatioInfo.GroupRatio, taskModelPrice, info.TieredBillingSnapshot)
 	model.RecordConsumeLog(c, info.UserId, model.RecordConsumeLogParams{
 		ChannelId: info.ChannelId,
 		ModelName: info.OriginModelName,
@@ -361,6 +366,13 @@ func RecalculateTaskQuota(ctx context.Context, task *model.Task, actualQuota int
 	other.SetPublic("actual_quota", actualQuota)
 	for _, clamp := range clamps {
 		attachQuotaSaturationToOther(other, clamp)
+	}
+	if bc := task.PrivateData.BillingContext; bc != nil {
+		taskModelPrice := 0.0
+		if bc.ModelRatio <= 0 {
+			taskModelPrice = bc.ModelPrice
+		}
+		attachTaskGrossMargin(other, taskModelName(task), actualQuota, bc.GroupRatio, taskModelPrice, bc.TieredSnapshot)
 	}
 	model.RecordTaskBillingLog(model.RecordTaskBillingLogParams{
 		UserId:    task.UserId,

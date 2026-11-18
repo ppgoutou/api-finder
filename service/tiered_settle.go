@@ -231,6 +231,9 @@ func TryTieredSettle(relayInfo *relaycommon.RelayInfo, params billingexpr.TokenP
 	// consume log records it under admin_info, regardless of which caller
 	// (text, audio, WSS) consumes the returned quota. First non-nil wins.
 	noteQuotaClamp(relayInfo, tr.Clamp)
+	if ratio, ok := tieredSupplyRatio(snap, params, requestInput); ok {
+		tr.SupplyRatio = &ratio
+	}
 
 	return true, tr.ActualQuotaAfterGroup, &tr
 }

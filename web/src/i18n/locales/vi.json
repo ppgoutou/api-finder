@@ -8356,6 +8356,10 @@
     "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "Người dùng mỗi nhóm thường chuyển sang nhóm VIP tương ứng và quay lại nhóm đó sau khi hoàn tiền. Mỗi nhóm VIP phải có trong tỷ lệ nhóm.",
     "Enter a group name for every row": "Nhập tên nhóm cho mọi dòng",
     "Official pricing also bills reference video seconds, so it does not compare per output second": "Giá chính thức tính cả số giây video tham chiếu nên không so sánh được theo giây đầu ra",
-    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Giá tính theo mỗi giây video đầu ra. Điều chỉnh âm sẽ giảm giá. Khách hàng trả giá cuối; đổi hệ số nhóm không làm thay đổi điều chỉnh."
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "Giá tính theo mỗi giây video đầu ra. Điều chỉnh âm sẽ giảm giá. Khách hàng trả giá cuối; đổi hệ số nhóm không làm thay đổi điều chỉnh.",
+    "Supply cost": "Chi phí nhập",
+    "Gross profit": "Lợi nhuận gộp",
+    "Gross margin {{percent}}": "Biên lợi nhuận gộp {{percent}}",
+    "Supply cost {{supply}}, gross profit {{profit}}": "Chi phí nhập {{supply}}, lợi nhuận gộp {{profit}}"
   }
 }
