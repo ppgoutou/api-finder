@@ -8163,6 +8163,7 @@
     "Supply price": "仕入れ価格",
     "Group ratio price (×{{ratio}})": "倍率価格（×{{ratio}}）",
     "Profit per second": "1秒あたりの利益",
+    "Gross margin": "粗利率",
     "Profit per image": "1枚あたりの利益",
     "Share of official price": "公式価格比",
     "{{percent}}% of official": "公式価格の {{percent}}%",
