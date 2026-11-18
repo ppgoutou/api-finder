@@ -128,3 +128,90 @@ export function modelBadgesByName(
   }
   return result
 }
+
+/** Starts a top-level Markdown list item. */
+const COMPARISON_ITEM = /^(?:[-*+]|\d+[.)])\s+/
+/** Starts a top-level list item that leads with a bold model name. */
+const COMPARISON_LABELED_ITEM = /^(?:[-*+]|\d+[.)])\s+\*\*(.+?)\*\*/
+/** Starts a new Markdown block even right after a list item line. */
+const COMPARISON_BLOCK_START = /^(?:#|>|```|---|\*\*\*)/
+
+/**
+ * Words a comparison label or a model name is matched by, in lower case. A
+ * trailing note in brackets is dropped when it is full-width or holds spaces
+ * or non-ASCII text, such as （官方 · 国内线路） or (official · China route);
+ * a short tag such as (F) stays a word of its own, so "Seedance 2.0 (F)" and
+ * "Seedance 2.0 (D)" remain different models.
+ */
+function comparisonNameWords(name: string): string[] {
+  let text = name
+    .trim()
+    .replace(/[:：]$/, '')
+    .trim()
+  const note = /\s*(?:（[^（）]*）|\(([^()]*)\))$/.exec(text)
+  if (note && (note[1] === undefined || /[\s\u0080-\uffff]/.test(note[1]))) {
+    text = text.slice(0, note.index)
+  }
+  return text
+    .replaceAll('（', '(')
+    .replaceAll('）', ')')
+    .replaceAll('(', ' (')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+/**
+ * Comparison text a visitor sees for the models of a category they can see.
+ * Each top-level list item that leads with a bold model name is kept, with its
+ * indented and continuation lines, only when every word of that name is in the
+ * display name or model name of one shown model, so a short label such as
+ * "Doubao Mini" still finds "Doubao Seedance 2.0 Mini". Text in no such item
+ * is kept. With fewer than two named models left there is nothing to compare,
+ * so the result is empty; text that names no model is returned unchanged.
+ */
+export function comparisonForModels(
+  comparison: string,
+  models: Pick<PricingModel, 'model_name' | 'display_name'>[]
+): string {
+  const shown = models.flatMap((model) =>
+    [model.model_name, model.display_name ?? ''].flatMap((name) =>
+      name.trim() ? [new Set(comparisonNameWords(name))] : []
+    )
+  )
+  const isShown = (label: string) => {
+    const words = comparisonNameWords(label)
+    return (
+      words.length > 0 &&
+      shown.some((nameWords) => words.every((word) => nameWords.has(word)))
+    )
+  }
+  const kept: string[] = []
+  let named = 0
+  let keptNamed = 0
+  let dropping = false
+  let previousBlank = true
+  for (const line of comparison.split('\n')) {
+    const blank = line.trim() === ''
+    if (COMPARISON_ITEM.test(line)) {
+      const label = COMPARISON_LABELED_ITEM.exec(line)?.[1]
+      dropping = label !== undefined && !isShown(label)
+      if (label !== undefined) named++
+      if (label !== undefined && !dropping) keptNamed++
+    } else if (
+      !blank &&
+      !/^\s/.test(line) &&
+      (previousBlank || COMPARISON_BLOCK_START.test(line))
+    ) {
+      dropping = false
+    }
+    if (!dropping || blank) kept.push(line)
+    previousBlank = blank
+  }
+  if (named === 0) return comparison
+  if (keptNamed < 2) return ''
+  return kept
+    .join('\n')
+    .replaceAll(/\n{3,}/g, '\n\n')
+    .trim()
+}

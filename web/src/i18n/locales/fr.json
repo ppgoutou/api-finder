@@ -8311,6 +8311,7 @@
     "Model comparison": "Comparatif des modèles",
     "{{name}} model comparison": "Comparatif des modèles {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Affiché dans une fenêtre contextuelle sous le titre de la catégorie. Markdown pris en charge.",
+    "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.": "Chaque élément de liste commençant par un nom de modèle en gras, comme **Seedance 2.0 (F)**, n'est affiché qu'aux visiteurs qui voient ce modèle.",
     "Only this user": "Uniquement cet utilisateur",
     "View Usage Logs": "Voir les journaux d'utilisation",
     "Announcement bar": "Barre d'annonce",

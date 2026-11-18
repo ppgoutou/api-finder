@@ -8311,6 +8311,7 @@
     "Model comparison": "So sánh mô hình",
     "{{name}} model comparison": "So sánh mô hình {{name}}",
     "Shown in a popover under the category heading. Supports Markdown.": "Hiển thị trong cửa sổ bật lên dưới tiêu đề danh mục. Hỗ trợ Markdown.",
+    "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.": "Mỗi mục danh sách bắt đầu bằng tên mô hình in đậm, như **Seedance 2.0 (F)**, chỉ hiển thị với khách truy cập thấy mô hình đó.",
     "Only this user": "Chỉ người dùng này",
     "View Usage Logs": "Xem nhật ký sử dụng",
     "Announcement bar": "Thanh thông báo",

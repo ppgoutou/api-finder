@@ -26,6 +26,7 @@ import { api } from '@/lib/api'
 
 import { usePricingData } from '../hooks/use-pricing-data'
 import {
+  comparisonForModels,
   filterByCategory,
   groupModelsByCategory,
   modelBadgesByName,
@@ -188,5 +189,77 @@ describe('pricing categories', () => {
         expect(result.current.categories[0]?.comparison).toBe(expected)
       }
     )
+  })
+
+  describe('comparisonForModels', () => {
+    const comparison = [
+      '- **Doubao Seedance 2.0（官方 · 国内线路）**：最稳定；支持 4K。',
+      '- **Dreamina Seedance 2.0（官方 · 海外线路）**：走海外线路，',
+      '  价格贵约 8%。',
+      '- **Seedance 2.0 (F)**：按秒计费。',
+      '- **Seedance 2.0 (D)**：带参考视频要加价，',
+      '每个素材都要在提示词里引用。',
+      '',
+      '均为 4–15 秒。',
+    ].join('\n')
+    const doubao = {
+      model_name: 'doubao-seedance-2-0',
+      display_name: 'Doubao Seedance 2.0',
+    }
+    const fast = {
+      model_name: 'seedance-2.0-f',
+      display_name: 'Seedance 2.0 (F)',
+    }
+
+    it('keeps only the entries of the models the visitor can see', () => {
+      expect(comparisonForModels(comparison, [doubao, fast])).toBe(
+        [
+          '- **Doubao Seedance 2.0（官方 · 国内线路）**：最稳定；支持 4K。',
+          '- **Seedance 2.0 (F)**：按秒计费。',
+          '',
+          '均为 4–15 秒。',
+        ].join('\n')
+      )
+    })
+
+    it('matches a model name when the model has no display name', () => {
+      const text =
+        '- **seedance-2.0-f**: fast\n- **seedance-2.0-d**: dev\n- **sd-pro**: pro'
+      expect(
+        comparisonForModels(text, [
+          { model_name: 'seedance-2.0-f' },
+          { model_name: 'SD-Pro' },
+        ])
+      ).toBe('- **seedance-2.0-f**: fast\n- **sd-pro**: pro')
+    })
+
+    it('drops a half-width note and matches a short label', () => {
+      const text = [
+        '- **Doubao Mini (official · China route)**: stable.',
+        '- **Dreamina Mini (official · overseas route)**: overseas.',
+        '- **Mini (F)**: cheaper.',
+        '- **Mini (D)**: dev.',
+      ].join('\n')
+      expect(
+        comparisonForModels(text, [
+          {
+            model_name: 'doubao-mini',
+            display_name: 'Doubao Seedance 2.0 Mini',
+          },
+          { model_name: 'mini-yh', display_name: 'Seedance 2.0 Mini (F)' },
+        ])
+      ).toBe(
+        '- **Doubao Mini (official · China route)**: stable.\n- **Mini (F)**: cheaper.'
+      )
+    })
+
+    it('shows nothing when fewer than two named models remain', () => {
+      expect(comparisonForModels(comparison, [fast])).toBe('')
+    })
+
+    it('keeps text that names no model', () => {
+      const text = 'Doubao is the most stable.\n\n- faster\n- cheaper'
+      expect(comparisonForModels(text, [fast])).toBe(text)
+    })
   })
 })

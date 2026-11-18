@@ -8311,6 +8311,7 @@
     "Model comparison": "Model comparison",
     "{{name}} model comparison": "{{name}} model comparison",
     "Shown in a popover under the category heading. Supports Markdown.": "Shown in a popover under the category heading. Supports Markdown.",
+    "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.": "Each list item that starts with a bold model name, such as **Seedance 2.0 (F)**, is shown only to visitors who can see that model.",
     "Only this user": "Only this user",
     "View Usage Logs": "View Usage Logs",
     "Announcement bar": "Announcement bar",
