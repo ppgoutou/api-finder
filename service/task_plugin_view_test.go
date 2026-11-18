@@ -1,7 +1,11 @@
 package service
 
 import (
+	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,4 +111,38 @@ func TestBuildTaskPluginViewEncodesKeysInMapOrder(t *testing.T) {
 	reencoded, err := common.Marshal(payload)
 	require.NoError(t, err)
 	assert.Equal(t, string(reencoded), string(encoded))
+}
+
+func TestBuildClientTaskPluginViewServesTheResultThroughThisSite(t *testing.T) {
+	const upstreamURL = "https://supplier.example/results/video.mp4"
+	taskData, err := common.Marshal(map[string]any{
+		"content": map[string]any{"video_url": upstreamURL, "last_frame_url": "https://supplier.example/frame.png"},
+	})
+	require.NoError(t, err)
+	task := &model.Task{
+		TaskID:      "task_public",
+		Status:      model.TaskStatusSuccess,
+		Data:        taskData,
+		PrivateData: model.TaskPrivateData{ResultURL: upstreamURL},
+	}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+
+	view, err := BuildClientTaskPluginView(c, task)
+	require.NoError(t, err)
+
+	content := view.Data.(map[string]any)["content"].(map[string]any)
+	assert.True(t, strings.HasSuffix(content["video_url"].(string), "/v1/videos/task_public/content"), content["video_url"])
+	assert.Equal(t, "https://supplier.example/frame.png", content["last_frame_url"])
+}
+
+func TestShouldCopyUpstreamHeaderKeepsOnlyWhatClientsNeed(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	for _, name := range []string{"Content-Type", "content-encoding", "Retry-After", "X-Codex-Turn-State"} {
+		assert.True(t, ShouldCopyUpstreamHeader(c, name, []string{"v"}), name)
+	}
+	for _, name := range []string{"Set-Cookie", "Server", "X-Request-Id", "X-Ratelimit-Remaining-Requests", "Openai-Organization", "Via", "Content-Length"} {
+		assert.False(t, ShouldCopyUpstreamHeader(c, name, []string{"v"}), name)
+	}
+	assert.False(t, ShouldCopyUpstreamHeader(c, common.RequestIdKey, []string{"upstream-1"}))
+	assert.Equal(t, "upstream-1", c.GetString(common.UpstreamRequestIdKey))
 }

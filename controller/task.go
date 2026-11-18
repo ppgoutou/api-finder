@@ -56,9 +56,15 @@ func GetTask(c *gin.Context) {
 		failReason = ""
 	}
 	failReason = service.UserFacingFailReason(c, failReason)
+	// A task plugin key or channel-type platform names the supplier; suno
+	// stays because clients tell its clips apart by platform.
+	platform := ""
+	if task.Platform == constant.TaskPlatformSuno {
+		platform = string(task.Platform)
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"task_id":     task.TaskID,
-		"platform":    task.Platform,
+		"platform":    platform,
 		"status":      task.Status,
 		"progress":    task.Progress,
 		"fail_reason": failReason,

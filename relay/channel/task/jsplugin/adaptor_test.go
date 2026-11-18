@@ -808,7 +808,9 @@ func TestTaskAdaptorRejectsNonObjectOpenAIVideoRendererOutput(t *testing.T) {
 	}
 }
 
-func TestTaskAdaptorPreservesOpenAIVideoFailureSlotsAndOwnsLifecycle(t *testing.T) {
+// The caller puts the classified reason on the task, so the supplier's own
+// error text in the plugin's error slot never reaches the client.
+func TestTaskAdaptorOwnsOpenAIVideoFailureMessageAndLifecycle(t *testing.T) {
 	source := strings.Replace(mockPlugin, `render: function(ctx, task) { return {id: task.task_id, status: "completed"}; }`, `render: function() { return {id:"provider", object:"provider", model:"provider-model", status:"completed", progress:100, created_at:99, completed_at:20, error:{code:"provider_error",message:"provider rejected request"}}; }`, 1)
 	plugin, err := pluginruntime.NewRegistry().Register(source, pluginruntime.Options{})
 	require.NoError(t, err)
@@ -816,7 +818,7 @@ func TestTaskAdaptorPreservesOpenAIVideoFailureSlotsAndOwnsLifecycle(t *testing.
 	task := &model.Task{
 		TaskID:     "task_public",
 		Status:     model.TaskStatusFailure,
-		FailReason: "provider secret",
+		FailReason: "The video could not be generated.",
 		CreatedAt:  10,
 		UpdatedAt:  20,
 		Properties: model.Properties{OriginModelName: "origin-model"},
@@ -825,7 +827,7 @@ func TestTaskAdaptorPreservesOpenAIVideoFailureSlotsAndOwnsLifecycle(t *testing.
 	rendered, err := adaptor.ConvertToOpenAIVideo(task)
 
 	require.NoError(t, err)
-	assert.JSONEq(t, `{"id":"task_public","object":"video","model":"origin-model","status":"failed","progress":0,"created_at":10,"error":{"message":"provider rejected request","code":"provider_error"}}`, string(rendered))
+	assert.JSONEq(t, `{"id":"task_public","object":"video","model":"origin-model","status":"failed","progress":0,"created_at":10,"error":{"message":"The video could not be generated.","code":"provider_error"}}`, string(rendered))
 }
 
 func TestTaskAdaptorBoundsNativeUsageBeforeQuotaCalculation(t *testing.T) {
