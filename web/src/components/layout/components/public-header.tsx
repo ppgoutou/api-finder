@@ -205,7 +205,12 @@ export function PublicHeader(props: PublicHeaderProps) {
 
   return (
     <>
-      <header className='pointer-events-none fixed inset-x-0 top-0 z-50'>
+      <header
+        className={cn(
+          'pointer-events-none fixed inset-x-0 top-0 z-50',
+          props.className
+        )}
+      >
         {props.announcement && !scrolled && (
           <div className='bg-brand pointer-events-auto flex h-9 items-center justify-center px-4 text-center text-xs font-medium text-white sm:text-sm'>
             {props.announcement.href ? (

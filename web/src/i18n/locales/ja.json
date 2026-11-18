@@ -8485,11 +8485,14 @@
     "No membership fee: top up as usual and you are upgraded automatically.": "会費は不要：通常どおりチャージすれば自動で VIP に昇格します。",
     "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}}で自動的に VIP に昇格。会費は不要です。",
     "You are VIP. Every benefit below already applies to your account.": "VIP 会員です。以下の特典はすべてご利用のアカウントに適用済みです。",
-    "Standard members": "スタンダード：",
     "Redemption codes count": "引き換えコードも対象",
     "Also applies to API calls": "API 呼び出しにも適用",
     "Every benefit, with what a standard member gets instead.": "各特典をスタンダード会員と比較しています。",
     "Step {{number}}": "ステップ {{number}}",
-    "No renewal needed": "更新手続き不要"
+    "No renewal needed": "更新手続き不要",
+    "Save on every model": "全モデルが割引",
+    "Both tiers are free. Your top-ups unlock VIP.": "どちらのランクも無料。チャージで VIP が解放されます。",
+    "Your current tier": "現在のランク",
+    "Included in VIP": "VIP に含まれます"
   }
 }

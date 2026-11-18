@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 
 import { VIP_BENEFIT_ICONS } from '../lib/benefit-icons'
 import { getVipBenefits, type VipBenefit } from '../lib/benefits'
-import { VIP_GOLD_TEXT } from '../lib/vip-style'
+import { VIP_LIME_TEXT } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipCompareTableProps {
@@ -54,10 +54,10 @@ export function VipCompareTable(props: VipCompareTableProps) {
     {
       id: 'label',
       header: t('Benefit'),
-      className: 'text-muted-foreground w-[24%] text-xs sm:w-[26%]',
+      className: 'w-[24%] text-xs text-white/40 sm:w-[26%]',
       cellClassName: 'py-2.5 align-top whitespace-normal',
       cell: (row) => (
-        <span className='text-muted-foreground flex items-center gap-2'>
+        <span className='flex items-center gap-2 text-white/55'>
           <HugeiconsIcon
             icon={VIP_BENEFIT_ICONS[row.id]}
             className='hidden size-4 shrink-0 sm:block'
@@ -70,10 +70,10 @@ export function VipCompareTable(props: VipCompareTableProps) {
     {
       id: 'standard',
       header: t('Standard'),
-      className: 'text-muted-foreground w-[33%] text-xs sm:w-[34%]',
+      className: 'w-[33%] text-xs text-white/40 sm:w-[34%]',
       cellClassName: 'py-2.5 align-top whitespace-normal',
       cell: (row) => (
-        <span className='text-muted-foreground flex items-start gap-1.5'>
+        <span className='flex items-start gap-1.5 text-white/55'>
           <HugeiconsIcon
             icon={MinusSignIcon}
             className='mt-0.5 hidden size-3.5 shrink-0 opacity-60 sm:block'
@@ -89,20 +89,20 @@ export function VipCompareTable(props: VipCompareTableProps) {
         <span
           className={cn(
             'inline-flex items-center gap-1 text-xs font-semibold',
-            VIP_GOLD_TEXT
+            VIP_LIME_TEXT
           )}
         >
           <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
           VIP
         </span>
       ),
-      className: 'bg-amber-500/10',
-      cellClassName: 'bg-amber-500/[0.07] py-2.5 align-top whitespace-normal',
+      className: 'bg-[#d1fe17]/[0.08]',
+      cellClassName: 'bg-[#d1fe17]/[0.05] py-2.5 align-top whitespace-normal',
       cell: (row) => (
         <span
           className={cn(
             'flex items-start gap-1.5 font-semibold',
-            VIP_GOLD_TEXT
+            VIP_LIME_TEXT
           )}
         >
           <HugeiconsIcon
@@ -118,7 +118,10 @@ export function VipCompareTable(props: VipCompareTableProps) {
 
   return (
     <StaticDataTable
-      className={cn('border-border/60 rounded-xl', props.className)}
+      className={cn(
+        'rounded-2xl border-white/10 bg-white/[0.02] [&_tr]:border-white/[0.07]',
+        props.className
+      )}
       tableClassName='table-fixed text-sm'
       headerRowClassName='hover:bg-transparent'
       columns={columns}

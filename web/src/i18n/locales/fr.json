@@ -8485,11 +8485,14 @@
     "No membership fee: top up as usual and you are upgraded automatically.": "Aucun frais d’adhésion : rechargez normalement et vous passez VIP automatiquement.",
     "{{rule}} and you are upgraded automatically, with no membership fee.": "{{rule}} et vous passez VIP automatiquement, sans frais d’adhésion.",
     "You are VIP. Every benefit below already applies to your account.": "Vous êtes VIP. Tous les avantages ci-dessous s’appliquent déjà à votre compte.",
-    "Standard members": "Membres standard :",
     "Redemption codes count": "Les codes d’échange comptent",
     "Also applies to API calls": "Valable aussi pour les appels API",
     "Every benefit, with what a standard member gets instead.": "Chaque avantage, avec ce qu’obtient un membre standard.",
     "Step {{number}}": "Étape {{number}}",
-    "No renewal needed": "Aucun renouvellement"
+    "No renewal needed": "Aucun renouvellement",
+    "Save on every model": "Économisez sur tous les modèles",
+    "Both tiers are free. Your top-ups unlock VIP.": "Les deux niveaux sont gratuits. Vos recharges débloquent le VIP.",
+    "Your current tier": "Votre niveau actuel",
+    "Included in VIP": "Inclus dans le VIP"
   }
 }

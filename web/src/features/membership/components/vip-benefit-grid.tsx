@@ -23,14 +23,15 @@ import { cn } from '@/lib/utils'
 
 import { VIP_BENEFIT_ICONS } from '../lib/benefit-icons'
 import { getVipBenefits } from '../lib/benefits'
+import { VIP_LIME_TEXT, VIP_NIGHT_PANEL } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipBenefitGridProps {
   info: MembershipInfo
   /** Show only the first few benefits, such as on the home page. */
   limit?: number
-  /** Add what a standard member gets under each benefit, for the VIP page. */
-  showStandard?: boolean
+  /** Glassy cards with lime icons, for the dark VIP page. */
+  night?: boolean
   className?: string
 }
 
@@ -48,28 +49,38 @@ export function VipBenefitGrid(props: VipBenefitGridProps) {
       {benefits.map((benefit) => (
         <li
           key={benefit.id}
-          className='bg-card border-border/60 flex gap-3 rounded-2xl border p-4 shadow-sm sm:p-5'
+          className={
+            props.night
+              ? cn('flex gap-4 rounded-3xl p-5 sm:p-6', VIP_NIGHT_PANEL)
+              : 'bg-card border-border/60 flex gap-3 rounded-2xl border p-4 shadow-sm sm:p-5'
+          }
         >
-          <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300'>
+          <span
+            className={
+              props.night
+                ? cn(
+                    'flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#d1fe17]/10',
+                    VIP_LIME_TEXT
+                  )
+                : 'flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300'
+            }
+          >
             <HugeiconsIcon
               icon={VIP_BENEFIT_ICONS[benefit.id]}
               className='size-5'
               aria-hidden
             />
           </span>
-          <div className='flex min-w-0 flex-1 flex-col'>
+          <div className='min-w-0'>
             <h3 className='font-semibold'>{benefit.title}</h3>
-            <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
+            <p
+              className={cn(
+                'text-muted-foreground mt-1 text-sm leading-relaxed',
+                props.night && 'text-white/50'
+              )}
+            >
               {benefit.description}
             </p>
-            {props.showStandard && (
-              <div className='mt-auto pt-4'>
-                <p className='text-muted-foreground border-border/60 flex gap-1.5 border-t border-dashed pt-3 text-xs'>
-                  <span className='shrink-0'>{t('Standard members')}</span>
-                  <span className='text-foreground/70'>{benefit.standard}</span>
-                </p>
-              </div>
-            )}
           </div>
         </li>
       ))}
