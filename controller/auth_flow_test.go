@@ -702,6 +702,30 @@ func TestGenerateOAuthCodeCarriesAffiliateInLoginFlow(t *testing.T) {
 	assert.Empty(t, flow.SessionId)
 }
 
+func TestOAuthSignUpRecordsInviterFromAffiliateCode(t *testing.T) {
+	provider := setupAuthFlowControllerTest(t)
+	previousRegister := common.RegisterEnabled
+	common.RegisterEnabled = true
+	t.Cleanup(func() { common.RegisterEnabled = previousRegister })
+	inviter := &model.User{Username: "inviter", Password: "password123", AffCode: "INVITE01"}
+	require.NoError(t, model.DB.Create(inviter).Error)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/oauth/auth-flow-test", nil)
+	user, _, err := findOrCreateOAuthUser(c, provider, &oauth.OAuthUser{ProviderUserID: "external-user"}, &oauth.OAuthToken{}, "INVITE01")
+	require.NoError(t, err)
+
+	var stored model.User
+	require.NoError(t, model.DB.First(&stored, user.Id).Error)
+	assert.Equal(t, inviter.Id, stored.InviterId)
+	invitees, total, err := model.GetInviteesByInviterId(inviter.Id, &common.PageInfo{Page: 1, PageSize: 10})
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, total)
+	require.Len(t, invitees, 1)
+	assert.Equal(t, user.Id, invitees[0].Id)
+}
+
 func TestGenerateOAuthCodeBindsFlowToAuthenticatedSession(t *testing.T) {
 	_, identity := setupSecurityEnrollmentTest(t)
 	oauth.Register("auth-flow-test", &authFlowTestOAuthProvider{})
