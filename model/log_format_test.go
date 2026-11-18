@@ -22,6 +22,7 @@ func TestFormatUserLogsStripsQuotaSaturation(t *testing.T) {
 				"kind":    "overflow",
 				"clamped": common.MaxQuota,
 			},
+			"gross_margin": map[string]any{"revenue_quota": 900, "supply_quota": 500},
 		},
 	})
 	logs := []*Log{{Other: other}}
@@ -32,6 +33,7 @@ func TestFormatUserLogsStripsQuotaSaturation(t *testing.T) {
 	require.NoError(t, err)
 	_, hasAdminInfo := parsed["admin_info"]
 	require.False(t, hasAdminInfo, "admin_info (and nested quota_saturation) must be stripped for non-admin views")
+	require.NotContains(t, logs[0].Other, "gross_margin")
 	// The base price is supply cost and stays hidden from log owners.
 	require.NotContains(t, parsed, "model_price")
 }

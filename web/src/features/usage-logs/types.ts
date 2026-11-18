@@ -147,6 +147,12 @@ export interface LogOtherData {
     // Reject / intercept reason (admin only)
     reject_reason?: string
     task_plugin?: TaskPluginInfo
+    // What the charge earns over the supplier price, both in quota. For a
+    // task settlement log, revenue is the task's settled total.
+    gross_margin?: {
+      revenue_quota: number
+      supply_quota: number
+    }
   }
   root_info?: {
     task_plugin?: TaskPluginRuntimeInfo

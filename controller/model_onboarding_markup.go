@@ -21,7 +21,7 @@ import (
 
 // onboardingMarkupOption keeps each marked-up model's supplier price and the
 // fixed amounts added on top of the group-ratio price.
-const onboardingMarkupOption = "OnboardingPriceMarkup"
+const onboardingMarkupOption = model.OnboardingMarkupOption
 
 // maxMarkupPerSecond bounds one tier's markup or discount in USD per second
 // of video.

@@ -63,7 +63,12 @@ import { pluginUsageSchema } from '@/features/pricing/lib/plugin-pricing'
 import { PolicyDecisionRecord } from '@/features/system-settings/request-policies/decision-record'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
-import { formatLogQuota, formatTokens, formatUseTime } from '@/lib/format'
+import {
+  formatLogQuota,
+  formatPercent,
+  formatTokens,
+  formatUseTime,
+} from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
@@ -85,6 +90,7 @@ import {
   renderLogContent,
   renderUserErrorContent,
 } from '../../lib/format'
+import { getGrossMargin } from '../../lib/gross-margin'
 import { buildQuotaAuditOperation } from '../../lib/quota-audit-operation'
 import {
   getLogTypeConfig,
@@ -507,6 +513,7 @@ export function DetailsDialog(props: DetailsDialogProps) {
   const showAdminIp =
     !!props.log.ip && (showTiming || (props.isAdmin && isTopup))
   const adminInfo = other?.admin_info
+  const grossMargin = props.isAdmin ? getGrossMargin(other) : null
   const topupAuditFields =
     isTopup && props.isAdmin && adminInfo
       ? ([
@@ -842,6 +849,31 @@ export function DetailsDialog(props: DetailsDialogProps) {
             <DetailRow
               label={t('Operation')}
               value={other.admin_info.quota_saturation.op}
+              mono
+            />
+          </DetailSection>
+        )}
+
+        {props.isAdmin && grossMargin && (
+          <DetailSection label={t('Gross margin')}>
+            <DetailRow
+              label={t('Revenue')}
+              value={formatLogQuota(grossMargin.revenueQuota)}
+              mono
+            />
+            <DetailRow
+              label={t('Supply cost')}
+              value={formatLogQuota(grossMargin.supplyQuota)}
+              mono
+            />
+            <DetailRow
+              label={t('Gross profit')}
+              value={formatLogQuota(grossMargin.profitQuota)}
+              mono
+            />
+            <DetailRow
+              label={t('Gross margin')}
+              value={formatPercent(grossMargin.percent)}
               mono
             />
           </DetailSection>

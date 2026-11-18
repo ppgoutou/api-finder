@@ -8356,6 +8356,10 @@
     "Users in each standard group move to its VIP group and back to it after a refund. Every VIP group must exist in the group ratios.": "各一般分組的使用者升級到對應的 VIP 分組，退款後降回原分組。每個 VIP 分組都必須在分組倍率中存在。",
     "Enter a group name for every row": "每一列都要填寫分組名稱",
     "Official pricing also bills reference video seconds, so it does not compare per output second": "官方另按參考影片時長計費，無法按輸出秒比較",
-    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "價格按每秒輸出影片計算。負數表示降價。客戶支付最終價；修改分組倍率後調整金額保持不變。"
+    "Prices are per second of output video. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.": "價格按每秒輸出影片計算。負數表示降價。客戶支付最終價；修改分組倍率後調整金額保持不變。",
+    "Supply cost": "供貨成本",
+    "Gross profit": "毛利",
+    "Gross margin {{percent}}": "毛利率 {{percent}}",
+    "Supply cost {{supply}}, gross profit {{profit}}": "供貨成本 {{supply}}，毛利 {{profit}}"
   }
 }

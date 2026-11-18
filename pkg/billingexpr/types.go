@@ -101,6 +101,10 @@ type TieredResult struct {
 	// clamping occurred. Not serialized: the marker is attached separately via
 	// the shared quota-saturation audit path.
 	Clamp *common.QuotaClamp `json:"-"`
+	// SupplyRatio is the share of ActualQuotaBeforeGroup that pays the
+	// supplier, set by the host for the admin-only gross margin. Nil when the
+	// supplier price is unknown.
+	SupplyRatio *float64 `json:"-"`
 }
 
 // ExprHashString returns the SHA-256 hex digest of an expression string.

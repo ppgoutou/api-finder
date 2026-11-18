@@ -62,7 +62,11 @@ import { taskUsageUnitLabel } from '@/features/pricing/lib/task-price-display'
 import type { BillingUsageSchema } from '@/features/pricing/types'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
-import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
+import {
+  formatLogQuota,
+  formatPercent,
+  formatTimestampToDate,
+} from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
@@ -79,6 +83,7 @@ import {
   renderAuditContent,
   renderLogContent,
 } from '../../lib/format'
+import { getGrossMargin } from '../../lib/gross-margin'
 import {
   getTopupAmount,
   getTopupKind,
@@ -850,12 +855,35 @@ export function useCommonLogsColumns(
 
           const quota = row.getValue('quota') as number
           const other = parseLogOther(log.other)
+          // The backend strips admin_info for log owners; gating on isAdmin
+          // keeps the supplier margin hidden even if that ever changes.
+          const margin = isAdmin ? getGrossMargin(other) : null
           return (
-            <LogCostDisplay
-              quota={quota}
-              other={other}
-              showBillingSource={showBillingSource}
-            />
+            <div className='flex flex-col items-start gap-0.5'>
+              <LogCostDisplay
+                quota={quota}
+                other={other}
+                showBillingSource={showBillingSource}
+              />
+              {margin && (
+                <span
+                  className={cn(
+                    'text-xs tabular-nums',
+                    margin.profitQuota < 0
+                      ? 'text-destructive'
+                      : 'text-green-600 dark:text-green-500'
+                  )}
+                  title={t('Supply cost {{supply}}, gross profit {{profit}}', {
+                    supply: formatLogQuota(margin.supplyQuota),
+                    profit: formatLogQuota(margin.profitQuota),
+                  })}
+                >
+                  {t('Gross margin {{percent}}', {
+                    percent: formatPercent(margin.percent),
+                  })}
+                </span>
+              )}
+            </div>
           )
         },
       },
