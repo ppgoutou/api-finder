@@ -23,20 +23,26 @@ import { describe, expect, it, vi } from 'vitest'
 import { StudioCost } from '../components/studio-cost'
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: (props: { to: string; className?: string; children?: ReactNode }) => (
-    <a href={props.to} className={props.className}>
+  Link: (props: {
+    to: string
+    className?: string
+    title?: string
+    'aria-label'?: string
+    children?: ReactNode
+  }) => (
+    <a
+      href={props.to}
+      className={props.className}
+      title={props.title}
+      aria-label={props['aria-label']}
+    >
       {props.children}
     </a>
   ),
 }))
-vi.mock('@/features/membership', () => ({
-  VipCompareButton: (props: { label?: ReactNode }) => (
-    <button type='button'>{props.label}</button>
-  ),
-}))
 
 describe('studio cost', () => {
-  it('shows the VIP price and an upgrade prompt beside the estimate for a standard member', () => {
+  it('shows the VIP price as a link to top up beside the estimate for a standard member', () => {
     render(
       <StudioCost
         price={{ label: '¥1.00', costUSD: 0.15, vipLabel: '¥0.85' }}
@@ -47,10 +53,8 @@ describe('studio cost', () => {
     expect(screen.getByText('¥1.00')).toBeInTheDocument()
     expect(screen.getByText('Estimated fee')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', {
-        name: /VIP price\s*¥0\.85.*Top up to upgrade/,
-      })
-    ).toBeInTheDocument()
+      screen.getByRole('link', { name: 'VIP price ¥0.85, Top up to upgrade' })
+    ).toHaveAttribute('href', '/wallet')
   })
 
   it('shows only the estimate when there is no VIP price to offer', () => {
@@ -62,6 +66,6 @@ describe('studio cost', () => {
     )
 
     expect(screen.queryByText(/VIP price/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 })

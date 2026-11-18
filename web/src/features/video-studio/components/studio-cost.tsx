@@ -16,13 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
+import { ArrowRight01Icon, CrownIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { VipCompareButton } from '@/features/membership'
-import { VIP_GOLD_SURFACE } from '@/features/membership/lib/vip-style'
+import {
+  VIP_GOLD_SURFACE,
+  VIP_GOLD_TEXT,
+} from '@/features/membership/lib/vip-style'
 import { VIDEO_PRICE_FRACTION_DIGITS } from '@/features/pricing/lib/video-pricing'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -51,31 +53,27 @@ export function StudioCost(props: StudioCostProps) {
         </span>
       </span>
       {props.price.vipLabel && (
-        <VipCompareButton
-          source='studio-cost'
-          standardOnly
+        <Link
+          to='/wallet'
+          aria-label={`${t('VIP price')} ${props.price.vipLabel}, ${t('Top up to upgrade')}`}
+          title={t('Top up to upgrade')}
           className={cn(
-            'gap-1 rounded-full border px-2 py-0.5 text-xs hover:no-underline hover:brightness-95',
-            VIP_GOLD_SURFACE
+            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium hover:brightness-95',
+            VIP_GOLD_SURFACE,
+            VIP_GOLD_TEXT
           )}
-          label={
-            <>
-              {t('VIP price')}
-              <span className='font-semibold tabular-nums'>
-                {props.price.vipLabel}
-              </span>
-              <span aria-hidden className='opacity-50'>
-                |
-              </span>
-              {t('Top up to upgrade')}
-              <HugeiconsIcon
-                icon={ArrowRight01Icon}
-                className='size-3'
-                aria-hidden
-              />
-            </>
-          }
-        />
+        >
+          <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
+          {t('VIP price')}
+          <span className='font-semibold tabular-nums'>
+            {props.price.vipLabel}
+          </span>
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className='size-3'
+            aria-hidden
+          />
+        </Link>
       )}
       {props.shortfallUSD !== null && (
         <span role='alert' className='text-destructive text-xs'>
