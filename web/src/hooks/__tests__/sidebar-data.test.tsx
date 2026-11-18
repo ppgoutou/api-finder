@@ -16,16 +16,36 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { getUserTaskLogs } from '@/features/usage-logs/api'
 import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { useSidebarData } from '../use-sidebar-data'
 
+vi.mock('@/features/usage-logs/api', () => ({
+  getUserTaskLogs: vi.fn(async () => ({ data: { items: [] } })),
+}))
+
+function renderSidebarData() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return renderHook(() => useSidebarData(), {
+    wrapper: (props: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>
+        {props.children}
+      </QueryClientProvider>
+    ),
+  })
+}
+
 function dashboardEntry() {
-  const { result } = renderHook(() => useSidebarData())
+  const { result } = renderSidebarData()
   const items = result.current.navGroups.flatMap((group) => group.items)
   return items.find((item) => item.title === 'Dashboard') as {
     url: string
@@ -56,5 +76,34 @@ describe('useSidebarData dashboard entry', () => {
   it('opens model analytics for regular users', () => {
     signInWithRole(ROLE.USER)
     expect(dashboardEntry().url).toBe('/dashboard/models')
+  })
+})
+
+describe('useSidebarData my works entry', () => {
+  afterEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('badges My works with the number of videos about to expire', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: {
+        items: [
+          { task_id: 'a', status: 'SUCCESS', media_expires_at: now + 3600 },
+          { task_id: 'b', status: 'SUCCESS', media_kept: true },
+        ],
+      },
+    } as never)
+    const { result } = renderSidebarData()
+    const myWorks = () =>
+      result.current.navGroups
+        .flatMap((group) => group.items)
+        .find((item) => item.title === 'My works') as {
+        url: string
+        badge?: string
+      }
+
+    expect(myWorks().url).toBe('/my-works')
+    await waitFor(() => expect(myWorks().badge).toBe('1'))
   })
 })

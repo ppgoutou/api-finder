@@ -355,6 +355,10 @@ export interface TaskLog {
   // A synchronous result returned inline and never persisted; artifact
   // retrieval is not offered for it.
   result_discarded?: boolean
+  // Successful video tasks: saved for good in this site's media storage, or
+  // the Unix time its video stops being available.
+  media_kept?: boolean
+  media_expires_at?: number
   fail_reason?: string
   // Admin views only: what the task's owner sees instead of `fail_reason`.
   user_fail_reason?: string
