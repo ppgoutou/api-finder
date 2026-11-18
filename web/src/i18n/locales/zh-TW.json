@@ -8372,6 +8372,14 @@
     "Gross profit": "毛利",
     "Gross margin {{percent}}": "毛利率 {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "供貨成本 {{supply}}，毛利 {{profit}}",
-    "Press Enter to start a new line": "按 Enter 換行"
+    "Press Enter to start a new line": "按 Enter 換行",
+    "Model group ratio saved": "模型分組倍率已儲存",
+    "This model": "本模型",
+    "This model's ratio in {{group}}": "本模型在 {{group}} 分組的倍率",
+    "Target share of official price (%)": "目標官方價佔比（%）",
+    "Calculate ratio": "反算倍率",
+    "Save model ratio": "儲存模型倍率",
+    "Use group ratio": "恢復分組倍率",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "只對本模型在該分組生效，取代分組倍率 ×{{ratio}}。留空即使用分組倍率。儲存前下方價格按輸入的倍率預覽。"
   }
 }

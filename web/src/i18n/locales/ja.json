@@ -8372,6 +8372,14 @@
     "Gross profit": "粗利",
     "Gross margin {{percent}}": "粗利率 {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "仕入れコスト {{supply}}、粗利 {{profit}}",
-    "Press Enter to start a new line": "Enter キーで改行"
+    "Press Enter to start a new line": "Enter キーで改行",
+    "Model group ratio saved": "モデルのグループ倍率を保存しました",
+    "This model": "このモデル",
+    "This model's ratio in {{group}}": "{{group}} でのこのモデルの倍率",
+    "Target share of official price (%)": "公式価格に対する目標割合（%）",
+    "Calculate ratio": "倍率を逆算",
+    "Save model ratio": "モデル倍率を保存",
+    "Use group ratio": "グループ倍率に戻す",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "このグループのこのモデルにのみ適用され、グループ倍率 ×{{ratio}} を置き換えます。空欄はグループ倍率を使用します。保存前に下の価格で倍率をプレビューできます。"
   }
 }

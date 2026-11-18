@@ -287,6 +287,46 @@ func SetOnboardingPriceMarkup(c *gin.Context) {
 	respondUpstreamPriceReport(c, upstreamPriceChannelRows(channels))
 }
 
+// SetOnboardingModelGroupRatio replaces the group ratios one model has of its
+// own. A group left out pays its group ratio again; an empty map clears them.
+func SetOnboardingModelGroupRatio(c *gin.Context) {
+	var request struct {
+		ModelName string             `json:"model_name"`
+		Ratios    map[string]float64 `json:"ratios"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &request); err != nil || strings.TrimSpace(request.ModelName) == "" {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid request parameter format"))
+		return
+	}
+	name := strings.TrimSpace(request.ModelName)
+	all := ratio_setting.ModelGroupRatioCopy()
+	if len(request.Ratios) == 0 {
+		delete(all, name)
+	} else {
+		all[name] = request.Ratios
+	}
+	if err := ratio_setting.ValidateModelGroupRatios(map[string]map[string]float64{name: request.Ratios}); err != nil {
+		common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage(err.Error()))
+		return
+	}
+	value, err := common.Marshal(all)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if err := model.UpdateOption(ratio_setting.ModelGroupRatioOption, string(value)); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	recordManageAudit(c, "model.group_ratio.update", map[string]any{"model": name})
+	channels, err := upstreamPriceChannels()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	respondUpstreamPriceReport(c, upstreamPriceChannelRows(channels))
+}
+
 // recomposeOnboardingMarkups rewrites every marked-up model's price for
 // the current group ratio, so customers keep paying the same fixed markup. It
 // returns the models it could not update.

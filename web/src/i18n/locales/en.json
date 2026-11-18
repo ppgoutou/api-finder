@@ -8372,6 +8372,14 @@
     "Gross profit": "Gross profit",
     "Gross margin {{percent}}": "Gross margin {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "Supply cost {{supply}}, gross profit {{profit}}",
-    "Press Enter to start a new line": "Press Enter to start a new line"
+    "Press Enter to start a new line": "Press Enter to start a new line",
+    "Model group ratio saved": "Model group ratio saved",
+    "This model": "This model",
+    "This model's ratio in {{group}}": "This model's ratio in {{group}}",
+    "Target share of official price (%)": "Target share of official price (%)",
+    "Calculate ratio": "Calculate ratio",
+    "Save model ratio": "Save model ratio",
+    "Use group ratio": "Use group ratio",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving."
   }
 }

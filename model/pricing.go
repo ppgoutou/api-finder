@@ -52,7 +52,11 @@ type Pricing struct {
 	OfficialPriceExpr      string                  `json:"official_price_expr,omitempty"`
 	// OfficialPrice is the official price table a model inherits from its
 	// pricing category; filled per request, never cached.
-	OfficialPrice        *OfficialPriceTable                  `json:"official_price,omitempty"`
+	OfficialPrice *OfficialPriceTable `json:"official_price,omitempty"`
+	// ModelGroupRatio holds the group ratios this model has of its own, on
+	// the same scale as the response's group_ratio; filled per request,
+	// never cached.
+	ModelGroupRatio      map[string]float64                   `json:"model_group_ratio,omitempty"`
 	BillingUsageSchema   map[string]jsplugin.UsageFieldSchema `json:"billing_usage_schema,omitempty"`
 	BillingUsageExamples []jsplugin.UsageExample              `json:"billing_usage_examples,omitempty"`
 	// ModelLimits is what the serving plugin says the model can generate.

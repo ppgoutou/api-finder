@@ -8372,6 +8372,14 @@
     "Gross profit": "Marge brute en valeur",
     "Gross margin {{percent}}": "Marge brute {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "Coût d'achat {{supply}}, marge brute {{profit}}",
-    "Press Enter to start a new line": "Appuyez sur Entrée pour aller à la ligne"
+    "Press Enter to start a new line": "Appuyez sur Entrée pour aller à la ligne",
+    "Model group ratio saved": "Ratio de groupe du modèle enregistré",
+    "This model": "Ce modèle",
+    "This model's ratio in {{group}}": "Ratio de ce modèle dans {{group}}",
+    "Target share of official price (%)": "Part cible du prix officiel (%)",
+    "Calculate ratio": "Calculer le ratio",
+    "Save model ratio": "Enregistrer le ratio du modèle",
+    "Use group ratio": "Utiliser le ratio du groupe",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "S'applique à ce modèle dans ce groupe uniquement et remplace le ratio du groupe ×{{ratio}}. Vide utilise le ratio du groupe. Les prix ci-dessous prévisualisent le ratio avant l'enregistrement."
   }
 }

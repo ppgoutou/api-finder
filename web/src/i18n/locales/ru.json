@@ -8372,6 +8372,14 @@
     "Gross profit": "Валовая прибыль",
     "Gross margin {{percent}}": "Валовая маржа {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "Закупочная стоимость {{supply}}, валовая прибыль {{profit}}",
-    "Press Enter to start a new line": "Нажмите Enter, чтобы начать новую строку"
+    "Press Enter to start a new line": "Нажмите Enter, чтобы начать новую строку",
+    "Model group ratio saved": "Коэффициент группы для модели сохранён",
+    "This model": "Эта модель",
+    "This model's ratio in {{group}}": "Коэффициент этой модели в {{group}}",
+    "Target share of official price (%)": "Целевая доля официальной цены (%)",
+    "Calculate ratio": "Рассчитать коэффициент",
+    "Save model ratio": "Сохранить коэффициент модели",
+    "Use group ratio": "Использовать коэффициент группы",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "Действует только для этой модели в этой группе и заменяет коэффициент группы ×{{ratio}}. Пустое поле — коэффициент группы. Цены ниже показывают коэффициент до сохранения."
   }
 }

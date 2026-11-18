@@ -8372,6 +8372,14 @@
     "Gross profit": "Lợi nhuận gộp",
     "Gross margin {{percent}}": "Biên lợi nhuận gộp {{percent}}",
     "Supply cost {{supply}}, gross profit {{profit}}": "Chi phí nhập {{supply}}, lợi nhuận gộp {{profit}}",
-    "Press Enter to start a new line": "Nhấn Enter để xuống dòng"
+    "Press Enter to start a new line": "Nhấn Enter để xuống dòng",
+    "Model group ratio saved": "Đã lưu hệ số nhóm của mô hình",
+    "This model": "Mô hình này",
+    "This model's ratio in {{group}}": "Hệ số của mô hình này trong {{group}}",
+    "Target share of official price (%)": "Tỷ lệ mục tiêu so với giá chính thức (%)",
+    "Calculate ratio": "Tính hệ số",
+    "Save model ratio": "Lưu hệ số mô hình",
+    "Use group ratio": "Dùng hệ số nhóm",
+    "Applies to this model in this group only and replaces the group ratio ×{{ratio}}. Empty uses the group ratio. Prices below preview the ratio before saving.": "Chỉ áp dụng cho mô hình này trong nhóm này và thay thế hệ số nhóm ×{{ratio}}. Để trống sẽ dùng hệ số nhóm. Giá bên dưới xem trước hệ số trước khi lưu."
   }
 }
