@@ -2153,10 +2153,8 @@
     "Describe": "Mô tả",
     "Describe how the video moves from the first frame to the last frame.": "Mô tả video chuyển từ khung đầu sang khung cuối như thế nào.",
     "Describe the image you want": "Hãy mô tả hình ảnh bạn muốn",
-    "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Mô tả hình ảnh. Gõ @ để nhắc tới ảnh đã tải lên, ví dụ: đặt nhân vật trong @{{image}} lên bãi biển.",
     "Describe the scene in words and get a video.": "Mô tả cảnh bằng lời và nhận video.",
     "Describe the video you want": "Hãy mô tả video bạn muốn",
-    "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Mô tả video. Gõ @ để nhắc đến tệp đã tải lên, ví dụ: dùng chuyển động của @{{video}} cho nhân vật trong @{{image}}.",
     "Describe this model...": "Mô tả mô hình này...",
     "Describe this vendor...": "Mô tả nhà cung cấp này...",
     "Description": "Mô tả",
@@ -8021,9 +8019,6 @@
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Nhận hoa hồng mời {{quota}}, sẽ vào số dư ngày {{date}}",
     "Invitation rebate {{quota}} moved to balance": "Hoa hồng mời {{quota}} đã vào số dư",
     "MiniMax takes up to {{max}} characters.": "MiniMax nhận tối đa {{max}} ký tự.",
-    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance cho kết quả tốt nhất với tối đa 500 chữ Hán hoặc 1.000 từ tiếng Anh (tối đa {{max}} ký tự).",
-    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan hỗ trợ prompt dài và chi tiết (tối đa {{max}} ký tự).",
-    "Up to {{max}} characters.": "Tối đa {{max}} ký tự.",
     "Generation parameters": "Tham số tạo",
     "{{model}} (not available)": "{{model}} (không khả dụng)",
     "No video models are available in the studio yet.": "Studio chưa có mô hình video nào khả dụng.",
@@ -8510,6 +8505,13 @@
     "Dialogs and panels": "Hộp thoại và bảng",
     "Button": "Nút",
     "Every model, one API": "Mọi mô hình, một API",
-    "Badges": "Huy hiệu"
+    "Badges": "Huy hiệu",
+    "Describe the video you want to create": "Mô tả video bạn muốn tạo",
+    "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Gõ @ để nhắc đến tệp đã tải lên, ví dụ: dùng chuyển động của @{{video}} cho nhân vật trong @{{image}}.",
+    "Describe the image you want to create": "Mô tả hình ảnh bạn muốn tạo",
+    "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Gõ @ để nhắc tới ảnh đã tải lên, ví dụ: đặt nhân vật trong @{{image}} lên bãi biển.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words.": "Seedance cho kết quả tốt nhất với tối đa 500 chữ Hán hoặc 1.000 từ tiếng Anh.",
+    "Wan handles long, detailed prompts.": "Wan hỗ trợ prompt dài và chi tiết.",
+    "Up to {{max}} characters.": "Tối đa {{max}} ký tự."
   }
 }

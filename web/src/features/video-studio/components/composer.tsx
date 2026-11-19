@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { ArrowUp, Film, Images, Layers } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -28,7 +28,6 @@ import { formatNumber } from '@/lib/format'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 
 import { createVideoTask } from '../api'
-import { ASSET_RETENTION_DAYS } from '../constants'
 import { assetKindOf, useAssetUploader } from '../hooks/use-asset-uploader'
 import { useStudioBalance } from '../hooks/use-studio-balance'
 import { useStudioDraft } from '../hooks/use-studio-draft'
@@ -43,10 +42,16 @@ import {
   validateDraft,
 } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
-import { PROMPT_TOO_LONG, promptGuide, promptLength } from '../lib/prompt-guide'
+import {
+  composerHintIds,
+  PROMPT_TOO_LONG,
+  promptGuide,
+  promptLength,
+} from '../lib/prompt-guide'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 import type { StudioDraft, StudioMode } from '../types'
 import { ChoiceMenu } from './choice-menu'
+import { ComposerCard } from './composer-card'
 import { ParamsPopover } from './params-popover'
 import { PromptInput } from './prompt-input'
 import { FramePanel, ReferencePanel } from './reference-panel'
@@ -84,6 +89,7 @@ export function Composer(props: ComposerProps) {
     ? validateDraft(draft, model)
     : 'No video model is available'
   const guide = promptGuide(model?.name)
+  const hintId = useId()
   if (!problem && model && promptLength(draft.prompt) > guide.maxLength) {
     problem = PROMPT_TOO_LONG
   }
@@ -149,115 +155,121 @@ export function Composer(props: ComposerProps) {
   ]
 
   return (
-    <div className='bg-card border-border/70 focus-within:border-primary/50 rounded-2xl border p-3 shadow-sm transition-colors'>
-      <div className='flex flex-col gap-3 sm:flex-row'>
-        {draft.mode === 'reference' ? (
-          <ReferencePanel
-            references={draft.references}
-            onAddFiles={addReferences}
-            onRemove={studio.removeReference}
+    <ComposerCard
+      prompt={draft.prompt}
+      guide={guide}
+      hintId={hintId}
+      toolbar={
+        <>
+          <ChoiceMenu
+            label={t('Mode')}
+            value={draft.mode}
+            options={modeOptions}
+            onChange={(mode) => studio.update({ mode })}
           />
-        ) : (
-          <FramePanel
-            firstFrame={draft.firstFrame}
-            lastFrame={draft.lastFrame}
-            onSetFrame={(slot, file) =>
-              upload(file, 'image', (asset) => studio.putFrame(slot, asset))
-            }
-            onRemoveFrame={studio.removeFrame}
+          {model && (
+            <>
+              <ChoiceMenu
+                label={t('Model')}
+                value={draft.model}
+                options={models.map((option) => ({
+                  value: option.name,
+                  label: option.label ?? option.name,
+                  group: option.group,
+                  icon: <Film className='size-3.5' aria-hidden />,
+                  unavailableLabel: option.unavailable
+                    ? t('Temporarily unavailable')
+                    : undefined,
+                }))}
+                onChange={(name) => studio.update({ model: name })}
+              />
+              <ParamsPopover
+                draft={draft}
+                model={model}
+                onChange={studio.update}
+              />
+            </>
+          )}
+          <div className='ml-auto flex items-center gap-3'>
+            <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
+            <Button
+              type='button'
+              size='icon'
+              className='size-9 rounded-full'
+              onClick={submit}
+              disabled={submitting || insufficient || unavailable}
+              aria-label={t('Generate video')}
+              title={problem ? t(problem, problemParams) : t('Generate video')}
+            >
+              {submitting ? (
+                <Spinner className='size-4' />
+              ) : (
+                <ArrowUp className='size-4' aria-hidden />
+              )}
+            </Button>
+          </div>
+        </>
+      }
+      notice={
+        model &&
+        unavailable && (
+          <UnavailableModelNotice
+            reason={model.unavailableReason}
+            replacement={replacementModel(models, model)?.name}
+            onSwitch={(name) => studio.update({ model: name })}
           />
-        )}
-        <PromptInput
-          value={draft.prompt}
-          onChange={(prompt) => studio.update({ prompt })}
-          mentions={
-            draft.mode === 'reference'
-              ? labelReferences(draft.references).map(({ asset, token }) => ({
-                  token,
-                  fileName: asset.fileName,
-                }))
-              : []
-          }
-          placeholder={
-            draft.mode === 'reference'
-              ? t(
-                  'Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.',
-                  {
-                    video: localizeMentions('@视频1', language).slice(1),
-                    image: localizeMentions('@图片1', language).slice(1),
-                  }
-                )
-              : t(
-                  'Describe how the video moves from the first frame to the last frame.'
-                )
-          }
-          onSubmit={submit}
-          guide={guide}
+        )
+      }
+    >
+      {draft.mode === 'reference' ? (
+        <ReferencePanel
+          references={draft.references}
+          onAddFiles={addReferences}
+          onRemove={studio.removeReference}
         />
-      </div>
-
-      <div className='mt-2 flex flex-wrap items-center gap-1'>
-        <ChoiceMenu
-          label={t('Mode')}
-          value={draft.mode}
-          options={modeOptions}
-          onChange={(mode) => studio.update({ mode })}
-        />
-        {model && (
-          <>
-            <ChoiceMenu
-              label={t('Model')}
-              value={draft.model}
-              options={models.map((option) => ({
-                value: option.name,
-                label: option.label ?? option.name,
-                group: option.group,
-                icon: <Film className='size-3.5' aria-hidden />,
-                unavailableLabel: option.unavailable
-                  ? t('Temporarily unavailable')
-                  : undefined,
-              }))}
-              onChange={(name) => studio.update({ model: name })}
-            />
-            <ParamsPopover
-              draft={draft}
-              model={model}
-              onChange={studio.update}
-            />
-          </>
-        )}
-        <div className='ml-auto flex items-center gap-3'>
-          <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
-          <Button
-            type='button'
-            size='icon'
-            className='size-9 rounded-full'
-            onClick={submit}
-            disabled={submitting || insufficient || unavailable}
-            aria-label={t('Generate video')}
-            title={problem ? t(problem, problemParams) : t('Generate video')}
-          >
-            {submitting ? (
-              <Spinner className='size-4' />
-            ) : (
-              <ArrowUp className='size-4' aria-hidden />
-            )}
-          </Button>
-        </div>
-      </div>
-      {model && unavailable && (
-        <UnavailableModelNotice
-          reason={model.unavailableReason}
-          replacement={replacementModel(models, model)?.name}
-          onSwitch={(name) => studio.update({ model: name })}
+      ) : (
+        <FramePanel
+          firstFrame={draft.firstFrame}
+          lastFrame={draft.lastFrame}
+          onSetFrame={(slot, file) =>
+            upload(file, 'image', (asset) => studio.putFrame(slot, asset))
+          }
+          onRemoveFrame={studio.removeFrame}
         />
       )}
-      <p className='text-muted-foreground mt-2 px-1 text-caption'>
-        {t(
-          'Reference files are kept for {{days}} days and then deleted automatically. Uploading requires a positive balance.',
-          { days: ASSET_RETENTION_DAYS }
-        )}
-      </p>
-    </div>
+      <PromptInput
+        value={draft.prompt}
+        onChange={(prompt) => studio.update({ prompt })}
+        mentions={
+          draft.mode === 'reference'
+            ? labelReferences(draft.references).map(({ asset, token }) => ({
+                token,
+                fileName: asset.fileName,
+              }))
+            : []
+        }
+        placeholder={
+          draft.mode === 'reference'
+            ? t('Describe the video you want to create')
+            : t(
+                'Describe how the video moves from the first frame to the last frame.'
+              )
+        }
+        placeholderExample={
+          draft.mode === 'reference'
+            ? t(
+                'Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.',
+                {
+                  video: localizeMentions('@视频1', language).slice(1),
+                  image: localizeMentions('@图片1', language).slice(1),
+                }
+              )
+            : undefined
+        }
+        describedBy={composerHintIds(hintId)}
+        onSubmit={submit}
+        guide={guide}
+      />
+    </ComposerCard>
   )
 }

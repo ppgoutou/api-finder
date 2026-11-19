@@ -2153,10 +2153,8 @@
     "Describe": "説明",
     "Describe how the video moves from the first frame to the last frame.": "最初のフレームから最後のフレームへの動きを説明してください。",
     "Describe the image you want": "作りたい画像を説明してください",
-    "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "作りたい画像を説明してください。@ でアップロードした画像を参照できます。例：@{{image}} のキャラクターをビーチに置く。",
     "Describe the scene in words and get a video.": "シーンを文章で説明するだけで動画を生成。",
     "Describe the video you want": "作りたい動画を説明してください",
-    "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "動画を説明してください。@ でアップロードした素材を引用できます。例：@{{video}} の動きで @{{image}} のキャラクターを生成。",
     "Describe this model...": "このモデルを説明...",
     "Describe this vendor...": "このベンダーを説明...",
     "Description": "説明",
@@ -8021,9 +8019,6 @@
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "招待リベート {{quota}} を獲得、{{date}} に残高へ入金されます",
     "Invitation rebate {{quota}} moved to balance": "招待リベート {{quota}} を残高へ入金しました",
     "MiniMax takes up to {{max}} characters.": "MiniMax は最大 {{max}} 文字まで入力できます。",
-    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance は中国語 500 字以内、英語 1,000 語以内が推奨です（最大 {{max}} 文字）。",
-    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan は長く詳細なプロンプトに対応しています（最大 {{max}} 文字）。",
-    "Up to {{max}} characters.": "最大 {{max}} 文字。",
     "Generation parameters": "生成パラメーター",
     "{{model}} (not available)": "{{model}}（利用不可）",
     "No video models are available in the studio yet.": "動画スタジオで使える動画モデルはまだありません。",
@@ -8510,6 +8505,13 @@
     "Dialogs and panels": "ダイアログとパネル",
     "Button": "ボタン",
     "Every model, one API": "すべてのモデルをひとつの API で",
-    "Badges": "バッジ"
+    "Badges": "バッジ",
+    "Describe the video you want to create": "作りたい動画を説明してください",
+    "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "@ でアップロードした素材を引用できます。例：@{{video}} の動きで @{{image}} のキャラクターを生成。",
+    "Describe the image you want to create": "作りたい画像を説明してください",
+    "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "@ でアップロードした画像を参照できます。例：@{{image}} のキャラクターをビーチに置く。",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words.": "Seedance は中国語 500 字以内、英語 1,000 語以内が推奨です。",
+    "Wan handles long, detailed prompts.": "Wan は長く詳細なプロンプトに対応しています。",
+    "Up to {{max}} characters.": "最大 {{max}} 文字。"
   }
 }

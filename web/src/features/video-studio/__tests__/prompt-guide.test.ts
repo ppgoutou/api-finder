@@ -27,14 +27,15 @@ describe('promptGuide', () => {
     ['D-sd2.5-G3-1', 5000, /^Seedance/],
     ['D-wan-3.0-P', 5000, /^Wan/],
     ['H-MiniMax-H3-Fast', 2000, /^MiniMax/],
-    ['A-seedream-5.0-pro-P', 5000, /^Up to/],
-    [undefined, 5000, /^Up to/],
+    ['A-seedream-5.0-pro-P', 5000, undefined],
+    [undefined, 5000, undefined],
   ])(
     'maps %s to a %i-character limit with its family hint',
     (name, max, hint) => {
       const guide = promptGuide(name)
       expect(guide.maxLength).toBe(max)
-      expect(guide.hint).toMatch(hint)
+      if (hint) expect(guide.hint).toMatch(hint)
+      else expect(guide.hint).toBeUndefined()
     }
   )
 
