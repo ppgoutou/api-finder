@@ -10,6 +10,7 @@
     "typecheck": "tsgo -b",
     "lint": "oxlint -c .oxlintrc.json .",
     "lint:fix": "oxlint -c .oxlintrc.json . --fix",
+    "lint:design": "oxlint -c .oxlintrc.design.json --deny-warnings .",
     "lint:plugins": "cd ../plugins && oxlint -c .oxlintrc.json .",
     "format:plugins": "cd ../plugins && oxfmt -c .oxfmtrc.json --write .",
     "format:plugins:check": "cd ../plugins && oxfmt -c .oxfmtrc.json --check .",

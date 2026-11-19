@@ -78,7 +78,7 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
           render={
             <Button
               variant='ghost'
-              className='bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary dark:bg-primary/20 dark:hover:bg-primary/25 h-auto rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-normal sm:text-sm dark:text-blue-300 dark:hover:text-blue-300 dark:aria-expanded:text-blue-300'
+              className='bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary dark:bg-primary/20 dark:hover:bg-primary/25 dark:text-brand-on-dark dark:hover:text-brand-on-dark dark:aria-expanded:text-brand-on-dark h-auto rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-normal sm:text-sm'
             />
           }
         >

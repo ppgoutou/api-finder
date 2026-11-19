@@ -30,6 +30,7 @@ import type { PricingModel } from '../types'
 const CAPTION_TEXT_CLASS: Partial<Record<StatusVariant, string>> = {
   warning: 'text-warning',
   info: 'text-info',
+  // oxlint-disable-next-line design/no-raw-palette-color -- darker shade for 4.5:1 caption text
   purple: 'text-fuchsia-700 dark:text-chart-4',
 }
 

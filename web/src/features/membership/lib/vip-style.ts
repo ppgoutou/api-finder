@@ -31,7 +31,7 @@ export const VIP_GOLD_SURFACE =
  * the site font for text, Space Grotesk for display figures and a lime accent. The
  * `dark` class switches the theme tokens of everything inside to dark.
  */
-export const VIP_NIGHT_STAGE = 'dark bg-[#0d0e10] text-white'
+export const VIP_NIGHT_STAGE = 'dark bg-night text-white'
 
 /** Large figures and headlines on the night stage. */
 export const VIP_DISPLAY_FONT = 'font-display font-bold tracking-[-0.03em]'

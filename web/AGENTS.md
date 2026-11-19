@@ -155,6 +155,7 @@
 
 - 以 Tailwind 工具类为主，动态类名用 `cn()` 合并；非动态场景避免内联样式。
 - 响应式采用移动优先与 Tailwind 断点（`sm:`、`md:`、`lg:` 等）；主题与暗色用 CSS 变量与 `dark:`，自定义样式集中在 `src/styles/`，组件内尽量少写自定义 CSS。
+- **设计规范（强制）**：字号只用 `src/styles/theme.css` 中的字号档（如 `text-micro`、`text-caption`、`text-body-sm`、`text-page-title`），不写 `text-[13px]`；颜色只用主题色（`brand`、`vip`、`success`、`warning`、`destructive`、`info`、`muted`、`chart-1..8` 等），不写 `amber-500` 这类原色或 `bg-[#hex]`；按钮用 `Button`，不手写 `<button>`。`bun run lint:design`（CI 必跑）检查这三条。确需保留的特殊控件或品牌色，用 `oxlint-disable-next-line design/<规则> -- 原因` 注明；整个文件豁免写在 `.oxlintrc.design.json` 的 `overrides` 里。
 
 ### 3.11 文件组织
 

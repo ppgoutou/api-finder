@@ -48,6 +48,7 @@ export function VipHeaderChip(props: VipHeaderChipProps) {
   if (isVip || props.compact) label = 'VIP'
 
   return (
+    // oxlint-disable-next-line design/no-raw-button -- pill chip in the header
     <button
       type='button'
       onClick={() => openCompare(isVip ? 'header-vip' : 'header-upgrade')}

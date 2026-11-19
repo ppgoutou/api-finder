@@ -35,7 +35,7 @@ import {
 
 /** Box and type the prompt textarea and its mention layer share. */
 const PROMPT_TEXT_BOX =
-  'px-1 py-1 text-base leading-6 break-words whitespace-pre-wrap [scrollbar-gutter:stable] md:text-[15px] md:leading-6'
+  'px-1 py-1 text-base leading-6 break-words whitespace-pre-wrap [scrollbar-gutter:stable] md:text-body-lg'
 
 export interface MentionOption {
   /** Token the model reads, such as "图片1". */
@@ -155,7 +155,7 @@ export function PromptInput(props: PromptInputProps) {
             >
               {props.placeholder}
               {props.placeholderExample && (
-                <span className='mt-1 block text-[13px] leading-5'>
+                <span className='text-body-sm mt-1 block'>
                   {props.placeholderExample}
                 </span>
               )}
@@ -225,6 +225,7 @@ export function PromptInput(props: PromptInputProps) {
             </p>
           ) : (
             props.mentions.map((option, index) => (
+              // oxlint-disable-next-line design/no-raw-button -- listbox option that keeps focus in the textarea
               <button
                 key={option.token}
                 type='button'

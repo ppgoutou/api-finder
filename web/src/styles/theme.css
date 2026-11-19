@@ -108,6 +108,13 @@ For commercial licensing, please contact support@quantumnous.com
   --color-vip-soft: var(--vip-soft);
   --color-accent-night: var(--accent-night);
   --color-accent-night-foreground: var(--accent-night-foreground);
+  /* Fixed colours that do not follow light / dark mode: the dark VIP stage,
+   * the Telegram brand and the NSFW category marker. */
+  --color-night: #0d0e10;
+  --color-night-raised: #11130a;
+  --color-telegram: #229ed9;
+  --color-telegram-hover: #1a8bc2;
+  --color-nsfw: #d6246e;
   --color-chart-6: var(--chart-6);
   --color-chart-7: var(--chart-7);
   --color-chart-8: var(--chart-8);

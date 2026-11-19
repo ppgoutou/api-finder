@@ -157,7 +157,7 @@ export function DesignSystem() {
                     ))}
                   </div>
                 ))}
-                <div className='dark rounded-card flex min-w-max items-center gap-3 bg-[#0d0e10] p-3'>
+                <div className='dark rounded-card bg-night flex min-w-max items-center gap-3 p-3'>
                   <code className='text-caption w-24 shrink-0 text-white/60'>
                     night
                   </code>
