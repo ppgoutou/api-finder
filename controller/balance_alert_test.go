@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,5 +62,22 @@ func TestValidateFeishuWebhookURL(t *testing.T) {
 	for _, tt := range tests {
 		err := service.ValidateFeishuWebhookURL(tt.url)
 		assert.Equal(t, tt.valid, err == nil, tt.url)
+	}
+}
+
+func TestBalanceAlertMonitorConvert(t *testing.T) {
+	tests := []struct {
+		name    string
+		divisor float64
+		raw     float64
+		want    float64
+	}{
+		{name: "credits at 10 per yuan become yuan", divisor: 10, raw: 4553.9, want: 455.39},
+		{name: "unset divisor keeps the upstream number", divisor: 0, raw: 4553.9, want: 4553.9},
+		{name: "negative divisor keeps the upstream number", divisor: -2, raw: 80, want: 80},
+	}
+	for _, tt := range tests {
+		got := system_setting.BalanceAlertMonitor{Divisor: tt.divisor}.Convert(tt.raw)
+		assert.InDelta(t, tt.want, got, 1e-9, tt.name)
 	}
 }

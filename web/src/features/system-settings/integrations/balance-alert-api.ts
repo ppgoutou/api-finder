@@ -25,6 +25,8 @@ export interface BalanceAlertMonitor {
   path: string
   field: string
   threshold: number
+  /** Upstream number ÷ divisor = balance in `unit`; 1 keeps it. */
+  divisor: number
   unit: string
 }
 
@@ -65,6 +67,7 @@ export function parseBalanceAlertMonitors(
       path: String(item.path ?? ''),
       field: String(item.field ?? ''),
       threshold: Number(item.threshold) || 0,
+      divisor: Number(item.divisor) > 0 ? Number(item.divisor) : 1,
       unit: String(item.unit ?? ''),
     }))
 }

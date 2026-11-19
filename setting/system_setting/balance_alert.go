@@ -13,8 +13,20 @@ type BalanceAlertMonitor struct {
 	Path      string  `json:"path"`
 	Field     string  `json:"field"`
 	Threshold float64 `json:"threshold"`
+	// Divisor converts the upstream number into the unit the threshold and
+	// messages use, e.g. 10 for an upstream that reports 10 credits per yuan.
+	// 0 or less means 1.
+	Divisor float64 `json:"divisor"`
 	// Unit is only shown in alert messages, e.g. "CNY".
 	Unit string `json:"unit"`
+}
+
+// Convert turns the balance read from upstream into the monitor's unit.
+func (m BalanceAlertMonitor) Convert(raw float64) float64 {
+	if m.Divisor <= 0 {
+		return raw
+	}
+	return raw / m.Divisor
 }
 
 // BalanceAlertSettings sends a Feishu (Lark) bot message when a watched

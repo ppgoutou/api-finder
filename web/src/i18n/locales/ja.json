@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Divide by": "割る数",
+    "Enter a number greater than 0": "0 より大きい数を入力してください",
+    "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "「割る数」は上流の数値を自分の単位に換算します。例：上流が 1 元 = 10 クレジットなら 10。しきい値とメッセージは換算後の金額を使います。",
     "Upstream balance alerts": "上流残高アラート",
     "Upstream balance alert": "上流残高アラート",
     "Checks the account balance of upstream channels and sends a Feishu bot message when it falls below the threshold, again while it stays low, and once when it recovers.": "上流チャネルのアカウント残高を確認し、しきい値を下回ると Feishu ボットで通知します。低いままなら再通知し、回復したら一度通知します。",

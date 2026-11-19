@@ -71,7 +71,7 @@ beforeEach(() => {
   vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } })
 })
 
-test('adding a channel saves the monitor list as JSON with fenglang-style defaults', async () => {
+test('adding a channel with divide by 10 saves the monitor list as JSON', async () => {
   const user = userEvent.setup()
   renderSettings()
 
@@ -79,6 +79,9 @@ test('adding a channel saves the monitor list as JSON with fenglang-style defaul
   const channelId = screen.getByLabelText('Channel ID')
   await user.clear(channelId)
   await user.type(channelId, '11')
+  const divisor = screen.getByLabelText('Divide by')
+  await user.tripleClick(divisor)
+  await user.keyboard('10')
   await user.click(screen.getByRole('button', { name: 'Save Changes' }))
 
   await waitFor(() => expect(api.put).toHaveBeenCalledTimes(1))
@@ -90,6 +93,7 @@ test('adding a channel saves the monitor list as JSON with fenglang-style defaul
         path: '/balance',
         field: 'balance',
         threshold: 100,
+        divisor: 10,
         unit: 'CNY',
       },
     ]),
@@ -178,6 +182,7 @@ test('saved monitors JSON is parsed and unreadable values become an empty list',
       path: '/balance',
       field: 'balance',
       threshold: 50,
+      divisor: 1,
       unit: 'CNY',
     },
   ])

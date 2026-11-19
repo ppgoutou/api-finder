@@ -66,6 +66,7 @@ const NEW_MONITOR: BalanceAlertMonitor = {
   path: '/balance',
   field: 'balance',
   threshold: 100,
+  divisor: 1,
   unit: 'CNY',
 }
 
@@ -90,6 +91,7 @@ const createBalanceAlertSchema = (t: (key: string) => string) =>
         path: z.string().trim().min(1, t('Enter the balance path')),
         field: z.string().trim().min(1, t('Enter the balance field')),
         threshold: z.number().min(0),
+        divisor: z.number().positive(t('Enter a number greater than 0')),
         unit: z.string(),
       })
     ),
@@ -287,11 +289,16 @@ export function BalanceAlertSettingsSection(
                 'The balance is read with GET channel base URL + path, using the channel key. Field is the JSON path of the balance, such as balance or data.balance.'
               )}
             </p>
+            <p className='text-muted-foreground text-sm'>
+              {t(
+                'Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.'
+              )}
+            </p>
           </div>
           {monitors.fields.map((item, index) => (
             <div
               key={item.id}
-              className='grid grid-cols-2 items-start gap-3 md:grid-cols-[7rem_1fr_1fr_8rem_6rem_auto]'
+              className='grid grid-cols-2 items-start gap-3 md:grid-cols-[7rem_1fr_1fr_6rem_8rem_6rem_auto]'
             >
               <FormField
                 control={form.control}
@@ -331,6 +338,24 @@ export function BalanceAlertSettingsSection(
                     <FormLabel>{t('Balance field')}</FormLabel>
                     <FormControl>
                       <Input placeholder='balance' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`monitors.${index}.divisor`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Divide by')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        min={0}
+                        step='any'
+                        {...safeNumberFieldProps(field)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
