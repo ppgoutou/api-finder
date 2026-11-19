@@ -61,7 +61,7 @@ export function VipTierCards(props: VipTierCardsProps) {
   let standardAction = (
     <Button
       size='xl'
-      className='w-full bg-white font-semibold text-[#111214] hover:bg-white/90'
+      className='text-accent-night-foreground w-full bg-white font-semibold hover:bg-white/90'
       render={
         <Link
           to='/sign-up'
@@ -120,7 +120,7 @@ export function VipTierCards(props: VipTierCardsProps) {
         </ul>
       </article>
 
-      <article className='border-accent-night/45 rounded-panel relative flex flex-col overflow-hidden border bg-[#11130a] p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
+      <article className='border-accent-night/45 rounded-panel bg-night-raised relative flex flex-col overflow-hidden border p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
         <div
           aria-hidden
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,rgba(209,254,23,0.26),transparent_62%)]'

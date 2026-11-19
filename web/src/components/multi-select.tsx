@@ -341,6 +341,7 @@ export function MultiSelect(props: MultiSelectProps) {
                         </span>
                       )}
                       {props.copyChipOnClick ? (
+                        // oxlint-disable-next-line design/no-raw-button -- chip-sized control inside the combobox field
                         <button
                           type='button'
                           onClick={(event) =>
@@ -368,6 +369,7 @@ export function MultiSelect(props: MultiSelectProps) {
                   )
                 })}
                 {hiddenCount > 0 && (
+                  // oxlint-disable-next-line design/no-raw-button -- chip-sized control inside the combobox field
                   <button
                     type='button'
                     onClick={(event) => {
@@ -385,6 +387,7 @@ export function MultiSelect(props: MultiSelectProps) {
                 {expanded &&
                   typeof props.maxVisibleChips === 'number' &&
                   values.length > props.maxVisibleChips && (
+                    // oxlint-disable-next-line design/no-raw-button -- chip-sized control inside the combobox field
                     <button
                       type='button'
                       onClick={(event) => {

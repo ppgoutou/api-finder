@@ -39,7 +39,7 @@ export function VipSupportContact(props: VipSupportContactProps) {
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex items-center gap-2.5 rounded-lg border px-3 py-2'>
-        <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-[#229ED9] text-white'>
+        <span className='bg-telegram flex size-8 shrink-0 items-center justify-center rounded-full text-white'>
           <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />
         </span>
         <div className='min-w-0 flex-1'>
@@ -60,7 +60,7 @@ export function VipSupportContact(props: VipSupportContactProps) {
         rel='noopener noreferrer'
         className={cn(
           buttonVariants(),
-          'h-10 w-full bg-[#229ED9] text-white hover:bg-[#1a8bc2]'
+          'h-10 w-full bg-telegram text-white hover:bg-telegram-hover'
         )}
       >
         <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />

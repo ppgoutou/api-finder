@@ -43,17 +43,20 @@ const COMPACT_NUMBER = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
 })
 
+// Gold, silver and bronze for the podium; the rest stay neutral.
+const PODIUM_PALETTE: Record<number, string> = {
+  // oxlint-disable-next-line design/no-raw-palette-color -- podium medal colours
+  1: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  // oxlint-disable-next-line design/no-raw-palette-color -- podium medal colours
+  2: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  // oxlint-disable-next-line design/no-raw-palette-color -- podium medal colours
+  3: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+}
+
 function RankBadge(props: { rank: number }) {
   const rank = props.rank
   const isPodium = rank <= 3
-  const palette =
-    rank === 1
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-      : rank === 2
-        ? 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
-        : rank === 3
-          ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300'
-          : 'bg-muted text-muted-foreground'
+  const palette = PODIUM_PALETTE[rank] ?? 'bg-muted text-muted-foreground'
   return (
     <span
       className={cn(
@@ -70,12 +73,15 @@ function GrowthChip(props: { value: number }) {
   const value = props.value
   const isUp = value > 0
   const isDown = value < 0
-  const palette = isUp
-    ? 'bg-success/10 text-success'
-    : isDown
-      ? 'bg-destructive/10 text-destructive'
-      : 'bg-muted text-muted-foreground'
-  const Icon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : null
+  let palette = 'bg-muted text-muted-foreground'
+  let Icon: typeof ArrowUpRight | null = null
+  if (isUp) {
+    palette = 'bg-success/10 text-success'
+    Icon = ArrowUpRight
+  } else if (isDown) {
+    palette = 'bg-destructive/10 text-destructive'
+    Icon = ArrowDownRight
+  }
   const formatted = `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
   return (
     <span

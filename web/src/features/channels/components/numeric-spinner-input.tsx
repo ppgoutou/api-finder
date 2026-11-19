@@ -148,6 +148,7 @@ export function NumericSpinnerInput({
           editing && 'bg-muted/60 ring-primary/30 ring-1'
         )}
       >
+        {/* oxlint-disable-next-line design/no-raw-button -- spinner step drawn inside the number field */}
         <button
           type='button'
           tabIndex={-1}
@@ -177,6 +178,7 @@ export function NumericSpinnerInput({
             autoFocus
           />
         ) : (
+          // oxlint-disable-next-line design/no-raw-button -- spinner step drawn inside the number field
           <button
             type='button'
             onClick={handleStartEdit}
@@ -191,6 +193,7 @@ export function NumericSpinnerInput({
           </button>
         )}
 
+        {/* oxlint-disable-next-line design/no-raw-button -- spinner step drawn inside the number field */}
         <button
           type='button'
           tabIndex={-1}

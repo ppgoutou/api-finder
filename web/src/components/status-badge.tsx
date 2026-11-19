@@ -56,6 +56,7 @@ export const dotColorMap = {
   grey: 'bg-neutral',
   indigo: 'bg-chart-1',
   'light-blue': 'bg-info',
+  // oxlint-disable-next-line design/no-raw-palette-color -- light-green is a palette option, not a status
   'light-green': 'bg-emerald-400',
   lime: 'bg-chart-3',
   orange: 'bg-warning',
@@ -80,6 +81,7 @@ export const textColorMap = {
   grey: 'text-muted-foreground',
   indigo: 'text-chart-1',
   'light-blue': 'text-info',
+  // oxlint-disable-next-line design/no-raw-palette-color -- light-green is a palette option, not a status
   'light-green': 'text-emerald-500 dark:text-emerald-300',
   lime: 'text-chart-3',
   orange: 'text-warning',

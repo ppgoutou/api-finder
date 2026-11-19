@@ -199,6 +199,7 @@ function SeriesCarouselControls() {
       <CarouselPrevious className='static translate-y-0' />
       <div className='flex items-center gap-1.5'>
         {snaps.map((snap, index) => (
+          // oxlint-disable-next-line design/no-raw-button -- carousel position dot
           <button
             key={snap}
             type='button'

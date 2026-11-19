@@ -109,6 +109,7 @@ export function SupportWidget() {
             </PopoverTitle>
             <p className='flex items-center gap-1.5 text-xs text-white/80'>
               <span
+                // oxlint-disable-next-line design/no-raw-palette-color -- online dot on the brand-coloured header
                 className='size-2 rounded-full bg-emerald-300'
                 aria-hidden
               />
@@ -125,7 +126,7 @@ export function SupportWidget() {
           </PopoverDescription>
 
           <div className='flex items-center gap-2.5 rounded-lg border px-3 py-2'>
-            <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-[#229ED9] text-white'>
+            <span className='bg-telegram flex size-8 shrink-0 items-center justify-center rounded-full text-white'>
               <HugeiconsIcon
                 icon={TelegramIcon}
                 className='size-4'
@@ -162,7 +163,7 @@ export function SupportWidget() {
             rel='noopener noreferrer'
             className={cn(
               buttonVariants(),
-              'h-10 w-full bg-[#229ED9] text-white hover:bg-[#1a8bc2]'
+              'h-10 w-full bg-telegram text-white hover:bg-telegram-hover'
             )}
           >
             <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />

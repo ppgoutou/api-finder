@@ -339,7 +339,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
       </section>
 
       <section className='px-6 pt-8 pb-20 md:pb-28'>
-        <div className='border-accent-night/35 rounded-panel relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden border bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
+        <div className='border-accent-night/35 rounded-panel bg-night-raised relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden border px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
           <div
             aria-hidden
             className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(209,254,23,0.22),transparent_65%)]'

@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "jsPlugins": [
+    {
+      "name": "design",
+      "specifier": "./scripts/oxlint/design-tokens.mjs"
+    }
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".tanstack",
+    ".eslintrc.cjs",
+    "src/components/ui",
+    "src/routeTree.gen.ts"
+  ],
+  "rules": {
+    "design/no-arbitrary-font-size": "error",
+    "design/no-raw-palette-color": "error",
+    "design/no-raw-button": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "design/no-raw-button": "off",
+        "design/no-raw-palette-color": "off",
+        "design/no-arbitrary-font-size": "off"
+      }
+    },
+    {
+      "files": [
+        "src/features/home/components/hero-terminal-demo.tsx",
+        "src/features/home/components/promo-popup/**",
+        "src/features/landing/**",
+        "src/features/task-plugins/components/javascript-viewer.tsx",
+        "src/features/wallet/components/stripe-accepted-methods.tsx",
+        "src/features/docs/index.tsx",
+        "src/lib/colors.ts"
+      ],
+      "rules": {
+        "design/no-raw-button": "off",
+        "design/no-raw-palette-color": "off",
+        "design/no-arbitrary-font-size": "off"
+      }
+    }
+  ]
+}

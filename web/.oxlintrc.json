@@ -1,8 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["./.oxlintrc.design.json"],
   "plugins": ["typescript", "unicorn", "oxc", "react", "import", "promise"],
   "jsPlugins": [
-    { "name": "project", "specifier": "./scripts/oxlint/intl-locale.mjs" }
+    {
+      "name": "project",
+      "specifier": "./scripts/oxlint/intl-locale.mjs"
+    }
   ],
   "categories": {
     "correctness": "error"

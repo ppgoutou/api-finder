@@ -57,12 +57,12 @@ export function GatewayCard({ logo, systemName }: GatewayCardProps) {
 
         {/* Features Grid */}
         <div className='grid grid-cols-2 gap-3'>
-          {features.map((feature, i) => (
+          {features.map((feature) => (
             <div
-              key={i}
+              key={feature}
               className='glass-morphism group/item border-border/40 dark:border-border/20 hover:border-primary/40 relative overflow-hidden rounded-xl border px-4 py-3.5 text-center shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md'
             >
-              <div className='group-hover/item:from-primary/10 absolute inset-0 bg-gradient-to-br from-amber-500/0 to-amber-500/0 transition-all duration-300' />
+              <div className='group-hover/item:from-primary/10 absolute inset-0 bg-gradient-to-br from-transparent to-transparent transition-all duration-300' />
               <span className='text-foreground/90 group-hover/item:text-foreground relative text-sm font-medium'>
                 {feature}
               </span>
