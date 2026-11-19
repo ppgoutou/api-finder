@@ -185,9 +185,13 @@ var (
 	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as"}
 	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核"}
 	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}
+	// A reference the supplier could not fetch or open, in its own words.
+	materialUnreachablePatterns = []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败",
+		"source video could not be resolved", "video file cannot be read"}
+	materialFrameRatePatterns = []string{"frame rate must", "参考视频帧率"}
 	// Checked after copyright, which names an asset: these name neither side,
 	// and a supplier uses them for the result.
-	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation"}
+	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation", "内容审核未通过"}
 )
 
 // Patterns are lower case and checked in order; the first match wins. Specific
@@ -209,9 +213,9 @@ var textRules = []rule{
 	{CodePromptTooLong, promptTooLongPatterns},
 	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeMaterialDownloadTimeout, []string{"外部素材下载超时"}},
-	{CodeMaterialUnreachable, []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败"}},
+	{CodeMaterialUnreachable, materialUnreachablePatterns},
 	{CodeMaterialPublicURL, []string{"public http(s) url", "media_url_required", "公网 http", "仅接受 http(s)"}},
-	{CodeMaterialFrameRate, []string{"frame rate must"}},
+	{CodeMaterialFrameRate, materialFrameRatePatterns},
 	{CodeMaterialPixels, []string{"pixel count must"}},
 	{CodeMaterialRequirements, []string{"请检查上传素材"}},
 	{CodeFramesPaired, []string{"must be provided together"}},
@@ -253,8 +257,8 @@ var failReasonRules = []rule{
 	{CodeModerationCopyright, []string{"copyright", "版权"}},
 	{CodeModerationOutput, generalModerationPatterns},
 	{CodeMaterialDownloadTimeout, []string{"外部素材下载超时"}},
-	{CodeMaterialUnreachable, []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败"}},
-	{CodeMaterialFrameRate, []string{"frame rate must"}},
+	{CodeMaterialUnreachable, materialUnreachablePatterns},
+	{CodeMaterialFrameRate, materialFrameRatePatterns},
 	{CodeMaterialPixels, []string{"pixel count must"}},
 	{CodeMaterialRequirements, []string{"请检查上传素材"}},
 }
