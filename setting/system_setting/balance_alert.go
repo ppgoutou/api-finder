@@ -34,7 +34,8 @@ func (m BalanceAlertMonitor) Convert(raw float64) float64 {
 // BalanceAlertSettings sends a Feishu (Lark) bot message when a watched
 // upstream balance falls below its threshold, repeats it every RepeatMinutes
 // while it stays low, and sends one more message when it recovers. With
-// ReportEnabled, every check that needs no alert also sends the balance.
+// ReportEnabled, a check that needs no alert also sends the balance, at most
+// once per ReportMinutes.
 //
 // The sign secret ends in "_secret" so the option API never returns it.
 type BalanceAlertSettings struct {
@@ -42,9 +43,11 @@ type BalanceAlertSettings struct {
 	IntervalMinutes int  `json:"interval_minutes"`
 	// RepeatHours is the old repeat setting, used only while RepeatMinutes
 	// is unset.
-	RepeatHours      int                   `json:"repeat_hours"`
-	RepeatMinutes    int                   `json:"repeat_minutes"`
-	ReportEnabled    bool                  `json:"report_enabled"`
+	RepeatHours   int  `json:"repeat_hours"`
+	RepeatMinutes int  `json:"repeat_minutes"`
+	ReportEnabled bool `json:"report_enabled"`
+	// ReportMinutes spaces routine reports; 0 sends one on every check.
+	ReportMinutes    int                   `json:"report_minutes"`
 	FeishuWebhookURL string                `json:"feishu_webhook_url"`
 	FeishuSignSecret string                `json:"feishu_sign_secret"`
 	Monitors         []BalanceAlertMonitor `json:"monitors"`

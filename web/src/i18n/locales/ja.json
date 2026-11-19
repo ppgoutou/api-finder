@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "レポート間隔（分）",
+    "How often the balance report is sent. 0 sends one on every check.": "残高レポートを送る頻度です。0 なら確認のたびに送ります。",
     "Send a balance report on every check": "確認のたびに残高レポートを送信",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "確認のたびに各チャネルの残高も送信します。残高が低いときは残高不足の通知のみを再通知間隔で送ります。",
     "Repeat reminder every (minutes)": "再通知の間隔（分）",

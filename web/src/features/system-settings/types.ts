@@ -423,6 +423,7 @@ export type OperationsSettings = {
   'balance_alert_setting.repeat_hours': number
   'balance_alert_setting.repeat_minutes': number
   'balance_alert_setting.report_enabled': boolean
+  'balance_alert_setting.report_minutes': number
   'balance_alert_setting.monitors': string
   'media_storage.enabled': boolean
   'media_storage.overseas_endpoint': string

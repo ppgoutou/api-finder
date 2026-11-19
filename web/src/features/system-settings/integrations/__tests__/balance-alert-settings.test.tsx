@@ -38,6 +38,7 @@ const SAVED: BalanceAlertFormValues = {
   interval_minutes: 10,
   repeat_minutes: 360,
   report_enabled: false,
+  report_minutes: 0,
   monitors: [],
 }
 
@@ -191,7 +192,7 @@ test('saved monitors JSON is parsed and unreadable values become an empty list',
   expect(parseBalanceAlertMonitors('{"a":1}')).toEqual([])
 })
 
-test('turning on reports and setting a 30 minute repeat saves both options', async () => {
+test('turning on reports every 180 minutes with a 30 minute repeat saves all three options', async () => {
   const user = userEvent.setup()
   renderSettings()
 
@@ -201,9 +202,16 @@ test('turning on reports and setting a 30 minute repeat saves both options', asy
   const repeat = screen.getByLabelText('Repeat reminder every (minutes)')
   await user.tripleClick(repeat)
   await user.keyboard('30')
+  const report = screen.getByLabelText('Report every (minutes)')
+  await user.tripleClick(report)
+  await user.keyboard('180')
   await user.click(screen.getByRole('button', { name: 'Save Changes' }))
 
-  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(2))
+  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(3))
+  expect(api.put).toHaveBeenCalledWith('/api/option/', {
+    key: 'balance_alert_setting.report_minutes',
+    value: 180,
+  })
   expect(api.put).toHaveBeenCalledWith('/api/option/', {
     key: 'balance_alert_setting.repeat_minutes',
     value: 30,

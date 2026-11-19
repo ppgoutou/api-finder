@@ -77,7 +77,7 @@ const (
 	MsgNotifyQuotaLowEmail             = "notify.quota_low_email"
 )
 
-// Upstream balance alerts sent to the Feishu bot, in DEFAULT_LANGUAGE
+// Upstream balance alerts sent to the Feishu bot, always in zh-CN
 const (
 	MsgBalanceAlertLow         = "balance_alert.low"
 	MsgBalanceAlertRecovered   = "balance_alert.recovered"

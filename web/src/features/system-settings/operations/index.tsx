@@ -68,6 +68,7 @@ const defaultOperationsSettings: OperationsSettings = {
   'balance_alert_setting.repeat_hours': 6,
   'balance_alert_setting.repeat_minutes': 0,
   'balance_alert_setting.report_enabled': false,
+  'balance_alert_setting.report_minutes': 0,
   'balance_alert_setting.monitors': '[]',
   'media_storage.enabled': false,
   'media_storage.overseas_endpoint': '',

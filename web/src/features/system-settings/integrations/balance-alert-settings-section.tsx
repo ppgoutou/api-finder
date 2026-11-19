@@ -86,6 +86,7 @@ const createBalanceAlertSchema = (t: (key: string) => string) =>
     interval_minutes: z.number().int().min(1),
     repeat_minutes: z.number().int().min(1),
     report_enabled: z.boolean(),
+    report_minutes: z.number().int().min(0),
     monitors: z.array(
       z.object({
         channel_id: z.number().int().min(1, t('Enter a channel ID')),
@@ -112,6 +113,7 @@ const SCALAR_FIELDS = [
   'interval_minutes',
   'repeat_minutes',
   'report_enabled',
+  'report_minutes',
 ] as const
 
 /**
@@ -173,7 +175,7 @@ export function BalanceAlertSettingsSection(
   }
 
   const numberField = (
-    name: 'interval_minutes' | 'repeat_minutes',
+    name: 'interval_minutes' | 'repeat_minutes' | 'report_minutes',
     label: string,
     description: string
   ) => (
@@ -184,7 +186,11 @@ export function BalanceAlertSettingsSection(
         <FormItem>
           <FormLabel>{t(label)}</FormLabel>
           <FormControl>
-            <Input type='number' min={1} {...safeNumberFieldProps(field)} />
+            <Input
+              type='number'
+              min={name === 'report_minutes' ? 0 : 1}
+              {...safeNumberFieldProps(field)}
+            />
           </FormControl>
           <FormDescription>{t(description)}</FormDescription>
           <FormMessage />
@@ -299,6 +305,11 @@ export function BalanceAlertSettingsSection(
               'interval_minutes',
               'Check every (minutes)',
               'How often balances are read.'
+            )}
+            {numberField(
+              'report_minutes',
+              'Report every (minutes)',
+              'How often the balance report is sent. 0 sends one on every check.'
             )}
             {numberField(
               'repeat_minutes',

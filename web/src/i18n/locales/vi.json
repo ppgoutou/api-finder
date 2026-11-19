@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "Báo cáo mỗi (phút)",
+    "How often the balance report is sent. 0 sends one on every check.": "Tần suất gửi báo cáo số dư. 0 là gửi sau mỗi lần kiểm tra.",
     "Send a balance report on every check": "Gửi báo cáo số dư sau mỗi lần kiểm tra",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Mỗi lần kiểm tra cũng gửi số dư của từng kênh. Khi số dư thấp chỉ gửi nhắc số dư thấp theo khoảng nhắc lại.",
     "Repeat reminder every (minutes)": "Nhắc lại mỗi (phút)",
