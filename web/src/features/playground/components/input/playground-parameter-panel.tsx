@@ -124,7 +124,7 @@ function PlaygroundParameterContent({
                     {t(control.labelKey)}
                   </label>
                   <Badge
-                    className='h-5 max-w-24 shrink-0 px-1.5 font-mono text-[11px]'
+                    className='text-caption h-5 max-w-24 shrink-0 px-1.5 font-mono'
                     variant='outline'
                   >
                     {t(getParameterControlValueText(control.key, value))}
@@ -210,7 +210,7 @@ export function PlaygroundParameterPanel(props: PlaygroundParameterPanelProps) {
       variant='ghost'
     >
       <SlidersHorizontalIcon size={16} />
-      <span className='bg-primary text-primary-foreground absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-none font-semibold'>
+      <span className='bg-primary text-primary-foreground text-micro absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-1 leading-none font-semibold'>
         {activeCount}
       </span>
     </PromptInputButton>

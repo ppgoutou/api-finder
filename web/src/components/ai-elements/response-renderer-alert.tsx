@@ -32,32 +32,28 @@ import type {
 const alertConfig = {
   note: {
     label: 'Note',
-    className:
-      'border-blue-500/40 bg-blue-500/8 text-blue-950 dark:text-blue-100',
-    markerClassName: 'text-blue-600 dark:text-blue-300',
+    className: 'border-info/40 bg-info/8 text-foreground',
+    markerClassName: 'text-info',
   },
   tip: {
     label: 'Tip',
-    className:
-      'border-emerald-500/40 bg-emerald-500/8 text-emerald-950 dark:text-emerald-100',
-    markerClassName: 'text-emerald-600 dark:text-emerald-300',
+    className: 'border-success/40 bg-success/8 text-foreground',
+    markerClassName: 'text-success',
   },
   important: {
     label: 'Important',
-    className:
-      'border-violet-500/40 bg-violet-500/8 text-violet-950 dark:text-violet-100',
-    markerClassName: 'text-violet-600 dark:text-violet-300',
+    className: 'border-chart-3/40 bg-chart-3/8 text-foreground',
+    markerClassName: 'text-chart-3',
   },
   warning: {
     label: 'Warning',
-    className:
-      'border-amber-500/40 bg-amber-500/8 text-amber-950 dark:text-amber-100',
-    markerClassName: 'text-amber-600 dark:text-amber-300',
+    className: 'border-warning/40 bg-warning/8 text-foreground',
+    markerClassName: 'text-warning',
   },
   caution: {
     label: 'Caution',
-    className: 'border-red-500/40 bg-red-500/8 text-red-950 dark:text-red-100',
-    markerClassName: 'text-red-600 dark:text-red-300',
+    className: 'border-destructive/40 bg-destructive/8 text-foreground',
+    markerClassName: 'text-destructive',
   },
 } satisfies Record<AlertKind, AlertConfig>
 
@@ -145,10 +141,7 @@ export function renderBlockquote(
         key={key}
       >
         <div
-          className={cn(
-            'mb-2 text-xs font-semibold tracking-wide uppercase',
-            config.markerClassName
-          )}
+          className={cn('mb-2 text-xs font-semibold', config.markerClassName)}
         >
           {t(config.label)}
         </div>

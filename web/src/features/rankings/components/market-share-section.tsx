@@ -299,7 +299,7 @@ function VendorList(props: {
             <div className='text-foreground font-mono text-sm font-semibold tabular-nums'>
               {formatTokens(vendor.total_tokens)}
             </div>
-            <div className='text-muted-foreground/80 font-mono text-[11px] tabular-nums'>
+            <div className='text-muted-foreground/80 text-caption font-mono tabular-nums'>
               {formatShare(vendor.share)}
             </div>
           </div>

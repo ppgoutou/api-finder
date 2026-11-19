@@ -315,9 +315,7 @@ export function OnboardingMarkupTable(props: {
             }
             aria-invalid={badInput.has(row.tier) || notPositive.has(row.tier)}
             className={
-              (amounts[row.tier] ?? 0) < 0
-                ? 'text-green-600 dark:text-green-500'
-                : undefined
+              (amounts[row.tier] ?? 0) < 0 ? 'text-success' : undefined
             }
             placeholder='0'
             value={draft[row.tier] ?? ''}
@@ -358,13 +356,7 @@ export function OnboardingMarkupTable(props: {
       cell: (row) => {
         const profit = groupFinal(row) - row.supply
         return (
-          <span
-            className={
-              profit < 0
-                ? 'text-destructive'
-                : 'text-green-600 dark:text-green-500'
-            }
-          >
+          <span className={profit < 0 ? 'text-destructive' : 'text-success'}>
             {price(profit)}
           </span>
         )
@@ -379,13 +371,7 @@ export function OnboardingMarkupTable(props: {
         if (final <= 0) return <span className='text-muted-foreground'>—</span>
         const margin = (final - row.supply) / final
         return (
-          <span
-            className={
-              margin < 0
-                ? 'text-destructive'
-                : 'text-green-600 dark:text-green-500'
-            }
-          >
+          <span className={margin < 0 ? 'text-destructive' : 'text-success'}>
             {formatPercent(margin * 100)}
           </span>
         )

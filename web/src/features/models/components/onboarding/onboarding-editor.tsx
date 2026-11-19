@@ -113,7 +113,7 @@ export function OnboardingEditor(props: {
     <div className='space-y-4 pb-4 lg:min-h-0 lg:overflow-auto'>
       <div className='flex flex-wrap items-start justify-between gap-2'>
         <div className='min-w-0'>
-          <h2 className='font-mono text-lg font-semibold break-all'>
+          <h2 className='text-section-title font-mono break-all'>
             {props.item.model_name}
           </h2>
           <p className='text-muted-foreground text-sm'>

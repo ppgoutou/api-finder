@@ -130,7 +130,7 @@ export function VideoStudio() {
           <section className='flex flex-col gap-4'>
             {kind === 'image' ? (
               <>
-                <h2 className='text-lg font-semibold'>{t('My images')}</h2>
+                <h2 className='text-section-title'>{t('My images')}</h2>
                 <ImageWorksList onEdit={editWork} />
               </>
             ) : (

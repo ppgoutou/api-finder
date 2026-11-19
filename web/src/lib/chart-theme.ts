@@ -71,6 +71,18 @@ function vchartFallbackColors(domainLength: number): string[] {
 }
 
 /**
+ * One theme colour (for example `--success`) as rgb for canvas charts, or
+ * `fallback` where the theme cannot be read (tests, SSR).
+ */
+export function getThemeColor(token: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(token)
+    .trim()
+  return toRgb(value) ?? fallback
+}
+
+/**
  * The eight theme chart colours (`--chart-1` … `--chart-8`) in a fixed order,
  * so a model or channel keeps its colour across charts. Falls back to the
  * VChart palette where the theme cannot be read (tests, SSR).

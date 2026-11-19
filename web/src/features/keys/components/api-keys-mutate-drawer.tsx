@@ -680,7 +680,9 @@ export function ApiKeysMutateDrawer({
               <SideDrawerSection>
                 <CollapsibleTrigger
                   render={
-                    <button
+                    <Button
+                      variant='plain'
+                      size='inline'
                       type='button'
                       className='hover:bg-muted/40 flex w-full items-center gap-3 rounded-md py-1.5 text-left transition-colors'
                     />

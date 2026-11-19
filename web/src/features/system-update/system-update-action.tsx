@@ -110,7 +110,7 @@ function AdminSystemUpdateAction(props: SystemUpdateActionProps) {
         {update.shouldNotify && (
           <Badge
             variant='secondary'
-            className='bg-primary/10 text-primary hidden h-5 px-1.5 text-[10px] @min-[22rem]/system-brand:inline-flex'
+            className='bg-primary/10 text-primary text-micro hidden h-5 px-1.5 @min-[22rem]/system-brand:inline-flex'
           >
             {t('Update available')}
           </Badge>

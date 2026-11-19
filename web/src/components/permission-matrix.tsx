@@ -175,9 +175,11 @@ function PermissionResourceRow(props: PermissionResourceRowProps) {
         <Tooltip>
           <TooltipTrigger
             render={
-              <button
+              <Button
+                variant='plain'
+                size='inline'
                 type='button'
-                className='text-muted-foreground hover:text-foreground inline-flex'
+                className='text-muted-foreground hover:text-foreground'
                 aria-label={t('Details')}
               />
             }

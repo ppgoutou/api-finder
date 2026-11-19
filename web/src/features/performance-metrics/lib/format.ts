@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { getThemeColor } from '@/lib/chart-theme'
 export function formatThroughput(tps: number): string {
   if (!Number.isFinite(tps) || tps <= 0) return '—'
   if (tps >= 1_000) return `${(tps / 1_000).toFixed(1)}K t/s`
@@ -61,28 +62,32 @@ export function getSuccessRateLevel(rate: number): SuccessRateLevel {
 }
 
 const SUCCESS_RATE_TEXT_CLASS: Record<SuccessRateLevel, string> = {
-  excellent: 'text-emerald-600 dark:text-emerald-400',
-  good: 'text-emerald-500 dark:text-emerald-300',
-  warning: 'text-amber-600 dark:text-amber-400',
-  critical: 'text-red-600 dark:text-red-400',
+  excellent: 'text-success',
+  good: 'text-success',
+  warning: 'text-warning',
+  critical: 'text-destructive',
   unknown: 'text-muted-foreground',
 }
 
 const SUCCESS_RATE_DOT_CLASS: Record<SuccessRateLevel, string> = {
-  excellent: 'bg-emerald-500',
-  good: 'bg-emerald-400',
-  warning: 'bg-amber-500',
-  critical: 'bg-red-500',
+  excellent: 'bg-success',
+  good: 'bg-success/70',
+  warning: 'bg-warning',
+  critical: 'bg-destructive',
   unknown: 'bg-muted-foreground',
 }
 
-// Hex colors for non-CSS contexts (e.g. chart libraries that need raw values).
-const SUCCESS_RATE_HEX_COLOR: Record<SuccessRateLevel, string> = {
-  excellent: '#10b981', // emerald-500 (full green)
-  good: '#34d399', // emerald-400 (slightly lighter green)
-  warning: '#f59e0b', // amber-500
-  critical: '#ef4444', // red-500
-  unknown: '#9ca3af', // gray-400
+// Theme colours for non-CSS contexts (chart libraries need raw values); the
+// fallbacks apply where the theme cannot be read.
+const SUCCESS_RATE_CHART_COLOR: Record<
+  SuccessRateLevel,
+  { token: string; fallback: string }
+> = {
+  excellent: { token: '--success', fallback: '#047857' },
+  good: { token: '--success', fallback: '#047857' },
+  warning: { token: '--warning', fallback: '#a16207' },
+  critical: { token: '--destructive', fallback: '#dc2626' },
+  unknown: { token: '--muted-foreground', fallback: '#9ca3af' },
 }
 
 export function getSuccessRateTextClass(rate: number): string {
@@ -94,5 +99,6 @@ export function getSuccessRateDotClass(rate: number): string {
 }
 
 export function getSuccessRateColor(rate: number): string {
-  return SUCCESS_RATE_HEX_COLOR[getSuccessRateLevel(rate)]
+  const color = SUCCESS_RATE_CHART_COLOR[getSuccessRateLevel(rate)]
+  return getThemeColor(color.token, color.fallback)
 }

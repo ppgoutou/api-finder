@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/status-badge'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -149,7 +150,9 @@ export function OnboardingList(props: {
                     checked={props.checked.has(name)}
                     onCheckedChange={(value) => toggle(name, value)}
                   />
-                  <button
+                  <Button
+                    variant='plain'
+                    size='inline'
                     type='button'
                     aria-current={active ? 'true' : undefined}
                     onClick={() => props.onSelect(name)}
@@ -159,7 +162,7 @@ export function OnboardingList(props: {
                       {name}
                     </span>
                     <OnboardingStatusBadges status={row.status} />
-                  </button>
+                  </Button>
                 </li>
               )
             })}
