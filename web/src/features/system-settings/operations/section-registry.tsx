@@ -17,6 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { SystemBehaviorSection } from '../general/system-behavior-section'
+import { parseBalanceAlertMonitors } from '../integrations/balance-alert-api'
+import { BalanceAlertSettingsSection } from '../integrations/balance-alert-settings-section'
 import { EmailSettingsSection } from '../integrations/email-settings-section'
 import { MediaStorageSettingsSection } from '../integrations/media-storage-settings-section'
 import { MonitoringSettingsSection } from '../integrations/monitoring-settings-section'
@@ -57,6 +59,26 @@ const OPERATIONS_SECTIONS = [
             settings['perf_metrics_setting.bucket_time'] ?? 'hour',
           'perf_metrics_setting.retention_days':
             settings['perf_metrics_setting.retention_days'] ?? 0,
+        }}
+      />
+    ),
+  },
+  {
+    id: 'balance-alert',
+    titleKey: 'Upstream balance alerts',
+    build: (settings: OperationsSettings) => (
+      <BalanceAlertSettingsSection
+        defaultValues={{
+          enabled: settings['balance_alert_setting.enabled'] ?? false,
+          feishu_webhook_url:
+            settings['balance_alert_setting.feishu_webhook_url'] ?? '',
+          feishu_sign_secret: '',
+          interval_minutes:
+            settings['balance_alert_setting.interval_minutes'] || 10,
+          repeat_hours: settings['balance_alert_setting.repeat_hours'] || 6,
+          monitors: parseBalanceAlertMonitors(
+            settings['balance_alert_setting.monitors']
+          ),
         }}
       />
     ),
@@ -104,19 +126,28 @@ const OPERATIONS_SECTIONS = [
           overseas_endpoint: settings['media_storage.overseas_endpoint'] ?? '',
           overseas_region: settings['media_storage.overseas_region'] ?? 'auto',
           overseas_bucket: settings['media_storage.overseas_bucket'] ?? '',
-          overseas_access_key_id: settings['media_storage.overseas_access_key_id'] ?? '',
-          overseas_access_secret: settings['media_storage.overseas_access_secret'] ?? '',
-          overseas_virtual_host: settings['media_storage.overseas_virtual_host'] ?? false,
-          overseas_public_url: settings['media_storage.overseas_public_url'] ?? '',
+          overseas_access_key_id:
+            settings['media_storage.overseas_access_key_id'] ?? '',
+          overseas_access_secret:
+            settings['media_storage.overseas_access_secret'] ?? '',
+          overseas_virtual_host:
+            settings['media_storage.overseas_virtual_host'] ?? false,
+          overseas_public_url:
+            settings['media_storage.overseas_public_url'] ?? '',
           mainland_enabled: settings['media_storage.mainland_enabled'] ?? false,
           mainland_endpoint: settings['media_storage.mainland_endpoint'] ?? '',
           mainland_region: settings['media_storage.mainland_region'] ?? '',
           mainland_bucket: settings['media_storage.mainland_bucket'] ?? '',
-          mainland_access_key_id: settings['media_storage.mainland_access_key_id'] ?? '',
-          mainland_access_secret: settings['media_storage.mainland_access_secret'] ?? '',
-          mainland_virtual_host: settings['media_storage.mainland_virtual_host'] ?? false,
-          mainland_public_url: settings['media_storage.mainland_public_url'] ?? '',
-          mainland_countries: settings['media_storage.mainland_countries'] ?? 'CN',
+          mainland_access_key_id:
+            settings['media_storage.mainland_access_key_id'] ?? '',
+          mainland_access_secret:
+            settings['media_storage.mainland_access_secret'] ?? '',
+          mainland_virtual_host:
+            settings['media_storage.mainland_virtual_host'] ?? false,
+          mainland_public_url:
+            settings['media_storage.mainland_public_url'] ?? '',
+          mainland_countries:
+            settings['media_storage.mainland_countries'] ?? 'CN',
           object_prefix: settings['media_storage.object_prefix'] ?? 'videos',
           retention_days: settings['media_storage.retention_days'] ?? 0,
         }}

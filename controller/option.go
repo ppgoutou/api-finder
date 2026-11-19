@@ -197,6 +197,13 @@ func UpdateOption(c *gin.Context) {
 		option.Value = fmt.Sprintf("%v", option.Value)
 	}
 	switch option.Key {
+	case "balance_alert_setting.feishu_webhook_url":
+		if value := strings.TrimSpace(option.Value.(string)); value != "" {
+			if err := service.ValidateFeishuWebhookURL(value); err != nil {
+				common.ApiErrorT(c, "Enter a Feishu bot webhook URL, like https://open.feishu.cn/open-apis/bot/v2/hook/...")
+				return
+			}
+		}
 	case "QuotaForInviter", "QuotaForInvitee", "AffRebatePercent":
 		if option.Key == "AffRebatePercent" {
 			percent, err := strconv.ParseFloat(strings.TrimSpace(option.Value.(string)), 64)

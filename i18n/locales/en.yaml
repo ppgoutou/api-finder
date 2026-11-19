@@ -126,3 +126,9 @@ user_error.frames_paired: "The first frame and last frame must be provided toget
 user_error.task_type_mismatch: "The assets do not match the selected generation mode, for example reference images were treated as a first frame. Any charge has been refunded. Please check the mode and assets, then submit again."
 user_error.moderation_input: "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again."
 user_error.moderation_music_copyright: "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again."
+
+# Upstream balance alerts (Feishu bot)
+balance_alert.low: "[{{.System}}] Upstream balance is low\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}\nPlease top up soon."
+balance_alert.recovered: "[{{.System}}] Upstream balance is back above the threshold\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}"
+balance_alert.check_failed: "[{{.System}}] Upstream balance check failed {{.Count}} times in a row\nChannel: {{.Name}} (#{{.Id}})\nError: {{.Error}}"
+balance_alert.test: "[{{.System}}] Test message: upstream balance alerts are connected."
