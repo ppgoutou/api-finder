@@ -16,10 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+
+import type { OpsDashboardData } from '../../types'
 
 export type OpsStatTone = 'muted' | 'good' | 'bad' | 'warning'
 
@@ -40,21 +43,70 @@ const NOTE_TONES: Record<OpsStatTone, string> = {
   warning: 'text-warning',
 }
 
+export type OpsSectionTone =
+  | 'neutral'
+  | 'wallet'
+  | 'users'
+  | 'topups'
+  | 'tasks'
+  | 'profit'
+
+// Each section keeps one chart color for its badge, icon and edge, so the
+// five blocks read apart at a glance.
+const SECTION_TONES: Record<OpsSectionTone, { edge: string; badge: string; icon: string }> = {
+  neutral: { edge: 'border-l-foreground/40', badge: 'bg-muted', icon: 'text-muted-foreground' },
+  wallet: { edge: 'border-l-chart-1', badge: 'bg-chart-1/15', icon: 'text-chart-1' },
+  users: { edge: 'border-l-chart-3', badge: 'bg-chart-3/15', icon: 'text-chart-3' },
+  topups: { edge: 'border-l-chart-2', badge: 'bg-chart-2/15', icon: 'text-chart-2' },
+  tasks: { edge: 'border-l-chart-6', badge: 'bg-chart-6/15', icon: 'text-chart-6' },
+  profit: { edge: 'border-l-chart-5', badge: 'bg-chart-5/15', icon: 'text-chart-5' },
+}
+
 export function OpsSection(props: {
   id: string
   title: string
   description?: string
+  /** Number shown in the badge and in the section navigation. */
+  index?: number
+  tone?: OpsSectionTone
+  icon?: LucideIcon
   children: ReactNode
 }) {
+  const tone = SECTION_TONES[props.tone ?? 'neutral']
+  const Icon = props.icon
   return (
-    <section id={props.id} className='scroll-mt-16 space-y-2.5'>
-      <div className='flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5'>
-        <h2 className='text-body-lg font-semibold'>{props.title}</h2>
+    <section
+      id={props.id}
+      aria-labelledby={`${props.id}-title`}
+      className={cn(
+        'bg-card scroll-mt-16 overflow-hidden rounded-2xl border border-l-4',
+        tone.edge
+      )}
+    >
+      <div className='flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b px-4 py-3 sm:px-5'>
+        {props.index != null && (
+          <span
+            className={cn(
+              'text-foreground flex size-7 shrink-0 items-center justify-center rounded-lg text-sm font-semibold tabular-nums',
+              tone.badge
+            )}
+          >
+            {props.index}
+          </span>
+        )}
+        {Icon != null && (
+          <Icon className={cn('size-5 shrink-0', tone.icon)} aria-hidden='true' />
+        )}
+        <h2 id={`${props.id}-title`} className='text-body-lg font-semibold'>
+          {props.title}
+        </h2>
         {props.description != null && (
-          <p className='text-muted-foreground text-xs'>{props.description}</p>
+          <p className='text-muted-foreground basis-full text-xs sm:basis-auto'>
+            {props.description}
+          </p>
         )}
       </div>
-      {props.children}
+      <div className='bg-muted/30 space-y-3 p-3 sm:p-4'>{props.children}</div>
     </section>
   )
 }
@@ -112,4 +164,12 @@ export function OpsStatGrid(props: {
       {props.footer}
     </div>
   )
+}
+
+/** What every dashboard section receives from the page. */
+export interface OpsSectionProps {
+  data: OpsDashboardData | undefined
+  loading: boolean
+  allTime: boolean
+  channel: string
 }

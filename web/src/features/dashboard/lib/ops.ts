@@ -30,6 +30,10 @@ import type {
 } from '../types'
 
 export const OPS_CHANNEL_ALL = 'all'
+/** Trend and channel key of quota credited by redemption codes, which have no order. */
+export const OPS_TREND_REDEMPTION = 'redemption'
+/** The top-up channels the page filters on. */
+export const OPS_TOPUP_CHANNELS = ['stripe', 'usdt', OPS_TREND_REDEMPTION]
 export const OPS_LOW_SUCCESS_RATE = 95
 // Below this many calls a success rate is too noisy to flag.
 export const OPS_MIN_RATE_REQUESTS = 20
@@ -112,6 +116,21 @@ export function percentChange(current: number, previous: number) {
   return ((current - previous) / previous) * 100
 }
 
+/** A change against the previous period, colored by direction. */
+export function opsChangeNote(
+  current: number,
+  previous: number,
+  higherIsBetter = true
+): { note?: string; noteTone?: 'good' | 'bad' } {
+  const change = percentChange(current, previous)
+  if (change == null) return {}
+  const good = higherIsBetter ? change >= 0 : change <= 0
+  return {
+    note: `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`,
+    noteTone: good ? 'good' : 'bad',
+  }
+}
+
 /** Percentage of `part` in `total`, or null when `total` is empty. */
 export function percentOf(part: number, total: number) {
   if (total <= 0) return null
@@ -119,19 +138,21 @@ export function percentOf(part: number, total: number) {
 }
 
 /**
- * Compares what entered the wallets with where it went. The difference comes
- * from credits without a structured record, such as manual adjustments and
- * sign-up bonuses, and from balances of deleted accounts.
+ * Compares what entered the wallets with where it went. Top-ups count every
+ * channel, redemption codes included. The difference comes from credits
+ * without a structured record, such as manual adjustments and sign-up
+ * bonuses, and from balances of deleted accounts.
  */
 export function reconcileWallet(wallet: OpsWallet) {
   const credit = wallet.other_credit
-  const otherCredit =
-    credit.redemption_quota + credit.rebate_quota + credit.checkin_quota
+  const topups = wallet.all_channels_quota + credit.redemption_quota
+  const otherCredit = credit.rebate_quota + credit.checkin_quota
   const nonOrderCredit = otherCredit + wallet.test_credit.granted_quota
-  const inflow = wallet.all_channels_quota + nonOrderCredit
+  const inflow = topups + nonOrderCredit
   const outflow =
     wallet.used_quota + wallet.balance_quota + wallet.negative_quota
   return {
+    topups,
     otherCredit,
     nonOrderCredit,
     inflow,
@@ -161,7 +182,9 @@ const CHANNEL_LABELS: Record<string, string> = {
   waffo_pancake: 'Waffo Pancake',
 }
 
-export function opsChannelLabel(channel: string) {
+/** Payment brands keep their names; redemption codes are translated. */
+export function opsChannelLabel(channel: string, t: (key: string) => string) {
+  if (channel === OPS_TREND_REDEMPTION) return t('Redemption codes')
   return CHANNEL_LABELS[channel] ?? channel
 }
 
@@ -206,9 +229,18 @@ export function topModels(
   }))
 }
 
-function channelColor(channel: string, channels: string[]) {
+// The filterable channels keep one color on every chart.
+const FIXED_CHANNEL_COLORS: Record<string, string> = {
+  stripe: CHART_COLORS[0],
+  usdt: CHART_COLORS[1],
+  [OPS_TREND_REDEMPTION]: CHART_COLORS[3],
+}
+
+export function channelColor(channel: string, channels: string[]) {
+  const fixed = FIXED_CHANNEL_COLORS[channel]
+  if (fixed) return fixed
   // Amber is reserved for usage, so a channel never reads as consumption.
-  const palette = CHART_COLORS.filter((_, index) => index !== 2)
+  const palette = CHART_COLORS.filter((_, index) => index > 4)
   return palette[channels.indexOf(channel) % palette.length]
 }
 
@@ -221,9 +253,6 @@ export function opsTrendChannels(trend: OpsTrendDay[]) {
   }
   return [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key)
 }
-
-/** Trend key of quota credited by redemption codes, which have no order. */
-export const OPS_TREND_REDEMPTION = 'redemption'
 
 export interface OpsTrendLabels {
   usage: string
@@ -251,9 +280,7 @@ export function buildOpsTrendSpec(
 ) {
   const channels = opsTrendChannels(trend)
   const seriesLabel = (channel: string) =>
-    channel === OPS_TREND_REDEMPTION
-      ? labels.redemption
-      : opsChannelLabel(channel)
+    opsChannelLabel(channel, () => labels.redemption)
   const values = trend.flatMap((day) => {
     const date = day.date.slice(5).replace('-', '/')
     const dayTotal = channels.reduce(
@@ -332,7 +359,8 @@ export function buildOpsTrendSpec(
 
 export function buildOpsChannelSpec(
   rows: { channel: string; quota: number }[],
-  formatValue: (quota: number) => string
+  formatValue: (quota: number) => string,
+  t: (key: string) => string
 ) {
   const channels = rows.map((row) => row.channel)
   return {
@@ -341,7 +369,7 @@ export function buildOpsChannelSpec(
       {
         id: 'ops-channels',
         values: rows.map((row) => ({
-          channel: opsChannelLabel(row.channel),
+          channel: opsChannelLabel(row.channel, t),
           value: row.quota,
         })),
       },

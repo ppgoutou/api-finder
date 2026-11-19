@@ -48,7 +48,21 @@ const wallet: OpsWallet = {
   other_credit: { redemption_quota: 50, rebate_quota: 20, checkin_quota: 10 },
   recent_used_quota: 70,
   recent_used_seconds: 7 * 86400,
-  test_credit: { granted_quota: 40, used_quota: 10, users: 2 },
+  test_credit: {
+    granted_quota: 40,
+    used_quota: 10,
+    users: 2,
+    used_up_users: 1,
+    paid_after_users: 1,
+  },
+}
+
+const quietDay = {
+  new_users: 0,
+  active_users: 0,
+  new_payers: 0,
+  task_success: 0,
+  task_failure: 0,
 }
 
 function perf(name: string, requests: number, successes: number): OpsModelPerf {
@@ -154,8 +168,9 @@ describe('upstream profit', () => {
 describe('wallet figures', () => {
   test('reconciliation spans every channel and counts what users owe', () => {
     expect(reconcileWallet(wallet)).toEqual({
-      otherCredit: 80,
-      nonOrderCredit: 120,
+      topups: 1050,
+      otherCredit: 30,
+      nonOrderCredit: 70,
       inflow: 1120,
       outflow: 1030,
       difference: 90,
@@ -217,11 +232,12 @@ describe('model figures', () => {
 
 describe('buildOpsTrendSpec', () => {
   const trend: OpsTrendDay[] = [
-    { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7 },
+    { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7, ...quietDay },
     {
       date: '2026-11-06',
       topups: { stripe: 15, [OPS_TREND_REDEMPTION]: 5 },
       used_quota: 3,
+      ...quietDay,
     },
   ]
   const spec = buildOpsTrendSpec(trend, {
@@ -335,11 +351,12 @@ describe('opsTrendTopupTotal', () => {
   test('sums every channel including redemption codes', () => {
     expect(
       opsTrendTopupTotal([
-        { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7 },
+        { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7, ...quietDay },
         {
           date: '2026-11-06',
           topups: { stripe: 15, redemption: 5 },
           used_quota: 0,
+          ...quietDay,
         },
       ])
     ).toBe(25)

@@ -17,7 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -44,6 +50,10 @@ const emptyPeriod: OpsPeriodStats = {
   test_credit_quota: 0,
   registered_payers: 0,
   repeat_payers: 0,
+  redemptions: 0,
+  redemption_quota: 0,
+  task_success: 0,
+  task_failure: 0,
 }
 
 const emptyDashboard: OpsDashboardData = {
@@ -59,7 +69,13 @@ const emptyDashboard: OpsDashboardData = {
     other_credit: { redemption_quota: 0, rebate_quota: 0, checkin_quota: 0 },
     recent_used_quota: 0,
     recent_used_seconds: 604800,
-    test_credit: { granted_quota: 0, used_quota: 0, users: 0 },
+    test_credit: {
+      granted_quota: 0,
+      used_quota: 0,
+      users: 0,
+      used_up_users: 0,
+      paid_after_users: 0,
+    },
   },
   users: { registered: 0, total_payers: 0, repeat_payers: 0, dormant: 0 },
   pending: { pending: 0, overdue: 0 },
@@ -82,6 +98,11 @@ const emptyDashboard: OpsDashboardData = {
     disputed_orders: 0,
     low_balance_channels: 0,
   },
+  funnel: { registered: 0, active: 0, paid: 0, repeat: 0 },
+  sources: [],
+  inviters: [],
+  topup_tiers: [],
+  model_durations: [],
 }
 
 function renderDashboard() {
@@ -144,7 +165,7 @@ describe('OpsDashboard date range', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Last 7 days' }))
     await waitForRequests(2)
 
-    await screen.findByText('Paid in this period, net of refunds')
+    await screen.findByText('Usage in this period, including test credit')
     expect(screen.queryByText('All-channel reconciliation')).toBeNull()
     expect(screen.queryByText('Test credit used')).toBeNull()
   })
@@ -156,6 +177,7 @@ describe('OpsDashboard date range', () => {
       balance_updated_time: 0,
       task_success: 0,
       task_failure: 0,
+      recent_quota: 0,
     }
     vi.mocked(getOpsDashboard).mockResolvedValue({
       success: true,
@@ -200,12 +222,95 @@ describe('OpsDashboard date range', () => {
     expect(total?.textContent).toContain('20%')
   })
 
+  it('filters on Stripe, USDT and redemption codes only', async () => {
+    renderDashboard()
+    await waitForRequests(1)
+
+    const tabs = within(
+      screen.getByText('Top-up channel').parentElement as HTMLElement
+    ).getAllByRole('tab')
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'All',
+      'Stripe',
+      'USDT',
+      'Redemption codes',
+    ])
+    await userEvent.click(screen.getByRole('tab', { name: 'Redemption codes' }))
+    await waitForRequests(2)
+
+    expect(lastRequest()).toMatchObject({ channel: 'redemption' })
+  })
+
+  it('takes 5% of Stripe top-ups as fees in the net profit', async () => {
+    vi.mocked(getOpsDashboard).mockResolvedValue({
+      success: true,
+      data: {
+        ...emptyDashboard,
+        channels: [
+          {
+            channel: 'stripe',
+            total_quota: 0,
+            topup_quota: 2000000,
+            topup_orders: 1,
+            pending: 0,
+            overdue: 0,
+            closed_orders: 0,
+            failed_orders: 0,
+            expired_orders: 0,
+            refund_orders: 0,
+            disputed_orders: 0,
+          },
+        ],
+        upstream: [
+          {
+            channel_id: 1,
+            name: 'costed',
+            quota: 1000000,
+            cost_quota: 500000,
+            cost_status: 'ok',
+            count: 1,
+            balance: 0,
+            balance_updated_time: 0,
+            task_success: 0,
+            task_failure: 0,
+            recent_quota: 0,
+          },
+        ],
+      },
+    })
+    renderDashboard()
+
+    const fee = await screen.findByText(/^5% of Stripe top-ups/)
+    expect(fee).toBeTruthy()
+    expect(screen.getAllByText('Stripe fees (5%)').length).toBeGreaterThan(0)
+  })
+
+  it('links every dashboard section from the section navigation', async () => {
+    renderDashboard()
+    await waitForRequests(1)
+
+    const nav = screen.getByRole('navigation', { name: 'Dashboard sections' })
+    const links = within(nav).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '#ops-overview',
+      '#ops-wallet',
+      '#ops-users',
+      '#ops-orders',
+      '#ops-models',
+      '#ops-upstream',
+    ])
+    for (const link of links) {
+      const id = link.getAttribute('href')?.slice(1) ?? ''
+      expect(document.getElementById(id)).toBeTruthy()
+    }
+  })
+
   it('reaches the present when refreshed on a page that stayed open', async () => {
     renderDashboard()
     await waitForRequests(1)
     await userEvent.click(screen.getByRole('tab', { name: 'Last 7 days' }))
     await waitForRequests(2)
-    await screen.findByText('Wallet')
+    await screen.findByRole('heading', { name: 'Wallet' })
 
     vi.setSystemTime(new Date(2026, 10, 6, 11, 0, 0))
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
@@ -233,14 +338,14 @@ describe('OpsDashboard date range', () => {
   it('asks for dates instead of showing another period for an empty custom range', async () => {
     renderDashboard()
     await waitForRequests(1)
-    await screen.findByText('Wallet')
+    await screen.findByRole('heading', { name: 'Wallet' })
 
     await userEvent.click(screen.getByRole('tab', { name: 'Custom' }))
 
     expect(
       await screen.findByText('Select a start and end date to see the figures')
     ).toBeTruthy()
-    expect(screen.queryByText('Wallet')).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Wallet' })).toBeNull()
     expect(getOpsDashboard).toHaveBeenCalledTimes(1)
   })
 })

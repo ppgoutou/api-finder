@@ -35,6 +35,7 @@ import {
   buildOpsTrendSpec,
   channelTracksRefunds,
   formatOpsMoney,
+  OPS_TREND_REDEMPTION,
   opsChannelLabel,
   opsTrendTopupTotal,
   percentOf,
@@ -96,11 +97,14 @@ export function OpsChannelPanel(props: {
     [props.channels]
   )
   const total = rows.reduce((sum, row) => sum + row.quota, 0)
-  const spec = useMemo(() => buildOpsChannelSpec(rows, formatOpsMoney), [rows])
+  const spec = useMemo(
+    () => buildOpsChannelSpec(rows, formatOpsMoney, t),
+    [rows, t]
+  )
 
   return (
     <PanelWrapper
-      title={t('Order channel distribution')}
+      title={t('Top-up channel distribution')}
       description={
         props.allTime
           ? t('Top-up amount of all time, all channels')
@@ -112,12 +116,12 @@ export function OpsChannelPanel(props: {
       className='min-w-0'
     >
       <div className='h-48'>
-        <OpsChart spec={spec} label={t('Order channel distribution')} />
+        <OpsChart spec={spec} label={t('Top-up channel distribution')} />
       </div>
       <ul className='mt-3 space-y-2 text-sm'>
         {rows.map((row) => (
           <li key={row.channel} className='flex justify-between gap-3'>
-            <span>{opsChannelLabel(row.channel)}</span>
+            <span>{opsChannelLabel(row.channel, t)}</span>
             <span className='font-mono tabular-nums'>
               {formatOpsMoney(row.quota)} ·{' '}
               {formatPercent(percentOf(row.quota, total))}
@@ -138,19 +142,22 @@ export function OpsChannelTable(props: {
   const count = (value: number) => formatNumber(value, locale)
   const refundCell = (channel: string, value: number) =>
     channelTracksRefunds(channel) ? count(value) : '—'
+  // Redemption codes have no order, so only their count and amount apply.
+  const orderCell = (channel: string, value: number) =>
+    channel === OPS_TREND_REDEMPTION ? '—' : count(value)
 
   return (
     <PanelWrapper
       title={t('Orders by channel')}
       description={t(
-        'Refunds and disputes are only reported by Stripe. Pending counts are current.'
+        'Failed means the payment was declined; expired means it was never paid. Refunds and disputes are only reported by Stripe. Pending counts are current.'
       )}
       loading={props.loading}
       empty={props.channels.length === 0}
       height='h-40'
       contentClassName='p-0 sm:p-0'
     >
-      <Table className='min-w-[760px]'>
+      <Table className='min-w-[820px]'>
         <TableHeader>
           <TableRow>
             <TableHead>{t('Channel')}</TableHead>
@@ -160,9 +167,8 @@ export function OpsChannelTable(props: {
               {t('Awaiting payment')}
             </TableHead>
             <TableHead className='text-right'>{t('Overdue')}</TableHead>
-            <TableHead className='text-right'>
-              {t('Failed or expired')}
-            </TableHead>
+            <TableHead className='text-right'>{t('Failed')}</TableHead>
+            <TableHead className='text-right'>{t('Expired')}</TableHead>
             <TableHead className='text-right'>{t('Refunds')}</TableHead>
             <TableHead className='text-right'>{t('Disputes')}</TableHead>
             <TableHead className='text-right'>
@@ -173,16 +179,23 @@ export function OpsChannelTable(props: {
         <TableBody>
           {props.channels.map((row) => (
             <TableRow key={row.channel}>
-              <TableCell>{opsChannelLabel(row.channel)}</TableCell>
+              <TableCell>{opsChannelLabel(row.channel, t)}</TableCell>
               <TableCell className={CELL}>{count(row.topup_orders)}</TableCell>
               <TableCell className={CELL}>
                 {formatOpsMoney(row.topup_quota)}
               </TableCell>
               <TableCell className={CELL}>
-                {count(row.pending - row.overdue)}
+                {orderCell(row.channel, row.pending - row.overdue)}
               </TableCell>
-              <TableCell className={CELL}>{count(row.overdue)}</TableCell>
-              <TableCell className={CELL}>{count(row.closed_orders)}</TableCell>
+              <TableCell className={CELL}>
+                {orderCell(row.channel, row.overdue)}
+              </TableCell>
+              <TableCell className={CELL}>
+                {orderCell(row.channel, row.failed_orders)}
+              </TableCell>
+              <TableCell className={CELL}>
+                {orderCell(row.channel, row.expired_orders)}
+              </TableCell>
               <TableCell className={CELL}>
                 {refundCell(row.channel, row.refund_orders)}
               </TableCell>
@@ -190,12 +203,14 @@ export function OpsChannelTable(props: {
                 {refundCell(row.channel, row.disputed_orders)}
               </TableCell>
               <TableCell className={CELL}>
-                {formatPercent(
-                  percentOf(
-                    row.topup_orders,
-                    row.topup_orders + row.closed_orders
-                  )
-                )}
+                {row.channel === OPS_TREND_REDEMPTION
+                  ? '—'
+                  : formatPercent(
+                      percentOf(
+                        row.topup_orders,
+                        row.topup_orders + row.closed_orders
+                      )
+                    )}
               </TableCell>
             </TableRow>
           ))}
