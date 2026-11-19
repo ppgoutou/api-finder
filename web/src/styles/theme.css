@@ -43,6 +43,9 @@ For commercial licensing, please contact support@quantumnous.com
 
   /* Display face for marketing headlines and large figures. */
   --font-display: 'Space Grotesk Variable', var(--font-ui-sans);
+  /* Monospace face for prices on model cards: headline, tiers, struck price. */
+  --font-price:
+    'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Type scale (see /design). Marketing pages read at 16px body text, the
    * console at 14px. Use these names instead of raw sizes such as
@@ -89,6 +92,11 @@ For commercial licensing, please contact support@quantumnous.com
   --text-micro: 0.6875rem;
   --text-micro--line-height: 0.875rem;
   --text-micro--font-weight: 500;
+  /* Headline price on a model card, set in font-price. */
+  --text-price: 2rem;
+  --text-price--line-height: 1.1;
+  --text-price--letter-spacing: -0.02em;
+  --text-price--font-weight: 700;
   --text-metric: clamp(1.5rem, 2.4vw, 2rem);
   --text-metric--line-height: 1.1;
   --text-metric--letter-spacing: -0.02em;

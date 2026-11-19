@@ -21,6 +21,7 @@ For commercial licensing, please contact support@quantumnous.com
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
 @import '@fontsource-variable/public-sans';
 /* Editorial serif (Lora) backing the `serif` font axis and the Anthropic
  * preset's default typography. See `--font-serif` in theme.css for the
@@ -714,6 +715,17 @@ For commercial licensing, please contact support@quantumnous.com
   .recommended-badge-pop {
     animation: none !important;
   }
+}
+
+/* ── Rolling price digits (RollingPrice) ── */
+/* Drawn as generated content so the element's text stays the price. A
+ * digit's strip is 0–9 stacked one line each; RollingPrice translates it. */
+.price-roll-char::before {
+  content: attr(data-char);
+}
+.price-roll-strip::before {
+  content: '0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9';
+  white-space: pre;
 }
 
 /* ── VIP price switch on model cards ── */

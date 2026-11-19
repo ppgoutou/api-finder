@@ -125,6 +125,12 @@ describe('card VIP price', () => {
     expect(screen.getAllByText('$0.036').length).toBeGreaterThan(0)
     expect(screen.getByText('$0.081')).toBeInTheDocument()
     expect(screen.getByText('Save 10%')).toBeInTheDocument()
+    // The headline keeps its price size and face in VIP gold.
+    expect(screen.getAllByText('$0.036')[0].parentElement).toHaveClass(
+      'font-price',
+      'text-price',
+      'text-vip'
+    )
     expect(screen.getByRole('button', { name: 'VIP' })).toHaveAttribute(
       'aria-pressed',
       'true'
