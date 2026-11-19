@@ -24,7 +24,7 @@ export const VIP_GOLD_TEXT = 'text-vip'
 
 /** The soft gold panel behind VIP banners and highlighted cells. */
 export const VIP_GOLD_SURFACE =
-  'border-amber-500/30 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-orange-400/10'
+  'border-vip/30 bg-gradient-to-r from-vip/15 via-vip/10 to-vip/5'
 
 /*
  * The night look of the VIP page and the compare dialog: a near-black stage,
@@ -34,8 +34,7 @@ export const VIP_GOLD_SURFACE =
 export const VIP_NIGHT_STAGE = 'dark bg-[#0d0e10] text-white'
 
 /** Large figures and headlines on the night stage. */
-export const VIP_DISPLAY_FONT =
-  'font-display font-bold tracking-[-0.03em] uppercase'
+export const VIP_DISPLAY_FONT = 'font-display font-bold tracking-[-0.03em]'
 
 /** The lime call-to-action fill. */
 export const VIP_LIME_FILL =

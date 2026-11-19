@@ -51,7 +51,7 @@ export function VideoHero(props: VideoHeroProps) {
           {t('Seedance 2.5 is live · up to 30 seconds per clip')}
         </p>
         <h1
-          className='landing-animate-fade-up max-w-4xl text-[clamp(2.25rem,6vw,4.25rem)] leading-[1.1] font-bold tracking-tight opacity-0'
+          className='landing-animate-fade-up font-display text-heading-1 max-w-4xl opacity-0'
           style={{ animationDelay: '60ms' }}
         >
           {t('Turn one sentence into')}{' '}

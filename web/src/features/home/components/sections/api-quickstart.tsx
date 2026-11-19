@@ -67,7 +67,7 @@ export function ApiQuickstart() {
     >
       <div className='mx-auto flex max-w-6xl flex-wrap items-start gap-12'>
         <div className='min-w-0 flex-[1_1_20rem]'>
-          <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
+          <h2 className='text-heading-2'>
             {t('Prefer code? Generate video with the API')}
           </h2>
           <ol className='mt-7 flex flex-col gap-5'>
@@ -98,7 +98,7 @@ export function ApiQuickstart() {
               aria-label={t('Copy code')}
             />
           </div>
-          <pre className='overflow-x-auto p-5 font-mono text-[13px] leading-relaxed'>
+          <pre className='text-body-sm overflow-x-auto p-5 font-mono leading-relaxed'>
             <code>{code}</code>
           </pre>
         </div>

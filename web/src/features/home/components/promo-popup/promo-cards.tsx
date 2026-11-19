@@ -63,7 +63,7 @@ const SALE_TEXT_CLASS = 'text-amber-700 dark:text-amber-400'
 const TITLE_CLASS = 'whitespace-pre-line text-balance'
 const DESCRIPTION_SIZE_CLASS: Record<PromoTextSize, string> = {
   large: 'text-lg leading-8 max-sm:text-base max-sm:leading-7',
-  medium: 'text-base leading-7 max-sm:text-[15px] max-sm:leading-6',
+  medium: 'text-base leading-7 max-sm:text-body-lg max-sm:leading-6',
   small: 'text-sm leading-[22px]',
 }
 
@@ -91,7 +91,7 @@ function PromoLink(props: {
       onClick={props.onNavigate}
       className={cn(
         buttonVariants({ variant: props.variant ?? 'default' }),
-        'h-11.5 min-w-0 flex-1 rounded-xl text-[15px]'
+        'h-11.5 min-w-0 flex-1 rounded-xl text-body-lg'
       )}
       {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
     >
@@ -134,7 +134,7 @@ function ModelPromoCard(props: PromoCardProps) {
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
           <span className={DEAL_PILL_CLASS}>{t('Limited-time price')}</span>
           {endLabel && (
-            <span className='text-[13px] text-white/70'>{endLabel}</span>
+            <span className='text-body-sm text-white/70'>{endLabel}</span>
           )}
         </div>
         <div className='mt-4 flex min-w-0 items-center gap-3 max-sm:mt-3'>
@@ -154,7 +154,7 @@ function ModelPromoCard(props: PromoCardProps) {
           </p>
         ) : (
           <div className='mt-auto grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3'>
-            <span className='text-[13px] font-semibold text-amber-400'>
+            <span className='text-body-sm font-semibold text-amber-400'>
               {t('Sale')}
             </span>
             <span className='block h-2.5 rounded-full bg-white/10'>
@@ -167,7 +167,7 @@ function ModelPromoCard(props: PromoCardProps) {
               {card.salePrice}
               <span className='text-xs font-normal'> {card.unit}</span>
             </span>
-            <span className='text-[13px] text-white/70'>{t('Original')}</span>
+            <span className='text-body-sm text-white/70'>{t('Original')}</span>
             <span className='block h-2.5 rounded-full bg-white/30' />
             <span className='text-right text-sm text-white/70 line-through'>
               {card.originalPrice} {card.unit}
@@ -210,7 +210,7 @@ function RechargePromoCard(props: PromoCardProps) {
           <span className='text-brand-hover rounded-full bg-white px-2.5 py-1 text-xs font-semibold'>
             {t('Top-up offer')}
           </span>
-          {endLabel && <span className='text-[13px]'>{endLabel}</span>}
+          {endLabel && <span className='text-body-sm'>{endLabel}</span>}
         </div>
         {/* The admin's title wins; otherwise the first tier is the headline. */}
         {(card.title || headline) && (
@@ -232,7 +232,7 @@ function RechargePromoCard(props: PromoCardProps) {
                 style={{ width: `max(${bonusShare * 100}%, 12px)` }}
               />
             </div>
-            <div className='mt-2 flex justify-between text-[13px]'>
+            <div className='text-body-sm mt-2 flex justify-between'>
               <span>{t('Top-up amount')}</span>
               <span className='font-semibold'>{t('Bonus')}</span>
             </div>
@@ -251,7 +251,7 @@ function RechargePromoCard(props: PromoCardProps) {
                   <p className='truncate text-base font-bold max-sm:text-sm'>
                     {tier.pay}
                   </p>
-                  <p className='text-brand-hover dark:text-brand-on-dark mt-0.5 truncate text-[13px]'>
+                  <p className='text-brand-hover dark:text-brand-on-dark text-body-sm mt-0.5 truncate'>
                     {t('+{{bonus}} free', { bonus: tier.bonus })}
                   </p>
                 </li>
@@ -302,7 +302,7 @@ function ListPromoCard(props: PromoCardProps) {
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
           <span className={DEAL_PILL_CLASS}>{t('Limited-time deals')}</span>
           {endLabel && (
-            <span className='text-[13px] text-white/70'>{endLabel}</span>
+            <span className='text-body-sm text-white/70'>{endLabel}</span>
           )}
         </div>
         <h3
@@ -447,7 +447,7 @@ function VipPromoCard(props: PromoCardProps) {
           <span className='rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-700'>
             {t('VIP membership')}
           </span>
-          {endLabel && <span className='text-[13px]'>{endLabel}</span>}
+          {endLabel && <span className='text-body-sm'>{endLabel}</span>}
         </div>
         <h3
           className={cn(
@@ -505,7 +505,7 @@ function VipPromoCard(props: PromoCardProps) {
             onClick={() => openCompare('promo-popup')}
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'h-11.5 min-w-0 flex-1 rounded-xl text-[15px]'
+              'h-11.5 min-w-0 flex-1 rounded-xl text-body-lg'
             )}
           >
             {t('Compare benefits')}

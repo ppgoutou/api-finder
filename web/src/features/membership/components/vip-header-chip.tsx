@@ -56,7 +56,7 @@ export function VipHeaderChip(props: VipHeaderChipProps) {
         'inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap transition-colors',
         isVip
           ? VIP_GOLD_FILL
-          : 'border border-amber-500/50 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 dark:text-amber-200',
+          : 'border border-vip/50 bg-vip-soft text-vip hover:bg-vip/20',
         props.className
       )}
     >

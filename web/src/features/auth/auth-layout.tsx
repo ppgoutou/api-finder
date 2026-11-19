@@ -81,7 +81,7 @@ function AuthShowcase() {
       />
       <SiteBrand className='relative' />
       <div className='relative my-auto flex flex-col gap-8'>
-        <h2 className='text-4xl leading-tight font-bold tracking-tight xl:text-5xl'>
+        <h2 className='font-display text-heading-1'>
           {t('Turn one sentence into')}{' '}
           <span className='text-brand-on-dark'>{t('cinematic video')}</span>
         </h2>
@@ -97,7 +97,10 @@ function AuthShowcase() {
         <ul className='grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-white/75'>
           {facts.map((fact) => (
             <li key={fact} className='flex items-center gap-2'>
-              <Check className='text-brand-on-dark size-4 shrink-0' aria-hidden />
+              <Check
+                className='text-brand-on-dark size-4 shrink-0'
+                aria-hidden
+              />
               {fact}
             </li>
           ))}

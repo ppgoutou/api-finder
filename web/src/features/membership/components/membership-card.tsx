@@ -59,11 +59,11 @@ export function MembershipCard(props: MembershipCardProps) {
       <CardContent className='grid gap-6 p-4 sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-center lg:gap-14'>
         <div className='min-w-0'>
           <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='text-[22px] leading-tight font-bold sm:text-[26px]'>
+            <h3 className='text-heading-3 sm:text-2xl'>
               {isVip ? t('VIP member') : t('Standard member')}
             </h3>
             {isVip && (
-              <Badge className='gap-1 bg-amber-500 text-white'>
+              <Badge className='bg-vip text-vip-foreground gap-1'>
                 <HugeiconsIcon
                   icon={CrownIcon}
                   className='size-3.5'
@@ -85,7 +85,7 @@ export function MembershipCard(props: MembershipCardProps) {
               <li key={benefit} className='flex items-center gap-2 text-sm'>
                 <HugeiconsIcon
                   icon={CheckmarkCircle02Icon}
-                  className='size-4 shrink-0 text-amber-500'
+                  className='text-vip size-4 shrink-0'
                   aria-hidden
                 />
                 {benefit}
@@ -151,7 +151,7 @@ function MembershipProgressPanel(props: MembershipProgressPanelProps) {
         </div>
       )}
       {singleThreshold > 0 && (
-        <p className='rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm'>
+        <p className='border-vip/30 bg-vip-soft rounded-lg border px-3 py-2 text-sm'>
           {t('Or top up {{amount}} at once to become VIP right away.', {
             amount: formatQuota(singleThreshold),
           })}

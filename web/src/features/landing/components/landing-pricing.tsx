@@ -61,7 +61,7 @@ export function LandingPricing() {
     >
       <div className='bg-ink-raised h-full rounded-[15px] p-5 md:p-6'>
         <div className='flex flex-wrap items-baseline justify-between gap-2'>
-          <h2 className='text-2xl font-bold text-white'>{t('Pricing')}</h2>
+          <h2 className='text-heading-2 text-white'>{t('Pricing')}</h2>
           <p className='text-brand-on-dark font-mono text-xs'>
             ● {t('Live · per second')}
           </p>
@@ -87,7 +87,7 @@ export function LandingPricing() {
                     >
                       {series.name}
                       {series.isNew && (
-                        <span className='ml-2 rounded bg-violet-500/20 px-1.5 py-0.5 font-sans text-[10px] text-violet-300'>
+                        <span className='text-micro ml-2 rounded bg-violet-500/20 px-1.5 py-0.5 font-sans text-violet-300'>
                           {t('New')}
                         </span>
                       )}

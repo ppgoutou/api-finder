@@ -89,11 +89,11 @@ export function VipTierCards(props: VipTierCardsProps) {
     <div className={cn('grid gap-4 md:grid-cols-2', props.className)}>
       <article
         className={cn(
-          'flex flex-col rounded-[32px] p-6 sm:p-8',
+          'flex flex-col rounded-panel p-6 sm:p-8',
           VIP_NIGHT_PANEL
         )}
       >
-        <h3 className='text-[34px] leading-none font-medium tracking-[-0.04em]'>
+        <h3 className='font-display text-heading-2 leading-none font-medium'>
           {t('Standard')}
         </h3>
         <p className='mt-3 text-sm text-white/50'>
@@ -120,13 +120,13 @@ export function VipTierCards(props: VipTierCardsProps) {
         </ul>
       </article>
 
-      <article className='border-accent-night/45 relative flex flex-col overflow-hidden rounded-[32px] border bg-[#11130a] p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
+      <article className='border-accent-night/45 rounded-panel relative flex flex-col overflow-hidden border bg-[#11130a] p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
         <div
           aria-hidden
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,rgba(209,254,23,0.26),transparent_62%)]'
         />
         <div className='relative flex items-start justify-between gap-3'>
-          <h3 className='flex items-center gap-2 text-[34px] leading-none font-medium tracking-[-0.04em]'>
+          <h3 className='font-display text-heading-2 flex items-center gap-2 leading-none font-medium'>
             <HugeiconsIcon
               icon={CrownIcon}
               className={cn('size-7', VIP_LIME_TEXT)}

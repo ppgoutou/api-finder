@@ -49,10 +49,10 @@ export function VipMembership() {
       id='vip'
       className='relative z-10 scroll-mt-20 px-6 py-14 md:py-20'
     >
-      <div className='mx-auto max-w-6xl rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-amber-400/5 to-orange-400/10 p-5 sm:p-8 lg:p-10'>
+      <div className='rounded-panel border-vip/30 from-vip/15 via-vip/5 to-vip/10 mx-auto max-w-6xl border bg-gradient-to-br p-5 sm:p-8 lg:p-10'>
         <div className='flex flex-wrap items-end justify-between gap-4'>
           <div className='max-w-2xl'>
-            <span className='inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200'>
+            <span className='border-vip/40 bg-vip-soft text-caption text-vip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-semibold'>
               <HugeiconsIcon
                 icon={CrownIcon}
                 className='size-3.5'
@@ -60,9 +60,7 @@ export function VipMembership() {
               />
               {t('VIP membership')}
             </span>
-            <h2 className='mt-4 text-3xl font-bold tracking-tight md:text-4xl'>
-              {title}
-            </h2>
+            <h2 className='text-heading-2 mt-4'>{title}</h2>
             <p className='text-muted-foreground mt-3'>
               {rule
                 ? t(

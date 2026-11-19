@@ -111,7 +111,7 @@ export function LandingHero() {
             {t('Seedance AI video · online')}
           </p>
           {/* Three lines from lg up: the lead line never wraps there. */}
-          <h1 className='mt-5 text-[clamp(2.125rem,3.4vw,3.25rem)] leading-[1.12] font-bold tracking-tight text-white 2xl:text-[3.5rem]'>
+          <h1 className='font-display text-heading-1 mt-5 text-white'>
             <span className='lg:whitespace-nowrap'>
               {t('Cinematic AI video,')}
             </span>

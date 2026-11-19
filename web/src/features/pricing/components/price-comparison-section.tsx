@@ -91,7 +91,7 @@ function DiscountBadge(props: { ratio: number | undefined }) {
   }
   if (props.ratio > 1) {
     return (
-      <span className='text-xs font-medium text-amber-700 dark:text-amber-300'>
+      <span className='text-warning text-xs font-medium'>
         {t('{{percent}}% above official', {
           percent: Math.round((props.ratio - 1) * 100),
         })}

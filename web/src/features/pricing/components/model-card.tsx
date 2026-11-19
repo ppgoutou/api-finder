@@ -83,10 +83,9 @@ import { RollingPrice } from './rolling-price'
 const CARD_ACCENT_CLASS = 'border-brand bg-brand text-white'
 const STABLE_CARD_ACCENT_CLASS =
   'border-success bg-success text-success-foreground'
-// VIP prices take amber, matching the VIP badge elsewhere.
-const VIP_ACCENT_CLASS =
-  'border-amber-700 bg-amber-700 text-amber-50 dark:border-amber-500 dark:bg-amber-500 dark:text-amber-950'
-const VIP_PRICE_TEXT_CLASS = 'text-amber-800 dark:text-amber-300'
+// VIP prices take the VIP gold, matching the VIP badge elsewhere.
+const VIP_ACCENT_CLASS = 'border-vip bg-vip text-vip-foreground'
+const VIP_PRICE_TEXT_CLASS = 'text-vip'
 
 export interface ModelCardProps {
   model: PricingModel
@@ -265,7 +264,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
               <dt className='shrink-0 text-xs'>
                 {taskEnumLabel(optionDefinition, row.option, i18n.language)}
               </dt>
-              <dd className='truncate font-mono text-xs font-bold tabular-nums'>
+              <dd className='truncate font-mono text-xs font-semibold tabular-nums'>
                 <RollingPrice value={formatShownSecondPrice(row.secondPrice)} />
               </dd>
             </div>
@@ -525,7 +524,9 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             unavailable && 'opacity-50 grayscale'
           )}
         >
-          {modelIcon || <span className='text-sm font-bold'>{initial}</span>}
+          {modelIcon || (
+            <span className='text-sm font-semibold'>{initial}</span>
+          )}
           {stable && (
             <span
               data-stable-shield='true'
@@ -538,7 +539,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         <div className='min-w-0 flex-1'>
           <h3
             className={cn(
-              'line-clamp-2 font-mono text-lg leading-snug font-bold [overflow-wrap:anywhere]',
+              'line-clamp-2 font-mono text-lg leading-snug font-semibold [overflow-wrap:anywhere]',
               unavailable && 'text-muted-foreground'
             )}
             title={props.model.model_name}
@@ -564,7 +565,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           )}
         </div>
         {unavailable && (
-          <span className='bg-warning/15 text-warning flex shrink-0 items-center gap-1 self-start rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-bold'>
+          <span className='bg-warning/15 text-warning text-micro flex shrink-0 items-center gap-1 self-start rounded-md px-1.5 py-0.5'>
             <CirclePause aria-hidden className='size-3' />
             {t('Temporarily unavailable')}
           </span>
@@ -596,7 +597,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 <li
                   key={badge}
                   className={cn(
-                    'rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-bold tracking-wide',
+                    'rounded-md px-1.5 py-0.5 text-micro',
                     MODEL_BADGE_CLASSES[badge]
                   )}
                 >
@@ -609,7 +610,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       </CardHeader>
       <CardContent className='flex flex-1 flex-col gap-3'>
         <div className='flex min-w-0 flex-col gap-1.5'>
-          <p className='text-muted-foreground line-clamp-2 text-[13px] leading-5 break-words'>
+          <p className='text-muted-foreground text-body-sm line-clamp-2 leading-5 break-words'>
             {props.model.description || t('No description available.')}
           </p>
           {tags.length > 0 && (
@@ -637,7 +638,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           className={cn(
             'flex min-w-0 flex-col gap-1.5 rounded-xl border p-3 transition-colors duration-300',
             pricesVip && showVip
-              ? 'border-amber-500/30 bg-amber-500/10'
+              ? 'border-vip/30 bg-vip-soft'
               : 'border-brand/20 bg-brand-soft/60',
             unavailable && 'opacity-50'
           )}
@@ -731,7 +732,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
               onClick={() =>
                 tryKind && props.onTry?.(props.model.model_name || '', tryKind)
               }
-              className='hover:bg-muted h-auto min-h-11 flex-1 rounded-none px-4 font-bold'
+              className='hover:bg-muted h-auto min-h-11 flex-1 rounded-none px-4 font-semibold'
             >
               <Play aria-hidden className='size-4' />
               {t('Try')}
@@ -741,7 +742,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             variant='ghost'
             onClick={() => props.onClick(props.model.model_name || '')}
             className={cn(
-              'h-auto min-h-11 flex-1 rounded-none px-5 font-bold',
+              'h-auto min-h-11 flex-1 rounded-none px-5 font-semibold',
               stable
                 ? 'hover:bg-success/90 hover:text-success-foreground'
                 : 'hover:bg-brand-hover hover:text-white',

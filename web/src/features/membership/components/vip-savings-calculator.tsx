@@ -69,7 +69,7 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
   }
 
   return (
-    <div className={cn('rounded-[32px] p-6 sm:p-8', VIP_NIGHT_PANEL)}>
+    <div className={cn('rounded-panel p-6 sm:p-8', VIP_NIGHT_PANEL)}>
       <div className='flex items-center gap-2'>
         <HugeiconsIcon
           icon={Calculator01Icon}

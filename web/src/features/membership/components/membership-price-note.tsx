@@ -75,15 +75,13 @@ export function MembershipPriceNote(props: MembershipPriceNoteProps) {
         VIP_GOLD_SURFACE
       )}
     >
-      <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm shadow-amber-500/40 max-sm:hidden'>
+      <span className='bg-vip text-vip-foreground flex size-9 shrink-0 items-center justify-center rounded-full shadow-sm max-sm:hidden'>
         <HugeiconsIcon icon={CrownIcon} className='size-5' aria-hidden />
       </span>
       <div className='min-w-0 flex-1'>
-        <p className='text-sm font-bold text-amber-800 sm:text-base dark:text-amber-200'>
-          {title}
-        </p>
+        <p className='text-vip text-sm font-semibold sm:text-base'>{title}</p>
         {detail && (
-          <p className='mt-0.5 text-xs text-amber-900/80 sm:text-sm dark:text-amber-100/80'>
+          <p className='text-muted-foreground mt-0.5 text-xs sm:text-sm'>
             {detail}
           </p>
         )}

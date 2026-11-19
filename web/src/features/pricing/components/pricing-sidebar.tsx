@@ -91,7 +91,7 @@ function FilterChip(props: {
       {(props.option.suffix || props.option.count != null) && (
         <span
           className={cn(
-            'rounded-md px-1.5 py-0.5 text-[12px]',
+            'rounded-md px-1.5 py-0.5 text-caption',
             props.active
               ? 'bg-background text-foreground'
               : 'bg-muted text-muted-foreground'
@@ -224,7 +224,7 @@ export const PricingSidebar = memo(function PricingSidebar(
     <aside className={cn('bg-card rounded-xl border p-3', props.className)}>
       <div className='mb-2.5 flex items-center justify-between gap-2'>
         <div>
-          <h2 className='text-foreground text-sm font-bold'>{t('Filter')}</h2>
+          <h2 className='text-card-title text-foreground'>{t('Filter')}</h2>
           <p className='text-muted-foreground mt-1 text-xs'>
             {t('Refine models by category, pricing type, and model type.')}
           </p>

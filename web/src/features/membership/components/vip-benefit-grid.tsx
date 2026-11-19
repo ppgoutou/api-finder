@@ -62,7 +62,7 @@ export function VipBenefitGrid(props: VipBenefitGridProps) {
                     'flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-night/10',
                     VIP_LIME_TEXT
                   )
-                : 'flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                : 'bg-vip-soft text-vip flex size-10 shrink-0 items-center justify-center rounded-xl'
             }
           >
             <HugeiconsIcon
