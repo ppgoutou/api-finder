@@ -293,6 +293,11 @@ export interface OpsPeriodStats {
   test_credit_quota: number
   registered_payers: number
   repeat_payers: number
+  /** Codes redeemed in the period, when the channel filter includes them. */
+  redemptions: number
+  redemption_quota: number
+  task_success: number
+  task_failure: number
 }
 
 export interface OpsWallet {
@@ -313,6 +318,8 @@ export interface OpsWallet {
     granted_quota: number
     used_quota: number
     users: number
+    used_up_users: number
+    paid_after_users: number
   }
 }
 
@@ -324,6 +331,8 @@ export interface OpsChannelStats {
   pending: number
   overdue: number
   closed_orders: number
+  failed_orders: number
+  expired_orders: number
   refund_orders: number
   disputed_orders: number
 }
@@ -332,6 +341,11 @@ export interface OpsTrendDay {
   date: string
   topups: Record<string, number>
   used_quota: number
+  new_users: number
+  active_users: number
+  new_payers: number
+  task_success: number
+  task_failure: number
 }
 
 export interface OpsModelUsage {
@@ -361,6 +375,8 @@ export interface OpsUpstream {
   balance_updated_time: number
   task_success: number
   task_failure: number
+  /** What users were charged on the channel in the last seven days. */
+  recent_quota: number
 }
 
 export interface OpsTopUser {
@@ -369,6 +385,45 @@ export interface OpsTopUser {
   quota: number
   balance: number
   last_used_at: number
+}
+
+export interface OpsFunnel {
+  registered: number
+  active: number
+  paid: number
+  repeat: number
+}
+
+export interface OpsSource {
+  method: 'google' | 'direct'
+  invited: boolean
+  users: number
+  payers: number
+  quota: number
+}
+
+export interface OpsInviter {
+  user_id: number
+  username: string
+  invited: number
+  payers: number
+  quota: number
+}
+
+export interface OpsTopupTier {
+  /** Upper bound in USD; 0 for the open-ended top tier. */
+  max_usd: number
+  first_orders: number
+  repeat_orders: number
+  first_quota: number
+  repeat_quota: number
+}
+
+export interface OpsModelDuration {
+  model_name: string
+  tasks: number
+  p50_seconds: number
+  p90_seconds: number
 }
 
 export interface OpsDashboardData {
@@ -401,4 +456,9 @@ export interface OpsDashboardData {
     disputed_orders: number
     low_balance_channels: number
   }
+  funnel: OpsFunnel
+  sources: OpsSource[]
+  inviters: OpsInviter[]
+  topup_tiers: OpsTopupTier[]
+  model_durations: OpsModelDuration[]
 }

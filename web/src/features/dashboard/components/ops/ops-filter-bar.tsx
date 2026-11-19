@@ -95,14 +95,14 @@ export function OpsFilterBar(props: {
       )}
       <div className='flex min-w-0 flex-wrap items-center gap-2'>
         <span className='text-muted-foreground text-xs'>
-          {t('Order channel')}
+          {t('Top-up channel')}
         </span>
         <Tabs value={props.channel} onValueChange={props.onChannelChange}>
           <TabsList className={FILTER_LIST_CLASS}>
             <TabsTrigger value={OPS_CHANNEL_ALL}>{t('All')}</TabsTrigger>
             {props.channels.map((channel) => (
               <TabsTrigger key={channel} value={channel}>
-                {opsChannelLabel(channel)}
+                {opsChannelLabel(channel, t)}
               </TabsTrigger>
             ))}
           </TabsList>

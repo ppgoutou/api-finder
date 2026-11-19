@@ -16,8 +16,9 @@ import (
 const (
 	// OpsChannelAll is the order channel filter that keeps every channel.
 	OpsChannelAll = "all"
-	// OpsTrendRedemption is the trend key of quota credited by redemption codes.
-	OpsTrendRedemption = "redemption"
+	// OpsChannelRedemption is the top-up channel of redemption codes. They
+	// have no order, so every order figure leaves them out.
+	OpsChannelRedemption = "redemption"
 
 	// A pending order older than this is reported as overdue: closing an
 	// order depends on a provider callback that may never arrive.
@@ -65,9 +66,16 @@ type OpsPeriodStats struct {
 	RegisteredPayers int64 `json:"registered_payers"`
 	// RepeatPayers paid at least twice in the period.
 	RepeatPayers int64 `json:"repeat_payers"`
+	// Redemptions and RedemptionQuota count codes redeemed in the period when
+	// the page shows every channel or only redemption codes.
+	Redemptions     int64 `json:"redemptions"`
+	RedemptionQuota int64 `json:"redemption_quota"`
+	TaskSuccess     int64 `json:"task_success"`
+	TaskFailure     int64 `json:"task_failure"`
 }
 
 // OpsOtherCredit breaks down wallet credits that did not come from an order.
+// Redemption codes count as a top-up channel, so total leaves them out.
 type OpsOtherCredit struct {
 	RedemptionQuota int64 `json:"redemption_quota"`
 	RebateQuota     int64 `json:"rebate_quota"`
@@ -75,7 +83,7 @@ type OpsOtherCredit struct {
 }
 
 func (credit OpsOtherCredit) total() int64 {
-	return credit.RedemptionQuota + credit.RebateQuota + credit.CheckinQuota
+	return credit.RebateQuota + credit.CheckinQuota
 }
 
 type OpsWallet struct {
@@ -99,6 +107,10 @@ type OpsTestCredit struct {
 	GrantedQuota int64 `json:"granted_quota"`
 	UsedQuota    int64 `json:"used_quota"`
 	Users        int64 `json:"users"`
+	// UsedUpUsers spent at least what they were granted.
+	UsedUpUsers int64 `json:"used_up_users"`
+	// PaidAfterUsers paid an order after their first grant.
+	PaidAfterUsers int64 `json:"paid_after_users"`
 }
 
 type OpsUsers struct {
@@ -122,15 +134,22 @@ type OpsChannelStats struct {
 	Pending        int64  `json:"pending"`
 	Overdue        int64  `json:"overdue"`
 	ClosedOrders   int64  `json:"closed_orders"`
+	FailedOrders   int64  `json:"failed_orders"`
+	ExpiredOrders  int64  `json:"expired_orders"`
 	RefundOrders   int64  `json:"refund_orders"`
 	DisputedOrders int64  `json:"disputed_orders"`
 }
 
 // OpsTrendDay carries one local calendar day of the top-up and usage chart.
 type OpsTrendDay struct {
-	Date      string           `json:"date"`
-	Topups    map[string]int64 `json:"topups"`
-	UsedQuota int64            `json:"used_quota"`
+	Date        string           `json:"date"`
+	Topups      map[string]int64 `json:"topups"`
+	UsedQuota   int64            `json:"used_quota"`
+	NewUsers    int64            `json:"new_users"`
+	ActiveUsers int64            `json:"active_users"`
+	NewPayers   int64            `json:"new_payers"`
+	TaskSuccess int64            `json:"task_success"`
+	TaskFailure int64            `json:"task_failure"`
 }
 
 type OpsModelUsage struct {
@@ -174,6 +193,9 @@ type OpsUpstream struct {
 	BalanceUpdatedTime int64   `json:"balance_updated_time"`
 	TaskSuccess        int64   `json:"task_success"`
 	TaskFailure        int64   `json:"task_failure"`
+	// RecentQuota is what users were charged on the channel in the last
+	// seven days, whatever the period, to estimate how long its balance lasts.
+	RecentQuota int64 `json:"recent_quota"`
 }
 
 type OpsTopUser struct {
@@ -205,6 +227,12 @@ type OpsDashboard struct {
 	Upstream []OpsUpstream     `json:"upstream"`
 	TopUsers []OpsTopUser      `json:"top_users"`
 	Alerts   OpsAlerts         `json:"alerts"`
+
+	Funnel         OpsFunnel          `json:"funnel"`
+	Sources        []OpsSource        `json:"sources"`
+	Inviters       []OpsInviter       `json:"inviters"`
+	TopupTiers     []OpsTopupTier     `json:"topup_tiers"`
+	ModelDurations []OpsModelDuration `json:"model_durations"`
 }
 
 // opsOrderChannel names the channel of a top-up. Orders written before
@@ -315,6 +343,18 @@ func opsApplyOrderAggregates(stats *OpsPeriodStats, rows []opsOrderAggregate, ch
 	}
 }
 
+// opsRedemptionsShown says whether a channel filter includes redemption codes.
+func opsRedemptionsShown(channel string) bool {
+	return channel == OpsChannelAll || channel == OpsChannelRedemption
+}
+
+func opsUsedRedemptions(scope opsScope) *gorm.DB {
+	return scope.excludeUsers(
+		DB.Model(&Redemption{}).Unscoped().Where("status = ?", common.RedemptionCodeStatusUsed),
+		"used_user_id",
+	)
+}
+
 func opsQuotaData(scope opsScope, start int64, end int64) *gorm.DB {
 	query := DB.Table("quota_data").Where("created_at >= ? AND created_at <= ?", start, end)
 	return scope.excludeUsers(query, "user_id")
@@ -355,10 +395,7 @@ func opsNetUsage(gross int64, refunded int64) int64 {
 
 func opsOtherCredit(scope opsScope, start int64, end int64) (OpsOtherCredit, error) {
 	var credit OpsOtherCredit
-	redemptions := scope.excludeUsers(
-		DB.Model(&Redemption{}).Unscoped().Where("status = ?", common.RedemptionCodeStatusUsed),
-		"used_user_id",
-	)
+	redemptions := opsUsedRedemptions(scope)
 	rebates := scope.excludeUsers(
 		DB.Model(&AffRebate{}).Where("status = ?", AffRebateStatusSettled),
 		"inviter_id",
@@ -453,6 +490,34 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 	if err != nil {
 		return stats, err
 	}
+
+	if opsRedemptionsShown(query.Channel) {
+		stats.RedemptionQuota = credit.RedemptionQuota
+		err = opsUsedRedemptions(scope).Where("redeemed_time >= ? AND redeemed_time <= ?", start, end).Count(&stats.Redemptions).Error
+		if err != nil {
+			return stats, err
+		}
+	}
+
+	var taskCounts []struct {
+		Status string
+		Total  int64
+	}
+	err = scope.excludeUsers(DB.Model(&Task{}), "user_id").
+		Select("status, count(*) as total").
+		Where("created_at >= ? AND created_at <= ? AND status IN ?", start, end, []string{TaskStatusSuccess, TaskStatusFailure}).
+		Group("status").
+		Scan(&taskCounts).Error
+	if err != nil {
+		return stats, err
+	}
+	for _, row := range taskCounts {
+		if row.Status == TaskStatusSuccess {
+			stats.TaskSuccess = row.Total
+		} else {
+			stats.TaskFailure = row.Total
+		}
+	}
 	return stats, nil
 }
 
@@ -461,9 +526,10 @@ func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
 		UserId      int
 		Quota       int64
 		UsedAtFirst int64
+		FirstGrant  int64
 	}
 	err := scope.excludeUsers(DB.Model(&TestCredit{}), "user_id").
-		Select("user_id, coalesce(sum(quota), 0) as quota, min(used_quota_at_grant) as used_at_first").
+		Select("user_id, coalesce(sum(quota), 0) as quota, min(used_quota_at_grant) as used_at_first, min(created_at) as first_grant").
 		Group("user_id").
 		Scan(&grants).Error
 	if err != nil || len(grants) == 0 {
@@ -485,11 +551,34 @@ func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
 	for _, user := range users {
 		usedByUser[user.Id] = user.UsedQuota
 	}
+	var lastPaid []struct {
+		UserId   int
+		LastPaid int64
+	}
+	err = DB.Model(&TopUp{}).
+		Select("user_id, max(complete_time) as last_paid").
+		Where("amount > 0 AND status = ? AND user_id IN ?", common.TopUpStatusSuccess, ids).
+		Group("user_id").
+		Scan(&lastPaid).Error
+	if err != nil {
+		return err
+	}
+	lastPaidByUser := make(map[int]int64, len(lastPaid))
+	for _, row := range lastPaid {
+		lastPaidByUser[row.UserId] = row.LastPaid
+	}
 	credit := &result.Wallet.TestCredit
 	credit.Users = int64(len(grants))
 	for _, grant := range grants {
+		used := min(grant.Quota, max(usedByUser[grant.UserId]-grant.UsedAtFirst, 0))
 		credit.GrantedQuota += grant.Quota
-		credit.UsedQuota += min(grant.Quota, max(usedByUser[grant.UserId]-grant.UsedAtFirst, 0))
+		credit.UsedQuota += used
+		if used >= grant.Quota {
+			credit.UsedUpUsers++
+		}
+		if lastPaidByUser[grant.UserId] > grant.FirstGrant {
+			credit.PaidAfterUsers++
+		}
 	}
 	return nil
 }
@@ -602,6 +691,32 @@ func opsLoadChannels(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 		target.RefundOrders += period.RefundOrders
 		target.DisputedOrders += period.DisputedOrders
 		target.ClosedOrders += period.ClosedOrders
+		switch row.Status {
+		case common.TopUpStatusFailed:
+			target.FailedOrders += row.Orders
+		case common.TopUpStatusExpired:
+			target.ExpiredOrders += row.Orders
+		}
+	}
+
+	// Redemption codes are a channel of their own in the table.
+	redemption := OpsChannelStats{Channel: OpsChannelRedemption}
+	var codes struct {
+		Codes int64
+		Quota int64
+	}
+	err = opsUsedRedemptions(scope).
+		Where("redeemed_time >= ? AND redeemed_time <= ?", query.Start, query.End).
+		Select("count(*) as codes, coalesce(sum(quota), 0) as quota").
+		Scan(&codes).Error
+	if err != nil {
+		return err
+	}
+	redemption.TopupOrders = codes.Codes
+	redemption.TopupQuota = codes.Quota
+	redemption.TotalQuota = result.Wallet.OtherCredit.RedemptionQuota
+	if redemption.TotalQuota > 0 || redemption.TopupOrders > 0 {
+		byChannel[OpsChannelRedemption] = &redemption
 	}
 
 	var pending []struct {
@@ -652,7 +767,7 @@ func opsDayKey(timestamp int64, offsetSeconds int64) string {
 
 // opsLoadTrend buckets per calendar day of the administrator's time zone. The
 // days are always all present, so the chart has no gaps.
-func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
+func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog, payers []opsPayerRow) error {
 	offset := int64(query.TZOffsetMinutes) * 60
 	byDate := make(map[string]*OpsTrendDay)
 	const daySeconds = int64(24 * 60 * 60)
@@ -689,17 +804,13 @@ func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard,
 		}
 	}
 
-	// Redemption codes are top-ups without an order, so they only show when
-	// the chart is not narrowed to one payment channel.
-	if query.Channel == OpsChannelAll {
+	// Redemption codes are top-ups without an order.
+	if opsRedemptionsShown(query.Channel) {
 		var redemptions []struct {
 			RedeemedTime int64
 			Quota        int64
 		}
-		err = scope.excludeUsers(
-			DB.Model(&Redemption{}).Unscoped().Where("status = ?", common.RedemptionCodeStatusUsed),
-			"used_user_id",
-		).
+		err = opsUsedRedemptions(scope).
 			Select("redeemed_time, quota").
 			Where("redeemed_time >= ? AND redeemed_time <= ?", query.Start, query.End).
 			Scan(&redemptions).Error
@@ -708,7 +819,7 @@ func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard,
 		}
 		for _, redemption := range redemptions {
 			if day, ok := byDate[opsDayKey(redemption.RedeemedTime, offset)]; ok {
-				day.Topups[OpsTrendRedemption] += redemption.Quota
+				day.Topups[OpsChannelRedemption] += redemption.Quota
 			}
 		}
 	}
@@ -736,6 +847,80 @@ func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard,
 	}
 	for i := range result.Trend {
 		result.Trend[i].UsedQuota = opsNetUsage(result.Trend[i].UsedQuota, 0)
+	}
+
+	var registered []int64
+	users := DB.Model(&User{}).Where("created_at >= ? AND created_at <= ?", query.Start, query.End)
+	if query.ExcludeInternal {
+		users = users.Where("role < ?", common.RoleAdminUser)
+	}
+	if err = users.Pluck("created_at", &registered).Error; err != nil {
+		return err
+	}
+	for _, createdAt := range registered {
+		if day, ok := byDate[opsDayKey(createdAt, offset)]; ok {
+			day.NewUsers++
+		}
+	}
+	for _, payer := range payers {
+		if payer.FirstPaid < query.Start || payer.FirstPaid > query.End {
+			continue
+		}
+		if day, ok := byDate[opsDayKey(payer.FirstPaid, offset)]; ok {
+			day.NewPayers++
+		}
+	}
+
+	// quota_data holds hourly buckets, so a user can appear several times a day.
+	var calls []struct {
+		CreatedAt int64
+		UserId    int
+	}
+	err = opsQuotaData(scope, query.Start, query.End).
+		Select("created_at, user_id").
+		Where("user_id > 0").
+		Group("created_at, user_id").
+		Scan(&calls).Error
+	if err != nil {
+		return err
+	}
+	activeByDate := make(map[string]map[int]struct{})
+	for _, call := range calls {
+		date := opsDayKey(call.CreatedAt, offset)
+		if activeByDate[date] == nil {
+			activeByDate[date] = make(map[int]struct{})
+		}
+		activeByDate[date][call.UserId] = struct{}{}
+	}
+	for date, active := range activeByDate {
+		if day, ok := byDate[date]; ok {
+			day.ActiveUsers = int64(len(active))
+		}
+	}
+
+	var tasks []struct {
+		CreatedAt int64
+		Status    string
+		Total     int64
+	}
+	err = scope.excludeUsers(DB.Model(&Task{}), "user_id").
+		Select("created_at, status, count(*) as total").
+		Where("created_at >= ? AND created_at <= ? AND status IN ?", query.Start, query.End, []string{TaskStatusSuccess, TaskStatusFailure}).
+		Group("created_at, status").
+		Scan(&tasks).Error
+	if err != nil {
+		return err
+	}
+	for _, task := range tasks {
+		day, ok := byDate[opsDayKey(task.CreatedAt, offset)]
+		if !ok {
+			continue
+		}
+		if task.Status == TaskStatusSuccess {
+			day.TaskSuccess += task.Total
+		} else {
+			day.TaskFailure += task.Total
+		}
 	}
 	return nil
 }
@@ -939,6 +1124,24 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 		target.Quota = max(target.Quota, revenue)
 	}
 
+	var recent []struct {
+		ChannelId int
+		Quota     int64
+	}
+	err = opsQuotaData(scope, query.Now-opsRunwayWindowSeconds, query.Now).
+		Select("channel_id, coalesce(sum(quota), 0) as quota").
+		Where("channel_id > 0").
+		Group("channel_id").
+		Scan(&recent).Error
+	if err != nil {
+		return err
+	}
+	for _, row := range recent {
+		if target, ok := byId[row.ChannelId]; ok {
+			target.RecentQuota = row.Quota
+		}
+	}
+
 	var taskCounts []struct {
 		ChannelId int
 		Status    string
@@ -1110,7 +1313,7 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 		}
 		trendQuery.Start = max(trendQuery.Start, query.End-opsTrendMaxDays*24*60*60+1)
 	}
-	if err = opsLoadTrend(scope, trendQuery, result, refunds); err != nil {
+	if err = opsLoadTrend(scope, trendQuery, result, refunds, payers); err != nil {
 		return nil, err
 	}
 	if err = opsLoadModels(scope, query, result, refunds); err != nil {
@@ -1123,6 +1326,15 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 		return nil, err
 	}
 	if err = opsLoadTopUsers(scope, query, result, refunds); err != nil {
+		return nil, err
+	}
+	if err = opsLoadUserSources(scope, query, result); err != nil {
+		return nil, err
+	}
+	if err = opsLoadTopupTiers(scope, query, result); err != nil {
+		return nil, err
+	}
+	if err = opsLoadModelDurations(scope, query, result); err != nil {
 		return nil, err
 	}
 

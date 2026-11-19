@@ -22,61 +22,31 @@ import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
-import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber, formatPercent } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { getOpsDashboard } from '../../api'
 import {
-  channelTracksRefunds,
-  formatOpsMoney,
   isLowSuccessRate,
   OPS_CHANNEL_ALL,
-  opsChannelLabel,
+  OPS_TOPUP_CHANNELS,
   opsCustomRangeIssue,
-  percentChange,
-  percentOf,
-  reconcileWallet,
   resolveOpsRange,
-  walletRunwayDays,
   type OpsCustomRange,
   type OpsRangeKey,
 } from '../../lib/ops'
 import { OpsAlertBar } from './ops-alert-bar'
 import { OpsFilterBar } from './ops-filter-bar'
-import {
-  OpsFailReasonPanel,
-  OpsModelRatePanel,
-  OpsModelUsagePanel,
-  OpsTaskPanel,
-} from './ops-model-panels'
-import {
-  OpsChannelPanel,
-  OpsChannelTable,
-  OpsTrendPanel,
-} from './ops-order-panels'
-import {
-  OpsSection,
-  OpsStatGrid,
-  type OpsStat,
-  type OpsStatTone,
-} from './ops-stat-grid'
-import { OpsTopUsersPanel, OpsUpstreamPanel } from './ops-upstream-panels'
-
-function changeNote(current: number, previous: number) {
-  const change = percentChange(current, previous)
-  if (change == null) return {}
-  const tone: OpsStatTone = change >= 0 ? 'good' : 'bad'
-  return {
-    note: `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`,
-    noteTone: tone,
-  }
-}
+import { OpsOverviewSection } from './ops-overview-section'
+import { OpsProfitSection } from './ops-profit-section'
+import { OpsSectionNav } from './ops-section-nav'
+import type { OpsSectionProps } from './ops-stat-grid'
+import { OpsTasksSection } from './ops-tasks-section'
+import { OpsTopupsSection } from './ops-topups-section'
+import { OpsUsersSection } from './ops-users-section'
+import { OpsWalletSection } from './ops-wallet-section'
 
 export function OpsDashboard() {
-  const { t, i18n } = useTranslation()
-  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
-  const count = (value: number) => formatNumber(value, locale)
+  const { t } = useTranslation()
 
   const [rangeKey, setRangeKey] = useState<OpsRangeKey>('all')
   const [custom, setCustom] = useState<OpsCustomRange>({})
@@ -121,223 +91,24 @@ export function OpsDashboard() {
     placeholderData: keepPreviousData,
   })
   const data = query.data
-  const loading = query.isLoading
+  const sectionProps: OpsSectionProps = {
+    data,
+    loading: query.isLoading,
+    allTime: rangeKey === 'all',
+    channel,
+  }
 
-  const channelOptions = useMemo(() => {
-    const options = (data?.channels ?? []).map((row) => row.channel)
-    if (channel !== OPS_CHANNEL_ALL && !options.includes(channel)) {
-      options.push(channel)
-    }
-    return options
-  }, [data?.channels, channel])
-
-  const recon = data ? reconcileWallet(data.wallet) : null
-  const runway = data ? walletRunwayDays(data.wallet) : null
-  const current = data?.current
-  const previous = data?.previous
-  const money = (value: number | undefined) => formatOpsMoney(value ?? 0)
-  const number = (value: number | undefined) => count(value ?? 0)
-
-  const allTime = rangeKey === 'all'
-  const testCredit = data?.wallet.test_credit
-  // All time shows lifetime totals; a period shows only what happened in it.
-  // Balances, debts and runway are always the current state.
-  const walletStats: OpsStat[] = [
-    {
-      key: 'topup',
-      label: t('Total top-ups'),
-      value: money(allTime ? data?.wallet.topup_quota : current?.topup_quota),
-      hint: allTime
-        ? t('Lifetime, net of refunds')
-        : t('Paid in this period, net of refunds'),
-    },
-    {
-      key: 'used',
-      label: t('Amount used'),
-      value: money(allTime ? data?.wallet.used_quota : current?.used_quota),
-      hint: allTime
-        ? t('Lifetime usage, including test credit')
-        : t('Usage in this period, including test credit'),
-    },
-    {
-      key: 'balance',
-      label: t('Unused amount'),
-      value: money(data?.wallet.balance_quota),
-      hint: t('Current balance of all users'),
-    },
-    {
-      key: 'other',
-      label: t('Other credits'),
-      value: money(allTime ? recon?.otherCredit : current?.other_credit_quota),
-      hint: t('Redemption codes, rebates, check-ins'),
-    },
-    {
-      key: 'test-granted',
-      label: t('Test credit granted'),
-      value: money(
-        allTime ? testCredit?.granted_quota : current?.test_credit_quota
-      ),
-      hint: allTime
-        ? t('{{count}} users, promotional cost with no revenue', {
-            count: testCredit?.users ?? 0,
-          })
-        : t('Promotional cost with no revenue'),
-    },
-    ...(allTime
-      ? [
-          {
-            key: 'test-used',
-            label: t('Test credit used'),
-            value: money(testCredit?.used_quota),
-            hint: t('Estimated, assuming test credit is spent first'),
-            note: t('Paid usage {{amount}}', {
-              amount: money(
-                Math.max(
-                  (data?.wallet.used_quota ?? 0) -
-                    (testCredit?.used_quota ?? 0),
-                  0
-                )
-              ),
-            }),
-          },
-        ]
-      : []),
-    {
-      key: 'negative',
-      label: t('Negative balances'),
-      value: money(Math.abs(data?.wallet.negative_quota ?? 0)),
-      hint: t('{{count}} users owe right now', {
-        count: data?.wallet.negative_users ?? 0,
-      }),
-    },
-    {
-      key: 'runway',
-      label: t('Balance runway'),
-      value:
-        runway == null ? '—' : t('{{days}} days', { days: Math.floor(runway) }),
-      hint: t('At the last 7 days of usage'),
-    },
-  ]
-
-  const userStats: OpsStat[] = [
-    {
-      key: 'registered',
-      label: allTime ? t('Registered users') : t('New users'),
-      value: number(current?.new_users),
-      hint: allTime ? undefined : t('Registered in this period'),
-      ...changeNote(current?.new_users ?? 0, previous?.new_users ?? 0),
-    },
-    {
-      key: 'payers',
-      label: t('Paying users'),
-      value: number(current?.payers),
-      hint: allTime ? t('Paid at least once') : t('Paid in this period'),
-      ...changeNote(current?.payers ?? 0, previous?.payers ?? 0),
-    },
-    allTime
-      ? {
-          key: 'dormant',
-          label: t('Dormant payers'),
-          value: number(data?.users.dormant),
-          hint: t('Balance left, no calls in 30 days'),
-        }
-      : {
-          key: 'new-payers',
-          label: t('New paying users'),
-          value: number(current?.new_payers),
-          hint: t('First payment in this period'),
-          ...changeNote(current?.new_payers ?? 0, previous?.new_payers ?? 0),
-        },
-    {
-      key: 'conversion',
-      label: t('Paid conversion'),
-      value: formatPercent(
-        percentOf(current?.registered_payers ?? 0, current?.new_users ?? 0)
-      ),
-      hint: allTime
-        ? `${number(current?.registered_payers)} / ${number(current?.new_users)}`
-        : t('{{paid}} / {{registered}} registered in this period have paid', {
-            paid: number(current?.registered_payers),
-            registered: number(current?.new_users),
-          }),
-    },
-    {
-      key: 'active',
-      label: t('Active users'),
-      value: number(current?.active_users),
-      hint: allTime
-        ? t('Made at least one call')
-        : t('Made calls in this period'),
-      ...changeNote(current?.active_users ?? 0, previous?.active_users ?? 0),
-    },
-    {
-      key: 'repeat',
-      label: t('Repeat payment rate'),
-      value: formatPercent(
-        percentOf(current?.repeat_payers ?? 0, current?.payers ?? 0)
-      ),
-      hint: allTime
-        ? t('Paid at least twice')
-        : t('Paid at least twice in this period'),
-    },
-  ]
-
-  const refundsTracked = channelTracksRefunds(channel)
-  const finishedOrders =
-    (current?.topup_orders ?? 0) + (current?.closed_orders ?? 0)
-  const orderStats: OpsStat[] = [
-    {
-      key: 'orders',
-      label: t('Top-up orders'),
-      value: number(current?.topup_orders),
-      hint: t('Amount {{amount}}', { amount: money(current?.topup_quota) }),
-      ...changeNote(current?.topup_orders ?? 0, previous?.topup_orders ?? 0),
-    },
-    {
-      key: 'refunds',
-      label: t('Refund orders'),
-      value: refundsTracked ? number(current?.refund_orders) : '—',
-      hint: refundsTracked
-        ? t('Amount {{amount}}', { amount: money(current?.refund_quota) })
-        : t('This channel has no refund flow'),
-    },
-    {
-      key: 'pending',
-      label: t('Awaiting payment'),
-      value: number(data?.pending.pending),
-      hint: t('Current, within 24 hours'),
-      note:
-        (data?.pending.overdue ?? 0) > 0
-          ? t('{{count}} overdue and not closed', {
-              count: data?.pending.overdue ?? 0,
-            })
-          : undefined,
-      noteTone: 'warning',
-    },
-    {
-      key: 'disputes',
-      label: t('Disputed orders'),
-      value: refundsTracked ? number(current?.disputed_orders) : '—',
-      hint: t('Stripe chargebacks'),
-    },
-    {
-      key: 'rate',
-      label: t('Payment success rate'),
-      value: formatPercent(
-        percentOf(current?.topup_orders ?? 0, finishedOrders)
-      ),
-      hint: t('Paid / (paid + failed + expired)'),
-    },
-    {
-      key: 'average',
-      label: t('Average order value'),
-      value:
-        (current?.topup_orders ?? 0) > 0
-          ? money((current?.topup_quota ?? 0) / (current?.topup_orders ?? 1))
-          : '—',
-      hint: t('Top-up amount / paid orders'),
-    },
-  ]
+  const navItems = useMemo(
+    () => [
+      { id: 'ops-overview', index: 0, label: t('Overview') },
+      { id: 'ops-wallet', index: 1, label: t('Wallet') },
+      { id: 'ops-users', index: 2, label: t('Users') },
+      { id: 'ops-orders', index: 3, label: t('Top-ups and usage') },
+      { id: 'ops-models', index: 4, label: t('Tasks and models') },
+      { id: 'ops-upstream', index: 5, label: t('Channel profit') },
+    ],
+    [t]
+  )
 
   const lowRateModels = data?.model_perf.filter(isLowSuccessRate).length ?? 0
   const alerts = [
@@ -380,7 +151,7 @@ export function OpsDashboard() {
       custom={custom}
       onCustomChange={setCustom}
       channel={channel}
-      channels={channelOptions}
+      channels={OPS_TOPUP_CHANNELS}
       onChannelChange={setChannel}
       excludeInternal={excludeInternal}
       onExcludeInternalChange={setExcludeInternal}
@@ -406,7 +177,7 @@ export function OpsDashboard() {
   }
 
   return (
-    <div className='space-y-5'>
+    <div className='space-y-4'>
       {filterBar}
 
       {query.isError && (
@@ -418,117 +189,14 @@ export function OpsDashboard() {
       )}
 
       <OpsAlertBar alerts={alerts} />
+      <OpsSectionNav items={navItems} />
 
-      <OpsSection
-        id='ops-wallet'
-        title={t('Wallet')}
-        description={
-          allTime
-            ? t(
-                'Only total top-ups follow the order channel. Unused amount and negative balances are current.'
-              )
-            : t(
-                'Figures cover the selected period. Unused amount, negative balances and runway are current.'
-              )
-        }
-      >
-        <OpsStatGrid
-          stats={walletStats}
-          loading={loading}
-          fourColumns
-          footer={
-            allTime &&
-            recon && (
-              <div className='bg-muted/50 flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t px-3 py-2.5 text-sm sm:px-5'>
-                <span className='font-medium'>
-                  {t('All-channel reconciliation')}
-                </span>
-                <span className='font-mono tabular-nums'>
-                  {t('Top-ups {{topups}} + other {{other}} = {{total}}', {
-                    topups: formatOpsMoney(
-                      data?.wallet.all_channels_quota ?? 0
-                    ),
-                    other: formatOpsMoney(recon.nonOrderCredit),
-                    total: formatOpsMoney(recon.inflow),
-                  })}
-                </span>
-                <span className='text-muted-foreground'>≈</span>
-                <span className='font-mono tabular-nums'>
-                  {t('Used + balance = {{total}}', {
-                    total: formatOpsMoney(recon.outflow),
-                  })}
-                </span>
-                <span
-                  className='text-warning ml-auto font-mono font-semibold tabular-nums'
-                  title={t(
-                    'Includes manual adjustments, sign-up bonuses, subscription payments from balance and deleted accounts, which have no structured record.'
-                  )}
-                >
-                  {t('Difference {{amount}}', {
-                    amount: formatOpsMoney(recon.difference),
-                  })}
-                </span>
-              </div>
-            )
-          }
-        />
-      </OpsSection>
-
-      <OpsSection id='ops-users' title={t('Users')}>
-        <OpsStatGrid stats={userStats} loading={loading} />
-      </OpsSection>
-
-      <OpsSection
-        id='ops-orders'
-        title={t('Orders')}
-        description={t('Channel: {{channel}}', {
-          channel:
-            channel === OPS_CHANNEL_ALL ? t('All') : opsChannelLabel(channel),
-        })}
-      >
-        <OpsStatGrid stats={orderStats} loading={loading} />
-        <div className='grid gap-3 xl:grid-cols-3'>
-          <OpsTrendPanel
-            trend={data?.trend ?? []}
-            loading={loading}
-            usedQuota={current?.used_quota ?? 0}
-          />
-          <OpsChannelPanel
-            channels={data?.channels ?? []}
-            loading={loading}
-            allTime={allTime}
-          />
-        </div>
-        <OpsChannelTable channels={data?.channels ?? []} loading={loading} />
-      </OpsSection>
-
-      <OpsSection id='ops-models' title={t('Tasks and models')}>
-        <div className='grid gap-3 lg:grid-cols-2'>
-          <OpsModelUsagePanel models={data?.models ?? []} loading={loading} />
-          <OpsModelRatePanel
-            models={data?.model_perf ?? []}
-            loading={loading}
-          />
-          <OpsTaskPanel tasks={data?.tasks} loading={loading} />
-          <OpsFailReasonPanel
-            reasons={data?.tasks.fail_reasons ?? []}
-            loading={loading}
-          />
-        </div>
-      </OpsSection>
-
-      <OpsSection
-        id='ops-upstream'
-        title={t('Upstream channels and top users')}
-      >
-        <OpsUpstreamPanel upstream={data?.upstream ?? []} loading={loading} />
-        <OpsTopUsersPanel
-          users={data?.top_users ?? []}
-          usedQuota={current?.used_quota ?? 0}
-          dormant={data?.users.dormant ?? 0}
-          loading={loading}
-        />
-      </OpsSection>
+      <OpsOverviewSection {...sectionProps} />
+      <OpsWalletSection {...sectionProps} />
+      <OpsUsersSection {...sectionProps} />
+      <OpsTopupsSection {...sectionProps} />
+      <OpsTasksSection {...sectionProps} />
+      <OpsProfitSection {...sectionProps} />
     </div>
   )
 }

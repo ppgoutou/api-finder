@@ -44,7 +44,7 @@ func seedOpsDashboard(t *testing.T) {
 
 	users := []User{
 		{Id: 1, Username: "ops_admin", Password: "x", AffCode: "aff1", Role: common.RoleAdminUser, Quota: 1000, UsedQuota: 500, CreatedAt: opsTestStart + 5},
-		{Id: 2, Username: "ops_new", Password: "x", AffCode: "aff2", Role: common.RoleCommonUser, Quota: 200, UsedQuota: 300, CreatedAt: opsTestStart + 10},
+		{Id: 2, Username: "ops_new", Password: "x", AffCode: "aff2", Role: common.RoleCommonUser, Quota: 200, UsedQuota: 300, CreatedAt: opsTestStart + 10, OidcId: "google-sub-2", InviterId: 3},
 		{Id: 3, Username: "ops_paid", Password: "x", AffCode: "aff3", Role: common.RoleCommonUser, UsedQuota: 100, CreatedAt: opsTestStart - 10},
 		{Id: 4, Username: "ops_owing", Password: "x", AffCode: "aff4", Role: common.RoleCommonUser, Quota: -50, UsedQuota: 50, CreatedAt: opsTestStart - 10},
 		{Id: 5, Username: "ops_dormant", Password: "x", AffCode: "aff5", Role: common.RoleCommonUser, Quota: 400, CreatedAt: opsTestStart - 100000},
@@ -91,7 +91,7 @@ func seedOpsDashboard(t *testing.T) {
 	require.NoError(t, DB.Create(&channels).Error)
 
 	tasks := []Task{
-		{UserId: 2, ChannelId: 1, Status: TaskStatusSuccess, CreatedAt: opsTestStart + 1},
+		{UserId: 2, ChannelId: 1, Status: TaskStatusSuccess, CreatedAt: opsTestStart + 1, SubmitTime: opsTestStart + 1, FinishTime: opsTestStart + 301, Properties: Properties{OriginModelName: "video-a"}},
 		{UserId: 2, ChannelId: 1, Status: TaskStatusFailure, FailReason: "boom", CreatedAt: opsTestStart + 2},
 		{UserId: 3, ChannelId: 1, Status: TaskStatusFailure, FailReason: "boom", CreatedAt: opsTestStart + 3},
 		{UserId: 3, ChannelId: 2, Status: TaskStatusQueued, CreatedAt: opsTestStart + 4},
@@ -162,10 +162,14 @@ func assertOpsDashboardFigures(t *testing.T) {
 		NewPayers:        2,
 		ActiveUsers:      2,
 		UsedQuota:        100,
-		OtherCreditQuota: 1320,
+		OtherCreditQuota: 320,
 		TestCreditQuota:  240,
 		RegisteredPayers: 1,
 		RepeatPayers:     1,
+		Redemptions:      1,
+		RedemptionQuota:  1000,
+		TaskSuccess:      1,
+		TaskFailure:      2,
 	}, got.Current)
 	assert.Equal(t, OpsPeriodStats{
 		TopupQuota:       7 * opsTestUnit,
@@ -175,9 +179,10 @@ func assertOpsDashboardFigures(t *testing.T) {
 		NewUsers:         3,
 		ActiveUsers:      1,
 		UsedQuota:        5,
-		OtherCreditQuota: 500,
 		TestCreditQuota:  40,
 		RegisteredPayers: 2,
+		Redemptions:      1,
+		RedemptionQuota:  500,
 	}, got.Previous)
 
 	assert.Equal(t, OpsWallet{
@@ -190,22 +195,23 @@ func assertOpsDashboardFigures(t *testing.T) {
 		OtherCredit:       OpsOtherCredit{RedemptionQuota: 1500, RebateQuota: 300, CheckinQuota: 20},
 		RecentUsedQuota:   105,
 		RecentUsedSeconds: opsRunwayWindowSeconds,
-		TestCredit:        OpsTestCredit{GrantedQuota: 280, UsedQuota: 110, Users: 4},
+		TestCredit:        OpsTestCredit{GrantedQuota: 280, UsedQuota: 110, Users: 4, UsedUpUsers: 1, PaidAfterUsers: 2},
 	}, got.Wallet)
 	assert.Equal(t, OpsUsers{Registered: 4, TotalPayers: 3, RepeatPayer: 1, Dormant: 1}, got.Users)
 	assert.Equal(t, OpsPending{Pending: 1, Overdue: 1}, got.Pending)
 	assert.Equal(t, OpsAlerts{OverdueOrders: 1, USDTExceptions: 1, DisputedOrders: 1, LowBalanceChannels: 1}, got.Alerts)
 
 	assert.Equal(t, []OpsChannelStats{
-		{Channel: PaymentProviderStripe, TotalQuota: 17 * opsTestUnit, TopupQuota: 10 * opsTestUnit, TopupOrders: 1, Pending: 1, ClosedOrders: 1, RefundOrders: 1, DisputedOrders: 1},
-		{Channel: PaymentProviderUSDT, TotalQuota: 5 * opsTestUnit, TopupQuota: 5 * opsTestUnit, TopupOrders: 1, Pending: 1, Overdue: 1, ClosedOrders: 1},
+		{Channel: PaymentProviderStripe, TotalQuota: 17 * opsTestUnit, TopupQuota: 10 * opsTestUnit, TopupOrders: 1, Pending: 1, ClosedOrders: 1, FailedOrders: 1, RefundOrders: 1, DisputedOrders: 1},
+		{Channel: PaymentProviderUSDT, TotalQuota: 5 * opsTestUnit, TopupQuota: 5 * opsTestUnit, TopupOrders: 1, Pending: 1, Overdue: 1, ClosedOrders: 1, ExpiredOrders: 1},
 		{Channel: PaymentProviderEpay, TotalQuota: 3 * opsTestUnit, TopupQuota: 3 * opsTestUnit, TopupOrders: 1},
+		{Channel: OpsChannelRedemption, TotalQuota: 1500, TopupQuota: 1000, TopupOrders: 1},
 	}, got.Channels)
 
 	assert.Equal(t, []OpsTrendDay{
-		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit, OpsTrendRedemption: 1000}, UsedQuota: 70},
-		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 30},
-		{Date: "1970-01-23", Topups: map[string]int64{PaymentProviderEpay: 3 * opsTestUnit}},
+		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit, OpsChannelRedemption: 1000}, UsedQuota: 70, NewUsers: 1, ActiveUsers: 1, NewPayers: 1, TaskSuccess: 1, TaskFailure: 2},
+		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 30, ActiveUsers: 1},
+		{Date: "1970-01-23", Topups: map[string]int64{PaymentProviderEpay: 3 * opsTestUnit}, NewPayers: 1},
 	}, got.Trend)
 
 	assert.Equal(t, []OpsModelUsage{
@@ -223,8 +229,8 @@ func assertOpsDashboardFigures(t *testing.T) {
 	}, got.Tasks)
 
 	assert.Equal(t, []OpsUpstream{
-		{ChannelId: 1, Name: "low", Quota: 70, Count: 2, Balance: 10, BalanceUpdatedTime: 1, TaskSuccess: 1, TaskFailure: 2},
-		{ChannelId: 2, Name: "healthy", Quota: 30, Count: 1, Balance: 500, BalanceUpdatedTime: 1},
+		{ChannelId: 1, Name: "low", Quota: 70, Count: 2, Balance: 10, BalanceUpdatedTime: 1, TaskSuccess: 1, TaskFailure: 2, RecentQuota: 107},
+		{ChannelId: 2, Name: "healthy", Quota: 30, Count: 1, Balance: 500, BalanceUpdatedTime: 1, RecentQuota: 40},
 		{ChannelId: 4, Name: "unfetched"},
 	}, got.Upstream)
 	assert.Equal(t, []OpsTopUser{
@@ -243,7 +249,8 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, 25*opsTestUnit, stripe.Wallet.AllChannelsQuota, "reconciliation always spans every channel")
 	assert.Equal(t, OpsPending{Pending: 1}, stripe.Pending)
 	assert.Equal(t, int64(100), stripe.Current.UsedQuota, "usage has no order channel")
-	assert.Len(t, stripe.Channels, 3, "the channel table is not filtered")
+	assert.Len(t, stripe.Channels, 4, "the channel table is not filtered")
+	assert.Zero(t, stripe.Current.RedemptionQuota, "redemption codes are not a Stripe top-up")
 	assert.Equal(t, map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, stripe.Trend[0].Topups, "redemption codes have no payment channel")
 	assert.Empty(t, stripe.Trend[1].Topups)
 
@@ -255,12 +262,51 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, int64(599), everyone.Current.UsedQuota)
 	assert.Equal(t, int64(5), everyone.Users.Registered)
 	assert.Equal(t, int64(950), everyone.Wallet.UsedQuota)
-	assert.Equal(t, OpsTestCredit{GrantedQuota: 1280, UsedQuota: 610, Users: 5}, everyone.Wallet.TestCredit)
+	assert.Equal(t, OpsTestCredit{GrantedQuota: 1280, UsedQuota: 610, Users: 5, UsedUpUsers: 1, PaidAfterUsers: 2}, everyone.Wallet.TestCredit)
 	assert.Equal(t, 27*opsTestUnit, everyone.Current.TopupQuota, "test credit never counts as a top-up")
 }
 
 func TestGetOpsDashboardFiguresFollowChannelAndInternalScope(t *testing.T) {
 	assertOpsDashboardFigures(t)
+}
+
+func TestGetOpsDashboardBreaksDownUsersOrdersAndTasks(t *testing.T) {
+	seedOpsDashboard(t)
+
+	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
+	require.NoError(t, err)
+
+	// Only ops_new registered in the period: Google, invited by ops_paid, two paid orders.
+	assert.Equal(t, OpsFunnel{Registered: 1, Active: 1, Paid: 1, Repeat: 1}, got.Funnel)
+	assert.Equal(t, []OpsSource{
+		{Method: OpsSourceGoogle, Invited: true, Users: 1, Payers: 1, Quota: 15 * opsTestUnit},
+		{Method: OpsSourceGoogle},
+		{Method: OpsSourceDirect, Invited: true},
+		{Method: OpsSourceDirect},
+	}, got.Sources)
+	assert.Equal(t, []OpsInviter{{UserId: 3, Username: "ops_paid", Invited: 1, Payers: 1, Quota: 15 * opsTestUnit}}, got.Inviters)
+
+	// ops_new pays $10 by Stripe first, then $5 by USDT; the $3 epay order is
+	// the first paid order of ops_paid, whose earlier order was refunded.
+	assert.Equal(t, []OpsTopupTier{
+		{MaxUSD: 5, FirstOrders: 1, FirstQuota: 3 * opsTestUnit, RepeatOrders: 1, RepeatQuota: 5 * opsTestUnit},
+		{MaxUSD: 10, FirstOrders: 1, FirstQuota: 10 * opsTestUnit},
+		{MaxUSD: 20}, {MaxUSD: 50}, {MaxUSD: 100}, {},
+	}, got.TopupTiers)
+	assert.Equal(t, []OpsModelDuration{{ModelName: "video-a", Tasks: 1, P50Seconds: 300, P90Seconds: 300}}, got.ModelDurations)
+
+	codes, err := GetOpsDashboard(opsTestQuery(OpsChannelRedemption))
+	require.NoError(t, err)
+	assert.Equal(t, int64(1000), codes.Current.RedemptionQuota)
+	assert.Zero(t, codes.Current.TopupQuota, "redemption codes have no orders")
+	assert.Equal(t, map[string]int64{OpsChannelRedemption: 1000}, codes.Trend[0].Topups)
+}
+
+func TestOpsPercentileUsesNearestRank(t *testing.T) {
+	values := []int64{10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
+	assert.Equal(t, int64(50), opsPercentile(values, 50))
+	assert.Equal(t, int64(90), opsPercentile(values, 90))
+	assert.Equal(t, int64(7), opsPercentile([]int64{7}, 90))
 }
 
 func TestGetOpsDashboardTrendUsesAdministratorTimeZone(t *testing.T) {
