@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react'
 
 import { useTheme } from '@/context/theme-provider'
 import { VCHART_OPTION } from '@/lib/vchart'
+import { applySiteChartTheme } from '@/lib/chart-theme'
 
 let themeManagerPromise: Promise<
   (typeof import('@visactor/vchart'))['ThemeManager']
@@ -41,7 +42,7 @@ export function OpsChart(props: {
     )
     void themeManagerPromise.then((ThemeManager) => {
       if (!active) return
-      ThemeManager.setCurrentTheme(resolvedTheme === 'dark' ? 'dark' : 'light')
+      applySiteChartTheme(ThemeManager, resolvedTheme)
       setThemeReady(true)
     })
     return () => {

@@ -202,7 +202,7 @@ export function PromptInput(props: PromptInputProps) {
       <p
         id={hintId}
         className={cn(
-          'text-muted-foreground px-1 text-[11px]',
+          'text-muted-foreground px-1 text-caption',
           tooLong && 'text-destructive'
         )}
       >

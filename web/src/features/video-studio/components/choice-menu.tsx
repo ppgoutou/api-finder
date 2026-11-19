@@ -91,7 +91,7 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
           {sections.map((section) => (
             <DropdownMenuGroup key={section.options[0].value}>
               {section.group && (
-                <DropdownMenuLabel className='text-muted-foreground pt-2 text-[11px]'>
+                <DropdownMenuLabel className='text-muted-foreground pt-2 text-caption'>
                   {section.group}
                 </DropdownMenuLabel>
               )}
@@ -105,7 +105,7 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
                   {option.icon}
                   {option.label}
                   {option.unavailableLabel && (
-                    <span className='bg-warning/15 text-warning ml-auto rounded-md px-1.5 py-0.5 text-[10px] leading-4 font-bold'>
+                    <span className='bg-warning/15 text-warning ml-auto rounded-md px-1.5 py-0.5 text-micro leading-4'>
                       {option.unavailableLabel}
                     </span>
                   )}

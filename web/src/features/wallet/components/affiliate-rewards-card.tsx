@@ -85,7 +85,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
                 <div className='text-brand-hover dark:text-brand-on-dark text-sm font-semibold'>
                   {t('Referral Program')}
                 </div>
-                <h3 className='mt-1 text-[22px] leading-tight font-bold sm:text-[26px]'>
+                <h3 className='text-heading-3 mt-1 sm:text-2xl'>
                   {t('Invite friends, earn {{percent}}% back', {
                     percent: rebatePercent,
                   })}
@@ -98,7 +98,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
               </>
             ) : (
               <>
-                <h3 className='text-[22px] leading-tight font-bold sm:text-[26px]'>
+                <h3 className='text-heading-3 sm:text-2xl'>
                   {t('Referral Program')}
                 </h3>
                 <p className='text-muted-foreground mt-2 text-sm'>
@@ -114,12 +114,12 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
             <div className='text-muted-foreground text-sm'>
               {t('Total rebates')}
             </div>
-            <div className='mt-1 text-4xl font-bold tracking-tight break-all tabular-nums sm:text-[44px] sm:leading-none'>
+            <div className='font-display mt-1 text-4xl font-bold tracking-tight break-all tabular-nums sm:text-5xl sm:leading-none'>
               {formatQuota(props.summary?.earned_quota ?? 0)}
             </div>
             <div className='border-brand/15 mt-4 flex gap-10 border-t pt-4 sm:gap-12'>
               <div className='min-w-0'>
-                <div className='text-muted-foreground text-[13px]'>
+                <div className='text-muted-foreground text-body-sm'>
                   {t('Arriving')}
                 </div>
                 <div className='mt-0.5 text-lg font-semibold break-all tabular-nums sm:text-xl'>
@@ -127,7 +127,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
                 </div>
               </div>
               <div className='min-w-0'>
-                <div className='text-muted-foreground text-[13px]'>
+                <div className='text-muted-foreground text-body-sm'>
                   {t('Invites')}
                 </div>
                 <div className='mt-0.5 text-lg font-semibold tabular-nums sm:text-xl'>
@@ -143,7 +143,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
                 aria-label={t('Invitation link')}
                 value={props.affiliateLink}
                 readOnly
-                className='bg-background dark:bg-background h-12 min-w-0 flex-1 rounded-xl border-0 font-mono text-[13px]'
+                className='bg-background dark:bg-background h-12 min-w-0 flex-1 rounded-xl border-0 font-mono text-body-sm'
               />
               <CopyButton
                 value={props.affiliateLink}
@@ -176,11 +176,11 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
           aria-label={t('How referral rebates work')}
           className='border-brand/15 border-t pt-5'
         >
-          <h4 className='text-[13px] font-semibold'>
+          <h4 className='text-body-sm font-semibold'>
             {t('How referral rebates work')}
           </h4>
           {rebatePercent > 0 ? (
-            <ol className='mt-3 grid gap-3 text-[13px] sm:grid-cols-3 sm:gap-6'>
+            <ol className='mt-3 grid gap-3 text-body-sm sm:grid-cols-3 sm:gap-6'>
               {[
                 t(
                   'Share your invitation link, or have friends enter your invitation code when they sign up.'
@@ -192,7 +192,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
                 arrivalStep,
               ].map((step, index) => (
                 <li key={step} className='flex gap-2.5'>
-                  <span className='bg-background text-brand-hover dark:text-brand-on-dark flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums'>
+                  <span className='bg-background text-brand-hover dark:text-brand-on-dark flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums'>
                     {index + 1}
                   </span>
                   <span className='text-muted-foreground'>{step}</span>
@@ -200,7 +200,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
               ))}
             </ol>
           ) : (
-            <p className='text-muted-foreground mt-1 text-[13px]'>
+            <p className='text-muted-foreground mt-1 text-body-sm'>
               {t(
                 'Referral rebates are not open yet. Friends who sign up with your code still appear in your invitees.'
               )}

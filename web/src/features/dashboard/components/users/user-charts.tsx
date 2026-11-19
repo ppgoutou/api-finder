@@ -43,6 +43,7 @@ import type {
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { getRollingDateRange, type TimeGranularity } from '@/lib/time'
 import { VCHART_OPTION } from '@/lib/vchart'
+import { applySiteChartTheme } from '@/lib/chart-theme'
 
 let themeManagerPromise: Promise<
   (typeof import('@visactor/vchart'))['ThemeManager']
@@ -131,7 +132,7 @@ export function UserCharts(props: UserChartsProps) {
       }
       const ThemeManager = await themeManagerPromise
       themeManagerRef.current = ThemeManager
-      ThemeManager.setCurrentTheme(resolvedTheme === 'dark' ? 'dark' : 'light')
+      applySiteChartTheme(ThemeManager, resolvedTheme)
       setThemeReady(true)
     }
     updateTheme()

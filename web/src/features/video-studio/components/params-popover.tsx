@@ -155,7 +155,7 @@ export function ParamsPopover(props: ParamsPopoverProps) {
               props.onChange({ seconds: fitStudioSeconds(model, seconds) })
             }}
           />
-          <div className='text-muted-foreground flex justify-between text-[11px]'>
+          <div className='text-muted-foreground flex justify-between text-caption'>
             <span>{t('{{seconds}}s', { seconds: shortest })}</span>
             <span>{t('{{seconds}}s', { seconds: longest })}</span>
           </div>

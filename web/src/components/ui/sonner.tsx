@@ -26,9 +26,23 @@ import {
   Loading03Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Toaster as Sonner, type ToasterProps } from 'sonner'
+import { Toaster as Sonner, toast, type ToasterProps } from 'sonner'
 
 import { useTheme } from '@/context/theme-provider'
+
+/** Success toasts leave on their own after 3s. */
+const SUCCESS_TOAST_DURATION = 3000
+
+// Design guideline: a success message leaves on its own, an error stays until
+// the reader closes it. Sonner only has one duration per Toaster, so the two
+// shortcuts every feature calls are given their own default here; a call that
+// passes its own `duration` still wins.
+const showSuccess = toast.success
+const showError = toast.error
+toast.success = (message, data) =>
+  showSuccess(message, { duration: SUCCESS_TOAST_DURATION, ...data })
+toast.error = (message, data) =>
+  showError(message, { duration: Number.POSITIVE_INFINITY, ...data })
 
 const Toaster = (props: ToasterProps) => {
   const { resolvedTheme } = useTheme()
@@ -36,7 +50,8 @@ const Toaster = (props: ToasterProps) => {
   return (
     <Sonner
       theme={resolvedTheme}
-      className='toaster group'
+      // Sonner sets its own system font stack; use the site font instead.
+      className='toaster group font-sans!'
       icons={{
         success: (
           <HugeiconsIcon

@@ -88,7 +88,7 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
                     .filter(Boolean)
                     .join(' · ')}
                 </div>
-                <div className='text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] tabular-nums'>
+                <div className='text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-body-sm tabular-nums'>
                   {formatTimestampToDate(rebate.created_at)}
                   <span>
                     {rebate.source_type === 'redemption'
@@ -107,7 +107,7 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
             </div>
             <span
               className={cn(
-                'shrink-0 text-[15px] tabular-nums',
+                'shrink-0 text-body-lg tabular-nums',
                 reversed
                   ? 'text-muted-foreground line-through'
                   : 'font-semibold',
@@ -145,7 +145,7 @@ export function AffiliateRebatesCard(props: AffiliateRebatesCardProps) {
       <div className='mb-2 flex items-baseline justify-between gap-2'>
         <h3 className='text-base font-semibold'>{t('Rebates')}</h3>
         {props.holdDays && props.holdDays > 0 ? (
-          <span className='text-muted-foreground text-[13px]'>
+          <span className='text-muted-foreground text-body-sm'>
             {t('Each rebate arrives {{days}} days after it is earned', {
               days: props.holdDays,
             })}

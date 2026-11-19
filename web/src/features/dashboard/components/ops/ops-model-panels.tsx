@@ -205,7 +205,7 @@ export function OpsTaskPanel(props: {
         {stats.map((stat) => (
           <div key={stat.key}>
             <div className='text-muted-foreground text-xs'>{stat.label}</div>
-            <div className='mt-0.5 font-mono text-xl font-bold tabular-nums'>
+            <div className='mt-0.5 font-mono text-xl font-semibold tabular-nums'>
               {formatNumber(stat.value, locale)}
             </div>
           </div>

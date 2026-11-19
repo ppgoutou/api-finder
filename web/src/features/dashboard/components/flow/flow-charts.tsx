@@ -94,6 +94,7 @@ import { VCHART_OPTION } from '@/lib/vchart'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { FlowNodeFilterControl } from './flow-node-filter'
+import { Button } from '@/components/ui/button'
 
 interface FlowChartsProps {
   filters?: DashboardFilters
@@ -545,9 +546,11 @@ export function FlowCharts(props: FlowChartsProps) {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <button
+                      <Button
+ variant='ghost'
+ size='icon-xs'
                         type='button'
-                        className='text-muted-foreground/60 hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded-md'
+                        className='text-muted-foreground/60 shrink-0'
                         aria-label={t('Flow width metric')}
                       />
                     }
@@ -679,9 +682,11 @@ export function FlowCharts(props: FlowChartsProps) {
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <button
+                    <Button
+ variant='ghost'
+ size='icon-xs'
                       type='button'
-                      className='text-muted-foreground/60 hover:text-foreground flex size-6 shrink-0 items-center justify-center rounded-md'
+                      className='text-muted-foreground/60 shrink-0'
                       aria-label={t('Show or hide flow columns')}
                     />
                   }

@@ -27,6 +27,7 @@ import {
 import { cn } from '@/lib/utils'
 
 import type { StudioAsset } from '../types'
+import { Button } from '@/components/ui/button'
 
 interface AssetThumbProps {
   asset: StudioAsset
@@ -71,11 +72,11 @@ export function AssetThumb(props: AssetThumbProps) {
       title={asset.fileName}
     >
       {preview}
-      <span className='absolute inset-x-0 bottom-0 truncate bg-slate-950/70 px-1 py-0.5 text-center text-[10px] font-medium text-white'>
+      <span className='absolute inset-x-0 bottom-0 truncate bg-black/70 px-1 py-0.5 text-center text-micro font-medium text-white'>
         {failed ? t('Upload failed') : props.label}
       </span>
       {asset.status === 'uploading' && (
-        <span className='absolute inset-0 flex items-center justify-center bg-slate-950/50 text-xs font-semibold text-white'>
+        <span className='absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-semibold text-white'>
           {asset.progress}%
         </span>
       )}
@@ -84,14 +85,14 @@ export function AssetThumb(props: AssetThumbProps) {
           <AlertCircle className='size-5' aria-hidden />
         </span>
       )}
-      <button
+      <Button variant='plain' size='inline'
         type='button'
         onClick={props.onRemove}
         aria-label={t('Remove {{name}}', { name: asset.fileName })}
-        className='absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-slate-950/70 text-white opacity-100 transition-opacity hover:bg-slate-950 sm:opacity-0 sm:group-hover/thumb:opacity-100 sm:focus-visible:opacity-100'
+        className='absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-black/70 text-white opacity-100 transition-opacity hover:bg-black sm:opacity-0 sm:group-hover/thumb:opacity-100 sm:focus-visible:opacity-100'
       >
         <X className='size-3' aria-hidden />
-      </button>
+      </Button>
     </div>
   )
 

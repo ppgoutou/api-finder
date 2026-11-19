@@ -69,7 +69,7 @@ export function WorkRetentionBadge(props: {
       })
     }
     className =
-      'border-transparent bg-amber-500 text-white dark:bg-amber-600 dark:text-white'
+      'border-transparent bg-warning text-warning-foreground'
     content = (
       <>
         <Clock aria-hidden />

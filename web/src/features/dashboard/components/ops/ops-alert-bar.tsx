@@ -75,7 +75,7 @@ export function OpsAlertBar(props: { alerts: OpsAlertItem[] }) {
             href={alert.href}
             className='text-foreground hover:underline'
           >
-            <span className='text-warning font-mono font-bold'>
+            <span className='text-warning font-mono font-semibold'>
               {formatNumber(alert.n, locale)}
             </span>{' '}
             {alert.label}

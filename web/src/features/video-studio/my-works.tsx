@@ -50,7 +50,7 @@ export function MyWorks() {
         <div className='mx-auto flex w-full max-w-[1800px] flex-col gap-6 px-3 py-8 sm:px-4'>
           <header className='flex flex-wrap items-end justify-between gap-3'>
             <div className='flex flex-col gap-1'>
-              <h1 className='text-2xl font-bold tracking-tight'>
+              <h1 className='text-page-title'>
                 {t('My works')}
               </h1>
               <p className='text-muted-foreground text-sm'>
@@ -70,7 +70,7 @@ export function MyWorks() {
             </Button>
           </header>
           {expiring.total > 0 && (
-            <Alert className='border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'>
+            <Alert variant='warning'>
               <TriangleAlert aria-hidden />
               <AlertTitle>
                 {t('{{value}} works expire soon', { value: expiring.total })}
@@ -91,7 +91,7 @@ export function MyWorks() {
               <TabsTrigger value='video'>
                 {t('Video')}
                 {expiring.videos > 0 && (
-                  <span className='rounded-full bg-amber-500 px-1.5 text-[10px] leading-4 text-white'>
+                  <span className='bg-warning text-warning-foreground rounded-full px-1.5 text-micro leading-4'>
                     {expiring.videos}
                   </span>
                 )}
@@ -99,7 +99,7 @@ export function MyWorks() {
               <TabsTrigger value='image'>
                 {t('Image')}
                 {expiring.images > 0 && (
-                  <span className='rounded-full bg-amber-500 px-1.5 text-[10px] leading-4 text-white'>
+                  <span className='bg-warning text-warning-foreground rounded-full px-1.5 text-micro leading-4'>
                     {expiring.images}
                   </span>
                 )}
