@@ -112,6 +112,10 @@ func TestClassifyFailReason(t *testing.T) {
 		"生成的音频被线路审核拦下，判定可能涉及音乐版权；可关闭生成音频，或去掉提示词里的音乐、歌曲、歌词描述后重新提交":                                                                                                                                              CodeModerationMusicCopyright,
 		"第6张图片未通过内容安全检查，请更换这张图片；尚未提交生成。":                                                                                                                                                                       CodeModerationInput,
 		"视频任务未被受理（请求参数或内容未通过校验），任务未开始生成，预扣费用已原路退回，请检查后重试。上游原因：参考视频：审核判定含不宜内容，请更换参考视频后重新提交":                                                                                                                     CodeModerationInput,
+		"第 1 段参考视频：参考视频帧率 23.8 fps，低于最低 24 fps。请按要求重新导出。":                                                                                                                                                      CodeMaterialFrameRate,
+		"生成未完成，请查看任务中的具体失败原因。 原始原因：The referenced source video could not be resolved by the generation service, so I couldn't proceed.":                                                                        CodeMaterialUnreachable,
+		"生成未完成，请查看任务中的具体失败原因。 原始原因：The current video file cannot be read.":                                                                                                                                     CodeMaterialUnreachable,
+		"内容审核未通过：提示词或参考素材触发上游内容限制，生成已被拦截。上游未指出具体词句或素材。请修改提示词或参考素材后重新提交。":                                                                                                                                       CodeModerationOutput,
 		"上游生成失败：The parameter `inner_generation__classification` specified in the request is not valid: You requested the reference generation task type, but 上游 classified your task as first-frame-to-video": CodeTaskTypeMismatch,
 	} {
 		assert.Equal(t, want, ClassifyFailReason(reason).Code, reason)
