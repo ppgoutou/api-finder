@@ -148,7 +148,7 @@ function ModelCategory(props: ModelCategoryProps) {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Info className='size-3.5 shrink-0 text-amber-500' />
+                      <Info className='text-warning size-3.5 shrink-0' />
                     }
                   />
                   <TooltipContent>

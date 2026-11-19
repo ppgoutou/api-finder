@@ -103,6 +103,7 @@ import { LogCostDisplay } from '../log-cost-display'
 import { ModelBadge } from '../model-badge'
 import { TimingMetricsCell, StreamTpsCell } from '../timing-metrics-cell'
 import { useUsageLogsContext } from '../usage-logs-provider'
+import { Button } from '@/components/ui/button'
 
 interface DetailSegment {
   text: string
@@ -499,7 +500,7 @@ export function useCommonLogsColumns(
                         <Popover>
                           <PopoverTrigger
                             render={
-                              <button
+                              <Button variant='plain' size='inline'
                                 type='button'
                                 className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none'
                                 aria-label={t('Retry Chain')}
@@ -508,7 +509,7 @@ export function useCommonLogsColumns(
                             }
                           >
                             <GitBranch
-                              className='size-3.5 text-amber-500'
+                              className='size-3.5 text-warning'
                               aria-hidden='true'
                             />
                           </PopoverTrigger>
@@ -527,9 +528,9 @@ export function useCommonLogsColumns(
                         </Popover>
                       )}
                       {affinity && (
-                        <button
+                        <Button variant='plain' size='inline'
                           type='button'
-                          className='absolute -top-1 -right-1 leading-none text-amber-500'
+                          className='absolute -top-1 -right-1 leading-none text-warning'
                           onClick={(e) => {
                             e.stopPropagation()
                             setAffinityTarget({
@@ -545,7 +546,7 @@ export function useCommonLogsColumns(
                           }}
                         >
                           <Sparkles className='size-3 fill-current' />
-                        </button>
+                        </Button>
                       )}
                     </div>
                     {log.channel_name && (
@@ -611,7 +612,7 @@ export function useCommonLogsColumns(
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <button
+                    <Button variant='plain' size='inline'
                       type='button'
                       aria-label={
                         sensitiveVisible
@@ -626,7 +627,7 @@ export function useCommonLogsColumns(
                   <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
                     <AvatarFallback
                       className={cn(
-                        'text-[11px] font-semibold',
+                        'text-caption font-semibold',
                         !sensitiveVisible && 'bg-muted text-muted-foreground'
                       )}
                       style={
@@ -829,7 +830,7 @@ export function useCommonLogsColumns(
                 {completionTokens.toLocaleString()}
               </span>
               {(cacheReadTokens > 0 || cacheWriteTokens > 0) && (
-                <div className='flex items-center gap-1 text-[11px]'>
+                <div className='flex items-center gap-1 text-caption'>
                   {cacheReadTokens > 0 && (
                     <span className='text-muted-foreground/60'>
                       {t('Cache')}↓ {cacheReadTokens.toLocaleString()}
@@ -871,7 +872,7 @@ export function useCommonLogsColumns(
                     'text-xs tabular-nums',
                     margin.profitQuota < 0
                       ? 'text-destructive'
-                      : 'text-green-600 dark:text-green-500'
+                      : 'text-success'
                   )}
                   title={t('Supply cost {{supply}}, gross profit {{profit}}', {
                     supply: formatLogQuota(margin.supplyQuota),
@@ -944,7 +945,7 @@ export function useCommonLogsColumns(
           if (primary?.muted) {
             primaryTextClass = 'text-muted-foreground/60'
           } else if (primary?.danger) {
-            primaryTextClass = 'text-red-600 dark:text-red-400'
+            primaryTextClass = 'text-destructive'
           }
           let detailPreview = (
             <span className='text-muted-foreground/40'>—</span>
@@ -975,7 +976,7 @@ export function useCommonLogsColumns(
 
           return (
             <>
-              <button
+              <Button variant='plain' size='inline'
                 type='button'
                 className={cn(
                   'group flex items-center gap-1 text-left text-xs',
@@ -985,7 +986,7 @@ export function useCommonLogsColumns(
                 title={t('Click to view full details')}
               >
                 {detailPreview}
-              </button>
+              </Button>
               <DetailsDialog
                 log={log}
                 isAdmin={isAdmin}

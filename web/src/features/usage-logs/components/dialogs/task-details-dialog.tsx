@@ -188,7 +188,7 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
             icon={
               <HugeiconsIcon
                 icon={Shield01Icon}
-                className='size-3.5 text-blue-500'
+                className='size-3.5 text-info'
                 strokeWidth={2}
               />
             }
@@ -251,7 +251,7 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
             icon={
               <HugeiconsIcon
                 icon={CloudUploadIcon}
-                className='size-3.5 text-blue-500'
+                className='size-3.5 text-info'
                 strokeWidth={2}
               />
             }
@@ -268,7 +268,7 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
             icon={
               <HugeiconsIcon
                 icon={Wrench01Icon}
-                className='size-3.5 text-amber-500'
+                className='size-3.5 text-warning'
                 strokeWidth={2}
               />
             }

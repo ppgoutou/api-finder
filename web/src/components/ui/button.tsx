@@ -42,6 +42,11 @@ const buttonVariants = cva(
         /* Lime call-to-action, only on dark marketing stages. */
         night:
           'bg-accent-night text-accent-night-foreground hover:bg-accent-night/90 focus-visible:ring-accent-night/50 font-semibold',
+        /* No surface: a clickable name, preview or reason inside a table
+         * cell or a line of text. Pair with size="inline"; it keeps the
+         * focus ring and text wrapping of the content it wraps. */
+        plain:
+          'justify-start rounded-sm text-left font-normal whitespace-normal select-text active:not-aria-[haspopup]:translate-y-0',
       },
       size: {
         default:
@@ -54,6 +59,8 @@ const buttonVariants = cva(
         'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
         'icon-sm': 'size-7',
         'icon-lg': 'size-10',
+        /* Takes the size of its content and the surrounding font size. */
+        inline: 'h-auto gap-1 p-0 text-[length:inherit]',
       },
     },
     defaultVariants: {

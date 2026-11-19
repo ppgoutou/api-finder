@@ -115,7 +115,7 @@ function LegacyAudioPreview(props: { taskId: string }) {
 
   return (
     <>
-      <button
+      <Button variant='plain' size='inline'
         type='button'
         className='group flex items-center gap-1 text-left text-xs'
         onClick={() => setOpen(true)}
@@ -129,7 +129,7 @@ function LegacyAudioPreview(props: { taskId: string }) {
         <span className='text-foreground leading-snug group-hover:underline'>
           {t('Click to preview audio')}
         </span>
-      </button>
+      </Button>
       <AudioPreviewDialog
         open={open}
         onOpenChange={setOpen}
@@ -269,7 +269,7 @@ function TaskArtifactCard(props: { artifact: TaskArtifact }) {
             {props.artifact.key}
           </span>
           {props.artifact.mime_type ? (
-            <span className='block truncate font-mono text-[11px]'>
+            <span className='block truncate font-mono text-caption'>
               {props.artifact.mime_type}
             </span>
           ) : null}
@@ -445,13 +445,13 @@ export function TaskArtifactsCell(props: { log: TaskLog }) {
   return (
     <>
       {previewMode === 'legacy-video' ? (
-        <button
+        <Button variant='plain' size='inline'
           type='button'
           className='text-foreground text-xs hover:underline'
           onClick={() => setOpen(true)}
         >
           {t('Click to preview video')}
-        </button>
+        </Button>
       ) : (
         <Button
           type='button'

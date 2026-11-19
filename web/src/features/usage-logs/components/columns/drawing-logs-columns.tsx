@@ -56,6 +56,7 @@ import {
   createProgressColumn,
   createFailReasonColumn,
 } from './column-helpers'
+import { Button } from '@/components/ui/button'
 
 const drawingTypeIconMap: Record<string, LucideIcon> = {
   [MJ_TASK_TYPES.IMAGINE]: ImageIcon,
@@ -205,7 +206,7 @@ export function useDrawingLogsColumns(
 
           return (
             <>
-              <button
+              <Button variant='plain' size='inline'
                 type='button'
                 className='group text-left text-xs'
                 onClick={() => setDialogOpen(true)}
@@ -214,7 +215,7 @@ export function useDrawingLogsColumns(
                 <span className='text-foreground truncate leading-snug group-hover:underline'>
                   {t('View')}
                 </span>
-              </button>
+              </Button>
               <ImageDialog
                 imageUrl={imageUrl}
                 taskId={log.mj_id}
@@ -239,7 +240,7 @@ export function useDrawingLogsColumns(
 
           return (
             <>
-              <button
+              <Button variant='plain' size='inline'
                 type='button'
                 className='group flex max-w-[220px] items-center text-left text-xs'
                 onClick={() => setDialogOpen(true)}
@@ -248,7 +249,7 @@ export function useDrawingLogsColumns(
                 <span className='text-muted-foreground truncate leading-snug group-hover:underline'>
                   {prompt}
                 </span>
-              </button>
+              </Button>
               <PromptDialog
                 prompt={prompt}
                 promptEn={log.prompt_en}

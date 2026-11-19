@@ -214,7 +214,7 @@ export function BalanceQueryDialog(props: BalanceQueryDialogProps) {
                 </IconBadge>
                 <span>{t('Current Balance')}</span>
               </div>
-              <div className='text-2xl font-bold'>
+              <div className='text-metric tabular-nums'>
                 {balance !== null
                   ? formatBalance(balance)
                   : formatBalance(currentRow.balance)}

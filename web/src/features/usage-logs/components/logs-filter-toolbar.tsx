@@ -128,7 +128,7 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
     >
       {advancedOpen ? t('Collapse') : t('Expand')}
       {activeAdvancedCount > 0 && (
-        <Badge className='ml-0.5 size-5 justify-center p-0 text-[10px]'>
+        <Badge className='ml-0.5 size-5 justify-center p-0 text-micro'>
           {activeAdvancedCount}
         </Badge>
       )}
@@ -167,7 +167,7 @@ export function LogsFilterToolbar<TData>(props: LogsFilterToolbarProps<TData>) {
                     <Badge
                       className={cn(
                         !props.compactMobile &&
-                          'ml-0.5 size-5 justify-center p-0 text-[10px]'
+                          'ml-0.5 size-5 justify-center p-0 text-micro'
                       )}
                     >
                       {activeMobileFilterCount}

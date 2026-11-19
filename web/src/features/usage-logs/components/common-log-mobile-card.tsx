@@ -252,7 +252,7 @@ export function CommonLogMobileCard<TData>(props: {
                   {id === 'user' ? (
                     <Avatar className='ring-border/60 size-6 shrink-0 ring-1'>
                       <AvatarFallback
-                        className='text-[11px] font-semibold'
+                        className='text-caption font-semibold'
                         style={
                           context.sensitiveVisible
                             ? getUserAvatarStyle(log.username)
