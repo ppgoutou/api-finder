@@ -196,6 +196,13 @@ type OpsUpstream struct {
 	// RecentQuota is what users were charged on the channel in the last
 	// seven days, whatever the period, to estimate how long its balance lasts.
 	RecentQuota int64 `json:"recent_quota"`
+	// TaskCostQuota is what the supplier charged for the channel's successful
+	// tasks, read from their snapshots for suppliers without readable logs.
+	// TaskCostCharged tasks carried a charge; TaskCostEstimated tasks did not
+	// and are priced at the same ratio.
+	TaskCostQuota     int64 `json:"task_cost_quota"`
+	TaskCostCharged   int64 `json:"task_cost_charged"`
+	TaskCostEstimated int64 `json:"task_cost_estimated"`
 }
 
 type OpsTopUser struct {
@@ -1323,6 +1330,9 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 		return nil, err
 	}
 	if err = opsLoadUpstream(scope, query, result, refunds); err != nil {
+		return nil, err
+	}
+	if err = opsLoadTaskCosts(scope, query, result); err != nil {
 		return nil, err
 	}
 	if err = opsLoadTopUsers(scope, query, result, refunds); err != nil {

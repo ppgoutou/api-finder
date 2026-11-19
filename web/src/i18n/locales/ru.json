@@ -8592,6 +8592,8 @@
     "{{amount}} revenue without a supplier cost, at {{rate}}": "{{amount}} выручки без стоимости поставщика, по ставке {{rate}}",
     "{{change}} pt": "{{change}} п.п.",
     "{{payers}} paid · {{rate}}": "Оплатили {{payers}} · {{rate}}",
-    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} от пополнений Stripe на {{amount}}"
+    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} от пополнений Stripe на {{amount}}",
+    "by task": "по задачам",
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Сумма списаний по {{charged}} задачам; {{estimated}} задач без списания оценены по той же доле"
   }
 }

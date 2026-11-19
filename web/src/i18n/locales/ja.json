@@ -8592,6 +8592,8 @@
     "{{amount}} revenue without a supplier cost, at {{rate}}": "仕入れコストのない売上 {{amount}}、{{rate}} で推定",
     "{{change}} pt": "{{change}} ポイント",
     "{{payers}} paid · {{rate}}": "支払い {{payers}} · {{rate}}",
-    "{{rate}} of Stripe top-ups {{amount}}": "Stripe チャージ {{amount}} の {{rate}}"
+    "{{rate}} of Stripe top-ups {{amount}}": "Stripe チャージ {{amount}} の {{rate}}",
+    "by task": "タスク別",
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "{{charged}} 件のタスクの課金記録を合計。記録のない {{estimated}} 件は同じ比率で推定"
   }
 }

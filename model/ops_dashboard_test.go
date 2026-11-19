@@ -1,9 +1,12 @@
 package model
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -300,6 +303,69 @@ func TestGetOpsDashboardBreaksDownUsersOrdersAndTasks(t *testing.T) {
 	assert.Equal(t, int64(1000), codes.Current.RedemptionQuota)
 	assert.Zero(t, codes.Current.TopupQuota, "redemption codes have no orders")
 	assert.Equal(t, map[string]int64{OpsChannelRedemption: 1000}, codes.Trend[0].Topups)
+}
+
+func TestGetOpsDashboardReadsSupplierChargesFromTaskSnapshots(t *testing.T) {
+	seedOpsDashboard(t)
+	rate := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 7
+	t.Cleanup(func() { operation_setting.USDExchangeRate = rate })
+
+	task := func(platform string, status TaskStatus, quota int, data string) Task {
+		return Task{UserId: 3, ChannelId: 2, Platform: constant.TaskPlatform(platform), Status: status, Quota: quota, CreatedAt: opsTestStart + 100, Data: json.RawMessage(data)}
+	}
+	tasks := []Task{
+		task("fenglang", TaskStatusSuccess, 1000, `{"success":true,"task":{"charge":{"amount":70,"at":1}}}`),
+		task("fenglang", TaskStatusSuccess, 1000, `{"success":true,"task":{"charge":35}}`),
+		// No charge in the snapshot: priced at the channel's own ratio.
+		task("fenglang", TaskStatusSuccess, 2000, `{"success":true,"task":{"status":"completed"}}`),
+		// The supplier refunds failed tasks, and other platforms have logs of their own.
+		task("fenglang", TaskStatusFailure, 1000, `{"success":true,"task":{"charge":{"amount":99}}}`),
+		task("suno", TaskStatusSuccess, 1000, `{"success":true,"task":{"charge":{"amount":99}}}`),
+	}
+	require.NoError(t, DB.Create(&tasks).Error)
+
+	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
+	require.NoError(t, err)
+
+	var healthy OpsUpstream
+	for _, row := range got.Upstream {
+		if row.ChannelId == 2 {
+			healthy = row
+		}
+	}
+	// 10.5 yuan at 7 yuan to the dollar is 750,000 quota for 2,000 charged,
+	// so the 2,000 without a charge add the same again.
+	assert.Equal(t, int64(1500000), healthy.TaskCostQuota)
+	assert.Equal(t, int64(2), healthy.TaskCostCharged)
+	assert.Equal(t, int64(1), healthy.TaskCostEstimated)
+	for _, row := range got.Upstream {
+		if row.ChannelId != 2 {
+			assert.Zero(t, row.TaskCostCharged, "channel %d has no snapshot charges", row.ChannelId)
+		}
+	}
+}
+
+func TestFenglangTaskChargeReadsCreditsAsYuan(t *testing.T) {
+	cases := []struct {
+		data  string
+		yuan  string
+		found bool
+	}{
+		{`{"task":{"charge":{"amount":155.7,"at":1}}}`, "15.57", true},
+		{`{"task":{"charge":20}}`, "2", true},
+		{`{"task":{"charge":null}}`, "0", false},
+		{`{"task":{"charge":{"at":1}}}`, "0", false},
+		{`{"task":{"charge":-5}}`, "0", false},
+		{`{"task":{}}`, "0", false},
+		{`not json`, "0", false},
+		{``, "0", false},
+	}
+	for _, c := range cases {
+		yuan, found := fenglangTaskCharge([]byte(c.data))
+		assert.Equal(t, c.found, found, c.data)
+		assert.Equal(t, c.yuan, yuan.String(), c.data)
+	}
 }
 
 func TestOpsPercentileUsesNearestRank(t *testing.T) {

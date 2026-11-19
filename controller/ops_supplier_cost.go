@@ -67,6 +67,13 @@ func applySupplierCosts(ctx context.Context, upstream []model.OpsUpstream, start
 		row := &upstream[i]
 		token := strings.TrimSpace(tokens[strconv.Itoa(row.ChannelId)])
 		if token == "" || !slices.Contains(existing, row.ChannelId) {
+			// A supplier without readable logs may still report each task's
+			// charge, which the model layer has added up.
+			if row.TaskCostCharged > 0 {
+				row.CostStatus = opsCostStatusOK
+				row.CostQuota = row.TaskCostQuota
+				continue
+			}
 			row.CostStatus = opsCostStatusNoToken
 			continue
 		}

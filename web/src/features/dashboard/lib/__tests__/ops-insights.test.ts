@@ -40,6 +40,9 @@ function upstream(overrides: Partial<OpsUpstream>): OpsUpstream {
     task_success: 0,
     task_failure: 0,
     recent_quota: 0,
+    task_cost_quota: 0,
+    task_cost_charged: 0,
+    task_cost_estimated: 0,
     ...overrides,
   }
 }
