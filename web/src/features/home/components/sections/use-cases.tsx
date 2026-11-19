@@ -99,7 +99,7 @@ export function UseCases() {
       className='relative z-10 scroll-mt-20 px-6 py-14 md:py-20'
     >
       <div className='mx-auto max-w-6xl'>
-        <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
+        <h2 className='text-heading-2'>
           {t('Video for every team that creates')}
         </h2>
         <ul className='mt-10 grid gap-x-12 gap-y-8 sm:grid-cols-2'>

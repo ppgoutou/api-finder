@@ -76,9 +76,7 @@ export function VipCompareButton(props: VipCompareButtonProps) {
       onClick={onClick}
       className={cn(
         'rounded-full font-semibold',
-        variant === 'chip'
-          ? VIP_GOLD_FILL
-          : cn('border-amber-500/50', VIP_GOLD_TEXT),
+        variant === 'chip' ? VIP_GOLD_FILL : cn('border-vip/50', VIP_GOLD_TEXT),
         props.className
       )}
     >

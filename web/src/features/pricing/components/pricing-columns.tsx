@@ -75,7 +75,7 @@ export function usePricingColumns(
             {model.unavailable && (
               <span
                 title={model.unavailable_reason || undefined}
-                className='bg-warning/15 text-warning shrink-0 rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-bold'
+                className='bg-warning/15 text-warning text-micro shrink-0 rounded-md px-1.5 py-0.5'
               >
                 {t('Temporarily unavailable')}
               </span>

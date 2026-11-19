@@ -63,7 +63,7 @@ export function ImageToVideo() {
     <section className='bg-muted/30 border-border/40 relative z-10 border-y px-6 py-14 md:py-20'>
       <div className='mx-auto flex max-w-6xl flex-wrap items-center gap-12'>
         <div className='min-w-0 flex-[1_1_22rem]'>
-          <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
+          <h2 className='text-heading-2'>
             {t('Bring a single image to life')}
           </h2>
           <p className='text-muted-foreground mt-3'>
@@ -82,7 +82,7 @@ export function ImageToVideo() {
               >
                 <span
                   className={cn(
-                    'flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold',
+                    'flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
                     mode.highlighted
                       ? 'bg-brand text-white'
                       : 'bg-brand-soft text-brand-hover dark:text-brand-on-dark'

@@ -99,9 +99,7 @@ export function Showcase(props: ShowcaseProps) {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-6'>
           <div className='max-w-xl'>
-            <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
-              {t('Prompt → video')}
-            </h2>
+            <h2 className='text-heading-2'>{t('Prompt → video')}</h2>
             <p className='text-muted-foreground mt-3'>
               {t(
                 'Every clip here was made on this platform with Seedance. Copy a prompt to create the same effect.'
@@ -146,7 +144,7 @@ export function Showcase(props: ShowcaseProps) {
                 {card.spec && (
                   <ClipSpec
                     spec={card.spec}
-                    className='pointer-events-none absolute right-2.5 bottom-2.5 px-2 py-0.5 text-[11px]'
+                    className='text-micro pointer-events-none absolute right-2.5 bottom-2.5 px-2 py-0.5'
                   />
                 )}
               </div>

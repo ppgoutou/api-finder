@@ -57,7 +57,7 @@ const formatPrice = (row: SeriesPriceRow) =>
   row.approximate ? `≈${row.price}` : row.price
 // Short header words keep every language on one line in the narrowest card.
 const HEADER_CELL =
-  'text-muted-foreground h-auto px-1 py-2 text-[11px]! leading-tight font-medium whitespace-nowrap'
+  'text-muted-foreground h-auto px-1 py-2 text-caption! font-medium whitespace-nowrap'
 
 /** The deepest discount of any resolution, for the card headline. */
 function getBestDiscount(series: VideoSeriesPricing) {
@@ -111,7 +111,7 @@ export function ModelPricing() {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-4'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight md:text-4xl'>
+            <h2 className='text-heading-2'>
               {headlineDiscount
                 ? t(
                     'Video billed per second, images per image, up to {{percentOff}}% off official prices',
@@ -280,9 +280,9 @@ function SeriesCard(props: SeriesCardProps) {
     {
       id: 'vip',
       header: 'VIP',
-      className: cn(HEADER_CELL, 'text-amber-700! dark:text-amber-300!'),
+      className: cn(HEADER_CELL, 'text-vip!'),
       cellClassName:
-        'px-1 py-2 font-mono font-semibold whitespace-nowrap text-amber-700 tabular-nums dark:text-amber-300',
+        'px-1 py-2 font-mono font-semibold whitespace-nowrap text-vip tabular-nums',
       cell: (row) =>
         row.vipPrice ? formatPrice({ ...row, price: row.vipPrice }) : '—',
     },
@@ -303,7 +303,7 @@ function SeriesCard(props: SeriesCardProps) {
             {row.discount && (
               <>
                 {' '}
-                <span className='text-[11px] font-semibold text-red-600 dark:text-red-400'>
+                <span className='text-caption text-destructive font-semibold'>
                   {t('{{percentOff}}% off', {
                     percentOff: row.discount.percentOff,
                     zhe: row.discount.zhe,
@@ -343,7 +343,7 @@ function SeriesCard(props: SeriesCardProps) {
             <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
             {t('VIP from')}
           </span>
-          <span className='text-xl font-bold tracking-tight tabular-nums'>
+          <span className='font-display text-xl font-bold tracking-tight tabular-nums'>
             {formatPrice({ ...lowest, price: lowest.vipPrice })}
           </span>{' '}
           <span className='text-xs'>{unitLabel}</span>
@@ -380,9 +380,9 @@ function SeriesCard(props: SeriesCardProps) {
   return (
     <article className='bg-card border-border/60 relative flex w-full flex-col overflow-hidden rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
       {bestDiscount && (
-        <p className='absolute top-0 right-0 flex flex-col items-center rounded-bl-2xl bg-gradient-to-br from-red-600 to-orange-500 px-3 py-1.5 leading-tight text-white shadow-sm shadow-red-500/30'>
-          <span className='text-[11px] font-medium'>{t('List price')}</span>{' '}
-          <span className='text-base font-bold whitespace-nowrap'>
+        <p className='bg-destructive absolute top-0 right-0 flex flex-col items-center rounded-bl-2xl px-3 py-1.5 leading-tight text-white shadow-sm'>
+          <span className='text-caption font-medium'>{t('List price')}</span>{' '}
+          <span className='font-display text-base font-bold whitespace-nowrap'>
             {t('{{percentOff}}% off', {
               percentOff: bestDiscount.percentOff,
               zhe: bestDiscount.zhe,
@@ -414,7 +414,7 @@ function SeriesCard(props: SeriesCardProps) {
       {lowest && (
         <p className='mt-4 flex flex-wrap items-baseline gap-1.5'>
           <span className='text-muted-foreground text-xs'>{t('From')}</span>
-          <span className='text-3xl font-bold tracking-tight tabular-nums'>
+          <span className='font-display text-3xl font-bold tracking-tight tabular-nums'>
             {formatPrice(lowest)}
           </span>
           <span className='text-muted-foreground text-sm'>{unitLabel}</span>

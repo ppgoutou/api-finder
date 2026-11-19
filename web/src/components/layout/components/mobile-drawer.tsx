@@ -56,7 +56,7 @@ function BrandLogo({
   return (
     <Link
       to={homeUrl}
-      className='flex items-center gap-2 text-xl font-bold'
+      className='flex items-center gap-2 text-xl font-semibold'
       onClick={onClick}
     >
       <div className='relative h-6 w-6'>

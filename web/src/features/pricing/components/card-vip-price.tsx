@@ -36,7 +36,7 @@ export function CardVipSaving(props: CardVipSavingProps) {
       <s className='text-muted-foreground font-mono tabular-nums'>
         {props.standardPrice}
       </s>
-      <span className='rounded-full bg-amber-700 px-1.5 py-px font-semibold text-amber-50 dark:bg-amber-500 dark:text-amber-950'>
+      <span className='bg-vip text-vip-foreground rounded-full px-1.5 py-px font-semibold'>
         {t('Save {{percent}}%', { percent: props.savingPercent })}
       </span>
     </span>
@@ -69,7 +69,7 @@ export function CardVipToggle(props: CardVipToggleProps) {
         'shrink-0 rounded-full px-2.5 font-semibold',
         props.showVip
           ? 'border-brand/40 bg-card text-brand hover:bg-brand-soft border'
-          : 'bg-amber-700 text-amber-50 hover:bg-amber-800 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400'
+          : 'bg-vip text-vip-foreground hover:bg-vip-hover'
       )}
     >
       {/* Group names, shown as is in every language. */}

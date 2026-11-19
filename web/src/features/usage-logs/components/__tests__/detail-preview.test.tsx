@@ -211,13 +211,13 @@ test.each([
     tier: 'standard',
     billingUnit: 'token' as const,
     fixedPrice: undefined,
-    expected: 'Dynamic Pricing · standard',
+    expected: 'Dynamic pricing · standard',
   },
   {
     tier: 'long_context',
     billingUnit: 'token' as const,
     fixedPrice: undefined,
-    expected: 'Dynamic Pricing · long_context',
+    expected: 'Dynamic pricing · long_context',
   },
   {
     tier: 'free_small_output',
@@ -261,7 +261,7 @@ test.each([
       matched_tier: 'recorded',
       expr_b64: expr,
     })
-    expect(preview.textContent).toBe('Dynamic Pricing · recorded')
+    expect(preview.textContent).toBe('Dynamic pricing · recorded')
   }
 )
 
@@ -279,7 +279,7 @@ test.each([false, true])(
       ),
     })
     expect(preview.textContent).toBe(
-      'Dynamic Pricing · Special billing expression'
+      'Dynamic pricing · Special billing expression'
     )
     await act(() => i18n.changeLanguage('zh'))
     expect(
@@ -497,7 +497,7 @@ test.each(['missing schema', 'unsupported expression', 'unknown tier'])(
       matched_tier: scenario === 'unknown tier' ? 'old' : 'music',
     })
     expect(preview.textContent).toBe(
-      `Dynamic Pricing · ${scenario === 'unknown tier' ? 'old' : 'music'}`
+      `Dynamic pricing · ${scenario === 'unknown tier' ? 'old' : 'music'}`
     )
   }
 )

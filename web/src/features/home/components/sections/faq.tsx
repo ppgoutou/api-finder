@@ -146,9 +146,7 @@ export function Faq() {
   return (
     <section className='relative z-10 px-6 py-14 md:py-20'>
       <div className='mx-auto max-w-3xl'>
-        <h2 className='mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl'>
-          {t('FAQ')}
-        </h2>
+        <h2 className='text-heading-2 mb-8 text-center'>{t('FAQ')}</h2>
         <Accordion
           defaultValue={['no-code']}
           className='bg-card border-border/60 rounded-2xl border px-5'
@@ -158,7 +156,7 @@ export function Faq() {
               <AccordionTrigger className='py-4 text-base'>
                 {item.question}
               </AccordionTrigger>
-              <AccordionContent className='text-muted-foreground pb-4 text-[15px] leading-relaxed'>
+              <AccordionContent className='text-muted-foreground text-body-lg pb-4 leading-relaxed'>
                 {item.answer}
               </AccordionContent>
             </AccordionItem>

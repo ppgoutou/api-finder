@@ -286,7 +286,7 @@ export function Footer(props: FooterProps) {
             <div className='grid grid-cols-3 gap-8 md:gap-16'>
               {displayColumns.map((column) => (
                 <div key={column.title}>
-                  <p className='text-muted-foreground/50 mb-3 text-xs font-medium tracking-wider uppercase'>
+                  <p className='text-muted-foreground/50 text-eyebrow mb-3 uppercase'>
                     {t(column.title)}
                   </p>
                   <ul className='space-y-2.5'>

@@ -99,7 +99,7 @@ export function VipHighlights(props: VipHighlightsProps) {
           <dt className='mt-2 text-xs leading-snug text-white/55 sm:text-sm'>
             {highlight.label}
             {highlight.hint && (
-              <span className='block text-[11px] text-white/35 sm:text-xs'>
+              <span className='text-caption block text-white/50'>
                 {highlight.hint}
               </span>
             )}

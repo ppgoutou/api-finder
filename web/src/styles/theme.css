@@ -219,9 +219,10 @@ For commercial licensing, please contact support@quantumnous.com
   --destructive-foreground: oklch(0.985 0 0);
   --success: #047857;
   --success-foreground: oklch(0.985 0 0);
-  --warning: oklch(0.681 0.162 75.834);
-  --warning-foreground: oklch(0.145 0 0);
-  --info: oklch(0.588 0.158 241.966);
+  /* Dark enough for warning text on white (4.9:1). */
+  --warning: #a16207;
+  --warning-foreground: oklch(0.985 0 0);
+  --info: #0369a1;
   --info-foreground: oklch(0.985 0 0);
   --neutral: oklch(0.708 0 0);
   --neutral-foreground: oklch(0.145 0 0);

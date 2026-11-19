@@ -176,7 +176,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
           className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(ellipse_55%_50%_at_50%_20%,rgba(209,254,23,0.16),transparent_70%)]'
         />
         <div className='mx-auto max-w-4xl text-center'>
-          <span className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-white/70 uppercase'>
+          <span className='text-eyebrow inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 uppercase'>
             <span className='bg-accent-night size-1.5 rounded-full shadow-[0_0_10px_#d1fe17]' />
             {t('VIP membership')}
           </span>
@@ -329,7 +329,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
                 <AccordionTrigger className='py-5 text-base'>
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className='pb-5 text-[15px] leading-relaxed text-white/55'>
+                <AccordionContent className='text-body-lg pb-5 leading-relaxed text-white/55'>
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -339,7 +339,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
       </section>
 
       <section className='px-6 pt-8 pb-20 md:pb-28'>
-        <div className='border-accent-night/35 relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden rounded-[32px] border bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
+        <div className='border-accent-night/35 rounded-panel relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden border bg-[#11130a] px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
           <div
             aria-hidden
             className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(209,254,23,0.22),transparent_65%)]'

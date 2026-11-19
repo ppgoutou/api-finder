@@ -69,7 +69,7 @@ export function VipCelebration() {
       contentClassName='sm:max-w-md'
       title={
         <span className='flex flex-col items-center gap-3 text-center'>
-          <span className='flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/40'>
+          <span className='bg-vip text-vip-foreground flex size-14 items-center justify-center rounded-full shadow-lg'>
             <HugeiconsIcon icon={CrownIcon} className='size-7' aria-hidden />
           </span>
           {t('Welcome to VIP!')}
@@ -94,7 +94,7 @@ export function VipCelebration() {
           <li key={benefit.id} className='flex items-center gap-2 text-sm'>
             <HugeiconsIcon
               icon={CheckmarkCircle02Icon}
-              className='size-4 shrink-0 text-amber-500'
+              className='text-vip size-4 shrink-0'
               aria-hidden
             />
             {benefit.title}

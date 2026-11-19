@@ -54,7 +54,7 @@ export function LandingContacts() {
 
   return (
     <div id='contact' className='flex flex-col gap-3'>
-      <h2 className='text-2xl font-bold text-white'>{t('Contact us')}</h2>
+      <h2 className='text-heading-2 text-white'>{t('Contact us')}</h2>
       <p className='text-sm leading-relaxed text-white/60'>
         {t(
           'Questions about pricing, volume, top-ups or integration? Reach us on whichever app is convenient for you.'

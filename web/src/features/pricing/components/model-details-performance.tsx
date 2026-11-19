@@ -55,7 +55,7 @@ function StatCard(props: {
   const Icon = props.icon
   return (
     <div className='bg-background flex flex-col gap-1 rounded-lg border p-3'>
-      <span className='text-muted-foreground inline-flex items-center gap-1.5 text-[10px] font-medium tracking-wider uppercase'>
+      <span className='text-muted-foreground text-caption inline-flex items-center gap-1.5 font-medium'>
         <Icon className='size-3' />
         {props.label}
       </span>
@@ -68,9 +68,7 @@ function StatCard(props: {
         {props.value}
       </span>
       {props.hint && (
-        <span className='text-muted-foreground/70 text-[11px]'>
-          {props.hint}
-        </span>
+        <span className='text-muted-foreground text-caption'>{props.hint}</span>
       )}
     </div>
   )
@@ -277,7 +275,7 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
           )}
           accent={
             incidentCount > 0 ? (
-              <span className='inline-flex items-center gap-1 text-amber-600 dark:text-amber-400'>
+              <span className='text-warning inline-flex items-center gap-1'>
                 <AlertTriangle className='size-3.5' />
                 {t('{{count}} incidents', {
                   count: incidentCount,

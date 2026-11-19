@@ -116,7 +116,7 @@ export function PromoDialog(props: PromoDialogProps) {
         </DialogTitle>
         <div
           aria-hidden
-          className='flex h-14 items-center px-4 text-base font-bold sm:hidden'
+          className='flex h-14 items-center px-4 text-base font-semibold sm:hidden'
         >
           {t('Limited-time offers')}
         </div>
@@ -217,7 +217,7 @@ export function PromoDialog(props: PromoDialogProps) {
             </div>
           )}
           <div className='flex items-center justify-between sm:px-3'>
-            <Label className='text-muted-foreground flex min-h-11 cursor-pointer items-center gap-2 text-[13px] font-normal'>
+            <Label className='text-muted-foreground text-body-sm flex min-h-11 cursor-pointer items-center gap-2 font-normal'>
               <Checkbox
                 checked={hideToday}
                 onCheckedChange={(checked) => setHideToday(checked === true)}
@@ -226,7 +226,7 @@ export function PromoDialog(props: PromoDialogProps) {
             </Label>
             {multiple && (
               <>
-                <span className='text-muted-foreground text-[13px] max-sm:hidden'>
+                <span className='text-muted-foreground text-body-sm max-sm:hidden'>
                   {index + 1} / {count}
                 </span>
                 <div aria-hidden className='flex gap-1.5 sm:hidden'>

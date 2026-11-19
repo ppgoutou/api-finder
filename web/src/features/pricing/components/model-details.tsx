@@ -130,11 +130,7 @@ import { VideoPricingTables } from './video-pricing-tables'
 // ----------------------------------------------------------------------------
 
 function SectionTitle(props: { children: React.ReactNode }) {
-  return (
-    <h2 className='text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase'>
-      {props.children}
-    </h2>
-  )
+  return <h2 className='text-section-title mb-3'>{props.children}</h2>
 }
 
 function DynamicPriceEntryLabel(props: { entry: DynamicPriceEntry }) {
@@ -269,7 +265,7 @@ function OverviewMetric(props: {
     <div className='flex min-w-0 items-center gap-2 px-3 py-2'>
       <Icon className='text-muted-foreground/70 size-3.5 shrink-0' />
       <div className='min-w-0 flex-1'>
-        <div className='text-muted-foreground truncate text-[10px] font-medium tracking-wider uppercase'>
+        <div className='text-muted-foreground text-caption truncate font-medium'>
           {props.label}
         </div>
         <div
@@ -443,7 +439,7 @@ function ModelBackendQuickStats(props: { model: PricingModel }) {
             key={stat.key}
             className='bg-background flex min-w-0 flex-col gap-0.5 px-3 py-2.5'
           >
-            <span className='text-muted-foreground inline-flex min-w-0 items-center gap-1 text-[10px] font-medium tracking-wider uppercase'>
+            <span className='text-muted-foreground text-caption inline-flex min-w-0 items-center gap-1 font-medium'>
               <Icon className='size-3 shrink-0' />
               <span className='truncate'>{stat.label}</span>
             </span>
@@ -451,7 +447,7 @@ function ModelBackendQuickStats(props: { model: PricingModel }) {
               {stat.value}
             </span>
             {stat.hint && (
-              <span className='text-muted-foreground/60 truncate text-[10px]'>
+              <span className='text-muted-foreground/60 text-micro truncate'>
                 {stat.hint}
               </span>
             )}
@@ -553,7 +549,7 @@ export function ModelHeader(props: { model: PricingModel }) {
           className='bg-brand-soft text-brand-hover dark:text-brand-on-dark flex size-12 shrink-0 items-center justify-center rounded-xl'
         >
           {modelIcon || (
-            <span className='text-base font-bold'>
+            <span className='text-base font-semibold'>
               {displayName.charAt(0).toUpperCase() || '?'}
             </span>
           )}
@@ -865,8 +861,7 @@ function ProviderGroupPricingSection(
   }
 
   const thClass = cn(
-    'text-muted-foreground py-2 text-xs font-medium whitespace-normal break-words',
-    !props.model.billing_usage_schema && 'tracking-wider uppercase'
+    'text-muted-foreground py-2 text-xs font-medium whitespace-normal break-words'
   )
 
   if (isDynamicPricingModel(props.model)) {
@@ -887,8 +882,8 @@ function ProviderGroupPricingSection(
             <SectionTitle>{t('Pricing by Group')}</SectionTitle>
           )}
           <AutoGroupChain model={props.model} autoGroups={props.autoGroups} />
-          <div className='rounded-lg border border-amber-200/70 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10'>
-            <div className='text-sm font-medium text-amber-800 dark:text-amber-200'>
+          <div className='border-warning/30 bg-warning/10 rounded-lg border p-3'>
+            <div className='text-warning text-sm font-medium'>
               {t('Special billing expression')}
             </div>
             <p className='text-muted-foreground mt-1 text-xs'>
@@ -901,7 +896,7 @@ function ProviderGroupPricingSection(
             </p>
             {canSeeRawExpression && (
               <div className='mt-3'>
-                <div className='text-muted-foreground mb-1 text-[10px] font-medium tracking-wider uppercase'>
+                <div className='text-muted-foreground text-caption mb-1 font-medium'>
                   {t('Raw expression')}
                 </div>
                 <code className='text-muted-foreground bg-background/80 block max-h-28 overflow-auto rounded-md border px-2 py-1.5 font-mono text-xs break-all'>
@@ -1067,7 +1062,7 @@ function ProviderGroupPricingSection(
                 />
                 {usageExampleRows.length > 0 ? (
                   <div className='border-t'>
-                    <div className='text-muted-foreground px-3 pt-2 text-[10px] font-medium tracking-wider uppercase'>
+                    <div className='text-muted-foreground text-caption px-3 pt-2 font-medium'>
                       {t('Price examples')}
                     </div>
                     <StaticDataTable
@@ -1100,7 +1095,7 @@ function ProviderGroupPricingSection(
                         },
                       ]}
                     />
-                    <p className='text-muted-foreground/40 px-3 pb-2 text-[10px]'>
+                    <p className='text-muted-foreground/40 text-micro px-3 pb-2'>
                       {t('Approximate prices for common specs.')}
                     </p>
                   </div>
@@ -1108,7 +1103,7 @@ function ProviderGroupPricingSection(
               </div>
             )
           })}
-          <p className='text-muted-foreground/40 mt-1.5 text-[10px]'>
+          <p className='text-muted-foreground/40 text-micro mt-1.5'>
             {dynamicTiers.some(
               (tier) => 'unitPrices' in tier || tier.billingUnit === 'request'
             )
@@ -1208,7 +1203,7 @@ function ProviderGroupPricingSection(
       />
       <div className='-mx-4 sm:mx-0'>
         {isTokenBased && (
-          <p className='text-muted-foreground/40 mt-1.5 px-4 text-[10px] sm:px-0'>
+          <p className='text-muted-foreground/40 text-micro mt-1.5 px-4 sm:px-0'>
             {t('Prices shown per {{unit}} tokens', { unit: tokenUnitLabel })}
           </p>
         )}

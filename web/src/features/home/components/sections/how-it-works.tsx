@@ -53,12 +53,10 @@ export function HowItWorks() {
     <section className='border-border/40 relative z-10 border-t px-6 py-24 md:py-32'>
       <div className='mx-auto max-w-6xl'>
         <AnimateInView className='mb-16 text-center md:mb-20'>
-          <p className='text-muted-foreground mb-3 text-xs font-medium tracking-widest uppercase'>
+          <p className='text-muted-foreground text-eyebrow mb-3 uppercase'>
             {t('How It Works')}
           </p>
-          <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('Three steps to get started')}
-          </h2>
+          <h2 className='text-heading-2'>{t('Three steps to get started')}</h2>
         </AnimateInView>
 
         <div className='grid gap-8 md:grid-cols-3 md:gap-12'>
@@ -73,7 +71,7 @@ export function HowItWorks() {
                 <div className='text-muted-foreground border-border/50 bg-muted/30 flex size-16 items-center justify-center rounded-2xl border transition-colors'>
                   {step.icon}
                 </div>
-                <div className='bg-foreground text-background absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full text-xs font-bold'>
+                <div className='bg-foreground text-background text-caption absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full font-semibold'>
                   {step.num}
                 </div>
               </div>
