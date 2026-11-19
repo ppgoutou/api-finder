@@ -40,7 +40,7 @@ function CodeSample(props: { label: string; code: string }) {
           aria-label={t('Copy code')}
         />
       </figcaption>
-      <pre className='overflow-x-auto p-4 font-mono text-[13px] leading-relaxed'>
+      <pre className='text-body-sm overflow-x-auto p-4 font-mono leading-relaxed'>
         <code>{props.code}</code>
       </pre>
     </figure>
@@ -90,7 +90,7 @@ export function Docs() {
           aria-label={t('On this page')}
           className='sticky top-20 hidden max-h-[calc(100vh-6rem)] w-52 shrink-0 self-start overflow-y-auto lg:block'
         >
-          <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase'>
+          <p className='text-muted-foreground text-eyebrow mb-3 uppercase'>
             {t('On this page')}
           </p>
           <ul className='flex flex-col gap-1 text-sm'>
@@ -109,9 +109,7 @@ export function Docs() {
 
         <article className='min-w-0 flex-1'>
           <header className='mb-8'>
-            <h1 className='text-3xl font-bold tracking-tight md:text-4xl'>
-              {content.title}
-            </h1>
+            <h1 className='font-display text-heading-1'>{content.title}</h1>
             <p className='text-muted-foreground mt-3 max-w-3xl leading-relaxed'>
               {content.intro}
             </p>

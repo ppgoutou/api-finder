@@ -60,10 +60,10 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
     remaining <= 0 ||
     (props.apiKey.expired_time !== -1 &&
       props.apiKey.expired_time * 1000 <= props.now)
-  let progressColor = 'text-emerald-500'
+  let progressColor = 'text-success'
   if (isInactive) progressColor = 'text-muted-foreground/60'
-  else if (percentage <= 10) progressColor = 'text-rose-500'
-  else if (percentage <= 30) progressColor = 'text-amber-500'
+  else if (percentage <= 10) progressColor = 'text-destructive'
+  else if (percentage <= 30) progressColor = 'text-warning'
   const usageDescription = `${t('Used amount')} ${formattedUsed}`
   const remainingDescription = hasProgress
     ? `${t('Remaining')} ${formattedRemaining}; ${t('Remaining percentage')} ${formattedPercentage}%`
@@ -163,7 +163,7 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
           </span>
         ) : (
           <span className='text-muted-foreground flex min-w-0 flex-col text-right'>
-            <span className='text-[11px] leading-4'>{t('Used amount')}</span>
+            <span className='text-caption leading-4'>{t('Used amount')}</span>
             <span className='truncate text-right tabular-nums'>
               {formattedUsed}
             </span>

@@ -70,19 +70,19 @@ export function ProfileDropdown() {
           <Avatar
             className={
               membership?.is_vip
-                ? 'ring-offset-background size-6 ring-2 ring-amber-500 ring-offset-1'
+                ? 'ring-offset-background ring-vip size-6 ring-2 ring-offset-1'
                 : 'size-6'
             }
           >
             <AvatarFallback
-              className={`${avatarFallbackClassName} text-[11px]`}
+              className={`${avatarFallbackClassName} text-micro font-normal`}
               style={avatarFallbackStyle}
             >
               {avatarFallback}
             </AvatarFallback>
           </Avatar>
           {membership?.is_vip && (
-            <span className='absolute -top-1.5 -right-1.5 flex size-3.5 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm'>
+            <span className='bg-vip text-vip-foreground absolute -top-1.5 -right-1.5 flex size-3.5 items-center justify-center rounded-full shadow-sm'>
               <HugeiconsIcon
                 icon={CrownIcon}
                 className='size-2.5'
@@ -108,7 +108,7 @@ export function ProfileDropdown() {
                   {displayName}
                 </p>
                 {membership?.is_vip && (
-                  <Badge className='h-4 shrink-0 bg-amber-500 px-1.5 text-[10px] text-white'>
+                  <Badge className='bg-vip text-vip-foreground text-micro h-4 shrink-0 px-1.5'>
                     VIP
                   </Badge>
                 )}
@@ -154,7 +154,7 @@ export function ProfileDropdown() {
             <DropdownMenuItem onClick={() => navigate({ to: '/vip' })}>
               <HugeiconsIcon
                 icon={CrownIcon}
-                className='size-4 text-amber-600 dark:text-amber-300'
+                className='text-vip size-4'
                 aria-hidden
               />
               {membership.is_vip ? t('My VIP benefits') : t('Upgrade to VIP')}

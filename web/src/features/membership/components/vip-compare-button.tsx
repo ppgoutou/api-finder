@@ -53,7 +53,9 @@ export function VipCompareButton(props: VipCompareButtonProps) {
 
   if (variant === 'link') {
     return (
-      <button
+      <Button
+        variant='link'
+        size='inline'
         type='button'
         onClick={onClick}
         className={cn(
@@ -64,7 +66,7 @@ export function VipCompareButton(props: VipCompareButtonProps) {
       >
         <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
         {label}
-      </button>
+      </Button>
     )
   }
 

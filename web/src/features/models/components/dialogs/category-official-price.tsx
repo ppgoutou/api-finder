@@ -156,7 +156,7 @@ export function CategoryOfficialPrice(props: {
       </div>
       {query.isLoading && <LoadingState />}
       {!query.isLoading && !layout && (
-        <p role='status' className='text-xs text-amber-600'>
+        <p role='status' className='text-warning text-xs'>
           {t(
             'One official price needs every model shown the same way: all per second, or all per token. Models shown differently: {{models}}',
             { models: result.conflicts.join(', ') }
@@ -164,7 +164,7 @@ export function CategoryOfficialPrice(props: {
         </p>
       )}
       {layout && !readable && (
-        <p role='status' className='text-xs text-amber-600'>
+        <p role='status' className='text-warning text-xs'>
           {t(
             'The saved official price cannot be shown in this form. Saving replaces it.'
           )}

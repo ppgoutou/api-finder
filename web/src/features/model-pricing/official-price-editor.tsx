@@ -149,7 +149,7 @@ export function OfficialPriceEditor(props: { modelName: string }) {
       {own && (!layout || !initial) && (
         <div className='space-y-1'>
           {layout && (
-            <p role='status' className='text-xs text-amber-600'>
+            <p role='status' className='text-warning text-xs'>
               {t(
                 'The saved official price cannot be shown in this form. Saving replaces it.'
               )}

@@ -29,7 +29,7 @@ export function NotFoundError() {
   return (
     <div className='h-svh'>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center'>
-        <h1 className='text-brand dark:text-brand-on-dark text-[7rem] leading-tight font-bold tabular-nums'>
+        <h1 className='text-brand dark:text-brand-on-dark font-display text-display tabular-nums'>
           404
         </h1>
         <span className='font-medium'>{t('Oops! Page Not Found!')}</span>

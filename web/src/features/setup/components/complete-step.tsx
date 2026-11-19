@@ -52,7 +52,7 @@ export function CompleteStep({ status, values }: CompleteStepProps) {
 
   return (
     <div className='flex flex-col items-center gap-6 text-center'>
-      <div className='rounded-2xl bg-emerald-500/10 p-4 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'>
+      <div className='bg-success/10 text-success rounded-2xl p-4'>
         <CheckCircle2 className='size-8' />
       </div>
       <div className='space-y-2'>
@@ -69,7 +69,7 @@ export function CompleteStep({ status, values }: CompleteStepProps) {
       <div className='bg-card w-full rounded-xl border p-6 text-left shadow-sm sm:p-8'>
         <dl className='grid gap-6'>
           <div className='space-y-1.5'>
-            <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            <dt className='text-muted-foreground text-caption font-medium'>
               {t('Database')}
             </dt>
             <dd className='flex flex-wrap items-center gap-2'>
@@ -85,7 +85,7 @@ export function CompleteStep({ status, values }: CompleteStepProps) {
           <Separator />
 
           <div className='space-y-1.5'>
-            <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            <dt className='text-muted-foreground text-caption font-medium'>
               {t('Administrator account')}
             </dt>
             <dd className='text-sm font-semibold'>
@@ -98,7 +98,7 @@ export function CompleteStep({ status, values }: CompleteStepProps) {
           <Separator />
 
           <div className='space-y-1.5'>
-            <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            <dt className='text-muted-foreground text-caption font-medium'>
               {t('Usage mode')}
             </dt>
             <dd className='text-sm font-semibold'>{t(usageLabelKey)}</dd>

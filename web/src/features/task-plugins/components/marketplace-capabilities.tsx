@@ -55,7 +55,7 @@ function PreviewFact(props: {
       {props.field.state === 'value' && props.field.origin === 'index' && (
         <Badge
           variant='outline'
-          className='text-muted-foreground text-[11px] font-normal'
+          className='text-muted-foreground text-caption font-normal'
         >
           {t('From marketplace index')}
         </Badge>
