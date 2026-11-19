@@ -1047,7 +1047,8 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 	// Channel 4 was deleted after its token was set.
 	require.NoError(t, writeOnboardingOption(onboardingPricingTokenOption, map[string]string{"1": "supplier-token", "3": "supplier-token", "4": "supplier-token"}))
 
-	upstreamRows := []model.OpsUpstream{{ChannelId: 1}, {ChannelId: 2}, {ChannelId: 3}, {ChannelId: 4}}
+	// Channel 5 has no token, but its tasks reported what the supplier charged.
+	upstreamRows := []model.OpsUpstream{{ChannelId: 1}, {ChannelId: 2}, {ChannelId: 3}, {ChannelId: 4}, {ChannelId: 5, TaskCostQuota: 9000, TaskCostCharged: 3}}
 	applySupplierCosts(context.Background(), upstreamRows, start, end, end)
 
 	// 1,600,000 charged less 400,000 refunded, in yuan at rate 1, is
@@ -1057,6 +1058,7 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 	assert.Equal(t, opsCostStatusError, upstreamRows[2].CostStatus)
 	assert.Equal(t, "the channel key matches 2 supplier tokens", upstreamRows[2].CostError)
 	assert.Equal(t, model.OpsUpstream{ChannelId: 4, CostStatus: opsCostStatusNoToken}, upstreamRows[3])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 5, CostQuota: 9000, CostStatus: opsCostStatusOK, TaskCostQuota: 9000, TaskCostCharged: 3}, upstreamRows[4])
 	assert.Equal(t, 3, logRequests, "two consume pages and one refund page")
 
 	again := []model.OpsUpstream{{ChannelId: 1}}

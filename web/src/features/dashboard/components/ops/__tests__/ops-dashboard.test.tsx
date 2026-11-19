@@ -178,6 +178,9 @@ describe('OpsDashboard date range', () => {
       task_success: 0,
       task_failure: 0,
       recent_quota: 0,
+      task_cost_quota: 0,
+      task_cost_charged: 0,
+      task_cost_estimated: 0,
     }
     vi.mocked(getOpsDashboard).mockResolvedValue({
       success: true,
@@ -274,6 +277,9 @@ describe('OpsDashboard date range', () => {
             task_success: 0,
             task_failure: 0,
             recent_quota: 0,
+            task_cost_quota: 0,
+            task_cost_charged: 0,
+            task_cost_estimated: 0,
           },
         ],
       },
@@ -283,6 +289,39 @@ describe('OpsDashboard date range', () => {
     const fee = await screen.findByText(/^5% of Stripe top-ups/)
     expect(fee).toBeTruthy()
     expect(screen.getAllByText('Stripe fees (5%)').length).toBeGreaterThan(0)
+  })
+
+  it('marks a cost added up from task charges and says how it was counted', async () => {
+    vi.mocked(getOpsDashboard).mockResolvedValue({
+      success: true,
+      data: {
+        ...emptyDashboard,
+        upstream: [
+          {
+            channel_id: 11,
+            name: 'by-tasks',
+            quota: 1000000,
+            cost_quota: 700000,
+            cost_status: 'ok',
+            count: 3,
+            balance: 0,
+            balance_updated_time: 0,
+            task_success: 3,
+            task_failure: 0,
+            recent_quota: 0,
+            task_cost_quota: 700000,
+            task_cost_charged: 2,
+            task_cost_estimated: 1,
+          },
+        ],
+      },
+    })
+    renderDashboard()
+
+    const note = await screen.findByText('by task')
+    expect(note.closest('td')?.getAttribute('title')).toBe(
+      'Added up from the charges of 2 tasks; 1 tasks without one are priced at the same ratio'
+    )
   })
 
   it('links every dashboard section from the section navigation', async () => {

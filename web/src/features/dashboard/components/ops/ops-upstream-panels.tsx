@@ -129,10 +129,29 @@ export function OpsUpstreamPanel(props: {
 function OpsCostCells(props: { row: OpsUpstream }) {
   const { t } = useTranslation()
   if (props.row.cost_status === 'ok') {
+    const fromTasks = props.row.task_cost_charged > 0
     return (
       <>
-        <TableCell className={CELL}>
+        <TableCell
+          className={CELL}
+          title={
+            fromTasks
+              ? t(
+                  'Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio',
+                  {
+                    charged: props.row.task_cost_charged,
+                    estimated: props.row.task_cost_estimated,
+                  }
+                )
+              : undefined
+          }
+        >
           {formatOpsMoney(props.row.cost_quota)}
+          {fromTasks && (
+            <span className='text-muted-foreground ml-1 font-sans text-xs'>
+              {t('by task')}
+            </span>
+          )}
         </TableCell>
         <OpsProfitCells revenue={props.row.quota} cost={props.row.cost_quota} />
       </>

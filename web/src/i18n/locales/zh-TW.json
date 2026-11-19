@@ -8592,6 +8592,8 @@
     "{{amount}} revenue without a supplier cost, at {{rate}}": "{{amount}} 收入沒有供應商成本，按 {{rate}} 估算",
     "{{change}} pt": "{{change}} 個百分點",
     "{{payers}} paid · {{rate}}": "付費 {{payers}} · {{rate}}",
-    "{{rate}} of Stripe top-ups {{amount}}": "Stripe 儲值 {{amount}} 的 {{rate}}"
+    "{{rate}} of Stripe top-ups {{amount}}": "Stripe 儲值 {{amount}} 的 {{rate}}",
+    "by task": "按任務",
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "按 {{charged}} 個任務的扣費記錄累加；{{estimated}} 個沒有扣費記錄的任務按同一比例估算"
   }
 }

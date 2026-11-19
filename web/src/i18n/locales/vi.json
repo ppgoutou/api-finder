@@ -8592,6 +8592,8 @@
     "{{amount}} revenue without a supplier cost, at {{rate}}": "{{amount}} doanh thu chưa có chi phí nhà cung cấp, ước tính {{rate}}",
     "{{change}} pt": "{{change}} điểm",
     "{{payers}} paid · {{rate}}": "{{payers}} đã trả · {{rate}}",
-    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} của số nạp Stripe {{amount}}"
+    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} của số nạp Stripe {{amount}}",
+    "by task": "theo tác vụ",
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Cộng từ phí của {{charged}} tác vụ; {{estimated}} tác vụ không có phí được ước tính theo cùng tỷ lệ"
   }
 }

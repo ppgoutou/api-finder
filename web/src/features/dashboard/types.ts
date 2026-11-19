@@ -377,6 +377,11 @@ export interface OpsUpstream {
   task_failure: number
   /** What users were charged on the channel in the last seven days. */
   recent_quota: number
+  /** Supplier cost added up from task charges, for suppliers without logs. */
+  task_cost_quota: number
+  /** Tasks that carried a charge, and tasks priced at the same ratio. */
+  task_cost_charged: number
+  task_cost_estimated: number
 }
 
 export interface OpsTopUser {

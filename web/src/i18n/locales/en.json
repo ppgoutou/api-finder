@@ -8592,6 +8592,8 @@
     "{{amount}} revenue without a supplier cost, at {{rate}}": "{{amount}} revenue without a supplier cost, at {{rate}}",
     "{{change}} pt": "{{change}} pt",
     "{{payers}} paid · {{rate}}": "{{payers}} paid · {{rate}}",
-    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} of Stripe top-ups {{amount}}"
+    "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} of Stripe top-ups {{amount}}",
+    "by task": "by task",
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio"
   }
 }
