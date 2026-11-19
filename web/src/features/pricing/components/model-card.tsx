@@ -262,7 +262,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           <RollingPrice
             value={formatShownSecondPrice(lowestRow.secondPrice)}
             className={cn(
-              'font-mono text-4xl leading-none font-bold tracking-tight tabular-nums',
+              'font-price text-price tabular-nums',
               showVip && VIP_PRICE_TEXT_CLASS
             )}
           />
@@ -287,14 +287,14 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             <div
               key={row.option}
               className={cn(
-                'border-border bg-card flex min-w-0 items-baseline gap-1 rounded-full border-[1.5px] px-2.5 py-0.5',
+                'border-border bg-card flex min-w-0 items-baseline gap-1 rounded-full border px-2.5 py-0.5',
                 row === lowestRow && (showVip ? VIP_ACCENT_CLASS : accentClass)
               )}
             >
-              <dt className='shrink-0 text-xs'>
+              <dt className='shrink-0 text-xs font-medium'>
                 {taskEnumLabel(optionDefinition, row.option, i18n.language)}
               </dt>
-              <dd className='truncate font-mono text-xs font-semibold tabular-nums'>
+              <dd className='font-price truncate text-xs font-bold tabular-nums'>
                 <RollingPrice value={formatShownSecondPrice(row.secondPrice)} />
               </dd>
             </div>
@@ -350,7 +350,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
               <dt className='text-muted-foreground truncate text-xs'>
                 {row.label}
               </dt>
-              <dd className='shrink-0 font-mono text-sm font-semibold tabular-nums'>
+              <dd className='font-price shrink-0 text-sm font-semibold tabular-nums'>
                 {row.entry.formatted}
                 <span className='text-muted-foreground text-xs font-normal'>
                   {' '}
@@ -405,7 +405,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                       {label}
                     </span>
                   )}
-                  <span className='flex flex-wrap items-baseline gap-x-1 font-mono text-sm font-semibold tabular-nums'>
+                  <span className='font-price flex flex-wrap items-baseline gap-x-1 text-sm font-semibold tabular-nums'>
                     <span>{entry.formattedRange ?? entry.formatted}</span>
                     <span className='text-muted-foreground text-xs font-normal whitespace-nowrap'>
                       {' '}
@@ -467,7 +467,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     priceSummary = prices.map((price) => (
       <div key={price.type} className='flex min-w-0 flex-col gap-1'>
         <span className='text-muted-foreground text-xs'>{price.label}</span>
-        <span className='font-mono text-sm font-semibold tabular-nums'>
+        <span className='font-price text-sm font-semibold tabular-nums'>
           {formatPrice(
             props.model,
             price.type,
@@ -511,7 +511,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 )
           }
           className={cn(
-            'font-mono text-4xl leading-none font-bold tracking-tight tabular-nums',
+            'font-price text-price tabular-nums',
             showVipRequestPrice && showVip && VIP_PRICE_TEXT_CLASS
           )}
         />

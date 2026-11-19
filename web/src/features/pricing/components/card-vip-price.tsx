@@ -38,7 +38,7 @@ export function CardVipSaving(props: CardVipSavingProps) {
   return (
     <span className='inline-flex items-center gap-1.5 pb-0.5 text-xs'>
       <span className='sr-only'>{t('Standard price')}</span>
-      <s className='vip-strike text-muted-foreground font-mono tabular-nums no-underline'>
+      <s className='vip-strike text-muted-foreground font-price font-medium tabular-nums no-underline'>
         {props.standardPrice}
       </s>
       <span className='vip-save-pop bg-vip text-vip-foreground rounded-full px-1.5 py-px font-semibold'>

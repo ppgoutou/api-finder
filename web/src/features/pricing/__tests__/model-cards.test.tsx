@@ -533,9 +533,9 @@ describe('model cards', () => {
         tokenUnit='K'
       />
     )
-    const price = screen.getByText(/\$0.6/)
-    expect(price).toHaveClass('text-4xl')
-    expect(price.parentElement).toHaveTextContent(/\$0.6\s*\/\s*request/)
+    const price = screen.getByText(/\$0.6/).parentElement
+    expect(price).toHaveClass('text-price')
+    expect(price?.parentElement).toHaveTextContent(/\$0.6\s*\/\s*request/)
     expect(screen.queryByText(/1K|1M/)).not.toBeInTheDocument()
     expect(screen.getAllByText('Per Request')).toHaveLength(1)
     expect(screen.queryByText('Per-request')).not.toBeInTheDocument()

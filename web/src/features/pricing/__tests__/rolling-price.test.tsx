@@ -16,70 +16,48 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { act, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { RollingPrice } from '../components/rolling-price'
 
-let frames: FrameRequestCallback[] = []
-const originalMatchMedia = window.matchMedia
-
-function runFrame(time: number) {
-  const pending = frames
-  frames = []
-  act(() => pending.forEach((callback) => callback(time)))
+function shownDigits(container: HTMLElement) {
+  return [...container.querySelectorAll<HTMLElement>('[data-digit]')]
 }
 
-beforeEach(() => {
-  frames = []
-  vi.spyOn(performance, 'now').mockReturnValue(0)
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frames.push(callback)
-    return frames.length
-  })
-  vi.stubGlobal('cancelAnimationFrame', () => undefined)
-  vi.spyOn(window, 'matchMedia').mockImplementation(
-    (query: string) =>
-      ({ ...originalMatchMedia(query), matches: false }) as MediaQueryList
-  )
-})
-afterEach(() => {
-  vi.unstubAllGlobals()
-  vi.restoreAllMocks()
-})
-
 describe('rolling price', () => {
-  it('counts down through intermediate prices to a lower price', () => {
-    const { container, rerender } = render(<RollingPrice value='¥0.37' />)
+  it('keeps the price itself as its text and hides the rolling digits', () => {
+    const { container } = render(<RollingPrice value='$0.056' />)
 
-    rerender(<RollingPrice value='¥0.342' />)
-    runFrame(100)
-
-    const frame = container.querySelector('[aria-hidden="true"]')
-    const shown = Number(frame?.textContent?.replace('¥', ''))
-    expect(shown).toBeLessThan(0.37)
-    expect(shown).toBeGreaterThan(0.342)
-    expect(frame?.textContent).toMatch(/^¥0\.\d{3}$/)
-    expect(screen.getByText('¥0.342')).toHaveClass('sr-only')
+    expect(container).toHaveTextContent(/^\$0\.056$/)
+    expect(screen.getByText('$0.056')).toHaveClass('sr-only')
+    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument()
   })
 
-  it('ends on the exact new price text once the roll finishes', () => {
-    const { container, rerender } = render(<RollingPrice value='¥0.342' />)
+  it('stops each digit column on its own digit after the price changes', () => {
+    const { container, rerender } = render(<RollingPrice value='$0.06' />)
 
-    rerender(<RollingPrice value='¥0.37' />)
-    runFrame(100)
-    runFrame(1000)
+    rerender(<RollingPrice value='$0.056' />)
 
-    expect(container).toHaveTextContent(/^¥0\.37$/)
+    const columns = shownDigits(container)
+    expect(columns.map((column) => column.dataset.digit)).toEqual([
+      '0',
+      '0',
+      '5',
+      '6',
+    ])
+    const strip = columns[2].firstElementChild as HTMLElement
+    expect(strip.style.getPropertyValue('--price-digit-offset')).toBe('-50%')
   })
 
-  it('shows the new price at once for viewers who prefer reduced motion', () => {
-    vi.mocked(window.matchMedia).mockImplementation(originalMatchMedia)
-    const { container, rerender } = render(<RollingPrice value='¥0.37' />)
+  it('starts each digit a little after the one to its left', () => {
+    const { container } = render(<RollingPrice value='¥0.383' />)
 
-    rerender(<RollingPrice value='¥0.342' />)
-
-    expect(frames).toHaveLength(0)
-    expect(container).toHaveTextContent(/^¥0\.342$/)
+    const delays = shownDigits(container).map(
+      (column) =>
+        (column.firstElementChild as HTMLElement).style.transitionDelay
+    )
+    expect(delays).toEqual(['0ms', '35ms', '70ms', '105ms'])
   })
 })
