@@ -41,7 +41,7 @@ export const EN_DOCS: DocContent = {
 
 Video generation is asynchronous: create a task to get a task ID, poll its status, then download the video once it completes. Image generation is synchronous: one request returns the images.
 
-Models differ in resolution, duration and billing, see Choosing a model and Image generation below. The model descriptions in the [Model Square](/pricing) always show the latest specs and live prices.`,
+Models differ in resolution, duration and billing, see Choosing a model and Image generation below. The model descriptions in the [Model square](/pricing) always show the latest specs and live prices.`,
         },
       ],
     },
@@ -53,7 +53,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
           type: 'markdown',
           text: `1. [Sign up](/sign-up) and sign in;
 2. Top up on the Wallet page of the console;
-3. Create an API key (starting with \`sk-\`) on the API Keys page;
+3. Create an API key (starting with \`sk-\`) on the API keys page;
 4. Call the three endpoints below in order: create a task → check its status → download the video.`,
         },
         {
@@ -81,12 +81,12 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
           type: 'markdown',
           text: 'Every request carries your API key in a header:',
         },
-        { type: 'code', label: 'HTTP Header', code: DOC_SAMPLES.authHeader },
+        { type: 'code', label: 'HTTP header', code: DOC_SAMPLES.authHeader },
         {
           type: 'markdown',
           text: `- Send the full key, including the \`sk-\` prefix;
 - Keep the key on your server, never in web page or app front-end code;
-- If a key leaks, delete it on the API Keys page right away and create a new one.`,
+- If a key leaks, delete it on the API keys page right away and create a new one.`,
         },
       ],
     },
@@ -333,7 +333,7 @@ If the download is slow, download it over several connections: the endpoint supp
       blocks: [
         {
           type: 'markdown',
-          text: `Models are billed in different ways. The [Model Square](/pricing) shows the actual prices:
+          text: `Models are billed in different ways. The [Model square](/pricing) shows the actual prices:
 
 | Billing | Calculation | Models |
 | --- | --- | --- |
@@ -342,7 +342,7 @@ If the download is slow, download it over several connections: the endpoint supp
 | Per image | Images returned × price per image, regardless of size or quality | Image models |
 
 - A video is charged when the task is created; per-token models settle the actual usage on completion;
-- VIP users pay VIP prices; switch to them on the Model Square to compare;
+- VIP users pay VIP prices; switch to them on the Model square to compare;
 - **A failed video task is refunded automatically**, and a failed image request is not charged. See charges and refunds on the Billing Records page of the console;
 - A submission is rejected when the balance is too low; top up on the Wallet page first.`,
         },

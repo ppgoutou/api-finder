@@ -118,6 +118,48 @@ For commercial licensing, please contact support@quantumnous.com
   --color-chart-6: var(--chart-6);
   --color-chart-7: var(--chart-7);
   --color-chart-8: var(--chart-8);
+  /* Chart hues as text (status badges, group names): a darker shade on
+   * light surfaces for 4.5:1, the chart colour itself in dark mode. */
+  --color-chart-1-ink: color-mix(
+    in oklab,
+    var(--chart-1) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-2-ink: color-mix(
+    in oklab,
+    var(--chart-2) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-3-ink: color-mix(
+    in oklab,
+    var(--chart-3) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-4-ink: color-mix(
+    in oklab,
+    var(--chart-4) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-5-ink: color-mix(
+    in oklab,
+    var(--chart-5) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-6-ink: color-mix(
+    in oklab,
+    var(--chart-6) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-7-ink: color-mix(
+    in oklab,
+    var(--chart-7) var(--chart-ink-mix),
+    black
+  );
+  --color-chart-8-ink: color-mix(
+    in oklab,
+    var(--chart-8) var(--chart-ink-mix),
+    black
+  );
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -253,6 +295,7 @@ For commercial licensing, please contact support@quantumnous.com
   --chart-6: oklch(0.72 0.15 60);
   --chart-7: oklch(0.62 0.17 20);
   --chart-8: oklch(0.6 0.05 250);
+  --chart-ink-mix: 75%;
   /* VIP gold: the VIP identity on every light surface. */
   --vip: #b45309;
   --vip-hover: #92400e;
@@ -326,7 +369,8 @@ For commercial licensing, please contact support@quantumnous.com
   --accent: color-mix(in oklch, var(--primary) 20%, var(--background));
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
+  /* Dark ink: white on this light red is 2.8:1. */
+  --destructive-foreground: oklch(0.145 0 0);
   --success: oklch(0.696 0.17 162.48);
   --success-foreground: oklch(0.145 0 0);
   --warning: oklch(0.769 0.188 70.08);
@@ -346,6 +390,7 @@ For commercial licensing, please contact support@quantumnous.com
   --chart-6: oklch(0.8 0.14 70);
   --chart-7: oklch(0.72 0.16 20);
   --chart-8: oklch(0.72 0.05 250);
+  --chart-ink-mix: 100%;
   --vip: #fcd34d;
   --vip-hover: #fde68a;
   --vip-foreground: #451a03;
