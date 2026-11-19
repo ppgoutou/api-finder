@@ -31,18 +31,14 @@ const (
 	opsCostSourceTasks    = "tasks"
 )
 
-// applySupplyPriceCosts makes the supply price recorded on billing logs the
-// cost of every channel that has one. What the supplier reported, from its
-// logs or its task charges, stays alongside to compare.
+// applySupplyPriceCosts costs at the supply price recorded on billing logs
+// every channel whose supplier did not report what it charged. A charge the
+// supplier reported, from its logs or its task charges, stays the cost.
 func applySupplyPriceCosts(upstream []model.OpsUpstream) {
 	for i := range upstream {
 		row := &upstream[i]
-		if row.SupplyCoveredQuota <= 0 {
+		if row.SupplyCoveredQuota <= 0 || row.CostStatus == opsCostStatusOK {
 			continue
-		}
-		row.ReportedCostQuota = 0
-		if row.CostStatus == opsCostStatusOK {
-			row.ReportedCostQuota = row.CostQuota
 		}
 		row.CostStatus = opsCostStatusOK
 		row.CostError = ""

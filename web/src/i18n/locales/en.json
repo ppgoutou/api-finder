@@ -8629,9 +8629,11 @@
     "by task": "by task",
     "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio",
     "supply price": "supply price",
-    "The supplier reported {{amount}}.": "The supplier reported {{amount}}.",
     "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.",
     "At supply prices or supplier charges, {{amount}} of revenue": "At supply prices or supplier charges, {{amount}} of revenue",
-    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.",
+    "actual charge": "actual charge",
+    "What the supplier charged, read from its logs.": "What the supplier charged, read from its logs.",
+    "At the supply price it comes to {{amount}}.": "At the supply price it comes to {{amount}}."
   }
 }

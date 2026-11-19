@@ -1067,18 +1067,20 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 	assert.Equal(t, 3, logRequests, "a repeated period is served from the cache")
 }
 
-func TestApplySupplyPriceCostsPrefersTheSupplyPriceAndKeepsTheReportedCost(t *testing.T) {
+func TestApplySupplyPriceCostsKeepsWhatTheSupplierReported(t *testing.T) {
 	upstream := []model.OpsUpstream{
 		{ChannelId: 1, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupplier, CostQuota: 900, SupplyCostQuota: 800, SupplyCoveredQuota: 1000},
 		{ChannelId: 2, CostStatus: opsCostStatusError, CostError: "down", SupplyCostQuota: 50, SupplyCoveredQuota: 70},
-		{ChannelId: 3, CostStatus: opsCostStatusNoToken},
+		{ChannelId: 3, CostStatus: opsCostStatusNoToken, SupplyCostQuota: 30, SupplyCoveredQuota: 40},
+		{ChannelId: 4, CostStatus: opsCostStatusNoToken},
 	}
 
 	applySupplyPriceCosts(upstream)
 
-	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupply, CostQuota: 800, ReportedCostQuota: 900, SupplyCostQuota: 800, SupplyCoveredQuota: 1000}, upstream[0])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupplier, CostQuota: 900, SupplyCostQuota: 800, SupplyCoveredQuota: 1000}, upstream[0], "the supplier's own charge stays")
 	assert.Equal(t, model.OpsUpstream{ChannelId: 2, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupply, CostQuota: 50, SupplyCostQuota: 50, SupplyCoveredQuota: 70}, upstream[1])
-	assert.Equal(t, model.OpsUpstream{ChannelId: 3, CostStatus: opsCostStatusNoToken}, upstream[2], "a channel without supply prices keeps its state")
+	assert.Equal(t, model.OpsUpstream{ChannelId: 3, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupply, CostQuota: 30, SupplyCostQuota: 30, SupplyCoveredQuota: 40}, upstream[2])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 4, CostStatus: opsCostStatusNoToken}, upstream[3], "a channel without supply prices keeps its state")
 }
 
 // supplierWithLogs serves a USD supplier whose channel key is token 12, now

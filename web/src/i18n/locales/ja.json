@@ -8629,9 +8629,11 @@
     "by task": "タスク別",
     "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "{{charged}} 件のタスクの課金記録を合計。記録のない {{estimated}} 件は同じ比率で推定",
     "supply price": "仕入れ価格",
-    "The supplier reported {{amount}}.": "仕入れ先の実請求は {{amount}}。",
     "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "課金時に記録した仕入れ価格で計算（売上 {{covered}} 分）。残り {{estimated}} は同じ比率で推定。",
     "At supply prices or supplier charges, {{amount}} of revenue": "仕入れ価格または仕入れ先の請求で計算、対応売上 {{amount}}",
-    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "売上はこのチャネルでユーザーに課金した額です。上流支出は課金ごとに記録した仕入れ価格で計算し、記録がなければ仕入れ先の報告額を使います。タスク成功率は非同期タスクのみ。「—」は残高未取得です。"
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "売上はこのチャネルでユーザーに課金した額です。上流支出は仕入れ先の実請求を優先し、取得できない場合は課金ごとに記録した仕入れ価格で計算します。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
+    "actual charge": "実請求",
+    "What the supplier charged, read from its logs.": "仕入れ先の実請求額（仕入れ先のログから取得）。",
+    "At the supply price it comes to {{amount}}.": "仕入れ価格では {{amount}}。"
   }
 }

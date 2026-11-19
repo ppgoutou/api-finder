@@ -54,7 +54,7 @@ export function OpsUpstreamPanel(props: {
     <PanelWrapper
       title={t('Upstream channels')}
       description={t(
-        'Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.'
+        'Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.'
       )}
       loading={props.loading}
       empty={props.upstream.length === 0}
@@ -169,41 +169,43 @@ function opsCostSourceNote(
   t: (key: string, options?: Record<string, unknown>) => string
 ) {
   if (row.cost_source === 'supply') {
-    const reported =
-      row.reported_cost_quota > 0
-        ? t('The supplier reported {{amount}}.', {
-            amount: formatOpsMoney(row.reported_cost_quota),
-          })
-        : ''
     return {
       label: t('supply price'),
-      detail: [
-        t(
-          'At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.',
-          {
-            covered: formatOpsMoney(row.supply_covered_quota),
-            estimated: formatOpsMoney(row.supply_estimated_quota),
-          }
-        ),
-        reported,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    }
-  }
-  if (row.cost_source === 'tasks') {
-    return {
-      label: t('by task'),
       detail: t(
-        'Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio',
+        'At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.',
         {
-          charged: row.task_cost_charged,
-          estimated: row.task_cost_estimated,
+          covered: formatOpsMoney(row.supply_covered_quota),
+          estimated: formatOpsMoney(row.supply_estimated_quota),
         }
       ),
     }
   }
-  return null
+  if (row.cost_source !== 'supplier' && row.cost_source !== 'tasks') {
+    return null
+  }
+  const parts = [
+    row.cost_source === 'tasks'
+      ? t(
+          'Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio',
+          {
+            charged: row.task_cost_charged,
+            estimated: row.task_cost_estimated,
+          }
+        )
+      : t('What the supplier charged, read from its logs.'),
+  ]
+  // The supply price stays alongside to compare.
+  if (row.supply_covered_quota > 0) {
+    parts.push(
+      t('At the supply price it comes to {{amount}}.', {
+        amount: formatOpsMoney(row.supply_cost_quota),
+      })
+    )
+  }
+  return {
+    label: row.cost_source === 'tasks' ? t('by task') : t('actual charge'),
+    detail: parts.join(' '),
+  }
 }
 
 function OpsProfitCells(props: { revenue: number; cost: number }) {
