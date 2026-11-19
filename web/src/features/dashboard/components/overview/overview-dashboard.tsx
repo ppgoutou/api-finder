@@ -207,8 +207,8 @@ function SetupGuideBackdrop(props: { compact?: boolean }) {
           className={cn(
             'absolute right-3 [mask-image:linear-gradient(90deg,transparent_0%,black_30%,black_82%,transparent_100%)] text-right tracking-[0.38em] whitespace-pre',
             props.compact
-              ? '-top-6 text-[9px] leading-4'
-              : 'top-1 text-[11px] leading-5'
+              ? '-top-6 text-micro leading-4'
+              : 'top-1 text-caption leading-5'
           )}
         >
           {SETUP_GUIDE_CODE_PATTERN}
@@ -660,7 +660,7 @@ export function OverviewDashboard() {
                       <div className='flex min-w-0 flex-col gap-5'>
                         <div className='flex flex-wrap items-start justify-between gap-3'>
                           <div className='flex max-w-2xl flex-col gap-1'>
-                            <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wider uppercase'>
+                            <div className='text-muted-foreground flex items-center gap-2 text-caption font-medium'>
                               <ListChecks
                                 className='size-3.5'
                                 aria-hidden='true'
@@ -717,7 +717,7 @@ export function OverviewDashboard() {
                 <CardStaggerItem className='bg-card h-full rounded-lg border-[1.5px] p-4 sm:p-5'>
                   <div className='flex h-full flex-col gap-4'>
                     <div className='flex flex-col gap-1'>
-                      <div className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                      <div className='text-muted-foreground text-caption font-medium'>
                         {t('Recommended actions')}
                       </div>
                       <h3 className='text-lg font-semibold tracking-tight'>

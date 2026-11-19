@@ -25,6 +25,7 @@ import { labelReferences } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
 import type { StudioAsset } from '../types'
 import { AssetThumb } from './asset-thumb'
+import { Button } from '@/components/ui/button'
 
 interface AddTileProps {
   label: string
@@ -38,10 +39,10 @@ function AddTile(props: AddTileProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <>
-      <button
+      <Button variant='plain' size='inline'
         type='button'
         onClick={() => inputRef.current?.click()}
-        className='border-border text-muted-foreground hover:border-primary hover:text-primary flex size-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed text-[11px] transition-colors'
+        className='border-border text-muted-foreground hover:border-primary hover:text-primary flex size-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed text-caption transition-colors'
       >
         {props.multiple ? (
           <Plus className='size-4' aria-hidden />
@@ -49,7 +50,7 @@ function AddTile(props: AddTileProps) {
           <ImagePlus className='size-4' aria-hidden />
         )}
         {props.label}
-      </button>
+      </Button>
       <input
         ref={inputRef}
         type='file'

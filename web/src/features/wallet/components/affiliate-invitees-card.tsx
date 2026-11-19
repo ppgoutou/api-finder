@@ -52,7 +52,7 @@ export function AffiliateInviteesCard() {
               <div className='truncate text-sm font-medium'>
                 {[invitee.name, invitee.email].filter(Boolean).join(' · ')}
               </div>
-              <div className='text-muted-foreground mt-0.5 flex items-center gap-2 text-[13px] tabular-nums'>
+              <div className='text-muted-foreground mt-0.5 flex items-center gap-2 text-body-sm tabular-nums'>
                 {formatTimestampToDate(invitee.created_at)}
                 <StatusBadge
                   label={
@@ -78,7 +78,7 @@ export function AffiliateInviteesCard() {
             </div>
           </div>
           <div className='shrink-0 text-right'>
-            <div className='text-[15px] font-semibold tabular-nums'>
+            <div className='text-body-lg font-semibold tabular-nums'>
               {formatQuota(invitee.rebate_quota ?? 0)}
             </div>
             <div className='text-muted-foreground mt-0.5 text-xs'>
@@ -113,7 +113,7 @@ export function AffiliateInviteesCard() {
     <section className='min-w-0 p-4 sm:p-6'>
       <div className='mb-2 flex items-baseline justify-between gap-2'>
         <h3 className='text-base font-semibold'>{t('Invitees')}</h3>
-        <span className='text-muted-foreground text-[13px]'>
+        <span className='text-muted-foreground text-body-sm'>
           {t('{{count}} in total', { count: total })}
         </span>
       </div>

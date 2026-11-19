@@ -32,7 +32,7 @@ export function WorkDownloadButton(props: { url: string; filename: string }) {
     <Button
       variant='secondary'
       size='icon'
-      className='absolute top-2 right-2 size-8 rounded-full text-[10px] font-semibold tabular-nums opacity-90'
+      className='absolute top-2 right-2 size-8 rounded-full text-micro font-semibold tabular-nums opacity-90'
       nativeButton={false}
       render={<a href={props.url} download={props.filename} />}
       onClick={download.onClick}

@@ -252,7 +252,7 @@ export function Composer(props: ComposerProps) {
           onSwitch={(name) => studio.update({ model: name })}
         />
       )}
-      <p className='text-muted-foreground mt-2 px-1 text-[11px]'>
+      <p className='text-muted-foreground mt-2 px-1 text-caption'>
         {t(
           'Reference files are kept for {{days}} days and then deleted automatically. Uploading requires a positive balance.',
           { days: ASSET_RETENTION_DAYS }

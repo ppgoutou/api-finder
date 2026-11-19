@@ -114,7 +114,7 @@ function GalleryTile(props: { card: GalleryCard; onOpen: () => void }) {
   }
 
   return (
-    <button
+    <Button variant='plain' size='inline'
       type='button'
       className='bg-muted group relative block aspect-video w-full overflow-hidden'
       onClick={props.onOpen}
@@ -128,7 +128,7 @@ function GalleryTile(props: { card: GalleryCard; onOpen: () => void }) {
           </span>
         </span>
       )}
-    </button>
+    </Button>
   )
 }
 
@@ -143,7 +143,7 @@ function GalleryWorkCard(props: { card: GalleryCard; onOpen: () => void }) {
       <div className='border-border/60 relative overflow-hidden rounded-lg border'>
         <GalleryTile card={card} onOpen={props.onOpen} />
         {model && (
-          <span className='pointer-events-none absolute top-1.5 right-1.5 max-w-[calc(100%-0.75rem)] truncate rounded bg-black/60 px-1.5 py-0.5 text-[11px] leading-4 text-white'>
+          <span className='pointer-events-none absolute top-1.5 right-1.5 max-w-[calc(100%-0.75rem)] truncate rounded bg-black/60 px-1.5 py-0.5 text-caption leading-4 text-white'>
             {displayName(model)}
           </span>
         )}

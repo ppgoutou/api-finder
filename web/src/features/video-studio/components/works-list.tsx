@@ -174,7 +174,7 @@ function WorkCard(props: {
           <p
             className={cn(
               'text-muted-foreground min-w-0 flex-1 truncate',
-              props.compact ? 'text-[11px]' : 'text-xs'
+              props.compact ? 'text-caption' : 'text-xs'
             )}
           >
             {specText || task.task_id}

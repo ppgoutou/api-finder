@@ -74,7 +74,7 @@ export function VideoStudio() {
             ref={composerRef}
             className='flex scroll-mt-4 flex-col items-center gap-5'
           >
-            <h1 className='text-center text-2xl font-bold tracking-tight md:text-3xl'>
+            <h1 className='text-page-title text-center md:text-2xl'>
               {kind === 'image'
                 ? t('Create an image, bring your ideas to life')
                 : t('Create a video, bring your ideas to life')}

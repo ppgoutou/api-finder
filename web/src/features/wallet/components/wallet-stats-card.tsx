@@ -64,13 +64,13 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
         <div className='text-muted-foreground text-sm'>
           {t('Current Balance')}
         </div>
-        <div className='text-foreground mt-1 text-4xl font-bold tracking-tight break-all tabular-nums sm:text-5xl'>
+        <div className='text-foreground font-display mt-1 text-4xl font-bold tracking-tight break-all tabular-nums sm:text-5xl'>
           {formatQuota(props.user?.quota ?? 0)}
         </div>
       </div>
       {secondaryStats.map((item) => (
         <div key={item.label} className='min-w-0'>
-          <div className='text-muted-foreground truncate text-[13px]'>
+          <div className='text-muted-foreground truncate text-body-sm'>
             {item.label}
           </div>
           <div className='text-foreground mt-1 text-base font-semibold break-all tabular-nums sm:text-xl'>

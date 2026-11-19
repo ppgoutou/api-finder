@@ -52,7 +52,7 @@ interface AcceptedMethod {
 
 const CHIP_CLASS =
   'inline-flex h-5 items-center justify-center overflow-hidden rounded border border-black/10 bg-white px-1'
-const TEXT_LOGO_CLASS = 'text-[10px] leading-none font-bold'
+const TEXT_LOGO_CLASS = 'text-micro leading-none font-bold'
 
 /**
  * Payment methods the Stripe checkout page offers, mirroring what is enabled
@@ -163,7 +163,7 @@ export function StripeAcceptedMethods(props: StripeAcceptedMethodsProps) {
       <span
         aria-hidden='true'
         className={cn(
-          'text-muted-foreground mr-0.5 text-[11px]',
+          'text-muted-foreground mr-0.5 text-caption',
           props.labelClassName
         )}
       >
@@ -178,7 +178,7 @@ export function StripeAcceptedMethods(props: StripeAcceptedMethodsProps) {
                 key={method.key}
                 className={cn(
                   CHIP_CLASS,
-                  'text-[11px] leading-none font-semibold text-[#D7000F]'
+                  'text-caption leading-none font-semibold text-[#D7000F]'
                 )}
               >
                 {name}
@@ -199,7 +199,7 @@ export function StripeAcceptedMethods(props: StripeAcceptedMethodsProps) {
             <Button
               variant='ghost'
               aria-label={moreLabel}
-              className='text-muted-foreground hover:text-foreground h-5 rounded border border-black/10 bg-white px-1 text-[11px] font-semibold dark:border-white/15 dark:bg-transparent'
+              className='text-muted-foreground hover:text-foreground h-5 rounded border border-black/10 bg-white px-1 text-caption font-semibold dark:border-white/15 dark:bg-transparent'
             />
           }
         >

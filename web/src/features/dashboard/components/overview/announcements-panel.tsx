@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils'
 
 import { PanelWrapper } from '../ui/panel-wrapper'
 import { AnnouncementDetailModal } from './announcement-detail-dialog'
+import { Button } from '@/components/ui/button'
 
 const AnnouncementStatusDot = memo(function AnnouncementStatusDot(props: {
   type?: string
@@ -79,7 +80,7 @@ export function AnnouncementsPanel() {
           {list.map((item: AnnouncementItem, idx: number) => {
             const key = item.id ?? `announcement-${idx}`
             return (
-              <button
+              <Button variant='plain' size='inline'
                 key={key}
                 type='button'
                 onClick={() => handleAnnouncementClick(item)}
@@ -106,7 +107,7 @@ export function AnnouncementsPanel() {
                     </div>
                   </div>
                 </div>
-              </button>
+              </Button>
             )
           })}
         </div>

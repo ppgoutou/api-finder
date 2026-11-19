@@ -49,7 +49,7 @@ export function OpsSection(props: {
   return (
     <section id={props.id} className='scroll-mt-16 space-y-2.5'>
       <div className='flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5'>
-        <h2 className='text-[15px] font-semibold'>{props.title}</h2>
+        <h2 className='text-body-lg font-semibold'>{props.title}</h2>
         {props.description != null && (
           <p className='text-muted-foreground text-xs'>{props.description}</p>
         )}
@@ -87,7 +87,7 @@ export function OpsStatGrid(props: {
               <Skeleton className='mt-2 h-7 w-20' />
             ) : (
               <div
-                className='text-foreground mt-1 truncate font-mono text-lg font-bold tracking-tight tabular-nums sm:mt-1.5 sm:text-2xl'
+                className='text-foreground mt-1 truncate font-mono text-lg font-semibold tracking-tight tabular-nums sm:mt-1.5 sm:text-2xl'
                 title={stat.fullValue ?? stat.value}
               >
                 {stat.value}

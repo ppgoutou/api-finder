@@ -252,7 +252,7 @@ export function RechargeFormCard({
                           </span>
                         )}
                         <div className='flex w-full items-center justify-center gap-2'>
-                          <div className='text-lg font-bold tabular-nums sm:text-xl'>
+                          <div className='text-lg font-semibold tabular-nums sm:text-xl'>
                             {formatCredit(preset.value)}
                           </div>
                           {hasDiscount && (
@@ -370,7 +370,7 @@ export function RechargeFormCard({
                               {method.name}
                             </span>
                             {disabledLabel && (
-                              <span className='max-w-full truncate text-[11px] leading-4 font-normal opacity-80'>
+                              <span className='max-w-full truncate text-caption leading-4 font-normal opacity-80'>
                                 {disabledLabel}
                               </span>
                             )}
@@ -425,7 +425,7 @@ export function RechargeFormCard({
                 hasWaffoPaymentMethods &&
                 onWaffoMethodSelect && (
                   <div className='space-y-2.5 sm:space-y-3'>
-                    <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                    <Label className='text-muted-foreground text-caption font-medium'>
                       {t('Waffo Payment')}
                     </Label>
                     <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
@@ -477,7 +477,7 @@ export function RechargeFormCard({
                                 {method.name}
                               </span>
                               {disabledLabel && (
-                                <span className='text-muted-foreground max-w-full truncate text-[11px] leading-4 font-normal'>
+                                <span className='text-muted-foreground max-w-full truncate text-caption leading-4 font-normal'>
                                   {disabledLabel}
                                 </span>
                               )}
@@ -518,7 +518,7 @@ export function RechargeFormCard({
         creemProducts.length > 0 &&
         onCreemProductSelect && (
           <div className='space-y-2.5 border-t pt-4 sm:space-y-3 sm:pt-6'>
-            <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+            <Label className='text-muted-foreground text-caption font-medium'>
               {t('Creem Payment')}
             </Label>
             <CreemProductsSection

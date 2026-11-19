@@ -133,12 +133,12 @@ export function RedemptionCard(props: RedemptionCardProps) {
                 key={step.title}
                 className='flex gap-2.5 sm:flex-col sm:gap-1'
               >
-                <span className='text-brand dark:text-brand-on-dark text-[13px] font-bold'>
+                <span className='text-brand dark:text-brand-on-dark text-body-sm font-semibold'>
                   {index + 1}
                 </span>
                 <span className='flex min-w-0 flex-col gap-0.5'>
                   <span className='text-sm font-semibold'>{step.title}</span>
-                  <span className='text-muted-foreground text-[13px]'>
+                  <span className='text-muted-foreground text-body-sm'>
                     {step.detail}
                   </span>
                 </span>
@@ -156,7 +156,7 @@ export function RedemptionCard(props: RedemptionCardProps) {
           >
             <Label
               htmlFor='redemption-code'
-              className='text-muted-foreground text-[13px] font-normal'
+              className='text-muted-foreground text-body-sm font-normal'
             >
               {t('Enter redemption code')}
             </Label>
@@ -180,7 +180,7 @@ export function RedemptionCard(props: RedemptionCardProps) {
                 {t('Redeem')}
               </Button>
             </div>
-            <p className='text-muted-foreground text-[13px]'>
+            <p className='text-muted-foreground text-body-sm'>
               {t('Credit never expires after redeeming')}
             </p>
           </div>

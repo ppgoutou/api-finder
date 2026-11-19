@@ -206,7 +206,7 @@ export function FlowNodeFilterControl(props: FlowNodeFilterControlProps) {
             <span className='truncate'>
               {t(props.stageLabels[option.kind])}: {option.label}
             </span>
-            <button
+            <Button variant='plain' size='inline'
               type='button'
               className='hover:bg-muted-foreground/15 flex size-4 shrink-0 items-center justify-center rounded-sm'
               aria-label={t('Remove node filter')}
@@ -215,7 +215,7 @@ export function FlowNodeFilterControl(props: FlowNodeFilterControlProps) {
               }
             >
               <X aria-hidden='true' />
-            </button>
+            </Button>
           </Badge>
         ))}
 
