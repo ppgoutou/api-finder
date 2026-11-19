@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Divide by": "Diviser par",
+    "Enter a number greater than 0": "Saisissez un nombre supérieur à 0",
+    "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "« Diviser par » convertit le nombre du fournisseur dans votre unité, par exemple 10 si le fournisseur compte 10 crédits par yuan. Le seuil et les messages utilisent le montant converti.",
     "Upstream balance alerts": "Alertes de solde fournisseur",
     "Upstream balance alert": "Alerte de solde fournisseur",
     "Checks the account balance of upstream channels and sends a Feishu bot message when it falls below the threshold, again while it stays low, and once when it recovers.": "Vérifie le solde du compte des canaux fournisseurs et envoie un message via un bot Feishu lorsqu'il passe sous le seuil, à nouveau tant qu'il reste bas, puis une fois rétabli.",

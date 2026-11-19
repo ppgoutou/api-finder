@@ -157,6 +157,7 @@ func fetchUpstreamBalance(ctx context.Context, monitor system_setting.BalanceAle
 	if (value.Type != gjson.Number && value.Type != gjson.String) || err != nil || math.IsNaN(balance) || math.IsInf(balance, 0) {
 		return result, 0, fmt.Errorf("field %q is not a number", field)
 	}
+	balance = monitor.Convert(balance)
 	result.Balance = &balance
 	return result, balance, nil
 }

@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Divide by": "Chia cho",
+    "Enter a number greater than 0": "Nhập số lớn hơn 0",
+    "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "« Chia cho » đổi số của nhà cung cấp sang đơn vị của bạn, ví dụ 10 khi nhà cung cấp tính 10 tín dụng cho mỗi tệ. Ngưỡng và tin nhắn dùng số tiền đã quy đổi.",
     "Upstream balance alerts": "Cảnh báo số dư nhà cung cấp",
     "Upstream balance alert": "Cảnh báo số dư nhà cung cấp",
     "Checks the account balance of upstream channels and sends a Feishu bot message when it falls below the threshold, again while it stays low, and once when it recovers.": "Kiểm tra số dư tài khoản của các kênh nhà cung cấp và gửi tin nhắn qua bot Feishu khi số dư xuống dưới ngưỡng, nhắc lại khi vẫn thấp và báo một lần khi đã phục hồi.",

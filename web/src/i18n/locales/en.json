@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Divide by": "Divide by",
+    "Enter a number greater than 0": "Enter a number greater than 0",
+    "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.",
     "Upstream balance alerts": "Upstream balance alerts",
     "Upstream balance alert": "Upstream balance alert",
     "Checks the account balance of upstream channels and sends a Feishu bot message when it falls below the threshold, again while it stays low, and once when it recovers.": "Checks the account balance of upstream channels and sends a Feishu bot message when it falls below the threshold, again while it stays low, and once when it recovers.",
