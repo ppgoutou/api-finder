@@ -18,13 +18,17 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { describe, expect, test } from 'vitest'
 
+import { formatPercent } from '@/lib/format'
+
 import type { OpsModelPerf, OpsTrendDay, OpsWallet } from '../../types'
 import {
   buildOpsTrendSpec,
   channelTracksRefunds,
+  OPS_TREND_REDEMPTION,
   isLowSuccessRate,
   opsCustomRangeIssue,
   opsProfit,
+  opsTrendTopupTotal,
   percentChange,
   percentOf,
   reconcileWallet,
@@ -214,26 +218,130 @@ describe('model figures', () => {
 describe('buildOpsTrendSpec', () => {
   const trend: OpsTrendDay[] = [
     { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7 },
-    { date: '2026-11-06', topups: { stripe: 20 }, used_quota: 3 },
+    {
+      date: '2026-11-06',
+      topups: { stripe: 15, [OPS_TREND_REDEMPTION]: 5 },
+      used_quota: 3,
+    },
   ]
   const spec = buildOpsTrendSpec(trend, {
     usage: 'Usage',
+    redemption: 'Redemption codes',
+    topupTotal: 'Top-ups',
     formatValue: String,
   })
+  const line = spec.tooltip.dimension.content[0]
 
-  test('every day has a value for each channel and for usage', () => {
+  test('every day has a value and a daily share for each channel', () => {
     expect(spec.data[0].values).toEqual([
-      { date: '11/05', kind: 'topup', series: 'Stripe', value: 0 },
-      { date: '11/05', kind: 'topup', series: 'USDT', value: 5 },
-      { date: '11/05', kind: 'usage', series: 'Usage', value: 7 },
-      { date: '11/06', kind: 'topup', series: 'Stripe', value: 20 },
-      { date: '11/06', kind: 'topup', series: 'USDT', value: 0 },
-      { date: '11/06', kind: 'usage', series: 'Usage', value: 3 },
+      {
+        date: '11/05',
+        kind: 'topup',
+        series: 'Stripe',
+        value: 0,
+        share: 0,
+        dayTotal: 5,
+      },
+      {
+        date: '11/05',
+        kind: 'topup',
+        series: 'USDT',
+        value: 5,
+        share: 100,
+        dayTotal: 5,
+      },
+      {
+        date: '11/05',
+        kind: 'topup',
+        series: 'Redemption codes',
+        value: 0,
+        share: 0,
+        dayTotal: 5,
+      },
+      {
+        date: '11/05',
+        kind: 'usage',
+        series: 'Usage',
+        value: 7,
+        share: null,
+        dayTotal: 5,
+      },
+      {
+        date: '11/06',
+        kind: 'topup',
+        series: 'Stripe',
+        value: 15,
+        share: 75,
+        dayTotal: 20,
+      },
+      {
+        date: '11/06',
+        kind: 'topup',
+        series: 'USDT',
+        value: 0,
+        share: 0,
+        dayTotal: 20,
+      },
+      {
+        date: '11/06',
+        kind: 'topup',
+        series: 'Redemption codes',
+        value: 5,
+        share: 25,
+        dayTotal: 20,
+      },
+      {
+        date: '11/06',
+        kind: 'usage',
+        series: 'Usage',
+        value: 3,
+        share: null,
+        dayTotal: 20,
+      },
     ])
   })
 
   test('colors line up with their series and usage keeps its own', () => {
-    expect(spec.color.domain).toEqual(['Stripe', 'USDT', 'Usage'])
-    expect(new Set(spec.color.range).size).toBe(3)
+    expect(spec.color.domain).toEqual([
+      'Stripe',
+      'USDT',
+      'Redemption codes',
+      'Usage',
+    ])
+    expect(new Set(spec.color.range).size).toBe(4)
+  })
+
+  test('tooltip shows a top-up amount with its share and usage without one', () => {
+    const [, , , usage, stripe] = spec.data[0].values
+    expect(line.value(stripe)).toBe(`15 · ${formatPercent(75)}`)
+    expect(line.value(usage)).toBe('7')
+  })
+
+  test('tooltip hides channels without top-ups that day but keeps usage', () => {
+    const [stripe, usdt, , usage] = spec.data[0].values
+    expect(line.visible(stripe)).toBe(false)
+    expect(line.visible(usdt)).toBe(true)
+    expect(line.visible({ ...usage, value: 0 })).toBe(true)
+  })
+
+  test('tooltip title names the day and its top-up total', () => {
+    expect(spec.tooltip.dimension.title.value(spec.data[0].values[4])).toBe(
+      '11/06  Top-ups 20'
+    )
+  })
+})
+
+describe('opsTrendTopupTotal', () => {
+  test('sums every channel including redemption codes', () => {
+    expect(
+      opsTrendTopupTotal([
+        { date: '2026-11-05', topups: { usdt: 5 }, used_quota: 7 },
+        {
+          date: '2026-11-06',
+          topups: { stripe: 15, redemption: 5 },
+          used_quota: 0,
+        },
+      ])
+    ).toBe(25)
   })
 })

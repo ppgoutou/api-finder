@@ -491,7 +491,6 @@ export function OpsDashboard() {
           <OpsTrendPanel
             trend={data?.trend ?? []}
             loading={loading}
-            topupQuota={current?.topup_quota ?? 0}
             usedQuota={current?.used_quota ?? 0}
           />
           <OpsChannelPanel

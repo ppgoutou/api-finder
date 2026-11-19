@@ -36,6 +36,7 @@ import {
   channelTracksRefunds,
   formatOpsMoney,
   opsChannelLabel,
+  opsTrendTopupTotal,
   percentOf,
 } from '../../lib/ops'
 import type { OpsChannelStats, OpsTrendDay } from '../../types'
@@ -47,25 +48,28 @@ const CELL = 'text-right font-mono tabular-nums'
 export function OpsTrendPanel(props: {
   trend: OpsTrendDay[]
   loading: boolean
-  topupQuota: number
   usedQuota: number
 }) {
   const { t } = useTranslation()
   const usageLabel = t('Site usage')
+  const redemptionLabel = t('Redemption codes')
+  const topupTotalLabel = t('Total top-ups')
   const spec = useMemo(
     () =>
       buildOpsTrendSpec(props.trend, {
         usage: usageLabel,
+        redemption: redemptionLabel,
+        topupTotal: topupTotalLabel,
         formatValue: formatOpsMoney,
       }),
-    [props.trend, usageLabel]
+    [props.trend, usageLabel, redemptionLabel, topupTotalLabel]
   )
 
   return (
     <PanelWrapper
       title={t('Daily top-ups and usage')}
       description={t('Top-ups {{topups}}, usage {{usage}}', {
-        topups: formatOpsMoney(props.topupQuota),
+        topups: formatOpsMoney(opsTrendTopupTotal(props.trend)),
         usage: formatOpsMoney(props.usedQuota),
       })}
       loading={props.loading}

@@ -20,6 +20,7 @@ import dayjs from 'dayjs'
 
 import { CHART_COLORS } from '@/lib/colors'
 import { formatQuotaWithCurrency } from '@/lib/currency'
+import { formatPercent } from '@/lib/format'
 
 import type {
   OpsModelPerf,
@@ -221,27 +222,80 @@ export function opsTrendChannels(trend: OpsTrendDay[]) {
   return [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key)
 }
 
+/** Trend key of quota credited by redemption codes, which have no order. */
+export const OPS_TREND_REDEMPTION = 'redemption'
+
+export interface OpsTrendLabels {
+  usage: string
+  redemption: string
+  topupTotal: string
+  formatValue: (quota: number) => string
+}
+
+/** Sum of every top-up channel across the trend. */
+export function opsTrendTopupTotal(trend: OpsTrendDay[]) {
+  return trend.reduce(
+    (sum, day) =>
+      sum + Object.values(day.topups).reduce((acc, value) => acc + value, 0),
+    0
+  )
+}
+
+/**
+ * One stacked top-up bar and one usage bar per day. Each top-up segment
+ * carries its share of the day's top-ups for the tooltip.
+ */
 export function buildOpsTrendSpec(
   trend: OpsTrendDay[],
-  labels: { usage: string; formatValue: (quota: number) => string }
+  labels: OpsTrendLabels
 ) {
   const channels = opsTrendChannels(trend)
+  const seriesLabel = (channel: string) =>
+    channel === OPS_TREND_REDEMPTION
+      ? labels.redemption
+      : opsChannelLabel(channel)
   const values = trend.flatMap((day) => {
     const date = day.date.slice(5).replace('-', '/')
+    const dayTotal = channels.reduce(
+      (sum, channel) => sum + (day.topups[channel] ?? 0),
+      0
+    )
     return [
-      ...channels.map((channel) => ({
+      ...channels.map((channel) => {
+        const value = day.topups[channel] ?? 0
+        return {
+          date,
+          kind: 'topup',
+          series: seriesLabel(channel),
+          value,
+          share: percentOf(value, dayTotal),
+          dayTotal,
+        }
+      }),
+      {
         date,
-        kind: 'topup',
-        series: opsChannelLabel(channel),
-        value: day.topups[channel] ?? 0,
-      })),
-      { date, kind: 'usage', series: labels.usage, value: day.used_quota },
+        kind: 'usage',
+        series: labels.usage,
+        value: day.used_quota,
+        share: null,
+        dayTotal,
+      },
     ]
   })
   const tooltipLine = {
     key: (datum?: Record<string, unknown>) => String(datum?.series ?? ''),
+    value: (datum?: Record<string, unknown>) => {
+      const amount = labels.formatValue(Number(datum?.value ?? 0))
+      if (datum?.kind !== 'topup') return amount
+      return `${amount} · ${formatPercent(datum.share as number | null)}`
+    },
+    // Days usually see a few channels; the rest would only list zeros.
+    visible: (datum?: Record<string, unknown>) =>
+      datum?.kind !== 'topup' || Number(datum?.value ?? 0) > 0,
+  }
+  const tooltipTitle = {
     value: (datum?: Record<string, unknown>) =>
-      labels.formatValue(Number(datum?.value ?? 0)),
+      `${String(datum?.date ?? '')}  ${labels.topupTotal} ${labels.formatValue(Number(datum?.dayTotal ?? 0))}`,
   }
 
   return {
@@ -253,7 +307,7 @@ export function buildOpsTrendSpec(
     stack: true,
     color: {
       type: 'ordinal',
-      domain: [...channels.map(opsChannelLabel), labels.usage],
+      domain: [...channels.map(seriesLabel), labels.usage],
       range: [
         ...channels.map((channel) => channelColor(channel, channels)),
         CHART_COLORS[2],
@@ -270,8 +324,8 @@ export function buildOpsTrendSpec(
       { orient: 'bottom', showAllLevel: false },
     ],
     tooltip: {
-      mark: { content: [tooltipLine] },
-      dimension: { content: [tooltipLine] },
+      mark: { title: tooltipTitle, content: [tooltipLine] },
+      dimension: { title: tooltipTitle, content: [tooltipLine] },
     },
   }
 }
