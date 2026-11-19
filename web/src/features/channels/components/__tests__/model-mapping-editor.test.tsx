@@ -60,7 +60,7 @@ test('language changes preserve draft mappings and explain the same direction in
       <ModelMappingEditor value='' onChange={onChange} />
     </I18nextProvider>
   )
-  await user.click(screen.getByRole('button', { name: 'Add Mapping' }))
+  await user.click(screen.getByRole('button', { name: 'Add mapping' }))
   await user.type(screen.getByPlaceholderText('gpt-3.5-turbo'), 'client-alias')
   await user.type(
     screen.getByPlaceholderText('gpt-3.5-turbo-0125'),

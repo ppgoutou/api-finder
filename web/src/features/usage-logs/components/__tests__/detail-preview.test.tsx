@@ -195,7 +195,7 @@ test.each([
   {
     name: 'zero price fallback',
     other: { model_price: 0, group_ratio: 1 },
-    expected: 'Group Ratio 1x',
+    expected: 'Group ratio 1x',
   },
   { name: 'missing price fallback', other: {}, expected: '—' },
 ])('$name stays visible without a plugin counter', ({ other, expected }) => {
