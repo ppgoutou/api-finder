@@ -778,7 +778,7 @@ it('translates the delete confirmation as a sentence and preserves the literal u
   expect(
     screen.getByRole('textbox', { name: `Type ${username} to confirm` })
   ).toBeVisible()
-  expect(screen.getByRole('button', { name: 'Delete Account' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Delete account' })).toBeDisabled()
 })
 
 it('shows complete translated 2FA step descriptions and updates every step on language change', async () => {
@@ -810,9 +810,9 @@ it('shows complete translated 2FA step descriptions and updates every step on la
     </I18nextProvider>
   )
   const descriptions = [
-    ['第 1 步，共 3 步：扫描二维码', 'Step 1 of 3: Scan QR Code'],
-    ['第 2 步，共 3 步：保存备份代码', 'Step 2 of 3: Save Backup Codes'],
-    ['第 3 步，共 3 步：验证设置', 'Step 3 of 3: Verify Setup'],
+    ['第 1 步，共 3 步：扫描二维码', 'Step 1 of 3: Scan QR code'],
+    ['第 2 步，共 3 步：保存备份代码', 'Step 2 of 3: Save backup codes'],
+    ['第 3 步，共 3 步：验证设置', 'Step 3 of 3: Verify setup'],
   ]
   for (const [chinese, english] of descriptions) {
     await act(() => i18n.changeLanguage('zh'))

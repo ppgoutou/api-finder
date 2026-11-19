@@ -98,5 +98,8 @@ jobs:
       - name: Design guideline lint
         run: bun run lint:design
 
+      - name: English sentence case
+        run: bun run i18n:sentence-case
+
       - name: Test
         run: bun run test

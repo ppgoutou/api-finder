@@ -63,6 +63,7 @@
   - 即使父组件已使用 `useTranslation()`，子组件仍应自行使用，以保证独立性。
 - **专有名词**：品牌、产品、技术术语等可保留英文（如 API、React、TypeScript）；若有约定俗成的译法则使用翻译。
 - **翻译键**：使用有层级、语义清晰的键名，如 `dashboard.overview.title`，并保持命名一致。
+- **英文大小写（强制）**：英文文案用 Sentence case，只有首词和专有名词大写，如 “Request count”“Sign in with passkey”。新增英文键时直接按 Sentence case 写。`en.json` 的值由 `bun run i18n:sentence-case`（CI 必跑）检查，`--fix` 会自动改写；只改英文值，不改键，也不动其他语言文件。专有名词、产品名和固定名称登记在 `scripts/sentence-case-exceptions.json`。
 
 - **枚举与文案（常量中的 i18n）**
   各 feature 的 `constants.ts` 中常出现「枚举/状态 + 展示文案」或「成功/错误消息」，须统一约定以免遗漏 i18n、用法混乱：
