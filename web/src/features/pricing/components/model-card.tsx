@@ -24,7 +24,7 @@ import {
   ShieldCheck,
   ThumbsUp,
 } from 'lucide-react'
-import { memo, useMemo, type ReactNode } from 'react'
+import { memo, useMemo, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -39,6 +39,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { useBillingTime } from '../hooks/use-billing-time'
+import { useCardVipView } from '../hooks/use-card-vip-view'
 import { modelBadgeLabel } from '../lib/categories'
 import {
   formatTaskUsageUnitPrice,
@@ -74,7 +75,12 @@ import type {
   PriceType,
   TokenUnit,
 } from '../types'
-import { CardVipSaving, CardVipToggle } from './card-vip-price'
+import {
+  CardVipFootnote,
+  CardVipPanelGlow,
+  CardVipSaving,
+  CardVipToggle,
+} from './card-vip-price'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { RollingPrice } from './rolling-price'
 
@@ -172,11 +178,25 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const setVipPriceView = usePricingPreferencesStore(
     (state) => state.setVipPriceView
   )
-  const showVip = vipRatios !== null && showsVipPrices(vipRatios, vipPriceView)
+  const cardRef = useRef<HTMLDivElement>(null)
+  // Other cards follow a switch a moment later, spreading out from this one.
+  const vipView = useCardVipView(
+    vipRatios !== null && showsVipPrices(vipRatios, vipPriceView),
+    props.model.model_name,
+    cardRef
+  )
+  const showVip = vipView.showVip
   const vipToggle = vipRatios && (
     <CardVipToggle
       showVip={showVip}
-      onShowVipChange={(next) => setVipPriceView(next ? 'vip' : 'standard')}
+      onShowVipChange={(next) => {
+        const rect = cardRef.current?.getBoundingClientRect()
+        setVipPriceView(next ? 'vip' : 'standard', {
+          modelName: props.model.model_name,
+          x: rect ? rect.left + rect.width / 2 : 0,
+          y: rect ? rect.top + rect.height / 2 : 0,
+        })
+      }}
     />
   )
   const videoPricing = useMemo(
@@ -214,6 +234,14 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         ...(vipRatios && { groupRatioMultiplier: vipRatios.standardRatio }),
         fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
       })
+    // Struck through beside a VIP price, the standard price keeps the same
+    // decimals, so $0.045 → $0.041 never reads as $0.04 → $0.041.
+    const formatStandardSecondPriceBesideVip = (price: number) =>
+      formatTaskUsageUnitPrice(price, {
+        ...dynamicPriceOptions,
+        groupRatioMultiplier: vipRatios?.standardRatio,
+        fractionDigits: VIP_VIDEO_PRICE_FRACTION_DIGITS,
+      })
     const lowestRow = videoPricing.rows.reduce((lowest, row) =>
       row.secondPrice < lowest.secondPrice ? row : lowest
     )
@@ -242,9 +270,11 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             {t('/s from')} ·{' '}
             {taskEnumLabel(optionDefinition, lowestRow.option, i18n.language)}
           </span>
-          {showVip && (
+          {showVip && vipRatios && (
             <CardVipSaving
-              standardPrice={formatSecondPrice(lowestRow.secondPrice)}
+              standardPrice={formatStandardSecondPriceBesideVip(
+                lowestRow.secondPrice
+              )}
               savingPercent={vipRatios.savingPercent}
             />
           )}
@@ -500,6 +530,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
 
   return (
     <Card
+      ref={cardRef}
       data-stable={stable || undefined}
       className={cn(
         'hover:border-brand/40 h-full min-w-0 gap-3',
@@ -636,13 +667,16 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           aria-label={t('Pricing')}
           data-vip-prices={(pricesVip && showVip) || undefined}
           className={cn(
-            'flex min-w-0 flex-col gap-1.5 rounded-xl border p-3 transition-colors duration-300',
+            'relative isolate flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border p-3 transition-colors duration-300',
             pricesVip && showVip
-              ? 'border-vip/30 bg-vip-soft'
+              ? 'border-vip/40 bg-card'
               : 'border-brand/20 bg-brand-soft/60',
             unavailable && 'opacity-50'
           )}
         >
+          {pricesVip && (
+            <CardVipPanelGlow showVip={showVip} shineKey={vipView.shineKey} />
+          )}
           <div className='flex min-w-0 items-center justify-between gap-2'>
             <ModelBillingModeBadge model={props.model} appearance='caption' />
             {pricesVip && vipToggle}
@@ -658,6 +692,9 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           )}
           <div className='grid grid-cols-[repeat(auto-fit,minmax(88px,1fr))] gap-x-3 gap-y-2'>
             {priceSummary}
+            {pricesVip && showVip && vipRatios && (
+              <CardVipFootnote isVip={vipRatios.isVip} />
+            )}
           </div>
         </div>
         {unavailable && (

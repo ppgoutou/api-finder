@@ -24,12 +24,25 @@ export type PricingCurrencyPreference = 'USD' | 'site'
 /** Which prices model cards show when a model has a VIP price. */
 export type PricingVipPriceView = 'vip' | 'standard'
 
+/** The card a viewer switched prices on; other cards follow it in a ripple. */
+export interface PricingVipSwitchOrigin {
+  modelName: string
+  /** Center of that card in viewport pixels at the moment of the switch. */
+  x: number
+  y: number
+}
+
 type PricingPreferences = {
   currency: PricingCurrencyPreference
   setCurrency: (currency: PricingCurrencyPreference) => void
   /** Null until the viewer switches; cards then follow their membership. */
   vipPriceView: PricingVipPriceView | null
-  setVipPriceView: (view: PricingVipPriceView) => void
+  /** The card of the last switch; not kept across visits. */
+  vipSwitchOrigin: PricingVipSwitchOrigin | null
+  setVipPriceView: (
+    view: PricingVipPriceView,
+    origin?: PricingVipSwitchOrigin
+  ) => void
 }
 
 export const usePricingPreferencesStore = create<PricingPreferences>()(
@@ -38,7 +51,9 @@ export const usePricingPreferencesStore = create<PricingPreferences>()(
       currency: 'USD',
       setCurrency: (currency) => set({ currency }),
       vipPriceView: null,
-      setVipPriceView: (vipPriceView) => set({ vipPriceView }),
+      vipSwitchOrigin: null,
+      setVipPriceView: (vipPriceView, origin) =>
+        set({ vipPriceView, vipSwitchOrigin: origin ?? null }),
     }),
     {
       name: 'model-pricing-preferences',
