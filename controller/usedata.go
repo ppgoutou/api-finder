@@ -72,6 +72,7 @@ func GetOpsDashboard(c *gin.Context) {
 		return
 	}
 	applySupplierCosts(c.Request.Context(), dashboard.Upstream, startTimestamp, endTimestamp, now)
+	applySupplyPriceCosts(dashboard.Upstream)
 	common.ApiSuccess(c, dashboard)
 }
 

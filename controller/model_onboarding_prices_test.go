@@ -1053,18 +1053,32 @@ func TestApplySupplierCostsReadsWhatTheSupplierCharged(t *testing.T) {
 
 	// 1,600,000 charged less 400,000 refunded, in yuan at rate 1, is
 	// 1,200,000 / 8 in local dollars.
-	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostQuota: 150000, CostStatus: opsCostStatusOK}, upstreamRows[0])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostQuota: 150000, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupplier}, upstreamRows[0])
 	assert.Equal(t, model.OpsUpstream{ChannelId: 2, CostStatus: opsCostStatusNoToken}, upstreamRows[1])
 	assert.Equal(t, opsCostStatusError, upstreamRows[2].CostStatus)
 	assert.Equal(t, "the channel key matches 2 supplier tokens", upstreamRows[2].CostError)
 	assert.Equal(t, model.OpsUpstream{ChannelId: 4, CostStatus: opsCostStatusNoToken}, upstreamRows[3])
-	assert.Equal(t, model.OpsUpstream{ChannelId: 5, CostQuota: 9000, CostStatus: opsCostStatusOK, TaskCostQuota: 9000, TaskCostCharged: 3}, upstreamRows[4])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 5, CostQuota: 9000, CostStatus: opsCostStatusOK, CostSource: opsCostSourceTasks, TaskCostQuota: 9000, TaskCostCharged: 3}, upstreamRows[4])
 	assert.Equal(t, 3, logRequests, "two consume pages and one refund page")
 
 	again := []model.OpsUpstream{{ChannelId: 1}}
 	applySupplierCosts(context.Background(), again, start, end, end+10)
 	assert.Equal(t, int64(150000), again[0].CostQuota)
 	assert.Equal(t, 3, logRequests, "a repeated period is served from the cache")
+}
+
+func TestApplySupplyPriceCostsPrefersTheSupplyPriceAndKeepsTheReportedCost(t *testing.T) {
+	upstream := []model.OpsUpstream{
+		{ChannelId: 1, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupplier, CostQuota: 900, SupplyCostQuota: 800, SupplyCoveredQuota: 1000},
+		{ChannelId: 2, CostStatus: opsCostStatusError, CostError: "down", SupplyCostQuota: 50, SupplyCoveredQuota: 70},
+		{ChannelId: 3, CostStatus: opsCostStatusNoToken},
+	}
+
+	applySupplyPriceCosts(upstream)
+
+	assert.Equal(t, model.OpsUpstream{ChannelId: 1, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupply, CostQuota: 800, ReportedCostQuota: 900, SupplyCostQuota: 800, SupplyCoveredQuota: 1000}, upstream[0])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 2, CostStatus: opsCostStatusOK, CostSource: opsCostSourceSupply, CostQuota: 50, SupplyCostQuota: 50, SupplyCoveredQuota: 70}, upstream[1])
+	assert.Equal(t, model.OpsUpstream{ChannelId: 3, CostStatus: opsCostStatusNoToken}, upstream[2], "a channel without supply prices keeps its state")
 }
 
 // supplierWithLogs serves a USD supplier whose channel key is token 12, now

@@ -382,6 +382,14 @@ export interface OpsUpstream {
   /** Tasks that carried a charge, and tasks priced at the same ratio. */
   task_cost_charged: number
   task_cost_estimated: number
+  /** Cost at the supply price on the billing logs, the revenue they cover, and the rest estimated at the same ratio. */
+  supply_cost_quota: number
+  supply_covered_quota: number
+  supply_estimated_quota: number
+  /** Where cost_quota came from. */
+  cost_source?: 'supply' | 'supplier' | 'tasks'
+  /** What the supplier itself reported, when the cost follows the supply price. */
+  reported_cost_quota: number
 }
 
 export interface OpsTopUser {

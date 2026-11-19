@@ -71,7 +71,7 @@ export function OpsProfitSection(props: OpsSectionProps) {
       key: 'cost',
       label: t('Upstream cost'),
       value: money(profit?.upstreamCost),
-      hint: t('Read from suppliers, {{amount}} of revenue', {
+      hint: t('At supply prices or supplier charges, {{amount}} of revenue', {
         amount: money(profit?.costedRevenue),
       }),
     },

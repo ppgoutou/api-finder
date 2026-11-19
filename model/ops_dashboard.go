@@ -203,6 +203,17 @@ type OpsUpstream struct {
 	TaskCostQuota     int64 `json:"task_cost_quota"`
 	TaskCostCharged   int64 `json:"task_cost_charged"`
 	TaskCostEstimated int64 `json:"task_cost_estimated"`
+	// SupplyCostQuota is the channel's cost at the supply price recorded on
+	// its billing logs. SupplyCoveredQuota is the revenue those logs cover;
+	// SupplyEstimatedQuota prices the rest at the same ratio.
+	SupplyCostQuota      int64 `json:"supply_cost_quota"`
+	SupplyCoveredQuota   int64 `json:"supply_covered_quota"`
+	SupplyEstimatedQuota int64 `json:"supply_estimated_quota"`
+	// CostSource says where CostQuota came from: supply, supplier or tasks.
+	// ReportedCostQuota is what the supplier itself reported when the cost
+	// follows the supply price, to compare the two.
+	CostSource        string `json:"cost_source,omitempty"`
+	ReportedCostQuota int64  `json:"reported_cost_quota"`
 }
 
 type OpsTopUser struct {
@@ -1333,6 +1344,9 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 		return nil, err
 	}
 	if err = opsLoadTaskCosts(scope, query, result); err != nil {
+		return nil, err
+	}
+	if err = opsLoadSupplyCosts(scope, query, result); err != nil {
 		return nil, err
 	}
 	if err = opsLoadTopUsers(scope, query, result, refunds); err != nil {
