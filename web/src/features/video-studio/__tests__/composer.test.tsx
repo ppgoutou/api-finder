@@ -426,11 +426,13 @@ describe('Composer balance check', () => {
 })
 
 describe('Composer prompt length guide', () => {
-  it('describes the empty prompt with the Seedance advice and the 5000-character limit', () => {
+  it('describes the empty prompt with the Seedance advice and a 0 / 5,000 counter', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
-    expect(prompt).toHaveAccessibleDescription(/Seedance works best.*5,000/)
+    expect(prompt).toHaveAccessibleDescription(
+      /^Seedance works best.*words\. 0 \/ 5,000 characters$/
+    )
   })
 
   it('describes the 2000-character limit with the MiniMax hint when a MiniMax model is picked', () => {
@@ -448,14 +450,16 @@ describe('Composer prompt length guide', () => {
     expect(prompt).toHaveAccessibleDescription(/MiniMax takes up to 2,000/)
   })
 
-  it('replaces the hint with a character counter once the user starts typing', async () => {
+  it('keeps the Seedance advice and counts characters once the user starts typing', async () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
     const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
 
     await user.type(prompt, 'a cat')
 
-    expect(prompt).toHaveAccessibleDescription('5 / 5,000 characters')
+    expect(prompt).toHaveAccessibleDescription(
+      /^Seedance works best.* 5 \/ 5,000 characters$/
+    )
     expect(prompt).toHaveAttribute('aria-invalid', 'false')
   })
 
@@ -470,7 +474,39 @@ describe('Composer prompt length guide', () => {
 
     expect(prompt).toHaveValue('猫'.repeat(5001))
     expect(prompt).toHaveAttribute('aria-invalid', 'true')
-    expect(prompt).toHaveAccessibleDescription('5,001 / 5,000 characters')
+    expect(prompt).toHaveAccessibleDescription(/5,001 \/ 5,000 characters$/)
     expect(createMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('Composer prompt card layout', () => {
+  it('shows the placeholder and its example line in the empty prompt box, and hides them once typing starts', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const placeholder = screen.getByTestId('prompt-placeholder')
+    expect(placeholder).toHaveTextContent(
+      /^Describe the video you want to createType @ to mention/
+    )
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat'
+    )
+
+    expect(screen.queryByTestId('prompt-placeholder')).toBeNull()
+  })
+
+  it('keeps the reference retention note in the card footer after typing', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat'
+    )
+
+    expect(screen.getByTestId('composer-card')).toHaveTextContent(
+      /Reference files are kept for \d+ days/
+    )
   })
 })

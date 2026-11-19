@@ -2153,10 +2153,8 @@
     "Describe": "图生文",
     "Describe how the video moves from the first frame to the last frame.": "描述视频如何从首帧过渡到尾帧。",
     "Describe the image you want": "请描述你想要的图片",
-    "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "描述你想要的图片，输入 @ 可引用上传的图片，例如：把 @{{image}} 中的角色放到海滩上。",
     "Describe the scene in words and get a video.": "只写一段描述，直接生成视频。",
     "Describe the video you want": "请先描述你想要的视频",
-    "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "描述你想要的视频，输入 @ 可引用上传的素材，例如：参考 @{{video}} 的动作，生成 @{{image}} 中的角色。",
     "Describe this model...": "描述此模型...",
     "Describe this vendor...": "描述此供应商...",
     "Description": "说明信息",
@@ -8021,9 +8019,6 @@
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "获得邀请返利 {{quota}}，将于 {{date}} 转入余额",
     "Invitation rebate {{quota}} moved to balance": "邀请返利 {{quota}} 已转入余额",
     "MiniMax takes up to {{max}} characters.": "MiniMax 最多支持 {{max}} 字符。",
-    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance 官方建议中文不超过 500 字、英文不超过 1000 词，效果最佳（最多 {{max}} 字符）。",
-    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan 支持较长的详细描述（最多 {{max}} 字符）。",
-    "Up to {{max}} characters.": "最多 {{max}} 字符。",
     "Generation parameters": "生成参数",
     "{{model}} (not available)": "{{model}}（已不可用）",
     "No video models are available in the studio yet.": "视频创作暂时没有可用的视频模型。",
@@ -8510,6 +8505,13 @@
     "Dialogs and panels": "弹窗和面板",
     "Button": "按钮",
     "Every model, one API": "一个 API，调用所有模型",
-    "Badges": "标签"
+    "Badges": "标签",
+    "Describe the video you want to create": "描述你想要的视频",
+    "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "输入 @ 可引用上传的素材，例如：参考 @{{video}} 的动作，生成 @{{image}} 中的角色。",
+    "Describe the image you want to create": "描述你想要的图片",
+    "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "输入 @ 可引用上传的图片，例如：把 @{{image}} 中的角色放到海滩上。",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words.": "Seedance 官方建议：中文不超过 500 字，英文不超过 1000 词。",
+    "Wan handles long, detailed prompts.": "Wan 支持较长的详细描述。",
+    "Up to {{max}} characters.": "最多 {{max}} 字符。"
   }
 }

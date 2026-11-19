@@ -280,9 +280,20 @@ export function StudioGallerySection(props: StudioGallerySectionProps) {
                     name={`items.${index}.prompt`}
                     label={t('Prompt text')}
                     multiline
-                    description={t(guide.hint, {
-                      max: guide.maxLength,
-                    })}
+                    description={
+                      // A hint without {{max}} leaves the limit to the
+                      // studio counter; state it here instead.
+                      guide.hint?.includes('{{max}}')
+                        ? t(guide.hint, { max: guide.maxLength })
+                        : [
+                            guide.hint && t(guide.hint),
+                            t('Up to {{max}} characters.', {
+                              max: guide.maxLength,
+                            }),
+                          ]
+                            .filter(Boolean)
+                            .join(' ')
+                    }
                   />
                 </CollapsibleMediaClip>
               )

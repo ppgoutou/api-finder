@@ -2153,10 +2153,8 @@
     "Describe": "Describe",
     "Describe how the video moves from the first frame to the last frame.": "Describe how the video moves from the first frame to the last frame.",
     "Describe the image you want": "Describe the image you want",
-    "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.",
     "Describe the scene in words and get a video.": "Describe the scene in words and get a video.",
     "Describe the video you want": "Describe the video you want",
-    "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.",
     "Describe this model...": "Describe this model...",
     "Describe this vendor...": "Describe this vendor...",
     "Description": "Description",
@@ -8021,9 +8019,6 @@
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}",
     "Invitation rebate {{quota}} moved to balance": "Invitation rebate {{quota}} moved to balance",
     "MiniMax takes up to {{max}} characters.": "MiniMax takes up to {{max}} characters.",
-    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).",
-    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan handles long, detailed prompts (up to {{max}} characters).",
-    "Up to {{max}} characters.": "Up to {{max}} characters.",
     "Generation parameters": "Generation parameters",
     "{{model}} (not available)": "{{model}} (not available)",
     "No video models are available in the studio yet.": "No video models are available in the studio yet.",
@@ -8510,6 +8505,13 @@
     "Dialogs and panels": "Dialogs and panels",
     "Button": "Button",
     "Every model, one API": "Every model, one API",
-    "Badges": "Badges"
+    "Badges": "Badges",
+    "Describe the video you want to create": "Describe the video you want to create",
+    "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.",
+    "Describe the image you want to create": "Describe the image you want to create",
+    "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words.": "Seedance works best with up to 500 Chinese characters or 1,000 English words.",
+    "Wan handles long, detailed prompts.": "Wan handles long, detailed prompts.",
+    "Up to {{max}} characters.": "Up to {{max}} characters."
   }
 }

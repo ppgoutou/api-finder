@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { ArrowUp, Copy, Image as ImageIcon, Maximize } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -31,7 +31,6 @@ import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 import { generateImages } from '../api'
 import {
   ASSET_ACCEPT,
-  ASSET_RETENTION_DAYS,
   DEFAULT_IMAGE_SIZE,
   STUDIO_IMAGE_SIZES,
   STUDIO_MAX_IMAGE_COUNT,
@@ -48,9 +47,15 @@ import {
 } from '../lib/draft'
 import { buildImageRequest, validateImageDraft } from '../lib/image-draft'
 import { localizeMentions } from '../lib/mention-names'
-import { PROMPT_TOO_LONG, promptGuide, promptLength } from '../lib/prompt-guide'
+import {
+  composerHintIds,
+  PROMPT_TOO_LONG,
+  promptGuide,
+  promptLength,
+} from '../lib/prompt-guide'
 import type { StudioDraft } from '../types'
 import { ChoiceMenu } from './choice-menu'
+import { ComposerCard } from './composer-card'
 import { PromptInput } from './prompt-input'
 import { ReferencePanel } from './reference-panel'
 import { StudioCost } from './studio-cost'
@@ -96,6 +101,7 @@ export function ImageComposer(props: ImageComposerProps) {
     ? validateImageDraft(draft)
     : 'No image model is available'
   const guide = promptGuide(model?.name)
+  const hintId = useId()
   if (!problem && model && promptLength(draft.prompt) > guide.maxLength) {
     problem = PROMPT_TOO_LONG
   }
@@ -145,107 +151,110 @@ export function ImageComposer(props: ImageComposerProps) {
   }
 
   return (
-    <div className='bg-card border-border/70 focus-within:border-primary/50 rounded-2xl border p-3 shadow-sm transition-colors'>
-      <div className='flex flex-col gap-3 sm:flex-row'>
-        <ReferencePanel
-          references={draft.references}
-          accept={ASSET_ACCEPT.image}
-          onAddFiles={addReferences}
-          onRemove={studio.removeReference}
-        />
-        <PromptInput
-          value={draft.prompt}
-          onChange={(prompt) => studio.update({ prompt })}
-          mentions={labelReferences(draft.references).map(
-            ({ asset, token }) => ({ token, fileName: asset.fileName })
+    <ComposerCard
+      prompt={draft.prompt}
+      guide={guide}
+      hintId={hintId}
+      toolbar={
+        <>
+          {model && (
+            <ChoiceMenu
+              label={t('Model')}
+              value={model.name}
+              options={models.map((option) => ({
+                value: option.name,
+                label: option.label ?? option.name,
+                group: option.group,
+                icon: <ImageIcon className='size-3.5' aria-hidden />,
+                unavailableLabel: option.unavailable
+                  ? t('Temporarily unavailable')
+                  : undefined,
+              }))}
+              onChange={(name) => studio.update({ model: name })}
+            />
           )}
-          placeholder={t(
-            'Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.',
-            {
-              image: localizeMentions(
-                '@图片1',
-                i18n.resolvedLanguage || i18n.language
-              ).slice(1),
-            }
-          )}
-          onSubmit={submit}
-          label={t('Image prompt')}
-          guide={guide}
-        />
-      </div>
-
-      <div className='mt-2 flex flex-wrap items-center gap-1'>
-        {model && (
           <ChoiceMenu
-            label={t('Model')}
-            value={model.name}
-            options={models.map((option) => ({
-              value: option.name,
-              label: option.label ?? option.name,
-              group: option.group,
-              icon: <ImageIcon className='size-3.5' aria-hidden />,
-              unavailableLabel: option.unavailable
-                ? t('Temporarily unavailable')
-                : undefined,
+            label={t('Size')}
+            value={size}
+            options={STUDIO_IMAGE_SIZES.map((option) => ({
+              value: option.value,
+              label: `${option.ratio} · ${option.value.replace('x', '×')}`,
+              icon: <Maximize className='size-3.5' aria-hidden />,
             }))}
-            onChange={(name) => studio.update({ model: name })}
+            onChange={setSize}
           />
-        )}
-        <ChoiceMenu
-          label={t('Size')}
-          value={size}
-          options={STUDIO_IMAGE_SIZES.map((option) => ({
-            value: option.value,
-            label: `${option.ratio} · ${option.value.replace('x', '×')}`,
-            icon: <Maximize className='size-3.5' aria-hidden />,
-          }))}
-          onChange={setSize}
-        />
-        <ChoiceMenu
-          label={t('Images')}
-          value={String(draft.count)}
-          options={Array.from(
-            { length: STUDIO_MAX_IMAGE_COUNT },
-            (_, index) => ({
-              value: String(index + 1),
-              label: t('{{count}} images', { count: index + 1 }),
-              icon: <Copy className='size-3.5' aria-hidden />,
-            })
-          )}
-          onChange={(count) => studio.update({ count: Number(count) })}
-        />
-        <div className='ml-auto flex items-center gap-3'>
-          <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
-          <Button
-            type='button'
-            size='icon'
-            className='size-9 rounded-full'
-            onClick={submit}
-            disabled={submitting || insufficient || unavailable}
-            aria-label={t('Generate image')}
-            title={problem ? t(problem, problemParams) : t('Generate image')}
-          >
-            {submitting ? (
-              <Spinner className='size-4' />
-            ) : (
-              <ArrowUp className='size-4' aria-hidden />
+          <ChoiceMenu
+            label={t('Images')}
+            value={String(draft.count)}
+            options={Array.from(
+              { length: STUDIO_MAX_IMAGE_COUNT },
+              (_, index) => ({
+                value: String(index + 1),
+                label: t('{{count}} images', { count: index + 1 }),
+                icon: <Copy className='size-3.5' aria-hidden />,
+              })
             )}
-          </Button>
-        </div>
-      </div>
-      {model && unavailable && (
-        <UnavailableModelNotice
-          reason={model.unavailableReason}
-          replacement={replacementModel(models, model)?.name}
-          onSwitch={(name) => studio.update({ model: name })}
-        />
-      )}
-      <p className='text-muted-foreground mt-2 px-1 text-caption'>
-        {t(
-          'Reference files are kept for {{days}} days and then deleted automatically. Uploading requires a positive balance.',
-          { days: ASSET_RETENTION_DAYS }
+            onChange={(count) => studio.update({ count: Number(count) })}
+          />
+          <div className='ml-auto flex items-center gap-3'>
+            <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
+            <Button
+              type='button'
+              size='icon'
+              className='size-9 rounded-full'
+              onClick={submit}
+              disabled={submitting || insufficient || unavailable}
+              aria-label={t('Generate image')}
+              title={problem ? t(problem, problemParams) : t('Generate image')}
+            >
+              {submitting ? (
+                <Spinner className='size-4' />
+              ) : (
+                <ArrowUp className='size-4' aria-hidden />
+              )}
+            </Button>
+          </div>
+        </>
+      }
+      notice={
+        model &&
+        unavailable && (
+          <UnavailableModelNotice
+            reason={model.unavailableReason}
+            replacement={replacementModel(models, model)?.name}
+            onSwitch={(name) => studio.update({ model: name })}
+          />
+        )
+      }
+    >
+      <ReferencePanel
+        references={draft.references}
+        accept={ASSET_ACCEPT.image}
+        onAddFiles={addReferences}
+        onRemove={studio.removeReference}
+      />
+      <PromptInput
+        value={draft.prompt}
+        onChange={(prompt) => studio.update({ prompt })}
+        mentions={labelReferences(draft.references).map(({ asset, token }) => ({
+          token,
+          fileName: asset.fileName,
+        }))}
+        placeholder={t('Describe the image you want to create')}
+        placeholderExample={t(
+          'Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.',
+          {
+            image: localizeMentions(
+              '@图片1',
+              i18n.resolvedLanguage || i18n.language
+            ).slice(1),
+          }
         )}
-      </p>
-    </div>
+        onSubmit={submit}
+        label={t('Image prompt')}
+        describedBy={composerHintIds(hintId)}
+        guide={guide}
+      />
+    </ComposerCard>
   )
 }

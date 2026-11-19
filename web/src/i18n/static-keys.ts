@@ -21,11 +21,12 @@ For commercial licensing, please contact support@quantumnous.com
 export const STATIC_I18N_KEYS = [
   // BONUS_LOG_TYPE_LABEL in usage-logs/constants
   'Bonus Credit',
-  // promptGuide hints in video-studio/lib/prompt-guide
-  'MiniMax takes up to {{max}} characters.',
-  'Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).',
-  'Wan handles long, detailed prompts (up to {{max}} characters).',
+  // promptGuide hints in video-studio/lib/prompt-guide, and the limit the
+  // studio gallery settings state next to them
   'Up to {{max}} characters.',
+  'MiniMax takes up to {{max}} characters.',
+  'Seedance works best with up to 500 Chinese characters or 1,000 English words.',
+  'Wan handles long, detailed prompts.',
   // PROMPT_TOO_LONG in video-studio/lib/prompt-guide
   'The prompt is too long. Shorten it to {{max}} characters or fewer.',
   // EVENT_FIELDS labels in x-pixel-settings-section

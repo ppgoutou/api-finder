@@ -2153,10 +2153,8 @@
     "Describe": "Описание",
     "Describe how the video moves from the first frame to the last frame.": "Опишите, как видео переходит от первого кадра к последнему.",
     "Describe the image you want": "Опишите нужное изображение",
-    "Describe the image. Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Опишите изображение. Введите @, чтобы сослаться на загруженное изображение, например: помести персонажа из @{{image}} на пляж.",
     "Describe the scene in words and get a video.": "Опишите сцену словами и получите видео.",
     "Describe the video you want": "Опишите нужное видео",
-    "Describe the video. Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Опишите видео. Введите @, чтобы упомянуть загруженный файл, например: движение из @{{video}} и персонаж из @{{image}}.",
     "Describe this model...": "Опишите эту модель...",
     "Describe this vendor...": "Опишите этого поставщика...",
     "Description": "Описание",
@@ -8021,9 +8019,6 @@
     "Invitation rebate {{quota}} earned, it reaches your balance on {{date}}": "Получено вознаграждение {{quota}}, зачисление на баланс {{date}}",
     "Invitation rebate {{quota}} moved to balance": "Вознаграждение {{quota}} зачислено на баланс",
     "MiniMax takes up to {{max}} characters.": "MiniMax принимает до {{max}} символов.",
-    "Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).": "Seedance лучше всего работает с текстом до 500 китайских иероглифов или 1000 английских слов (максимум {{max}} символов).",
-    "Wan handles long, detailed prompts (up to {{max}} characters).": "Wan поддерживает длинные подробные промпты (до {{max}} символов).",
-    "Up to {{max}} characters.": "До {{max}} символов.",
     "Generation parameters": "Параметры генерации",
     "{{model}} (not available)": "{{model}} (недоступна)",
     "No video models are available in the studio yet.": "В студии пока нет доступных видеомоделей.",
@@ -8510,6 +8505,13 @@
     "Dialogs and panels": "Диалоги и панели",
     "Button": "Кнопка",
     "Every model, one API": "Все модели — один API",
-    "Badges": "Значки"
+    "Badges": "Значки",
+    "Describe the video you want to create": "Опишите видео, которое хотите создать",
+    "Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.": "Введите @, чтобы упомянуть загруженный файл, например: движение из @{{video}} и персонаж из @{{image}}.",
+    "Describe the image you want to create": "Опишите изображение, которое хотите создать",
+    "Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.": "Введите @, чтобы сослаться на загруженное изображение, например: помести персонажа из @{{image}} на пляж.",
+    "Seedance works best with up to 500 Chinese characters or 1,000 English words.": "Seedance лучше всего работает с текстом до 500 китайских иероглифов или 1000 английских слов.",
+    "Wan handles long, detailed prompts.": "Wan поддерживает длинные подробные промпты.",
+    "Up to {{max}} characters.": "До {{max}} символов."
   }
 }

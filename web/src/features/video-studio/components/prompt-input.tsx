@@ -16,12 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Textarea } from '@/components/ui/textarea'
-import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import {
@@ -37,7 +35,7 @@ import {
 
 /** Box and type the prompt textarea and its mention layer share. */
 const PROMPT_TEXT_BOX =
-  'px-1 py-1 text-base leading-6 break-words whitespace-pre-wrap [scrollbar-gutter:stable] md:text-sm md:leading-6'
+  'px-1 py-1 text-base leading-6 break-words whitespace-pre-wrap [scrollbar-gutter:stable] md:text-[15px] md:leading-6'
 
 export interface MentionOption {
   /** Token the model reads, such as "图片1". */
@@ -51,7 +49,12 @@ interface PromptInputProps {
   onChange: (value: string) => void
   /** References the prompt can mention; typing "@" lists them. */
   mentions: MentionOption[]
+  /** What to write, shown in the empty box. */
   placeholder: string
+  /** A smaller example line under the placeholder. */
+  placeholderExample?: string
+  /** ids of the advice and counter that describe the prompt. */
+  describedBy: string
   onSubmit: () => void
   /** Accessible name of the textarea; "Video prompt" by default. */
   label?: string
@@ -70,13 +73,11 @@ interface PromptInputProps {
 export function PromptInput(props: PromptInputProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage || i18n.language
-  const locale = toIntlLocale(language)
   const shown = localizeMentions(props.value, language)
   const mentionName = (option: MentionOption) =>
     localizeMentions(`@${option.token}`, language).slice(1)
   const change = (text: string) =>
     props.onChange(canonicalMentions(text, language))
-  const hintId = useId()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const layerRef = useRef<HTMLDivElement>(null)
   const parts = splitMentions(
@@ -87,8 +88,7 @@ export function PromptInput(props: PromptInputProps) {
   const [mentionAt, setMentionAt] = useState<number | null>(null)
   const [highlighted, setHighlighted] = useState(0)
   const menuOpen = mentionAt !== null
-  const length = promptLength(props.value)
-  const tooLong = length > props.guide.maxLength
+  const tooLong = promptLength(props.value) > props.guide.maxLength
 
   const closeMenu = () => {
     setMentionAt(null)
@@ -148,6 +148,19 @@ export function PromptInput(props: PromptInputProps) {
             'pointer-events-none absolute inset-0 overflow-hidden'
           )}
         >
+          {!shown && (
+            <span
+              data-testid='prompt-placeholder'
+              className='text-muted-foreground'
+            >
+              {props.placeholder}
+              {props.placeholderExample && (
+                <span className='mt-1 block text-[13px] leading-5'>
+                  {props.placeholderExample}
+                </span>
+              )}
+            </span>
+          )}
           {parts.map((part) =>
             part.mention ? (
               <mark
@@ -166,15 +179,17 @@ export function PromptInput(props: PromptInputProps) {
         <Textarea
           ref={textareaRef}
           value={shown}
-          placeholder={props.placeholder}
+          placeholder={[props.placeholder, props.placeholderExample]
+            .filter(Boolean)
+            .join(' ')}
           aria-label={props.label ?? t('Video prompt')}
           maxLength={PROMPT_INPUT_CAP}
-          aria-describedby={hintId}
+          aria-describedby={props.describedBy}
           aria-invalid={tooLong}
-          rows={3}
+          rows={5}
           className={cn(
             PROMPT_TEXT_BOX,
-            'caret-foreground relative min-h-20 resize-none border-0 bg-transparent text-transparent shadow-none focus-visible:ring-0 dark:bg-transparent'
+            'caret-foreground relative min-h-32 resize-none border-0 placeholder:text-transparent bg-transparent text-transparent shadow-none focus-visible:ring-0 dark:bg-transparent'
           )}
           onScroll={(event) => {
             if (layerRef.current) {
@@ -198,23 +213,6 @@ export function PromptInput(props: PromptInputProps) {
           onBlur={() => closeMenu()}
         />
       </div>
-      {/* The advice until the user types, then a character counter. */}
-      <p
-        id={hintId}
-        className={cn(
-          'text-muted-foreground px-1 text-caption',
-          tooLong && 'text-destructive'
-        )}
-      >
-        {props.value
-          ? t('{{count}} / {{max}} characters', {
-              count: formatNumber(length, locale),
-              max: formatNumber(props.guide.maxLength, locale),
-            })
-          : t(props.guide.hint, {
-              max: formatNumber(props.guide.maxLength, locale),
-            })}
-      </p>
       {menuOpen && (
         <div
           role='listbox'

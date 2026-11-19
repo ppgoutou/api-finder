@@ -44,10 +44,11 @@ export interface PromptGuide {
   /** Longest prompt the selected model accepts. */
   maxLength: number
   /**
-   * i18n key of the length advice shown under the empty prompt box;
-   * {{max}} is filled with maxLength.
+   * i18n key of the model's prompt advice shown under the prompt box, next
+   * to the character counter; {{max}} is filled with maxLength. Models with
+   * nothing to add beyond the counter have none.
    */
-  hint: string
+  hint?: string
 }
 
 /**
@@ -68,17 +69,22 @@ export function promptGuide(modelName: string | undefined): PromptGuide {
   if (name.includes('seedance') || /(^|-)sd-?2/.test(name)) {
     return {
       maxLength: STUDIO_PROMPT_MAX_LENGTH,
-      hint: 'Seedance works best with up to 500 Chinese characters or 1,000 English words (up to {{max}} characters).',
+      hint: 'Seedance works best with up to 500 Chinese characters or 1,000 English words.',
     }
   }
   if (name.includes('wan')) {
     return {
       maxLength: STUDIO_PROMPT_MAX_LENGTH,
-      hint: 'Wan handles long, detailed prompts (up to {{max}} characters).',
+      hint: 'Wan handles long, detailed prompts.',
     }
   }
-  return {
-    maxLength: STUDIO_PROMPT_MAX_LENGTH,
-    hint: 'Up to {{max}} characters.',
-  }
+  return { maxLength: STUDIO_PROMPT_MAX_LENGTH }
+}
+
+/**
+ * ids of the advice and character counter under a studio prompt box, which
+ * the box names in aria-describedby; hintId is their shared prefix.
+ */
+export function composerHintIds(hintId: string): string {
+  return `${hintId}-advice ${hintId}-count`
 }
