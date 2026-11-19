@@ -184,7 +184,6 @@ describe('OpsDashboard date range', () => {
       supply_cost_quota: 0,
       supply_covered_quota: 0,
       supply_estimated_quota: 0,
-      reported_cost_quota: 0,
     }
     vi.mocked(getOpsDashboard).mockResolvedValue({
       success: true,
@@ -287,7 +286,6 @@ describe('OpsDashboard date range', () => {
             supply_cost_quota: 0,
             supply_covered_quota: 0,
             supply_estimated_quota: 0,
-            reported_cost_quota: 0,
           },
         ],
       },
@@ -324,7 +322,6 @@ describe('OpsDashboard date range', () => {
             supply_cost_quota: 0,
             supply_covered_quota: 0,
             supply_estimated_quota: 0,
-            reported_cost_quota: 0,
           },
         ],
       },
@@ -337,7 +334,7 @@ describe('OpsDashboard date range', () => {
     )
   })
 
-  it('marks a cost at the supply price and shows what the supplier reported', async () => {
+  it('keeps what the supplier charged and compares it with the supply price', async () => {
     vi.mocked(getOpsDashboard).mockResolvedValue({
       success: true,
       data: {
@@ -345,11 +342,11 @@ describe('OpsDashboard date range', () => {
         upstream: [
           {
             channel_id: 1,
-            name: 'supplied',
+            name: 'reported',
             quota: 1000000,
-            cost_quota: 800000,
+            cost_quota: 810000,
             cost_status: 'ok',
-            cost_source: 'supply',
+            cost_source: 'supplier',
             count: 3,
             balance: 0,
             balance_updated_time: 0,
@@ -362,16 +359,40 @@ describe('OpsDashboard date range', () => {
             supply_cost_quota: 800000,
             supply_covered_quota: 900000,
             supply_estimated_quota: 80000,
-            reported_cost_quota: 810000,
+          },
+          {
+            channel_id: 2,
+            name: 'supplied',
+            quota: 500000,
+            cost_quota: 300000,
+            cost_status: 'ok',
+            cost_source: 'supply',
+            count: 1,
+            balance: 0,
+            balance_updated_time: 0,
+            task_success: 0,
+            task_failure: 0,
+            recent_quota: 0,
+            task_cost_quota: 0,
+            task_cost_charged: 0,
+            task_cost_estimated: 0,
+            supply_cost_quota: 300000,
+            supply_covered_quota: 500000,
+            supply_estimated_quota: 0,
           },
         ],
       },
     })
     renderDashboard()
 
-    const note = await screen.findByText('supply price')
-    const title = note.closest('td')?.getAttribute('title') ?? ''
-    expect(title).toMatch(/^At the supply price recorded on .+ of revenue; .+ estimated at the same ratio\. The supplier reported .+\.$/)
+    const actual = await screen.findByText('actual charge')
+    expect(actual.closest('td')?.getAttribute('title')).toMatch(
+      /^What the supplier charged, read from its logs\. At the supply price it comes to .+\.$/
+    )
+    const supply = screen.getByText('supply price')
+    expect(supply.closest('td')?.getAttribute('title')).toMatch(
+      /^At the supply price recorded on .+ of revenue; .+ estimated at the same ratio\.$/
+    )
   })
 
   it('links every dashboard section from the section navigation', async () => {

@@ -8629,9 +8629,11 @@
     "by task": "按任務",
     "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "按 {{charged}} 個任務的扣費記錄累加；{{estimated}} 個沒有扣費記錄的任務按同一比例估算",
     "supply price": "供貨價",
-    "The supplier reported {{amount}}.": "供應商實際扣費 {{amount}}。",
     "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "按扣費時記錄的供貨價計算，涵蓋收入 {{covered}}；其餘按同一比例估算 {{estimated}}。",
     "At supply prices or supplier charges, {{amount}} of revenue": "按供貨價或供應商扣費計算，對應收入 {{amount}}",
-    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入是使用者在該渠道被扣的費用。上游支出按每筆扣費時記錄的供貨價計算，沒有記錄時用供應商回報的扣費。任務成功率只統計非同步任務；餘額為「—」表示沒有讀取到。"
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入是使用者在該渠道被扣的費用。上游支出優先用供應商實際扣費，讀不到時按每筆扣費時記錄的供貨價計算。任務成功率只統計非同步任務；餘額為「—」表示沒有讀取到。",
+    "actual charge": "實扣",
+    "What the supplier charged, read from its logs.": "供應商實際扣費，從供應商日誌讀取。",
+    "At the supply price it comes to {{amount}}.": "按供貨價約為 {{amount}}。"
   }
 }

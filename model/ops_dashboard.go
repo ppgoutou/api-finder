@@ -209,11 +209,9 @@ type OpsUpstream struct {
 	SupplyCostQuota      int64 `json:"supply_cost_quota"`
 	SupplyCoveredQuota   int64 `json:"supply_covered_quota"`
 	SupplyEstimatedQuota int64 `json:"supply_estimated_quota"`
-	// CostSource says where CostQuota came from: supply, supplier or tasks.
-	// ReportedCostQuota is what the supplier itself reported when the cost
-	// follows the supply price, to compare the two.
-	CostSource        string `json:"cost_source,omitempty"`
-	ReportedCostQuota int64  `json:"reported_cost_quota"`
+	// CostSource says where CostQuota came from: supplier or tasks when the
+	// supplier reported its charges, supply otherwise.
+	CostSource string `json:"cost_source,omitempty"`
 }
 
 type OpsTopUser struct {

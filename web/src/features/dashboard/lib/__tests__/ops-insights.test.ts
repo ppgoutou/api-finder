@@ -46,7 +46,6 @@ function upstream(overrides: Partial<OpsUpstream>): OpsUpstream {
     supply_cost_quota: 0,
     supply_covered_quota: 0,
     supply_estimated_quota: 0,
-    reported_cost_quota: 0,
     ...overrides,
   }
 }

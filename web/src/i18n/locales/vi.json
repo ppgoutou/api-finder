@@ -8629,9 +8629,11 @@
     "by task": "theo tác vụ",
     "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Cộng từ phí của {{charged}} tác vụ; {{estimated}} tác vụ không có phí được ước tính theo cùng tỷ lệ",
     "supply price": "giá nhập",
-    "The supplier reported {{amount}}.": "Nhà cung cấp báo {{amount}}.",
     "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "Theo giá nhập ghi khi tính phí trên {{covered}} doanh thu; {{estimated}} ước tính theo cùng tỷ lệ.",
     "At supply prices or supplier charges, {{amount}} of revenue": "Theo giá nhập hoặc phí nhà cung cấp, ứng với doanh thu {{amount}}",
-    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí nhà cung cấp theo giá nhập ghi ở mỗi lần tính phí, nếu không có thì theo số nhà cung cấp báo. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa đọc được số dư."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí nhà cung cấp ưu tiên số nhà cung cấp thực trừ, nếu không có thì theo giá nhập ghi ở mỗi lần tính phí. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa đọc được số dư.",
+    "actual charge": "phí thực",
+    "What the supplier charged, read from its logs.": "Số nhà cung cấp đã trừ, đọc từ nhật ký của họ.",
+    "At the supply price it comes to {{amount}}.": "Theo giá nhập là {{amount}}."
   }
 }

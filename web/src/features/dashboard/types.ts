@@ -386,10 +386,8 @@ export interface OpsUpstream {
   supply_cost_quota: number
   supply_covered_quota: number
   supply_estimated_quota: number
-  /** Where cost_quota came from. */
+  /** Where cost_quota came from: what the supplier reported, else the supply price. */
   cost_source?: 'supply' | 'supplier' | 'tasks'
-  /** What the supplier itself reported, when the cost follows the supply price. */
-  reported_cost_quota: number
 }
 
 export interface OpsTopUser {
