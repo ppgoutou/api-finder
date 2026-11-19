@@ -47,7 +47,7 @@ export function WorkRetentionBadge(props: {
   )
   let className = 'bg-background/85 text-foreground backdrop-blur'
   if (retention.state === 'expired') {
-    className = 'bg-destructive text-white'
+    className = 'bg-destructive text-destructive-foreground'
     content = (
       <>
         <TriangleAlert aria-hidden />
@@ -68,8 +68,7 @@ export function WorkRetentionBadge(props: {
         value: remaining.value,
       })
     }
-    className =
-      'border-transparent bg-warning text-warning-foreground'
+    className = 'border-transparent bg-warning text-warning-foreground'
     content = (
       <>
         <Clock aria-hidden />

@@ -118,6 +118,9 @@ export function PluginIcon(props: PluginIconProps) {
       </span>
     )
   }
+  // Text never drops below the 11px floor of the type scale. Two Latin
+  // letters fit a 20px tile at that size; two CJK characters do not, so a
+  // small tile shows only the first wide character.
   return (
     <div
       aria-hidden='true'
@@ -128,10 +131,12 @@ export function PluginIcon(props: PluginIconProps) {
       style={{
         width: size,
         height: size,
-        fontSize: Math.max(8, Math.floor(size * 0.42)),
+        fontSize: Math.max(11, Math.floor(size * 0.42)),
       }}
     >
-      {descriptor.label}
+      {size < 28 && /[^\u0020-\u00ff]/u.test(descriptor.label)
+        ? [...descriptor.label][0]
+        : descriptor.label}
     </div>
   )
 }

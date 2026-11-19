@@ -381,7 +381,7 @@ function SeriesCard(props: SeriesCardProps) {
   return (
     <article className='bg-card border-border/60 relative flex w-full flex-col overflow-hidden rounded-2xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6 lg:p-5'>
       {bestDiscount && (
-        <p className='bg-destructive absolute top-0 right-0 flex flex-col items-center rounded-bl-2xl px-3 py-1.5 leading-tight text-white shadow-sm'>
+        <p className='bg-destructive text-destructive-foreground absolute top-0 right-0 flex flex-col items-center rounded-bl-2xl px-3 py-1.5 leading-tight shadow-sm'>
           <span className='text-caption font-medium'>{t('List price')}</span>{' '}
           <span className='font-display text-base font-bold whitespace-nowrap'>
             {t('{{percentOff}}% off', {

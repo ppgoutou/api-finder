@@ -69,7 +69,7 @@ export const ZH_DOCS: DocContent = {
           type: 'markdown',
           text: '所有请求都需要在请求头中携带 API 密钥：',
         },
-        { type: 'code', label: 'HTTP Header', code: DOC_SAMPLES.authHeader },
+        { type: 'code', label: 'HTTP header', code: DOC_SAMPLES.authHeader },
         {
           type: 'markdown',
           text: `- 请填写完整的密钥，不要省略 \`sk-\` 前缀；
