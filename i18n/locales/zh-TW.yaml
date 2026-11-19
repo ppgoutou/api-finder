@@ -127,3 +127,9 @@ user_error.frames_paired: "首幀和尾幀需要同時提供。請補上缺少�
 user_error.task_type_mismatch: "素材與所選生成模式不相符（例如參考圖被當成了首幀）。如已扣費，費用已退回。請檢查生成模式和素材後重新提交。"
 user_error.moderation_input: "上傳的素材未通過內容審核，任務未開始生成，如已扣費，費用已退回。請更換該素材後重新提交。"
 user_error.moderation_music_copyright: "生成的音訊可能涉及音樂版權，已被攔截，如已扣費，費用已退回。請關閉生成音訊，或移除提示詞中的音樂、歌曲、歌詞描述後重新提交。"
+
+# 上游餘額提醒（飛書機器人）
+balance_alert.low: "【{{.System}}】上游餘額不足\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}\n請盡快儲值。"
+balance_alert.recovered: "【{{.System}}】上游餘額已恢復\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}"
+balance_alert.check_failed: "【{{.System}}】上游餘額連續 {{.Count}} 次查詢失敗\n管道：{{.Name}}（#{{.Id}}）\n錯誤：{{.Error}}"
+balance_alert.test: "【{{.System}}】測試訊息：上游餘額提醒已接通。"

@@ -127,3 +127,9 @@ user_error.frames_paired: "首帧和尾帧需要同时提供。请补上缺少�
 user_error.task_type_mismatch: "素材与所选生成模式不匹配（例如参考图被当成了首帧）。如已扣费，费用已退回。请检查生成模式和素材后重新提交。"
 user_error.moderation_input: "上传的素材未通过内容审核，任务未开始生成，如已扣费，费用已退回。请更换该素材后重新提交。"
 user_error.moderation_music_copyright: "生成的音频可能涉及音乐版权，已被拦截，如已扣费，费用已退回。请关闭生成音频，或去掉提示词里的音乐、歌曲、歌词描述后重新提交。"
+
+# 上游余额提醒（飞书机器人）
+balance_alert.low: "【{{.System}}】上游余额不足\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}\n请尽快充值。"
+balance_alert.recovered: "【{{.System}}】上游余额已恢复\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}"
+balance_alert.check_failed: "【{{.System}}】上游余额连续 {{.Count}} 次查询失败\n渠道：{{.Name}}（#{{.Id}}）\n错误：{{.Error}}"
+balance_alert.test: "【{{.System}}】测试消息：上游余额提醒已接通。"

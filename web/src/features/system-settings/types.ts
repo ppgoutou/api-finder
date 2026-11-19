@@ -416,6 +416,12 @@ export type OperationsSettings = {
   'perf_metrics_setting.flush_interval': number
   'perf_metrics_setting.bucket_time': 'hour' | 'minute' | '5min'
   'perf_metrics_setting.retention_days': number
+  'balance_alert_setting.enabled': boolean
+  'balance_alert_setting.feishu_webhook_url': string
+  'balance_alert_setting.feishu_sign_secret': string
+  'balance_alert_setting.interval_minutes': number
+  'balance_alert_setting.repeat_hours': number
+  'balance_alert_setting.monitors': string
   'media_storage.enabled': boolean
   'media_storage.overseas_endpoint': string
   'media_storage.overseas_region': string

@@ -77,6 +77,14 @@ const (
 	MsgNotifyQuotaLowEmail             = "notify.quota_low_email"
 )
 
+// Upstream balance alerts sent to the Feishu bot, in DEFAULT_LANGUAGE
+const (
+	MsgBalanceAlertLow         = "balance_alert.low"
+	MsgBalanceAlertRecovered   = "balance_alert.recovered"
+	MsgBalanceAlertCheckFailed = "balance_alert.check_failed"
+	MsgBalanceAlertTest        = "balance_alert.test"
+)
+
 // Channel notices sent to the root user and model update watchers
 const (
 	MsgChannelNotifyDisabledSubject = "channel.notify_disabled_subject"
