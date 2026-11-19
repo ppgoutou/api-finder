@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Send a balance report on every check": "每次检查都发送余额播报",
+    "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "每次检查都发送各渠道的当前余额。余额低于提醒值时只发余额不足提醒，按重复提醒间隔发送。",
+    "Repeat reminder every (minutes)": "重复提醒间隔（分钟）",
+    "While a balance stays low, remind again after this long. Reminders go out on checks, so it cannot be shorter than the check interval.": "余额一直偏低时，隔这么久再提醒一次。提醒在检查时发出，所以实际间隔不会短于检查间隔。",
     "Divide by": "除以",
     "Enter a number greater than 0": "请输入大于 0 的数",
     "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "「除以」把上游返回的数字换算成你用的单位，例如上游 1 元 = 10 算力时填 10。提醒阈值和消息都按换算后的金额。",

@@ -83,6 +83,7 @@ const (
 	MsgBalanceAlertRecovered   = "balance_alert.recovered"
 	MsgBalanceAlertCheckFailed = "balance_alert.check_failed"
 	MsgBalanceAlertTest        = "balance_alert.test"
+	MsgBalanceAlertReport      = "balance_alert.report"
 )
 
 // Channel notices sent to the root user and model update watchers

@@ -42,8 +42,54 @@ func TestNextBalanceAlertSequence(t *testing.T) {
 
 	state := &balanceAlertState{}
 	for _, step := range steps {
-		got := nextBalanceAlert(state, step.balance, step.err, threshold, repeat, start.Add(step.at))
+		got := nextBalanceAlert(state, step.balance, step.err, threshold, repeat, false, start.Add(step.at))
 		assert.Equal(t, step.want, got, step.name)
+	}
+}
+
+// TestNextBalanceAlertWithReport checks that routine reports go out on every
+// healthy check but a low balance still follows only the repeat window.
+func TestNextBalanceAlertWithReport(t *testing.T) {
+	start := time.Date(2026, 11, 19, 8, 0, 0, 0, time.UTC)
+	repeat := 30 * time.Minute
+	threshold := 200.0
+
+	steps := []struct {
+		name    string
+		at      time.Duration
+		balance float64
+		err     error
+		want    balanceAlertEvent
+	}{
+		{name: "healthy check sends a report", at: 0, balance: 450, want: balanceAlertReport},
+		{name: "next healthy check sends another report", at: 10 * time.Minute, balance: 440, want: balanceAlertReport},
+		{name: "failed check sends no report", at: 20 * time.Minute, err: errors.New("502"), want: balanceAlertNone},
+		{name: "dropping below threshold sends the low alert", at: 30 * time.Minute, balance: 190, want: balanceAlertLow},
+		{name: "low inside the repeat window sends nothing, not a report", at: 40 * time.Minute, balance: 180, want: balanceAlertNone},
+		{name: "low after the repeat window alerts again", at: 60 * time.Minute, balance: 170, want: balanceAlertLow},
+		{name: "recovery sends the recovered message instead of a report", at: 70 * time.Minute, balance: 300, want: balanceAlertRecovered},
+		{name: "healthy again sends reports", at: 80 * time.Minute, balance: 300, want: balanceAlertReport},
+	}
+
+	state := &balanceAlertState{}
+	for _, step := range steps {
+		got := nextBalanceAlert(state, step.balance, step.err, threshold, repeat, true, start.Add(step.at))
+		assert.Equal(t, step.want, got, step.name)
+	}
+}
+
+func TestBalanceAlertRepeatInterval(t *testing.T) {
+	tests := []struct {
+		name     string
+		settings system_setting.BalanceAlertSettings
+		want     time.Duration
+	}{
+		{name: "minutes win when set", settings: system_setting.BalanceAlertSettings{RepeatMinutes: 30, RepeatHours: 6}, want: 30 * time.Minute},
+		{name: "old hours setting is used while minutes are unset", settings: system_setting.BalanceAlertSettings{RepeatHours: 1}, want: time.Hour},
+		{name: "nothing set falls back to the default", settings: system_setting.BalanceAlertSettings{}, want: 6 * time.Hour},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, tt.settings.RepeatInterval(), tt.name)
 	}
 }
 

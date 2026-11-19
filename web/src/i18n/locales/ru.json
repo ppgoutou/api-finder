@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Send a balance report on every check": "Отправлять сводку баланса при каждой проверке",
+    "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Каждая проверка также отправляет баланс каждого канала. При низком балансе отправляется только напоминание о низком балансе с интервалом повтора.",
+    "Repeat reminder every (minutes)": "Повторять напоминание каждые (минут)",
+    "While a balance stays low, remind again after this long. Reminders go out on checks, so it cannot be shorter than the check interval.": "Пока баланс остаётся низким, напоминать снова через это время. Напоминания отправляются при проверках, поэтому не чаще интервала проверки.",
     "Divide by": "Делить на",
     "Enter a number greater than 0": "Введите число больше 0",
     "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "«Делить на» переводит число поставщика в вашу единицу, например 10, если поставщик считает 10 кредитов за юань. Порог и сообщения используют пересчитанную сумму.",

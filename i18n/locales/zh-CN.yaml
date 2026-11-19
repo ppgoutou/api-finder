@@ -133,3 +133,4 @@ balance_alert.low: "【{{.System}}】上游余额不足\n渠道：{{.Name}}（#{
 balance_alert.recovered: "【{{.System}}】上游余额已恢复\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "【{{.System}}】上游余额连续 {{.Count}} 次查询失败\n渠道：{{.Name}}（#{{.Id}}）\n错误：{{.Error}}"
 balance_alert.test: "【{{.System}}】测试消息：上游余额提醒已接通。"
+balance_alert.report: "【{{.System}}】上游余额播报\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}"

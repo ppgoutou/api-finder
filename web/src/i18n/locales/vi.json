@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Send a balance report on every check": "Gửi báo cáo số dư sau mỗi lần kiểm tra",
+    "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Mỗi lần kiểm tra cũng gửi số dư của từng kênh. Khi số dư thấp chỉ gửi nhắc số dư thấp theo khoảng nhắc lại.",
+    "Repeat reminder every (minutes)": "Nhắc lại mỗi (phút)",
+    "While a balance stays low, remind again after this long. Reminders go out on checks, so it cannot be shorter than the check interval.": "Khi số dư vẫn thấp, nhắc lại sau khoảng này. Nhắc nhở gửi khi kiểm tra nên không ngắn hơn khoảng kiểm tra.",
     "Divide by": "Chia cho",
     "Enter a number greater than 0": "Nhập số lớn hơn 0",
     "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "« Chia cho » đổi số của nhà cung cấp sang đơn vị của bạn, ví dụ 10 khi nhà cung cấp tính 10 tín dụng cho mỗi tệ. Ngưỡng và tin nhắn dùng số tiền đã quy đổi.",
