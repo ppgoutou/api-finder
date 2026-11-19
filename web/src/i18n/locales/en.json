@@ -8594,6 +8594,11 @@
     "{{payers}} paid · {{rate}}": "{{payers}} paid · {{rate}}",
     "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} of Stripe top-ups {{amount}}",
     "by task": "by task",
-    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio"
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio",
+    "supply price": "supply price",
+    "The supplier reported {{amount}}.": "The supplier reported {{amount}}.",
+    "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.",
+    "At supply prices or supplier charges, {{amount}} of revenue": "At supply prices or supplier charges, {{amount}} of revenue",
+    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched."
   }
 }

@@ -24,6 +24,33 @@ const (
 	opsCostStatusError   = "error"
 )
 
+// Where an upstream channel's cost came from.
+const (
+	opsCostSourceSupply   = "supply"
+	opsCostSourceSupplier = "supplier"
+	opsCostSourceTasks    = "tasks"
+)
+
+// applySupplyPriceCosts makes the supply price recorded on billing logs the
+// cost of every channel that has one. What the supplier reported, from its
+// logs or its task charges, stays alongside to compare.
+func applySupplyPriceCosts(upstream []model.OpsUpstream) {
+	for i := range upstream {
+		row := &upstream[i]
+		if row.SupplyCoveredQuota <= 0 {
+			continue
+		}
+		row.ReportedCostQuota = 0
+		if row.CostStatus == opsCostStatusOK {
+			row.ReportedCostQuota = row.CostQuota
+		}
+		row.CostStatus = opsCostStatusOK
+		row.CostError = ""
+		row.CostSource = opsCostSourceSupply
+		row.CostQuota = row.SupplyCostQuota
+	}
+}
+
 const (
 	opsSupplierCostTimeout = 45 * time.Second
 	// A supplier may cap how far one log search reaches, so longer periods
@@ -71,6 +98,7 @@ func applySupplierCosts(ctx context.Context, upstream []model.OpsUpstream, start
 			// charge, which the model layer has added up.
 			if row.TaskCostCharged > 0 {
 				row.CostStatus = opsCostStatusOK
+				row.CostSource = opsCostSourceTasks
 				row.CostQuota = row.TaskCostQuota
 				continue
 			}
@@ -85,6 +113,7 @@ func applySupplierCosts(ctx context.Context, upstream []model.OpsUpstream, start
 				return
 			}
 			row.CostStatus = opsCostStatusOK
+			row.CostSource = opsCostSourceSupplier
 			row.CostQuota = quota
 		})
 	}

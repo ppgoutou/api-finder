@@ -8594,6 +8594,11 @@
     "{{payers}} paid · {{rate}}": "{{payers}} payants · {{rate}}",
     "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} des recharges Stripe de {{amount}}",
     "by task": "par tâche",
-    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Somme des débits de {{charged}} tâches ; {{estimated}} tâches sans débit sont estimées au même ratio"
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Somme des débits de {{charged}} tâches ; {{estimated}} tâches sans débit sont estimées au même ratio",
+    "supply price": "prix fournisseur",
+    "The supplier reported {{amount}}.": "Le fournisseur a déclaré {{amount}}.",
+    "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "Au prix fournisseur enregistré sur {{covered}} de revenus ; {{estimated}} estimés au même ratio.",
+    "At supply prices or supplier charges, {{amount}} of revenue": "Aux prix fournisseur ou débits fournisseur, pour {{amount}} de revenus",
+    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "Le revenu est ce qui a été facturé aux utilisateurs sur le canal. Les dépenses fournisseur suivent le prix fournisseur enregistré à chaque débit, sinon ce que le fournisseur a déclaré. Le taux de réussite ne couvre que les tâches asynchrones ; un tiret signifie qu’aucun solde n’a été lu."
   }
 }

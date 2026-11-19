@@ -8594,6 +8594,11 @@
     "{{payers}} paid · {{rate}}": "Оплатили {{payers}} · {{rate}}",
     "{{rate}} of Stripe top-ups {{amount}}": "{{rate}} от пополнений Stripe на {{amount}}",
     "by task": "по задачам",
-    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Сумма списаний по {{charged}} задачам; {{estimated}} задач без списания оценены по той же доле"
+    "Added up from the charges of {{charged}} tasks; {{estimated}} tasks without one are priced at the same ratio": "Сумма списаний по {{charged}} задачам; {{estimated}} задач без списания оценены по той же доле",
+    "supply price": "по цене поставки",
+    "The supplier reported {{amount}}.": "Поставщик сообщил {{amount}}.",
+    "At the supply price recorded on {{covered}} of revenue; {{estimated}} estimated at the same ratio.": "По цене поставки, записанной на {{covered}} выручки; {{estimated}} оценено по той же доле.",
+    "At supply prices or supplier charges, {{amount}} of revenue": "По ценам поставки или списаниям поставщика, на выручку {{amount}}",
+    "Revenue is what users were charged on the channel. Upstream spending follows the supply price recorded on each charge, and otherwise what the supplier reported. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — сколько списано с пользователей по каналу. Расходы поставщику считаются по цене поставки, записанной при каждом списании, иначе по данным поставщика. Успешность учитывает только асинхронные задачи; прочерк — баланс не получен."
   }
 }

@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
@@ -344,6 +345,53 @@ func TestGetOpsDashboardReadsSupplierChargesFromTaskSnapshots(t *testing.T) {
 			assert.Zero(t, row.TaskCostCharged, "channel %d has no snapshot charges", row.ChannelId)
 		}
 	}
+}
+
+func TestGetOpsDashboardAddsUpSupplyPricesFromBillingLogs(t *testing.T) {
+	seedOpsDashboard(t)
+	margin := func(taskId string, revenue, supply int) string {
+		other := `{"admin_info":{"gross_margin":{"revenue_quota":` + strconv.Itoa(revenue) + `,"supply_quota":` + strconv.Itoa(supply) + `}}`
+		if taskId != "" {
+			other += `,"task_id":"` + taskId + `"`
+		}
+		return other + `}`
+	}
+	at := opsTestStart + 500
+	logs := []Log{
+		// A relay call on channel 1.
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 1, Quota: 100, CreatedAt: at, Other: margin("", 100, 40)},
+		// A task logs at submission and again for its whole settled charge.
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 1, Quota: 50, CreatedAt: at + 1, Other: margin("task-ok", 50, 20)},
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 1, Quota: 30, CreatedAt: at + 2, Other: margin("task-ok", 80, 32)},
+		// A failed task is refunded by the supplier.
+		{UserId: 2, Type: LogTypeConsume, ChannelId: 1, Quota: 50, CreatedAt: at + 3, Other: margin("task-failed", 50, 20)},
+		{UserId: 2, Type: LogTypeRefund, ChannelId: 1, Quota: 50, CreatedAt: at + 6, Other: `{"task_id":"task-failed"}`},
+		// An administrator's call is left out with the administrator.
+		{UserId: 1, Type: LogTypeConsume, ChannelId: 1, Quota: 999, CreatedAt: at + 4, Other: margin("", 999, 999)},
+		// Channel 2 has 30 of revenue, of which a log covers 10.
+		{UserId: 3, Type: LogTypeConsume, ChannelId: 2, Quota: 10, CreatedAt: at + 5, Other: margin("", 10, 6)},
+	}
+	require.NoError(t, DB.Create(&logs).Error)
+	tasks := []Task{
+		{TaskID: "task-ok", UserId: 2, ChannelId: 1, Status: TaskStatusSuccess, CreatedAt: at},
+		{TaskID: "task-failed", UserId: 2, ChannelId: 1, Status: TaskStatusFailure, CreatedAt: at},
+	}
+	require.NoError(t, DB.Create(&tasks).Error)
+
+	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
+	require.NoError(t, err)
+
+	byId := make(map[int]OpsUpstream)
+	for _, row := range got.Upstream {
+		byId[row.ChannelId] = row
+	}
+	assert.Equal(t, int64(40+32), byId[1].SupplyCostQuota)
+	assert.Equal(t, int64(100+80), byId[1].SupplyCoveredQuota)
+	assert.Zero(t, byId[1].SupplyEstimatedQuota, "the logs cover all of the channel's revenue")
+	assert.Equal(t, int64(10), byId[2].SupplyCoveredQuota)
+	assert.Equal(t, int64(12), byId[2].SupplyEstimatedQuota, "20 uncovered at the channel's 60%")
+	assert.Equal(t, int64(18), byId[2].SupplyCostQuota)
+	assert.Zero(t, byId[4].SupplyCoveredQuota)
 }
 
 func TestFenglangTaskChargeReadsCreditsAsYuan(t *testing.T) {

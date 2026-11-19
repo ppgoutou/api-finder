@@ -43,6 +43,10 @@ function upstream(overrides: Partial<OpsUpstream>): OpsUpstream {
     task_cost_quota: 0,
     task_cost_charged: 0,
     task_cost_estimated: 0,
+    supply_cost_quota: 0,
+    supply_covered_quota: 0,
+    supply_estimated_quota: 0,
+    reported_cost_quota: 0,
     ...overrides,
   }
 }
