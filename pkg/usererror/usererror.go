@@ -182,7 +182,7 @@ var codeRules = map[string]string{
 // generated video blocked for copyright is a result, not an asset.
 var (
 	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long", "characters, at most"}
-	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as"}
+	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as", "识别为视频编辑"}
 	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核"}
 	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}
 	// A reference the supplier could not fetch or open, in its own words.
@@ -222,7 +222,7 @@ var textRules = []rule{
 	{CodePromptRequired, []string{"prompt is required", "missing `prompt`", "prompt 不能为空"}},
 	{CodeModelRequired, []string{"model field is required", "model_name_required"}},
 	{CodeRefImageRequired, []string{"at least one reference image"}},
-	{CodeRatioRequired, []string{"ratio 不能为空"}},
+	{CodeRatioRequired, []string{"ratio 不能为空", "aspect_ratio_required"}},
 	{CodeInvalidDuration, []string{"seconds must", "duration must", "invalid video duration", "seconds and duration"}},
 	{CodeInvalidResolution, []string{"resolution must", "ratio must", "unsupported video size", "unsupported video resolution", "does not match resolution", "is not offered", "invalid video ratio"}},
 	{CodeInvalidFormat, []string{"json body required", "json object required", "unsupported model"}},
@@ -247,7 +247,8 @@ var failReasonRules = []rule{
 	{CodeTaskTimeout, []string{"task timed out"}},
 	{CodeTaskCancelledByAdmin, []string{"按管理员要求驳回"}},
 	{CodeTaskResultUnavailable, []string{"upstream task not found", "failed to query the upstream task status"}},
-	{CodeGenerationMaybeContent, []string{"请检查提示词和素材"}},
+	// "shark block" is the supplier's risk control refusing the prompt or assets.
+	{CodeGenerationMaybeContent, []string{"请检查提示词和素材", "shark block"}},
 	{CodePromptTooLong, promptTooLongPatterns},
 	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
