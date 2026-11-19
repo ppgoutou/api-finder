@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "Relevé toutes les (minutes)",
+    "How often the balance report is sent. 0 sends one on every check.": "Fréquence d'envoi du relevé de solde. 0 en envoie un à chaque vérification.",
     "Send a balance report on every check": "Envoyer un relevé de solde à chaque vérification",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Chaque vérification envoie aussi le solde de chaque canal. Un solde bas n'envoie que le rappel de solde bas, à l'intervalle de répétition.",
     "Repeat reminder every (minutes)": "Répéter le rappel toutes les (minutes)",

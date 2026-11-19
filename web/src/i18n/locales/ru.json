@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "Сводка каждые (минут)",
+    "How often the balance report is sent. 0 sends one on every check.": "Как часто отправлять сводку баланса. 0 — при каждой проверке.",
     "Send a balance report on every check": "Отправлять сводку баланса при каждой проверке",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Каждая проверка также отправляет баланс каждого канала. При низком балансе отправляется только напоминание о низком балансе с интервалом повтора.",
     "Repeat reminder every (minutes)": "Повторять напоминание каждые (минут)",

@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestNextBalanceAlertSequence walks one channel through a low balance that
@@ -42,7 +44,7 @@ func TestNextBalanceAlertSequence(t *testing.T) {
 
 	state := &balanceAlertState{}
 	for _, step := range steps {
-		got := nextBalanceAlert(state, step.balance, step.err, threshold, repeat, false, start.Add(step.at))
+		got := nextBalanceAlert(state, step.balance, step.err, balanceAlertPolicy{Threshold: threshold, Repeat: repeat}, start.Add(step.at))
 		assert.Equal(t, step.want, got, step.name)
 	}
 }
@@ -73,7 +75,38 @@ func TestNextBalanceAlertWithReport(t *testing.T) {
 
 	state := &balanceAlertState{}
 	for _, step := range steps {
-		got := nextBalanceAlert(state, step.balance, step.err, threshold, repeat, true, start.Add(step.at))
+		got := nextBalanceAlert(state, step.balance, step.err, balanceAlertPolicy{Threshold: threshold, Repeat: repeat, Report: true}, start.Add(step.at))
+		assert.Equal(t, step.want, got, step.name)
+	}
+}
+
+// TestNextBalanceAlertReportEvery checks routine reports spaced 3 hours apart
+// while checks run every 10 minutes and low reminders repeat every 30.
+func TestNextBalanceAlertReportEvery(t *testing.T) {
+	start := time.Date(2026, 11, 19, 8, 0, 0, 0, time.UTC)
+	policy := balanceAlertPolicy{Threshold: 200, Repeat: 30 * time.Minute, Report: true, ReportEvery: 3 * time.Hour}
+
+	steps := []struct {
+		name    string
+		at      time.Duration
+		balance float64
+		want    balanceAlertEvent
+	}{
+		{name: "first healthy check reports", at: 0, balance: 450, want: balanceAlertReport},
+		{name: "healthy check 10 minutes later stays quiet", at: 10 * time.Minute, balance: 440, want: balanceAlertNone},
+		{name: "healthy check before 3 hours stays quiet", at: 170 * time.Minute, balance: 400, want: balanceAlertNone},
+		{name: "healthy check at 3 hours reports", at: 180 * time.Minute, balance: 390, want: balanceAlertReport},
+		{name: "low balance alerts at once", at: 190 * time.Minute, balance: 150, want: balanceAlertLow},
+		{name: "low 20 minutes later stays quiet", at: 210 * time.Minute, balance: 140, want: balanceAlertNone},
+		{name: "low 30 minutes after the alert reminds again", at: 220 * time.Minute, balance: 130, want: balanceAlertLow},
+		{name: "recovery sends the recovered message", at: 230 * time.Minute, balance: 500, want: balanceAlertRecovered},
+		{name: "healthy check before the next 3 hours stays quiet", at: 240 * time.Minute, balance: 500, want: balanceAlertNone},
+		{name: "healthy check 3 hours after the last report reports", at: 360 * time.Minute, balance: 500, want: balanceAlertReport},
+	}
+
+	state := &balanceAlertState{}
+	for _, step := range steps {
+		got := nextBalanceAlert(state, step.balance, nil, policy, start.Add(step.at))
 		assert.Equal(t, step.want, got, step.name)
 	}
 }
@@ -126,4 +159,13 @@ func TestBalanceAlertMonitorConvert(t *testing.T) {
 		got := system_setting.BalanceAlertMonitor{Divisor: tt.divisor}.Convert(tt.raw)
 		assert.InDelta(t, tt.want, got, 1e-9, tt.name)
 	}
+}
+
+func TestBalanceAlertMessageIsChinese(t *testing.T) {
+	require.NoError(t, i18n.Init())
+	balance := 185.3
+	text := balanceAlertMessage(balanceAlertLow, balanceCheckResult{ChannelId: 11, ChannelName: "YH-妖火", Balance: &balance, Threshold: 200, Unit: "元"}, nil)
+	assert.Contains(t, text, "上游余额不足")
+	assert.Contains(t, text, "当前余额：185.30 元")
+	assert.Contains(t, text, "提醒阈值：200.00 元")
 }

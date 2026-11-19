@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "播报间隔（分钟）",
+    "How often the balance report is sent. 0 sends one on every check.": "多久发一次余额播报。填 0 表示每次检查都发。",
     "Send a balance report on every check": "每次检查都发送余额播报",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "每次检查都发送各渠道的当前余额。余额低于提醒值时只发余额不足提醒，按重复提醒间隔发送。",
     "Repeat reminder every (minutes)": "重复提醒间隔（分钟）",

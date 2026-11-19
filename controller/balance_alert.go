@@ -46,6 +46,7 @@ type balanceCheckResult struct {
 type balanceAlertState struct {
 	Low            bool
 	LastAlertAt    time.Time
+	LastReportAt   time.Time
 	Failures       int
 	FailureAlerted bool
 }
@@ -63,6 +64,10 @@ const (
 	balanceAlertReport balanceAlertEvent = "report"
 )
 
+// balanceAlertLanguage is the language of the Feishu messages; they go to the
+// site operator's group, which reads Simplified Chinese.
+const balanceAlertLanguage = "zh-CN"
+
 var (
 	balanceAlertStatesMu sync.Mutex
 	balanceAlertStates   = map[int]*balanceAlertState{}
@@ -70,10 +75,19 @@ var (
 
 // nextBalanceAlert advances state with one check result and returns the
 // message to send, if any. checkErr != nil means the balance could not be
-// read; balance is ignored then. With report on, a successful check that is
-// not below the threshold sends a routine report; a low balance only follows
+// read; balance is ignored then. With Report on, a successful check that is
+// not below the threshold sends a routine report once per ReportEvery (every
+// check when it is 0); a low balance only follows
 // the repeat window.
-func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error, threshold float64, repeat time.Duration, report bool, now time.Time) balanceAlertEvent {
+// balanceAlertPolicy is what one monitor's check is judged against.
+type balanceAlertPolicy struct {
+	Threshold   float64
+	Repeat      time.Duration
+	Report      bool
+	ReportEvery time.Duration
+}
+
+func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error, policy balanceAlertPolicy, now time.Time) balanceAlertEvent {
 	if checkErr != nil {
 		state.Failures++
 		if state.Failures >= balanceAlertFailureLimit && !state.FailureAlerted {
@@ -85,8 +99,8 @@ func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error,
 	state.Failures = 0
 	state.FailureAlerted = false
 
-	if balance < threshold {
-		if state.Low && now.Sub(state.LastAlertAt) < repeat {
+	if balance < policy.Threshold {
+		if state.Low && now.Sub(state.LastAlertAt) < policy.Repeat {
 			return balanceAlertNone
 		}
 		state.Low = true
@@ -97,7 +111,8 @@ func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error,
 		state.Low = false
 		return balanceAlertRecovered
 	}
-	if report {
+	if policy.Report && (state.LastReportAt.IsZero() || now.Sub(state.LastReportAt) >= policy.ReportEvery) {
+		state.LastReportAt = now
 		return balanceAlertReport
 	}
 	return balanceAlertNone
@@ -189,16 +204,16 @@ func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, che
 	}
 	switch event {
 	case balanceAlertLow:
-		return i18n.Translate("", i18n.MsgBalanceAlertLow, args)
+		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertLow, args)
 	case balanceAlertRecovered:
-		return i18n.Translate("", i18n.MsgBalanceAlertRecovered, args)
+		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertRecovered, args)
 	case balanceAlertReport:
-		return i18n.Translate("", i18n.MsgBalanceAlertReport, args)
+		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertReport, args)
 	default:
 		if checkErr != nil {
 			args["Error"] = checkErr.Error()
 		}
-		return i18n.Translate("", i18n.MsgBalanceAlertCheckFailed, args)
+		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertCheckFailed, args)
 	}
 }
 
@@ -225,7 +240,12 @@ func runBalanceAlertCheck(ctx context.Context) []balanceCheckResult {
 			state = &balanceAlertState{}
 			balanceAlertStates[monitor.ChannelId] = state
 		}
-		event := nextBalanceAlert(state, balance, checkErr, monitor.Threshold, repeat, settings.ReportEnabled, time.Now())
+		event := nextBalanceAlert(state, balance, checkErr, balanceAlertPolicy{
+			Threshold:   monitor.Threshold,
+			Repeat:      repeat,
+			Report:      settings.ReportEnabled,
+			ReportEvery: time.Duration(max(settings.ReportMinutes, 0)) * time.Minute,
+		}, time.Now())
 		balanceAlertStatesMu.Unlock()
 		if event == balanceAlertNone {
 			continue
@@ -297,7 +317,7 @@ func TestBalanceAlertFeishu(c *gin.Context) {
 		common.ApiErrorT(c, "Save the Feishu webhook URL first")
 		return
 	}
-	text := i18n.Translate("", i18n.MsgBalanceAlertTest, map[string]any{"System": common.SystemName})
+	text := i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertTest, map[string]any{"System": common.SystemName})
 	if err := service.SendFeishuText(settings.FeishuWebhookURL, settings.FeishuSignSecret, text); err != nil {
 		common.ApiError(c, err)
 		return

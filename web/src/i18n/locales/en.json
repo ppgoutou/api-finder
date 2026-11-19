@@ -1,5 +1,7 @@
 {
   "translation": {
+    "Report every (minutes)": "Report every (minutes)",
+    "How often the balance report is sent. 0 sends one on every check.": "How often the balance report is sent. 0 sends one on every check.",
     "Send a balance report on every check": "Send a balance report on every check",
     "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.",
     "Repeat reminder every (minutes)": "Repeat reminder every (minutes)",

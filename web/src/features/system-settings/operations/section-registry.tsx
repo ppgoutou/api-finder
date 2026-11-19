@@ -81,6 +81,7 @@ const OPERATIONS_SECTIONS = [
             (settings['balance_alert_setting.repeat_hours'] || 6) * 60,
           report_enabled:
             settings['balance_alert_setting.report_enabled'] ?? false,
+          report_minutes: settings['balance_alert_setting.report_minutes'] ?? 0,
           monitors: parseBalanceAlertMonitors(
             settings['balance_alert_setting.monitors']
           ),
