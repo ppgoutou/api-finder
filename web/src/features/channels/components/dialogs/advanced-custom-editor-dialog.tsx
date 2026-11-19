@@ -834,7 +834,7 @@ export function AdvancedCustomEditorDialog({
               >
                 <CollapsibleTrigger
                   render={
-                    <button
+                    <Button variant='plain' size='inline'
                       type='button'
                       className='hover:bg-muted/50 focus-visible:ring-ring/50 flex min-h-11 w-full items-center gap-3 rounded-md px-3 py-2 text-left outline-none focus-visible:ring-3'
                     />
@@ -1501,7 +1501,7 @@ function RouteEditor({
                         variant={ruleKind === 'regex' ? 'outline' : 'secondary'}
                         className='max-w-full gap-1.5 font-mono'
                       >
-                        <span className='font-sans text-[10px] font-semibold tracking-normal uppercase'>
+                        <span className='font-sans text-micro font-semibold'>
                           {t(ruleKind === 'regex' ? 'Regex' : 'Exact')}
                         </span>
                         <span className='truncate'>{displayModel}</span>

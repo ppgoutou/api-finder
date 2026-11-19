@@ -44,6 +44,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 type ChannelAdvancedSectionProps = {
   children: ReactNode
@@ -59,7 +60,7 @@ export function ChannelAdvancedSection(props: ChannelAdvancedSectionProps) {
     <Collapsible open={props.open} onOpenChange={props.onOpenChange}>
       <CollapsibleTrigger
         render={
-          <button
+          <Button variant='plain' size='inline'
             type='button'
             className='hover:bg-muted/40 border-border/60 flex w-full items-center justify-between rounded-lg border px-3 py-3 text-left transition-colors'
             aria-expanded={props.open}
@@ -71,7 +72,7 @@ export function ChannelAdvancedSection(props: ChannelAdvancedSectionProps) {
             <Settings className='h-4 w-4' aria-hidden='true' />
           </span>
           <div className='flex flex-col gap-0.5'>
-            <div className='text-[13px] font-semibold'>
+            <div className='text-body-sm font-semibold'>
               {t('Advanced Settings')}
             </div>
             <div className='text-muted-foreground text-xs'>

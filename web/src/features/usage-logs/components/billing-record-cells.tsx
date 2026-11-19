@@ -34,7 +34,7 @@ export function BillingRecordAmount(props: { log: UsageLog }) {
     <span
       className={cn(
         'font-mono text-xs font-medium whitespace-nowrap tabular-nums',
-        amount.startsWith('+') && 'text-emerald-600 dark:text-emerald-400'
+        amount.startsWith('+') && 'text-success'
       )}
     >
       {sensitiveVisible ? amount : '••••'}

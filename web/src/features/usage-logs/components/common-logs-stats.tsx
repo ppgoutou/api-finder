@@ -100,19 +100,19 @@ export function CommonLogsStats(props: {
       <StatBadge
         label={isBilling ? t('Total Consumption') : t('Usage')}
         value={sensitiveVisible ? formatLogQuota(stats?.quota || 0) : '••••'}
-        accent='bg-sky-500/70'
+        accent='bg-chart-1/70'
       />
       {!isBilling && (
         <>
           <StatBadge
             label={t('RPM')}
             value={stats?.rpm || 0}
-            accent='bg-rose-500/65'
+            accent='bg-chart-4/65'
           />
           <StatBadge
             label={t('TPM')}
             value={stats?.tpm || 0}
-            accent='bg-slate-400/70'
+            accent='bg-muted-foreground/50'
           />
         </>
       )}
