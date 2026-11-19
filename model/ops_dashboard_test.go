@@ -203,7 +203,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	}, got.Channels)
 
 	assert.Equal(t, []OpsTrendDay{
-		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, UsedQuota: 70},
+		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit, OpsTrendRedemption: 1000}, UsedQuota: 70},
 		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 30},
 		{Date: "1970-01-23", Topups: map[string]int64{PaymentProviderEpay: 3 * opsTestUnit}},
 	}, got.Trend)
@@ -244,7 +244,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, OpsPending{Pending: 1}, stripe.Pending)
 	assert.Equal(t, int64(100), stripe.Current.UsedQuota, "usage has no order channel")
 	assert.Len(t, stripe.Channels, 3, "the channel table is not filtered")
-	assert.Equal(t, map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, stripe.Trend[0].Topups)
+	assert.Equal(t, map[string]int64{PaymentProviderStripe: 10 * opsTestUnit}, stripe.Trend[0].Topups, "redemption codes have no payment channel")
 	assert.Empty(t, stripe.Trend[1].Topups)
 
 	withInternal := opsTestQuery(OpsChannelAll)

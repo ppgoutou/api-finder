@@ -16,6 +16,8 @@ import (
 const (
 	// OpsChannelAll is the order channel filter that keeps every channel.
 	OpsChannelAll = "all"
+	// OpsTrendRedemption is the trend key of quota credited by redemption codes.
+	OpsTrendRedemption = "redemption"
 
 	// A pending order older than this is reported as overdue: closing an
 	// order depends on a provider callback that may never arrive.
@@ -684,6 +686,30 @@ func opsLoadTrend(scope opsScope, query OpsDashboardQuery, result *OpsDashboard,
 		}
 		if day, ok := byDate[opsDayKey(order.CompleteTime, offset)]; ok {
 			day.Topups[channel] += opsCreditedQuota(channel, order.Amount, order.Money)
+		}
+	}
+
+	// Redemption codes are top-ups without an order, so they only show when
+	// the chart is not narrowed to one payment channel.
+	if query.Channel == OpsChannelAll {
+		var redemptions []struct {
+			RedeemedTime int64
+			Quota        int64
+		}
+		err = scope.excludeUsers(
+			DB.Model(&Redemption{}).Unscoped().Where("status = ?", common.RedemptionCodeStatusUsed),
+			"used_user_id",
+		).
+			Select("redeemed_time, quota").
+			Where("redeemed_time >= ? AND redeemed_time <= ?", query.Start, query.End).
+			Scan(&redemptions).Error
+		if err != nil {
+			return err
+		}
+		for _, redemption := range redemptions {
+			if day, ok := byDate[opsDayKey(redemption.RedeemedTime, offset)]; ok {
+				day.Topups[OpsTrendRedemption] += redemption.Quota
+			}
 		}
 	}
 
