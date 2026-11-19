@@ -132,3 +132,4 @@ balance_alert.low: "[{{.System}}] Upstream balance is low\nChannel: {{.Name}} (#
 balance_alert.recovered: "[{{.System}}] Upstream balance is back above the threshold\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "[{{.System}}] Upstream balance check failed {{.Count}} times in a row\nChannel: {{.Name}} (#{{.Id}})\nError: {{.Error}}"
 balance_alert.test: "[{{.System}}] Test message: upstream balance alerts are connected."
+balance_alert.report: "[{{.System}}] Upstream balance report\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}"

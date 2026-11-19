@@ -75,7 +75,12 @@ const OPERATIONS_SECTIONS = [
           feishu_sign_secret: '',
           interval_minutes:
             settings['balance_alert_setting.interval_minutes'] || 10,
-          repeat_hours: settings['balance_alert_setting.repeat_hours'] || 6,
+          // Older saves only have repeat_hours.
+          repeat_minutes:
+            settings['balance_alert_setting.repeat_minutes'] ||
+            (settings['balance_alert_setting.repeat_hours'] || 6) * 60,
+          report_enabled:
+            settings['balance_alert_setting.report_enabled'] ?? false,
           monitors: parseBalanceAlertMonitors(
             settings['balance_alert_setting.monitors']
           ),

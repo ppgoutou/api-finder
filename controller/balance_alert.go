@@ -58,6 +58,9 @@ const (
 	balanceAlertLow       balanceAlertEvent = "low"
 	balanceAlertRecovered balanceAlertEvent = "recovered"
 	balanceAlertFailed    balanceAlertEvent = "failed"
+	// balanceAlertReport is the routine balance message sent on a check
+	// that needs no alert, when routine reports are on.
+	balanceAlertReport balanceAlertEvent = "report"
 )
 
 var (
@@ -67,8 +70,10 @@ var (
 
 // nextBalanceAlert advances state with one check result and returns the
 // message to send, if any. checkErr != nil means the balance could not be
-// read; balance is ignored then.
-func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error, threshold float64, repeat time.Duration, now time.Time) balanceAlertEvent {
+// read; balance is ignored then. With report on, a successful check that is
+// not below the threshold sends a routine report; a low balance only follows
+// the repeat window.
+func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error, threshold float64, repeat time.Duration, report bool, now time.Time) balanceAlertEvent {
 	if checkErr != nil {
 		state.Failures++
 		if state.Failures >= balanceAlertFailureLimit && !state.FailureAlerted {
@@ -91,6 +96,9 @@ func nextBalanceAlert(state *balanceAlertState, balance float64, checkErr error,
 	if state.Low {
 		state.Low = false
 		return balanceAlertRecovered
+	}
+	if report {
+		return balanceAlertReport
 	}
 	return balanceAlertNone
 }
@@ -158,7 +166,8 @@ func fetchUpstreamBalance(ctx context.Context, monitor system_setting.BalanceAle
 		return result, 0, fmt.Errorf("field %q is not a number", field)
 	}
 	balance = monitor.Convert(balance)
-	result.Balance = &balance
+	shown := math.Round(balance*100) / 100
+	result.Balance = &shown
 	return result, balance, nil
 }
 
@@ -183,6 +192,8 @@ func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, che
 		return i18n.Translate("", i18n.MsgBalanceAlertLow, args)
 	case balanceAlertRecovered:
 		return i18n.Translate("", i18n.MsgBalanceAlertRecovered, args)
+	case balanceAlertReport:
+		return i18n.Translate("", i18n.MsgBalanceAlertReport, args)
 	default:
 		if checkErr != nil {
 			args["Error"] = checkErr.Error()
@@ -195,11 +206,7 @@ func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, che
 // their results call for.
 func runBalanceAlertCheck(ctx context.Context) []balanceCheckResult {
 	settings := system_setting.GetBalanceAlertSettings()
-	repeatHours := settings.RepeatHours
-	if repeatHours <= 0 {
-		repeatHours = system_setting.DefaultBalanceAlertRepeatHours
-	}
-	repeat := time.Duration(repeatHours) * time.Hour
+	repeat := settings.RepeatInterval()
 
 	results := make([]balanceCheckResult, 0, len(settings.Monitors))
 	for _, monitor := range settings.Monitors {
@@ -218,7 +225,7 @@ func runBalanceAlertCheck(ctx context.Context) []balanceCheckResult {
 			state = &balanceAlertState{}
 			balanceAlertStates[monitor.ChannelId] = state
 		}
-		event := nextBalanceAlert(state, balance, checkErr, monitor.Threshold, repeat, time.Now())
+		event := nextBalanceAlert(state, balance, checkErr, monitor.Threshold, repeat, settings.ReportEnabled, time.Now())
 		balanceAlertStatesMu.Unlock()
 		if event == balanceAlertNone {
 			continue

@@ -1,6 +1,8 @@
 package system_setting
 
 import (
+	"time"
+
 	"github.com/QuantumNous/new-api/setting/config"
 )
 
@@ -30,14 +32,19 @@ func (m BalanceAlertMonitor) Convert(raw float64) float64 {
 }
 
 // BalanceAlertSettings sends a Feishu (Lark) bot message when a watched
-// upstream balance falls below its threshold, repeats it every RepeatHours
-// while it stays low, and sends one more message when it recovers.
+// upstream balance falls below its threshold, repeats it every RepeatMinutes
+// while it stays low, and sends one more message when it recovers. With
+// ReportEnabled, every check that needs no alert also sends the balance.
 //
 // The sign secret ends in "_secret" so the option API never returns it.
 type BalanceAlertSettings struct {
-	Enabled          bool                  `json:"enabled"`
-	IntervalMinutes  int                   `json:"interval_minutes"`
+	Enabled         bool `json:"enabled"`
+	IntervalMinutes int  `json:"interval_minutes"`
+	// RepeatHours is the old repeat setting, used only while RepeatMinutes
+	// is unset.
 	RepeatHours      int                   `json:"repeat_hours"`
+	RepeatMinutes    int                   `json:"repeat_minutes"`
+	ReportEnabled    bool                  `json:"report_enabled"`
 	FeishuWebhookURL string                `json:"feishu_webhook_url"`
 	FeishuSignSecret string                `json:"feishu_sign_secret"`
 	Monitors         []BalanceAlertMonitor `json:"monitors"`
@@ -56,6 +63,18 @@ var balanceAlertSettings = BalanceAlertSettings{
 
 func init() {
 	config.GlobalConfig.Register("balance_alert_setting", &balanceAlertSettings)
+}
+
+// RepeatInterval is how long a low balance waits before it is reported again.
+func (s *BalanceAlertSettings) RepeatInterval() time.Duration {
+	if s.RepeatMinutes > 0 {
+		return time.Duration(s.RepeatMinutes) * time.Minute
+	}
+	hours := s.RepeatHours
+	if hours <= 0 {
+		hours = DefaultBalanceAlertRepeatHours
+	}
+	return time.Duration(hours) * time.Hour
 }
 
 func GetBalanceAlertSettings() *BalanceAlertSettings {

@@ -36,7 +36,8 @@ const SAVED: BalanceAlertFormValues = {
   feishu_webhook_url: 'https://open.feishu.cn/open-apis/bot/v2/hook/abc',
   feishu_sign_secret: '',
   interval_minutes: 10,
-  repeat_hours: 6,
+  repeat_minutes: 360,
+  report_enabled: false,
   monitors: [],
 }
 
@@ -188,4 +189,27 @@ test('saved monitors JSON is parsed and unreadable values become an empty list',
   ])
   expect(parseBalanceAlertMonitors('not json')).toEqual([])
   expect(parseBalanceAlertMonitors('{"a":1}')).toEqual([])
+})
+
+test('turning on reports and setting a 30 minute repeat saves both options', async () => {
+  const user = userEvent.setup()
+  renderSettings()
+
+  await user.click(
+    screen.getByRole('switch', { name: 'Send a balance report on every check' })
+  )
+  const repeat = screen.getByLabelText('Repeat reminder every (minutes)')
+  await user.tripleClick(repeat)
+  await user.keyboard('30')
+  await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(2))
+  expect(api.put).toHaveBeenCalledWith('/api/option/', {
+    key: 'balance_alert_setting.repeat_minutes',
+    value: 30,
+  })
+  expect(api.put).toHaveBeenCalledWith('/api/option/', {
+    key: 'balance_alert_setting.report_enabled',
+    value: true,
+  })
 })

@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Send a balance report on every check": "Envoyer un relevé de solde à chaque vérification",
+    "Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.": "Chaque vérification envoie aussi le solde de chaque canal. Un solde bas n'envoie que le rappel de solde bas, à l'intervalle de répétition.",
+    "Repeat reminder every (minutes)": "Répéter le rappel toutes les (minutes)",
+    "While a balance stays low, remind again after this long. Reminders go out on checks, so it cannot be shorter than the check interval.": "Tant que le solde reste bas, relancer après ce délai. Les rappels partent lors des vérifications, donc pas plus souvent que l'intervalle de vérification.",
     "Divide by": "Diviser par",
     "Enter a number greater than 0": "Saisissez un nombre supérieur à 0",
     "Divide by converts the upstream number into your unit, such as 10 when upstream reports 10 credits per yuan. The threshold and messages use the converted amount.": "« Diviser par » convertit le nombre du fournisseur dans votre unité, par exemple 10 si le fournisseur compte 10 crédits par yuan. Le seuil et les messages utilisent le montant converti.",

@@ -84,7 +84,8 @@ const createBalanceAlertSchema = (t: (key: string) => string) =>
       ),
     feishu_sign_secret: z.string(),
     interval_minutes: z.number().int().min(1),
-    repeat_hours: z.number().int().min(1),
+    repeat_minutes: z.number().int().min(1),
+    report_enabled: z.boolean(),
     monitors: z.array(
       z.object({
         channel_id: z.number().int().min(1, t('Enter a channel ID')),
@@ -109,7 +110,8 @@ const SCALAR_FIELDS = [
   'enabled',
   'feishu_webhook_url',
   'interval_minutes',
-  'repeat_hours',
+  'repeat_minutes',
+  'report_enabled',
 ] as const
 
 /**
@@ -171,7 +173,7 @@ export function BalanceAlertSettingsSection(
   }
 
   const numberField = (
-    name: 'interval_minutes' | 'repeat_hours',
+    name: 'interval_minutes' | 'repeat_minutes',
     label: string,
     description: string
   ) => (
@@ -213,6 +215,30 @@ export function BalanceAlertSettingsSection(
                   <FormLabel>{t('Enable balance alerts')}</FormLabel>
                   <FormDescription>
                     {t('Check the channels below on a schedule.')}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='report_enabled'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>
+                    {t('Send a balance report on every check')}
+                  </FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.'
+                    )}
                   </FormDescription>
                 </SettingsSwitchContent>
                 <FormControl>
@@ -275,9 +301,9 @@ export function BalanceAlertSettingsSection(
               'How often balances are read.'
             )}
             {numberField(
-              'repeat_hours',
-              'Repeat reminder every (hours)',
-              'While a balance stays low, remind again after this long.'
+              'repeat_minutes',
+              'Repeat reminder every (minutes)',
+              'While a balance stays low, remind again after this long. Reminders go out on checks, so it cannot be shorter than the check interval.'
             )}
           </SettingsFormGrid>
 

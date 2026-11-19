@@ -421,6 +421,8 @@ export type OperationsSettings = {
   'balance_alert_setting.feishu_sign_secret': string
   'balance_alert_setting.interval_minutes': number
   'balance_alert_setting.repeat_hours': number
+  'balance_alert_setting.repeat_minutes': number
+  'balance_alert_setting.report_enabled': boolean
   'balance_alert_setting.monitors': string
   'media_storage.enabled': boolean
   'media_storage.overseas_endpoint': string

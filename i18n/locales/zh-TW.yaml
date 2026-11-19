@@ -133,3 +133,4 @@ balance_alert.low: "【{{.System}}】上游餘額不足\n管道：{{.Name}}（#{
 balance_alert.recovered: "【{{.System}}】上游餘額已恢復\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "【{{.System}}】上游餘額連續 {{.Count}} 次查詢失敗\n管道：{{.Name}}（#{{.Id}}）\n錯誤：{{.Error}}"
 balance_alert.test: "【{{.System}}】測試訊息：上游餘額提醒已接通。"
+balance_alert.report: "【{{.System}}】上游餘額播報\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}"
