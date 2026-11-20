@@ -270,15 +270,17 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
+          {/* Spans the same width as the sidebar and list below: the text
+           * column starts at their left edge and the VIP card ends at their
+           * right edge. */}
           <header
             className={cn(
-              'mx-auto mb-5 grid gap-6 pt-5 sm:mb-10 sm:pt-10',
-              showVipCard
-                ? 'max-w-6xl lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-12'
-                : 'max-w-3xl'
+              'mb-5 grid gap-6 pt-5 sm:mb-10 sm:pt-10',
+              showVipCard &&
+                'lg:grid-cols-[minmax(0,52rem)_420px] lg:justify-between lg:gap-12'
             )}
           >
-            <div className='flex min-w-0 flex-col justify-center gap-4'>
+            <div className='flex max-w-[52rem] min-w-0 flex-col justify-center gap-4'>
               <span className='bg-card text-brand dark:text-brand-on-dark inline-flex h-7 items-center gap-2 self-start rounded-full border px-3 text-xs font-semibold'>
                 <span aria-hidden className='bg-brand size-1.5 rounded-full' />
                 {t('{{count}} models online', { count: models?.length || 0 })}
