@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí nhà cung cấp ưu tiên số nhà cung cấp thực trừ, nếu không có thì theo giá nhập ghi ở mỗi lần tính phí. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ; dấu gạch nghĩa là chưa đọc được số dư.",
     "actual charge": "phí thực",
     "What the supplier charged, read from its logs.": "Số nhà cung cấp đã trừ, đọc từ nhật ký của họ.",
-    "At the supply price it comes to {{amount}}.": "Theo giá nhập là {{amount}}."
+    "At the supply price it comes to {{amount}}.": "Theo giá nhập là {{amount}}.",
+    "{{minutes}} min {{seconds}} s": "{{minutes}} phút {{seconds}} giây",
+    "Success rate, last 24 h": "Tỷ lệ thành công 24 giờ qua",
+    "Avg. generation time": "Thời gian tạo trung bình",
+    "{{count}} models online": "{{count}} mô hình trực tuyến",
+    "Lower price on every call": "Rẻ hơn ở mỗi lần gọi",
+    "Video, image and chat models alike": "Áp dụng cho mô hình video, hình ảnh và chat",
+    "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tác vụ cùng lúc, tiêu chuẩn là {{standard}}",
+    "More stable upstream, priority at peak hours": "Upstream ổn định hơn, ưu tiên giờ cao điểm",
+    "Served first": "Ưu tiên",
+    "Unlocked by top-ups · no monthly fee": "Mở khóa bằng nạp tiền · không phí tháng",
+    "off every model": "mọi mô hình",
+    "already applied": "đã áp dụng",
+    "on every request": "mỗi yêu cầu",
+    "View my benefits": "Xem quyền lợi của tôi"
   }
 }

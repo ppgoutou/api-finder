@@ -22,8 +22,9 @@ import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
-import { MembershipPriceNote, useMembership } from '@/features/membership'
+import { MembershipPriceCard, useMembership } from '@/features/membership'
 import type { StudioKind } from '@/features/video-studio/types'
+import { cn } from '@/lib/utils'
 
 import {
   LoadingSkeleton,
@@ -36,6 +37,7 @@ import {
   ModelCardGrid,
   ModelDistribution,
   PricingHeroNote,
+  PricingLiveStats,
 } from './components'
 import { VIEW_MODES } from './constants'
 import { useFilters } from './hooks/use-filters'
@@ -59,6 +61,7 @@ const LazyModelDetailsDrawer = lazy(() =>
 export function Pricing() {
   const { t } = useTranslation()
   const { data: membership } = useMembership()
+  const showVipCard = Boolean(membership?.enabled)
   const vipPrice = useMemo((): VipPriceContext | undefined => {
     if (!membership?.enabled || !membership.vip_pairs?.length) return undefined
     return {
@@ -267,25 +270,41 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          <header className='mx-auto mb-5 max-w-3xl pt-5 text-center sm:mb-10 sm:pt-10'>
-            <h1 className='font-display text-heading-1'>{t('Model Square')}</h1>
-            <p className='text-muted-foreground/80 mt-3 text-sm sm:mt-4 sm:text-base'>
-              {t('This site currently has {{count}} models enabled', {
-                count: models?.length || 0,
-              })}
-            </p>
-            <ModelDistribution sections={distributionSections} />
-            <PricingHeroNote models={models || []} />
-            <MembershipPriceNote info={membership} />
-            <SearchBar
-              value={searchInput}
-              onChange={setSearchInput}
-              onClear={clearSearch}
-              placeholder={t(
-                'Search model name, provider, endpoint, or tag...'
-              )}
-              className='mx-auto mt-4 max-w-2xl sm:mt-6'
-            />
+          <header
+            className={cn(
+              'mx-auto mb-5 grid gap-6 pt-5 sm:mb-10 sm:pt-10',
+              showVipCard
+                ? 'max-w-6xl lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-12'
+                : 'max-w-3xl'
+            )}
+          >
+            <div className='flex min-w-0 flex-col justify-center gap-4'>
+              <span className='bg-card text-brand dark:text-brand-on-dark inline-flex h-7 items-center gap-2 self-start rounded-full border px-3 text-xs font-semibold'>
+                <span aria-hidden className='bg-brand size-1.5 rounded-full' />
+                {t('{{count}} models online', { count: models?.length || 0 })}
+              </span>
+              <h1 className='font-display text-heading-1'>
+                {t('Model Square')}
+              </h1>
+              <PricingHeroNote
+                models={models || []}
+                className='mx-0 mt-0 items-start'
+              />
+              <PricingLiveStats />
+              <SearchBar
+                value={searchInput}
+                onChange={setSearchInput}
+                onClear={clearSearch}
+                placeholder={t(
+                  'Search model name, provider, endpoint, or tag...'
+                )}
+              />
+              <ModelDistribution
+                sections={distributionSections}
+                className='mx-0 mt-0 max-w-none justify-start'
+              />
+            </div>
+            <MembershipPriceCard info={membership} className='self-center' />
           </header>
 
           <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>

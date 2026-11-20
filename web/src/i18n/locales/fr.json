@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Le revenu est ce qui a été facturé aux utilisateurs sur le canal. Les dépenses fournisseur sont ce que le fournisseur a déclaré facturer, sinon le prix fournisseur enregistré à chaque débit. Le taux de réussite ne couvre que les tâches asynchrones ; un tiret signifie qu’aucun solde n’a été lu.",
     "actual charge": "débit réel",
     "What the supplier charged, read from its logs.": "Ce que le fournisseur a facturé, lu dans ses journaux.",
-    "At the supply price it comes to {{amount}}.": "Au prix fournisseur, cela fait {{amount}}."
+    "At the supply price it comes to {{amount}}.": "Au prix fournisseur, cela fait {{amount}}.",
+    "{{minutes}} min {{seconds}} s": "{{minutes}} min {{seconds}} s",
+    "Success rate, last 24 h": "Taux de réussite, dernières 24 h",
+    "Avg. generation time": "Durée moyenne de génération",
+    "{{count}} models online": "{{count}} modèles en ligne",
+    "Lower price on every call": "Moins cher à chaque appel",
+    "Video, image and chat models alike": "Modèles vidéo, image et chat compris",
+    "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tâches simultanées, contre {{standard}} en standard",
+    "More stable upstream, priority at peak hours": "Amont plus stable, prioritaire aux heures de pointe",
+    "Served first": "Prioritaire",
+    "Unlocked by top-ups · no monthly fee": "Débloqué par les recharges · sans abonnement",
+    "off every model": "sur tous les modèles",
+    "already applied": "déjà appliqué",
+    "on every request": "à chaque requête",
+    "View my benefits": "Voir mes avantages"
   }
 }

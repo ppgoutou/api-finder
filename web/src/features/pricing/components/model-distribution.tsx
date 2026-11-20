@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 import {
   UNCATEGORIZED_CATEGORY,
@@ -28,6 +29,7 @@ import {
 type ModelDistributionProps = {
   /** Sections built from every enabled model, not the filtered list. */
   sections: PricingCategorySection[]
+  className?: string
 }
 
 /** Hero line naming every category that holds an enabled model. */
@@ -38,7 +40,10 @@ export function ModelDistribution(props: ModelDistributionProps) {
   return (
     <ul
       aria-label={t('Model distribution')}
-      className='mx-auto mt-3 flex max-w-2xl flex-wrap justify-center gap-1.5'
+      className={cn(
+        'mx-auto mt-3 flex max-w-2xl flex-wrap justify-center gap-1.5',
+        props.className
+      )}
     >
       {props.sections.map((section) => (
         <li key={section.id}>

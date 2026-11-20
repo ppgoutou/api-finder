@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "売上はこのチャネルでユーザーに課金した額です。上流支出は仕入れ先の実請求を優先し、取得できない場合は課金ごとに記録した仕入れ価格で計算します。タスク成功率は非同期タスクのみ。「—」は残高未取得です。",
     "actual charge": "実請求",
     "What the supplier charged, read from its logs.": "仕入れ先の実請求額（仕入れ先のログから取得）。",
-    "At the supply price it comes to {{amount}}.": "仕入れ価格では {{amount}}。"
+    "At the supply price it comes to {{amount}}.": "仕入れ価格では {{amount}}。",
+    "{{minutes}} min {{seconds}} s": "{{minutes}}分{{seconds}}秒",
+    "Success rate, last 24 h": "直近 24 時間の生成成功率",
+    "Avg. generation time": "平均生成時間",
+    "{{count}} models online": "{{count}} モデル稼働中",
+    "Lower price on every call": "すべての呼び出しがお得に",
+    "Video, image and chat models alike": "動画・画像・チャットモデルすべて対象",
+    "{{vip}} tasks at once, standard is {{standard}}": "同時に {{vip}} タスク、通常会員は {{standard}}",
+    "More stable upstream, priority at peak hours": "より安定した上流、混雑時も優先",
+    "Served first": "優先",
+    "Unlocked by top-ups · no monthly fee": "チャージで自動昇格 · 月額料金なし",
+    "off every model": "全モデル",
+    "already applied": "適用済み",
+    "on every request": "毎回お得",
+    "View my benefits": "特典を見る"
   }
 }
