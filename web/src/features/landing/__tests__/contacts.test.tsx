@@ -33,8 +33,8 @@ describe('LandingContacts', () => {
   it('links the Discord card to the community invite in a new tab', () => {
     render(<LandingContacts />)
 
-    const discord = screen.getByRole('link', { name: /discord\.gg\/4dVPvrx2J/ })
-    expect(discord).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
+    const discord = screen.getByRole('link', { name: /discord\.gg\/4ThRgPbn6Z/ })
+    expect(discord).toHaveAttribute('href', 'https://discord.gg/4ThRgPbn6Z')
     expect(discord).toHaveAttribute('target', '_blank')
   })
 

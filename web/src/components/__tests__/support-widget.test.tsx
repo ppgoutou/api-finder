@@ -94,7 +94,7 @@ describe('support widget', () => {
     const link = await screen.findByRole('link', {
       name: /Join our Discord community/,
     })
-    expect(link).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
+    expect(link).toHaveAttribute('href', 'https://discord.gg/4ThRgPbn6Z')
     expect(link).toHaveAttribute('target', '_blank')
   })
 

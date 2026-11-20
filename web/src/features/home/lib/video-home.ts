@@ -28,7 +28,7 @@ export const HOME_MEDIA_BASE_URL: string = ''
 export const SUPPORT_TELEGRAM = 'APIFinder_Support'
 
 /** Invite link to the official Discord community. */
-export const SUPPORT_DISCORD_URL = 'https://discord.gg/4dVPvrx2J'
+export const SUPPORT_DISCORD_URL = 'https://discord.gg/4ThRgPbn6Z'
 
 /**
  * Seedance models presented on the home page, in display order. The

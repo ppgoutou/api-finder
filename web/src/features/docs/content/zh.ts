@@ -407,7 +407,7 @@ export const ZH_DOCS: DocContent = {
           text: `以下两种方式任选其一，选您方便的即可：
 
 - Telegram：[@APIFinder_Support](https://t.me/APIFinder_Support)
-- Discord 官方社区：[discord.gg/4dVPvrx2J](https://discord.gg/4dVPvrx2J)
+- Discord 官方社区：[discord.gg/4ThRgPbn6Z](https://discord.gg/4ThRgPbn6Z)
 
 反馈问题时请附上任务 ID 和请求时间，便于排查。官方人员不会主动私聊，也不会索要您的账号密码或 API 密钥。`,
         },

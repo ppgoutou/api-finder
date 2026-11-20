@@ -424,7 +424,7 @@ Download links are temporary. Download and save the files soon after they are re
           text: `Reach us on whichever app is convenient for you:
 
 - Telegram: [@APIFinder_Support](https://t.me/APIFinder_Support)
-- Discord community: [discord.gg/4dVPvrx2J](https://discord.gg/4dVPvrx2J)
+- Discord community: [discord.gg/4ThRgPbn6Z](https://discord.gg/4ThRgPbn6Z)
 
 Include the task ID and request time when you report a problem. Our staff never message you first and never ask for your password or API key.`,
         },
