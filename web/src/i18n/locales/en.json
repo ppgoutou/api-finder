@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "Success rate, last 24 h",
     "Avg. generation time": "Avg. generation time",
     "{{count}} models online": "{{count}} models online",
+    "Models online": "Models online",
+    "Dedicated lines": "Dedicated lines",
     "Lower price on every call": "Lower price on every call",
     "Video, image and chat models alike": "Video, image and chat models alike",
     "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tasks at once, standard is {{standard}}",

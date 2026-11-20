@@ -40,14 +40,14 @@ export function ModelDistribution(props: ModelDistributionProps) {
   return (
     <ul
       aria-label={t('Model distribution')}
-      className={cn(
-        'mx-auto mt-3 flex max-w-2xl flex-wrap justify-center gap-1.5',
-        props.className
-      )}
+      className={cn('flex flex-wrap gap-2', props.className)}
     >
       {props.sections.map((section) => (
         <li key={section.id}>
-          <Badge variant='outline' className='bg-background/60 h-6 px-2.5'>
+          <Badge
+            variant='outline'
+            className='bg-card text-body-sm h-7 px-3 font-medium'
+          >
             {section.id === UNCATEGORIZED_CATEGORY
               ? t('Other models')
               : section.name}

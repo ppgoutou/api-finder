@@ -45,7 +45,7 @@ describe('pricing live stats', () => {
   })
 
   it('shows the success rate with one decimal and the average time in minutes and seconds', () => {
-    render(<PricingLiveStats />)
+    render(<PricingLiveStats modelCount={15} />)
 
     const stats = getLiveStats(START)
     expect(shown('Success rate, last 24 h')).toBe(
@@ -56,8 +56,14 @@ describe('pricing live stats', () => {
     )
   })
 
+  it('shows how many models are online next to the live figures', () => {
+    render(<PricingLiveStats modelCount={15} />)
+
+    expect(shown('Models online')).toBe('15')
+  })
+
   it('switches to the next figures when the next minute starts', () => {
-    render(<PricingLiveStats />)
+    render(<PricingLiveStats modelCount={15} />)
 
     act(() => {
       vi.advanceTimersByTime(30_000)

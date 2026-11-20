@@ -19,7 +19,9 @@ For commercial licensing, please contact support@quantumnous.com
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useCountUp } from '@/hooks/use-count-up'
 import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import { getLiveStats, msUntilNextMinute } from '../lib/live-stats'
@@ -41,86 +43,96 @@ function useLiveStats() {
   return stats
 }
 
-const STAT_CARD =
-  'bg-card flex min-w-0 items-center gap-2.5 rounded-card border px-3 py-2.5 text-left sm:gap-3 sm:px-4 sm:py-3'
+const STAT =
+  'flex min-w-0 items-center gap-3 border-border not-first:border-l not-first:pl-4 sm:gap-3.5 sm:not-first:pl-7 sm:not-last:pr-7 not-last:pr-4'
 const STAT_ICON =
-  'relative flex size-8 shrink-0 items-center justify-center rounded-control sm:size-10'
-// Three bars; index.css staggers them so they rise one after another.
-const LIVE_BARS = [0, 1, 2]
+  'relative hidden size-11 shrink-0 items-center justify-center rounded-control sm:flex'
+const STAT_LABEL = 'text-muted-foreground text-caption sm:text-body-sm'
 const STAT_VALUE =
-  'font-display text-xl leading-tight font-bold tracking-tight tabular-nums sm:text-2xl'
+  'font-display text-heading-3 sm:text-metric tracking-tight whitespace-nowrap tabular-nums'
+const ICON_SVG = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  className: 'size-5.5',
+  'aria-hidden': true,
+} as const
 
 /**
- * The success rate and average generation time under the model plaza title,
- * each with a moving icon that marks it as live.
+ * The live figures beside the model plaza title: how many models are online,
+ * the success rate and the average generation time, each with an icon that
+ * keeps moving so the row reads as live. Figures count up the first time.
  */
-export function PricingLiveStats(props: { className?: string }) {
+export function PricingLiveStats(props: {
+  modelCount: number
+  className?: string
+}) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const stats = useLiveStats()
-  const successRate = new Intl.NumberFormat(locale, {
+  const modelCount = useCountUp(props.modelCount)
+  const successRate = useCountUp(stats.successRate)
+  const shownRate = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(stats.successRate)
+  }).format(successRate)
   const duration = t('{{minutes}} min {{seconds}} s', {
     minutes: Math.floor(stats.durationSeconds / 60),
     seconds: stats.durationSeconds % 60,
   })
 
   return (
-    <dl className={cn('grid grid-cols-2 gap-2 sm:gap-3', props.className)}>
-      <div className={STAT_CARD}>
-        <span className={cn(STAT_ICON, 'bg-success/10 text-success')}>
-          <span
-            aria-hidden
-            className='bg-success absolute top-1.5 right-1.5 size-1.5 animate-ping rounded-full motion-reduce:animate-none'
-          />
-          <span
-            aria-hidden
-            className='bg-success absolute top-1.5 right-1.5 size-1.5 rounded-full'
-          />
-          <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='size-4 sm:size-5'
-            aria-hidden
-          >
-            <path d='M3 12h4l3-7 4 14 3-7h4' />
+    <dl className={cn('grid grid-cols-[repeat(3,auto)]', props.className)}>
+      <div className={STAT}>
+        <span className={cn(STAT_ICON, 'bg-brand-soft text-brand')}>
+          <svg {...ICON_SVG}>
+            <path
+              className='plaza-icon-drift-up'
+              d='M12 3 3 7.5 12 12l9-4.5z'
+            />
+            <g className='plaza-icon-drift-down'>
+              <path d='m3 12 9 4.5 9-4.5' opacity={0.75} />
+              <path d='m3 16.5 9 4.5 9-4.5' opacity={0.5} />
+            </g>
           </svg>
         </span>
         <div className='min-w-0'>
-          <dt className='text-muted-foreground text-xs'>
-            {t('Success rate, last 24 h')}
-          </dt>
-          <dd className={cn(STAT_VALUE, 'text-success')}>{successRate}%</dd>
+          <dt className={STAT_LABEL}>{t('Models online')}</dt>
+          <dd className={STAT_VALUE}>
+            {formatNumber(Math.round(modelCount), locale)}
+          </dd>
         </div>
       </div>
-      <div className={STAT_CARD}>
-        <span
-          aria-hidden
-          className={cn(
-            STAT_ICON,
-            'bg-brand-soft items-end gap-0.75 pb-2 sm:pb-2.75'
-          )}
-        >
-          {LIVE_BARS.map((bar) => (
-            <span
-              key={bar}
-              className='bg-brand live-stat-bar h-3 w-0.75 rounded-full sm:h-4 sm:w-1'
-            />
-          ))}
+      <div className={STAT}>
+        <span className={cn(STAT_ICON, 'bg-success/10 text-success')}>
+          <span
+            aria-hidden
+            className='plaza-icon-ring border-success absolute inset-2 rounded-full border-2'
+          />
+          <svg {...ICON_SVG}>
+            <circle cx='12' cy='12' r='9' opacity={0.35} />
+            <path className='plaza-icon-check' d='m8 12.5 2.8 2.8L16.5 9.5' />
+          </svg>
         </span>
         <div className='min-w-0'>
-          <dt className='text-muted-foreground text-xs'>
-            {t('Avg. generation time')}
-          </dt>
-          <dd className={cn(STAT_VALUE, 'text-brand dark:text-brand-on-dark')}>
-            {duration}
-          </dd>
+          <dt className={STAT_LABEL}>{t('Success rate, last 24 h')}</dt>
+          <dd className={cn(STAT_VALUE, 'text-success')}>{shownRate}%</dd>
+        </div>
+      </div>
+      <div className={STAT}>
+        <span className={cn(STAT_ICON, 'bg-vip-soft text-vip')}>
+          <svg {...ICON_SVG}>
+            <circle cx='12' cy='12' r='9' />
+            <path className='plaza-icon-hand' d='M12 12V7' />
+            <circle cx='12' cy='12' r='1' fill='currentColor' />
+          </svg>
+        </span>
+        <div className='min-w-0'>
+          <dt className={STAT_LABEL}>{t('Avg. generation time')}</dt>
+          <dd className={STAT_VALUE}>{duration}</dd>
         </div>
       </div>
     </dl>

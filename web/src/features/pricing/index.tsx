@@ -24,7 +24,6 @@ import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
 import { MembershipPriceCard, useMembership } from '@/features/membership'
 import type { StudioKind } from '@/features/video-studio/types'
-import { cn } from '@/lib/utils'
 
 import {
   LoadingSkeleton,
@@ -61,7 +60,6 @@ const LazyModelDetailsDrawer = lazy(() =>
 export function Pricing() {
   const { t } = useTranslation()
   const { data: membership } = useMembership()
-  const showVipCard = Boolean(membership?.enabled)
   const vipPrice = useMemo((): VipPriceContext | undefined => {
     if (!membership?.enabled || !membership.vip_pairs?.length) return undefined
     return {
@@ -270,30 +268,25 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          {/* Spans the same width as the sidebar and list below: the text
-           * column starts at their left edge and the VIP card ends at their
-           * right edge. */}
-          <header
-            className={cn(
-              'mb-5 grid gap-6 pt-5 sm:mb-10 sm:pt-10',
-              showVipCard &&
-                'lg:grid-cols-[minmax(0,52rem)_420px] lg:justify-between lg:gap-12'
-            )}
-          >
-            <div className='flex max-w-[52rem] min-w-0 flex-col justify-center gap-4'>
-              <span className='bg-card text-brand dark:text-brand-on-dark inline-flex h-7 items-center gap-2 self-start rounded-full border px-3 text-xs font-semibold'>
-                <span aria-hidden className='bg-brand size-1.5 rounded-full' />
-                {t('{{count}} models online', { count: models?.length || 0 })}
-              </span>
-              <h1 className='font-display text-heading-1'>
-                {t('Model Square')}
-              </h1>
+          {/* Option A of the plaza redesign: title and live figures on one
+           * row, the note and the search below at full width, then the VIP
+           * band. Each row rises in after the one above it. */}
+          <header className='mb-6 flex flex-col gap-6 pt-5 sm:mb-10 sm:gap-8 sm:pt-10'>
+            <div className='flex flex-col gap-4'>
+              <div className='plaza-rise flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-12'>
+                <h1 className='font-display text-heading-1'>
+                  {t('Model Square')}
+                </h1>
+                <PricingLiveStats modelCount={models?.length || 0} />
+              </div>
               <PricingHeroNote
                 models={models || []}
-                className='mx-0 mt-0 items-start'
+                className='plaza-rise [animation-delay:0.08s]'
               />
-              <PricingLiveStats />
+            </div>
+            <div className='plaza-rise flex flex-col gap-3.5 [animation-delay:0.16s]'>
               <SearchBar
+                size='lg'
                 value={searchInput}
                 onChange={setSearchInput}
                 onClear={clearSearch}
@@ -301,12 +294,12 @@ export function Pricing() {
                   'Search model name, provider, endpoint, or tag...'
                 )}
               />
-              <ModelDistribution
-                sections={distributionSections}
-                className='mx-0 mt-0 max-w-none justify-start'
-              />
+              <ModelDistribution sections={distributionSections} />
             </div>
-            <MembershipPriceCard info={membership} className='self-center' />
+            <MembershipPriceCard
+              info={membership}
+              className='plaza-rise [animation-delay:0.24s]'
+            />
           </header>
 
           <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>

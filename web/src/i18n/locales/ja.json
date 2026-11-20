@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "直近 24 時間の生成成功率",
     "Avg. generation time": "平均生成時間",
     "{{count}} models online": "{{count}} モデル稼働中",
+    "Models online": "稼働中のモデル",
+    "Dedicated lines": "専用回線",
     "Lower price on every call": "すべての呼び出しがお得に",
     "Video, image and chat models alike": "動画・画像・チャットモデルすべて対象",
     "{{vip}} tasks at once, standard is {{standard}}": "同時に {{vip}} タスク、通常会員は {{standard}}",

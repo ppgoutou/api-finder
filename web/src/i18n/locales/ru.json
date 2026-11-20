@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "Успешность за 24 ч",
     "Avg. generation time": "Среднее время генерации",
     "{{count}} models online": "Моделей онлайн: {{count}}",
+    "Models online": "Моделей онлайн",
+    "Dedicated lines": "Выделенные линии",
     "Lower price on every call": "Дешевле при каждом вызове",
     "Video, image and chat models alike": "Видео, изображения и чат-модели",
     "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} задач одновременно, в стандарте {{standard}}",
