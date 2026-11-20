@@ -16,9 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -40,45 +41,86 @@ import {
   opsTrendTopupTotal,
   percentOf,
 } from '../../lib/ops'
+import { buildOpsCumulativeSpec } from '../../lib/ops-insights'
 import type { OpsChannelStats, OpsTrendDay } from '../../types'
 import { PanelWrapper } from '../ui/panel-wrapper'
 import { OpsChart } from './ops-chart'
 
 const CELL = 'text-right font-mono tabular-nums'
 
+type OpsTrendView = 'daily' | 'cumulative'
+
+/** Daily top-ups and usage, or their running totals, in one panel. */
 export function OpsTrendPanel(props: {
   trend: OpsTrendDay[]
   loading: boolean
   usedQuota: number
 }) {
   const { t } = useTranslation()
+  const [view, setView] = useState<OpsTrendView>('daily')
   const usageLabel = t('Site usage')
   const redemptionLabel = t('Redemption codes')
   const topupTotalLabel = t('Total top-ups')
+  const cumulativeTopupsLabel = t('Cumulative top-ups')
+  const cumulativeUsageLabel = t('Cumulative usage')
   const spec = useMemo(
     () =>
-      buildOpsTrendSpec(props.trend, {
-        usage: usageLabel,
-        redemption: redemptionLabel,
-        topupTotal: topupTotalLabel,
-        formatValue: formatOpsMoney,
-      }),
-    [props.trend, usageLabel, redemptionLabel, topupTotalLabel]
+      view === 'daily'
+        ? buildOpsTrendSpec(props.trend, {
+            usage: usageLabel,
+            redemption: redemptionLabel,
+            topupTotal: topupTotalLabel,
+            formatValue: formatOpsMoney,
+          })
+        : buildOpsCumulativeSpec(props.trend, {
+            topups: cumulativeTopupsLabel,
+            usage: cumulativeUsageLabel,
+            formatValue: formatOpsMoney,
+          }),
+    [
+      view,
+      props.trend,
+      usageLabel,
+      redemptionLabel,
+      topupTotalLabel,
+      cumulativeTopupsLabel,
+      cumulativeUsageLabel,
+    ]
   )
+  const title =
+    view === 'daily'
+      ? t('Daily top-ups and usage')
+      : t('Cumulative top-ups and usage')
 
   return (
     <PanelWrapper
-      title={t('Daily top-ups and usage')}
-      description={t('Top-ups {{topups}}, usage {{usage}}', {
-        topups: formatOpsMoney(opsTrendTopupTotal(props.trend)),
-        usage: formatOpsMoney(props.usedQuota),
-      })}
+      title={title}
+      description={
+        view === 'daily'
+          ? t('Top-ups {{topups}}, usage {{usage}}', {
+              topups: formatOpsMoney(opsTrendTopupTotal(props.trend)),
+              usage: formatOpsMoney(props.usedQuota),
+            })
+          : t('The gap between the lines is balance users have not spent yet')
+      }
       loading={props.loading}
+      empty={props.trend.length === 0}
       height='h-80'
       contentClassName='h-80 p-1.5 sm:p-2'
-      className='min-w-0 xl:col-span-2'
+      className='min-w-0'
+      headerActions={
+        <Tabs
+          value={view}
+          onValueChange={(value) => setView(value as OpsTrendView)}
+        >
+          <TabsList>
+            <TabsTrigger value='daily'>{t('Daily')}</TabsTrigger>
+            <TabsTrigger value='cumulative'>{t('Cumulative')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      }
     >
-      <OpsChart spec={spec} label={t('Daily top-ups and usage')} />
+      <OpsChart spec={spec} label={title} />
     </PanelWrapper>
   )
 }

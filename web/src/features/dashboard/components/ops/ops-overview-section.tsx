@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatPercent } from '@/lib/format'
 
-import { opsDashboardProfit } from '../../lib/ops-insights'
+import { formatTaskMinutes, opsDashboardProfit } from '../../lib/ops-insights'
 import { formatOpsMoney,
   opsChangeNote, percentOf } from '../../lib/ops'
 import type { OpsPeriodStats } from '../../types'
@@ -33,9 +33,15 @@ import {
   type OpsStat,
 } from './ops-stat-grid'
 
+/** Cash revenue: every paid top-up, redemption codes included. */
+function cashRevenue(period: OpsPeriodStats | undefined) {
+  if (!period) return 0
+  return period.topup_quota + period.redemption_quota
+}
+
 function arppu(period: OpsPeriodStats | undefined) {
   if (!period || period.payers <= 0) return null
-  return period.topup_quota / period.payers
+  return cashRevenue(period) / period.payers
 }
 
 function taskSuccessRate(period: OpsPeriodStats | undefined) {
@@ -51,6 +57,8 @@ export function OpsOverviewSection(props: OpsSectionProps) {
   const previous = data?.previous
   const profit = data ? opsDashboardProfit(data, props.allTime) : null
   const compare = !props.allTime
+  const change = (value: number, before: number) =>
+    compare ? opsChangeNote(value, before) : {}
   const currentArppu = arppu(current)
   const previousArppu = arppu(previous)
   const currentRate = taskSuccessRate(current)
@@ -59,45 +67,50 @@ export function OpsOverviewSection(props: OpsSectionProps) {
     compare && currentRate != null && previousRate != null
       ? currentRate - previousRate
       : null
+  const avgSeconds = current?.task_avg_seconds ?? 0
+  const previousAvgSeconds = previous?.task_avg_seconds ?? 0
+  // A longer generation time is worse.
+  const avgChange =
+    compare && avgSeconds > 0 && previousAvgSeconds > 0
+      ? opsChangeNote(avgSeconds, previousAvgSeconds, false)
+      : {}
 
   const stats: OpsStat[] = [
     {
       key: 'cash',
       label: t('Cash revenue'),
-      value: formatOpsMoney(current?.topup_quota ?? 0),
-      hint: t('Paid orders, without redemption codes'),
-      ...(compare
-        ? opsChangeNote(current?.topup_quota ?? 0, previous?.topup_quota ?? 0)
-        : {}),
+      value: formatOpsMoney(cashRevenue(current)),
+      hint: t('Paid top-ups, redemption codes included'),
+      ...change(cashRevenue(current), cashRevenue(previous)),
     },
     {
       key: 'profit',
       label: t('Net profit (estimated)'),
       value: profit?.net == null ? '—' : formatOpsMoney(profit.net),
-      hint: t('After upstream cost, Stripe fees and test credit'),
+      hint: t('Margin {{rate}}', { rate: formatPercent(profit?.margin) }),
+    },
+    {
+      key: 'registered',
+      label: compare ? t('New users') : t('Registered users'),
+      value: formatNumber(current?.new_users ?? 0, locale),
+      hint: compare ? t('Registered in this period') : undefined,
+      ...change(current?.new_users ?? 0, previous?.new_users ?? 0),
     },
     {
       key: 'payers',
       label: t('Paying users'),
       value: formatNumber(current?.payers ?? 0, locale),
-      ...(compare
-        ? opsChangeNote(current?.payers ?? 0, previous?.payers ?? 0)
-        : {}),
+      hint: compare ? t('Paid in this period') : t('Paid at least once'),
+      ...change(current?.payers ?? 0, previous?.payers ?? 0),
     },
     {
       key: 'arppu',
       label: 'ARPPU',
       value: currentArppu == null ? '—' : formatOpsMoney(currentArppu),
       hint: t('Cash revenue per paying user'),
-      ...(compare && currentArppu != null && previousArppu != null
-        ? opsChangeNote(currentArppu, previousArppu)
+      ...(currentArppu != null && previousArppu != null
+        ? change(currentArppu, previousArppu)
         : {}),
-    },
-    {
-      key: 'liability',
-      label: t('Unspent balance'),
-      value: formatOpsMoney(data?.wallet.balance_quota ?? 0),
-      hint: t('Paid in advance, still owed as service'),
     },
     {
       key: 'tasks',
@@ -111,6 +124,21 @@ export function OpsOverviewSection(props: OpsSectionProps) {
             }),
             noteTone: rateChange >= 0 ? ('good' as const) : ('bad' as const),
           }),
+    },
+    {
+      key: 'duration',
+      label: t('Average generation time'),
+      value:
+        avgSeconds > 0
+          ? t('{{minutes}} min', { minutes: formatTaskMinutes(avgSeconds) })
+          : '—',
+      hint:
+        avgSeconds > 0
+          ? t('Median {{minutes}} min', {
+              minutes: formatTaskMinutes(current?.task_median_seconds ?? 0),
+            })
+          : t('No finished tasks in this period'),
+      ...avgChange,
     },
   ]
 
@@ -127,7 +155,7 @@ export function OpsOverviewSection(props: OpsSectionProps) {
           : t('All time, so there is no period to compare with')
       }
     >
-      <OpsStatGrid stats={stats} loading={props.loading} />
+      <OpsStatGrid stats={stats} loading={props.loading} columns={7} />
     </OpsSection>
   )
 }

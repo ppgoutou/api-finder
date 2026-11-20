@@ -31,7 +31,13 @@ import { getOpsDashboard } from '../../../api'
 import type { OpsDashboardData, OpsPeriodStats } from '../../../types'
 import { OpsDashboard } from '../ops-dashboard'
 
-vi.mock('../../../api', () => ({ getOpsDashboard: vi.fn() }))
+vi.mock('../../../api', () => ({
+  getOpsDashboard: vi.fn(),
+  getOpsSupplierBalances: vi.fn(async () => ({
+    success: true,
+    data: { suppliers: [], checked_at: 0 },
+  })),
+}))
 vi.mock('../ops-chart', () => ({ OpsChart: () => null }))
 
 const emptyPeriod: OpsPeriodStats = {
@@ -54,6 +60,8 @@ const emptyPeriod: OpsPeriodStats = {
   redemption_quota: 0,
   task_success: 0,
   task_failure: 0,
+  task_avg_seconds: 0,
+  task_median_seconds: 0,
 }
 
 const emptyDashboard: OpsDashboardData = {
@@ -98,6 +106,7 @@ const emptyDashboard: OpsDashboardData = {
     disputed_orders: 0,
     low_balance_channels: 0,
   },
+  live: { tasks_in_progress: 0, tasks_queued: 0 },
   funnel: { registered: 0, active: 0, paid: 0, repeat: 0 },
   sources: [],
   inviters: [],
@@ -148,7 +157,9 @@ describe('OpsDashboard date range', () => {
 
     expect(lastRequest()).toMatchObject({ all_time: true })
     expect(lastRequest()?.start_timestamp).toBeUndefined()
-    expect(await screen.findByText('All-channel reconciliation')).toBeTruthy()
+    expect(
+      await screen.findByText('Lifetime usage, including test credit')
+    ).toBeTruthy()
   })
 
   it('shows only the period figures once a period is picked', async () => {
@@ -166,7 +177,6 @@ describe('OpsDashboard date range', () => {
     await waitForRequests(2)
 
     await screen.findByText('Usage in this period, including test credit')
-    expect(screen.queryByText('All-channel reconciliation')).toBeNull()
     expect(screen.queryByText('Test credit used')).toBeNull()
   })
 

@@ -23,20 +23,16 @@ import { useTranslation } from 'react-i18next'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatPercent } from '@/lib/format'
 
-import {
-  buildOpsCumulativeSpec,
-  buildOpsTierSpec,
-} from '../../lib/ops-insights'
+import { buildOpsTierSpec } from '../../lib/ops-insights'
 import {
   channelTracksRefunds,
   formatOpsMoney,
   opsChangeNote,
   OPS_CHANNEL_ALL,
-  OPS_TREND_REDEMPTION,
   opsChannelLabel,
   percentOf,
 } from '../../lib/ops'
-import type { OpsTopupTier, OpsTrendDay } from '../../types'
+import type { OpsTopupTier } from '../../types'
 import { PanelWrapper } from '../ui/panel-wrapper'
 import { OpsChart } from './ops-chart'
 import {
@@ -61,6 +57,10 @@ export function OpsTopupsSection(props: OpsSectionProps) {
   const previous = data?.previous
   const channel = props.channel
   const refundsTracked = channelTracksRefunds(channel)
+  // Redemption codes are bought, so they count as payments here.
+  const payments = (current?.topup_orders ?? 0) + (current?.redemptions ?? 0)
+  const paidQuota =
+    (current?.topup_quota ?? 0) + (current?.redemption_quota ?? 0)
   const finishedOrders =
     (current?.topup_orders ?? 0) + (current?.closed_orders ?? 0)
 
@@ -90,19 +90,6 @@ export function OpsTopupsSection(props: OpsSectionProps) {
         : t('This channel has no refund flow'),
     },
     {
-      key: 'pending',
-      label: t('Awaiting payment'),
-      value: number(data?.pending.pending),
-      hint: t('Current, within 24 hours'),
-      note:
-        (data?.pending.overdue ?? 0) > 0
-          ? t('{{count}} overdue and not closed', {
-              count: data?.pending.overdue ?? 0,
-            })
-          : undefined,
-      noteTone: 'warning',
-    },
-    {
       key: 'rate',
       label: t('Payment success rate'),
       value: formatPercent(
@@ -113,11 +100,8 @@ export function OpsTopupsSection(props: OpsSectionProps) {
     {
       key: 'average',
       label: t('Average order value'),
-      value:
-        (current?.topup_orders ?? 0) > 0
-          ? money((current?.topup_quota ?? 0) / (current?.topup_orders ?? 1))
-          : '—',
-      hint: t('Top-up amount / paid orders'),
+      value: payments > 0 ? money(paidQuota / payments) : '—',
+      hint: t('Top-up amount / payments, redemption codes included'),
     },
   ]
 
@@ -133,25 +117,21 @@ export function OpsTopupsSection(props: OpsSectionProps) {
           channel === OPS_CHANNEL_ALL ? t('All') : opsChannelLabel(channel, t),
       })}
     >
-      <OpsStatGrid stats={stats} loading={props.loading} />
-      <div className='grid gap-3 xl:grid-cols-3'>
-        <OpsTrendPanel
-          trend={data?.trend ?? []}
-          loading={props.loading}
-          usedQuota={current?.used_quota ?? 0}
-        />
+      <OpsStatGrid stats={stats} loading={props.loading} columns={5} />
+      <OpsTrendPanel
+        trend={data?.trend ?? []}
+        loading={props.loading}
+        usedQuota={current?.used_quota ?? 0}
+      />
+      <div className='grid gap-3 xl:grid-cols-2'>
         <OpsChannelPanel
           channels={data?.channels ?? []}
           loading={props.loading}
           allTime={props.allTime}
         />
-      </div>
-      <div className='grid gap-3 xl:grid-cols-2'>
-        <OpsCumulativePanel trend={data?.trend ?? []} loading={props.loading} />
         <OpsTierPanel
           tiers={data?.topup_tiers ?? []}
           loading={props.loading}
-          codesOnly={channel === OPS_TREND_REDEMPTION}
         />
       </div>
       <OpsChannelTable channels={data?.channels ?? []} loading={props.loading} />
@@ -159,40 +139,7 @@ export function OpsTopupsSection(props: OpsSectionProps) {
   )
 }
 
-function OpsCumulativePanel(props: { trend: OpsTrendDay[]; loading: boolean }) {
-  const { t } = useTranslation()
-  const topupsLabel = t('Cumulative top-ups')
-  const usageLabel = t('Cumulative usage')
-  const spec = useMemo(
-    () =>
-      buildOpsCumulativeSpec(props.trend, {
-        topups: topupsLabel,
-        usage: usageLabel,
-        formatValue: formatOpsMoney,
-      }),
-    [props.trend, topupsLabel, usageLabel]
-  )
-
-  return (
-    <PanelWrapper
-      title={t('Cumulative top-ups and usage')}
-      description={t('The gap between the lines is balance users have not spent yet')}
-      loading={props.loading}
-      empty={props.trend.length === 0}
-      height='h-64'
-      contentClassName='h-64 p-1.5 sm:p-2'
-      className='min-w-0'
-    >
-      <OpsChart spec={spec} label={t('Cumulative top-ups and usage')} />
-    </PanelWrapper>
-  )
-}
-
-function OpsTierPanel(props: {
-  tiers: OpsTopupTier[]
-  loading: boolean
-  codesOnly: boolean
-}) {
+function OpsTierPanel(props: { tiers: OpsTopupTier[]; loading: boolean }) {
   const { t } = useTranslation()
   const firstLabel = t('First top-up')
   const repeatLabel = t('Repeat top-up')
@@ -209,14 +156,10 @@ function OpsTierPanel(props: {
   return (
     <PanelWrapper
       title={t('Top-up amount tiers')}
-      description={t('Paid orders in the period, by amount')}
+      description={t('Payments in the period by amount, redemption codes included')}
       loading={props.loading}
       empty={orders === 0}
-      emptyMessage={
-        props.codesOnly
-          ? t('Redemption codes have no orders')
-          : t('No paid orders in this period')
-      }
+      emptyMessage={t('No payments in this period')}
       height='h-64'
       contentClassName='h-64 p-1.5 sm:p-2'
       className='min-w-0'

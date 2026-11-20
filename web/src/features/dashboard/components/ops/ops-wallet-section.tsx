@@ -21,16 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import { formatPercent } from '@/lib/format'
 
-import {
-  formatOpsMoney,
-  OPS_CHANNEL_ALL,
-  OPS_TREND_REDEMPTION,
-  percentOf,
-  reconcileWallet,
-  walletRunwayDays,
-} from '../../lib/ops'
-import { PanelWrapper } from '../ui/panel-wrapper'
-import { OpsFunnelList } from './ops-funnel'
+import { formatOpsMoney, percentOf, reconcileWallet } from '../../lib/ops'
 import {
   OpsSection,
   OpsStatGrid,
@@ -45,27 +36,12 @@ export function OpsWalletSection(props: OpsSectionProps) {
   const wallet = data?.wallet
   const money = (value: number | undefined) => formatOpsMoney(value ?? 0)
   const recon = wallet ? reconcileWallet(wallet) : null
-  const runway = wallet ? walletRunwayDays(wallet) : null
   const testCredit = wallet?.test_credit
-  const codesShown =
-    props.channel === OPS_CHANNEL_ALL || props.channel === OPS_TREND_REDEMPTION
-  const lifetimeCodes = codesShown
-    ? (wallet?.other_credit.redemption_quota ?? 0)
-    : 0
 
   // All time shows lifetime totals; a period shows only what happened in it.
-  // Balances, debts and runway are always the current state.
+  // Top-ups are cash revenue in the overview, and balances are live figures
+  // at the top of the page.
   const stats: OpsStat[] = [
-    {
-      key: 'topup',
-      label: t('Total top-ups'),
-      value: money(
-        props.allTime
-          ? (wallet?.topup_quota ?? 0) + lifetimeCodes
-          : (current?.topup_quota ?? 0) + (current?.redemption_quota ?? 0)
-      ),
-      hint: t('Orders net of refunds, plus redemption codes'),
-    },
     {
       key: 'used',
       label: t('Amount used'),
@@ -73,12 +49,6 @@ export function OpsWalletSection(props: OpsSectionProps) {
       hint: props.allTime
         ? t('Lifetime usage, including test credit')
         : t('Usage in this period, including test credit'),
-    },
-    {
-      key: 'balance',
-      label: t('Unused amount'),
-      value: money(wallet?.balance_quota),
-      hint: t('Current balance of all users'),
     },
     {
       key: 'other',
@@ -119,19 +89,17 @@ export function OpsWalletSection(props: OpsSectionProps) {
         ]
       : []),
     {
-      key: 'negative',
-      label: t('Negative balances'),
-      value: money(Math.abs(wallet?.negative_quota ?? 0)),
-      hint: t('{{count}} users owe right now', {
-        count: wallet?.negative_users ?? 0,
+      key: 'test-conversion',
+      label: t('Test credit conversion'),
+      value: formatPercent(
+        percentOf(testCredit?.paid_after_users ?? 0, testCredit?.users ?? 0)
+      ),
+      hint: t('Granted {{granted}} · used up {{usedUp}} · paid after {{paid}}', {
+        granted: testCredit?.users ?? 0,
+        usedUp: testCredit?.used_up_users ?? 0,
+        paid: testCredit?.paid_after_users ?? 0,
       }),
-    },
-    {
-      key: 'runway',
-      label: t('Balance runway'),
-      value:
-        runway == null ? '—' : t('{{days}} days', { days: Math.floor(runway) }),
-      hint: t('At the last 7 days of usage'),
+      note: t('All time'),
     },
   ]
 
@@ -144,89 +112,15 @@ export function OpsWalletSection(props: OpsSectionProps) {
       title={t('Wallet')}
       description={
         props.allTime
-          ? t(
-              'Only total top-ups follow the top-up channel. Unused amount and negative balances are current.'
-            )
-          : t(
-              'Figures cover the selected period. Unused amount, negative balances and runway are current.'
-            )
+          ? t('Lifetime figures. Test credit conversion covers every user ever granted it.')
+          : t('Figures cover the selected period. Test credit conversion covers all time.')
       }
     >
       <OpsStatGrid
         stats={stats}
         loading={props.loading}
-        fourColumns
-        footer={
-          props.allTime &&
-          recon && (
-            <div className='bg-muted/50 flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t px-3 py-2.5 text-sm sm:px-5'>
-              <span className='font-medium'>
-                {t('All-channel reconciliation')}
-              </span>
-              <span className='font-mono tabular-nums'>
-                {t('Top-ups {{topups}} + other {{other}} = {{total}}', {
-                  topups: formatOpsMoney(recon.topups),
-                  other: formatOpsMoney(recon.nonOrderCredit),
-                  total: formatOpsMoney(recon.inflow),
-                })}
-              </span>
-              <span className='text-muted-foreground'>≈</span>
-              <span className='font-mono tabular-nums'>
-                {t('Used + balance = {{total}}', {
-                  total: formatOpsMoney(recon.outflow),
-                })}
-              </span>
-              <span
-                className='text-warning ml-auto font-mono font-semibold tabular-nums'
-                title={t(
-                  'Includes manual adjustments, sign-up bonuses, subscription payments from balance and deleted accounts, which have no structured record.'
-                )}
-              >
-                {t('Difference {{amount}}', {
-                  amount: formatOpsMoney(recon.difference),
-                })}
-              </span>
-            </div>
-          )
-        }
+        columns={props.allTime ? 5 : 4}
       />
-      <PanelWrapper
-        title={t('Test credit conversion')}
-        description={t(
-          'Every user ever granted test credit. {{rate}} paid an order after their first grant.',
-          {
-            rate: formatPercent(
-              percentOf(
-                testCredit?.paid_after_users ?? 0,
-                testCredit?.users ?? 0
-              )
-            ),
-          }
-        )}
-        loading={props.loading}
-        empty={(testCredit?.users ?? 0) === 0}
-        height='h-40'
-      >
-        <OpsFunnelList
-          steps={[
-            {
-              key: 'granted',
-              label: t('Granted test credit'),
-              value: testCredit?.users ?? 0,
-            },
-            {
-              key: 'used-up',
-              label: t('Used it all'),
-              value: testCredit?.used_up_users ?? 0,
-            },
-            {
-              key: 'paid',
-              label: t('Paid afterwards'),
-              value: testCredit?.paid_after_users ?? 0,
-            },
-          ]}
-        />
-      </PanelWrapper>
     </OpsSection>
   )
 }

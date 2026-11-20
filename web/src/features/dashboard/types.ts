@@ -298,6 +298,9 @@ export interface OpsPeriodStats {
   redemption_quota: number
   task_success: number
   task_failure: number
+  /** How long successful tasks took from submission to completion; 0 without any. */
+  task_avg_seconds: number
+  task_median_seconds: number
 }
 
 export interface OpsWallet {
@@ -486,6 +489,8 @@ export interface OpsDashboardData {
     disputed_orders: number
     low_balance_channels: number
   }
+  /** Figures of the present moment, which no period changes. */
+  live: { tasks_in_progress: number; tasks_queued: number }
   funnel: OpsFunnel
   sources: OpsSource[]
   inviters: OpsInviter[]

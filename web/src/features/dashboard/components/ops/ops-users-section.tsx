@@ -59,35 +59,18 @@ export function OpsUsersSection(props: OpsSectionProps) {
   const allTime = props.allTime
   const funnel = data?.funnel
 
+  // New and paying users lead the overview, and dormant payers are a live
+  // figure at the top of the page.
   const stats: OpsStat[] = [
     {
-      key: 'registered',
-      label: allTime ? t('Registered users') : t('New users'),
-      value: number(current?.new_users),
-      hint: allTime ? undefined : t('Registered in this period'),
-      ...opsChangeNote(current?.new_users ?? 0, previous?.new_users ?? 0),
+      key: 'new-payers',
+      label: t('New paying users'),
+      value: number(current?.new_payers),
+      hint: allTime ? t('Paid at least once') : t('First payment in this period'),
+      ...(allTime
+        ? {}
+        : opsChangeNote(current?.new_payers ?? 0, previous?.new_payers ?? 0)),
     },
-    {
-      key: 'payers',
-      label: t('Paying users'),
-      value: number(current?.payers),
-      hint: allTime ? t('Paid at least once') : t('Paid in this period'),
-      ...opsChangeNote(current?.payers ?? 0, previous?.payers ?? 0),
-    },
-    allTime
-      ? {
-          key: 'dormant',
-          label: t('Dormant payers'),
-          value: number(data?.users.dormant),
-          hint: t('Balance left, no calls in 30 days'),
-        }
-      : {
-          key: 'new-payers',
-          label: t('New paying users'),
-          value: number(current?.new_payers),
-          hint: t('First payment in this period'),
-          ...opsChangeNote(current?.new_payers ?? 0, previous?.new_payers ?? 0),
-        },
     {
       key: 'conversion',
       label: t('Paid conversion'),
@@ -144,7 +127,7 @@ export function OpsUsersSection(props: OpsSectionProps) {
         'Funnel, sources and inviters follow the users registered in the period, up to now.'
       )}
     >
-      <OpsStatGrid stats={stats} loading={props.loading} />
+      <OpsStatGrid stats={stats} loading={props.loading} columns={4} />
       <div className='grid gap-3 xl:grid-cols-3'>
         <PanelWrapper
           title={t('Daily new and active users')}

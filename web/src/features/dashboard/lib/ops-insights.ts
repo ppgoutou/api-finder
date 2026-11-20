@@ -93,11 +93,6 @@ export function opsDashboardProfit(data: OpsDashboardData, allTime: boolean) {
 }
 
 /**
- * Days the upstream balance lasts at the last seven days of usage, priced at
- * the channel's cost rate when its supplier cost is known. Null when the
- * balance was never read or the channel had no recent usage.
- */
-/**
  * Days a supplier wallet lasts at the last seven days of usage on its
  * channels, each priced at the channel's cost rate (full rate when the
  * supplier cost is unknown). Null without recent usage.
