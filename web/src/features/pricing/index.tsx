@@ -268,20 +268,23 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          {/* Option A of the plaza redesign: title and live figures on one
-           * row, the note and the search below at full width, then the VIP
-           * band. Each row rises in after the one above it. */}
+          {/* Option A of the plaza redesign: the title and note with the live
+           * figures on their right, the search at full width, then the VIP band. Each row
+           * rises in after the one above it. */}
           <header className='mb-6 flex flex-col gap-6 pt-5 sm:mb-10 sm:gap-8 sm:pt-10'>
-            <div className='flex flex-col gap-4'>
-              <div className='plaza-rise flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-12'>
-                <h1 className='font-display text-heading-1'>
+            <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-10'>
+              <div className='flex min-w-0 flex-col gap-4'>
+                <h1 className='plaza-rise font-display text-heading-1'>
                   {t('Model Square')}
                 </h1>
-                <PricingLiveStats modelCount={models?.length || 0} />
+                <PricingHeroNote
+                  models={models || []}
+                  className='plaza-rise [animation-delay:0.08s]'
+                />
               </div>
-              <PricingHeroNote
-                models={models || []}
-                className='plaza-rise [animation-delay:0.08s]'
+              <PricingLiveStats
+                modelCount={models?.length || 0}
+                className='plaza-rise [animation-delay:0.12s]'
               />
             </div>
             <div className='plaza-rise flex flex-col gap-3.5 [animation-delay:0.16s]'>

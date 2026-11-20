@@ -44,12 +44,12 @@ function useLiveStats() {
 }
 
 const STAT =
-  'flex min-w-0 items-center gap-3 border-border not-first:border-l not-first:pl-4 sm:gap-3.5 sm:not-first:pl-7 sm:not-last:pr-7 not-last:pr-4'
+  'flex min-w-0 items-center gap-2.5 border-border not-first:border-l not-first:pl-4 sm:gap-3 sm:not-first:pl-6 sm:not-last:pr-6 not-last:pr-4'
 const STAT_ICON =
-  'relative hidden size-11 shrink-0 items-center justify-center rounded-control sm:flex'
-const STAT_LABEL = 'text-muted-foreground text-caption sm:text-body-sm'
+  'relative hidden size-9 shrink-0 items-center justify-center rounded-control border bg-card sm:flex'
+const STAT_LABEL = 'text-muted-foreground text-caption'
 const STAT_VALUE =
-  'font-display text-heading-3 sm:text-metric tracking-tight whitespace-nowrap tabular-nums'
+  'font-display text-body-lg sm:text-heading-3 font-semibold tracking-tight whitespace-nowrap tabular-nums'
 const ICON_SVG = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -57,7 +57,7 @@ const ICON_SVG = {
   strokeWidth: 2,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
-  className: 'size-5.5',
+  className: 'size-4.5',
   'aria-hidden': true,
 } as const
 
@@ -85,9 +85,14 @@ export function PricingLiveStats(props: {
   })
 
   return (
-    <dl className={cn('grid grid-cols-[repeat(3,auto)]', props.className)}>
+    <dl
+      className={cn(
+        'grid grid-cols-[repeat(3,auto)] justify-start',
+        props.className
+      )}
+    >
       <div className={STAT}>
-        <span className={cn(STAT_ICON, 'bg-brand-soft text-brand')}>
+        <span className={cn(STAT_ICON, 'text-brand')}>
           <svg {...ICON_SVG}>
             <path
               className='plaza-icon-drift-up'
@@ -107,10 +112,10 @@ export function PricingLiveStats(props: {
         </div>
       </div>
       <div className={STAT}>
-        <span className={cn(STAT_ICON, 'bg-success/10 text-success')}>
+        <span className={cn(STAT_ICON, 'text-success')}>
           <span
             aria-hidden
-            className='plaza-icon-ring border-success absolute inset-2 rounded-full border-2'
+            className='plaza-icon-ring border-success absolute inset-1.5 rounded-full border-2'
           />
           <svg {...ICON_SVG}>
             <circle cx='12' cy='12' r='9' opacity={0.35} />
@@ -123,7 +128,7 @@ export function PricingLiveStats(props: {
         </div>
       </div>
       <div className={STAT}>
-        <span className={cn(STAT_ICON, 'bg-vip-soft text-vip')}>
+        <span className={cn(STAT_ICON, 'text-vip')}>
           <svg {...ICON_SVG}>
             <circle cx='12' cy='12' r='9' />
             <path className='plaza-icon-hand' d='M12 12V7' />
