@@ -69,8 +69,11 @@ const (
 	ContextKeyAdminRejectReason ContextKey = "admin_reject_reason"
 
 	// ContextKeyLanguage stores the user's language preference for i18n
-	ContextKeyLanguage             ContextKey = "language"
-	ContextKeyIsStream             ContextKey = "is_stream"
+	ContextKeyLanguage ContextKey = "language"
+	ContextKeyIsStream ContextKey = "is_stream"
+	// ContextKeyRelayWillRetry marks a failed attempt that the gateway retries,
+	// so its error log is kept for administrators but hidden from the owner.
+	ContextKeyRelayWillRetry       ContextKey = "relay_will_retry"
 	ContextKeyResponseStreamStatus ContextKey = "response_stream_status"
 
 	// ContextKeyAuditLogged marks that the current request has already recorded
