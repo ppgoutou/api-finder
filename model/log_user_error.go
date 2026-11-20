@@ -5,9 +5,21 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/pkg/usererror"
+	"gorm.io/gorm"
 )
 
 const logOtherUserContentPartsKey = "user_content_parts"
+
+// LogOtherWillRetryKey is the admin_info flag on the error log of an attempt
+// the gateway retried. The request went on, so its owner does not see it.
+const LogOtherWillRetryKey = "will_retry"
+
+// excludeRetriedAttemptErrors leaves out error logs flagged with
+// LogOtherWillRetryKey. The flag is matched in the stored JSON text.
+func excludeRetriedAttemptErrors(tx *gorm.DB) *gorm.DB {
+	return tx.Where("(logs.type <> ? OR logs.other IS NULL OR logs.other NOT LIKE ?)",
+		LogTypeError, `%"`+LogOtherWillRetryKey+`":true%`)
+}
 
 func parseLogOtherValues(value string) map[string]any {
 	values := map[string]any{}
