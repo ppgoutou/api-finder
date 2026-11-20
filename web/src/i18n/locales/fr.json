@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "Taux de réussite, dernières 24 h",
     "Avg. generation time": "Durée moyenne de génération",
     "{{count}} models online": "{{count}} modèles en ligne",
+    "Models online": "Modèles en ligne",
+    "Dedicated lines": "Lignes dédiées",
     "Lower price on every call": "Moins cher à chaque appel",
     "Video, image and chat models alike": "Modèles vidéo, image et chat compris",
     "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tâches simultanées, contre {{standard}} en standard",

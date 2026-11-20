@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "Tỷ lệ thành công 24 giờ qua",
     "Avg. generation time": "Thời gian tạo trung bình",
     "{{count}} models online": "{{count}} mô hình trực tuyến",
+    "Models online": "Mô hình trực tuyến",
+    "Dedicated lines": "Tuyến riêng",
     "Lower price on every call": "Rẻ hơn ở mỗi lần gọi",
     "Video, image and chat models alike": "Áp dụng cho mô hình video, hình ảnh và chat",
     "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tác vụ cùng lúc, tiêu chuẩn là {{standard}}",

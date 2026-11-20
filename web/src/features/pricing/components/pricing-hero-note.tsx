@@ -60,7 +60,7 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
     return (
       <p
         className={cn(
-          'text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm',
+          'text-muted-foreground text-body sm:text-body-lg',
           props.className
         )}
       >
@@ -75,11 +75,11 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
   return (
     <div
       className={cn(
-        'mx-auto mt-3 flex max-w-3xl flex-col items-center gap-2.5',
+        'flex flex-wrap items-center gap-x-5 gap-y-2',
         props.className
       )}
     >
-      <p className='text-muted-foreground/60 text-xs leading-relaxed sm:text-sm'>
+      <p className='text-muted-foreground text-body sm:text-body-lg'>
         {t(
           'Multi-channel groups billed per second, per token or per request, pick what fits.'
         )}
@@ -88,8 +88,9 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
         <PopoverTrigger
           render={
             <Button
-              variant='ghost'
-              className='bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary dark:bg-primary/20 dark:hover:bg-primary/25 dark:text-brand-on-dark dark:hover:text-brand-on-dark dark:aria-expanded:text-brand-on-dark h-auto rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-normal sm:text-sm'
+              variant='link'
+              size='inline'
+              className='text-brand dark:text-brand-on-dark text-body gap-1.5 font-medium whitespace-normal'
             />
           }
         >

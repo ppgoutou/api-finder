@@ -8649,6 +8649,8 @@
     "Success rate, last 24 h": "近 24 小时生成成功率",
     "Avg. generation time": "平均生成时长",
     "{{count}} models online": "{{count}} 个模型在线",
+    "Models online": "在线模型",
+    "Dedicated lines": "专属线路",
     "Lower price on every call": "每次调用都更便宜",
     "Video, image and chat models alike": "视频、图片、对话模型统一会员价",
     "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} 个任务同时运行，标准会员 {{standard}} 个",

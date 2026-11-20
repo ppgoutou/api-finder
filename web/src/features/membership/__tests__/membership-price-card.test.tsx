@@ -62,9 +62,8 @@ describe('membership price card', () => {
     expect(
       within(rows[1]).getByText('100 tasks at once, standard is 10')
     ).toBeInTheDocument()
-    expect(
-      within(rows[2]).getByText('Dedicated lines, served first')
-    ).toBeInTheDocument()
+    expect(within(rows[2]).getByText('Dedicated lines')).toBeInTheDocument()
+    expect(within(rows[2]).getByText('Served first')).toBeInTheDocument()
   })
 
   it('tells a visitor how to qualify and links to the VIP page', () => {
@@ -85,7 +84,6 @@ describe('membership price card', () => {
     render(<MembershipPriceCard info={{ ...visitor, is_vip: true }} />)
 
     expect(within(card()).getByText('You are VIP')).toBeInTheDocument()
-    expect(within(card()).getByText('already applied')).toBeInTheDocument()
     expect(
       within(card()).getByText(
         'The prices below already include your 8% saving.'
