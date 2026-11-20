@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "收入是用户在该渠道被扣的费用。上游支出优先用供应商实际扣费，读不到时按每笔扣费时记录的供货价计算。任务成功率只统计异步任务；余额为“—”表示没有读取到。",
     "actual charge": "实扣",
     "What the supplier charged, read from its logs.": "供应商实际扣费，从供应商日志读取。",
-    "At the supply price it comes to {{amount}}.": "按供货价约为 {{amount}}。"
+    "At the supply price it comes to {{amount}}.": "按供货价约为 {{amount}}。",
+    "{{minutes}} min {{seconds}} s": "{{minutes}}分钟{{seconds}}秒",
+    "Success rate, last 24 h": "近 24 小时生成成功率",
+    "Avg. generation time": "平均生成时长",
+    "{{count}} models online": "{{count}} 个模型在线",
+    "Lower price on every call": "每次调用都更便宜",
+    "Video, image and chat models alike": "视频、图片、对话模型统一会员价",
+    "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} 个任务同时运行，标准会员 {{standard}} 个",
+    "More stable upstream, priority at peak hours": "更稳定的上游，高峰期优先调度",
+    "Served first": "优先",
+    "Unlocked by top-ups · no monthly fee": "充值达标自动升级 · 无月费",
+    "off every model": "全站模型",
+    "already applied": "已为您生效",
+    "on every request": "每次都省",
+    "View my benefits": "查看我的权益"
   }
 }

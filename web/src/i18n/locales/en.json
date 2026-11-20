@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.",
     "actual charge": "actual charge",
     "What the supplier charged, read from its logs.": "What the supplier charged, read from its logs.",
-    "At the supply price it comes to {{amount}}.": "At the supply price it comes to {{amount}}."
+    "At the supply price it comes to {{amount}}.": "At the supply price it comes to {{amount}}.",
+    "{{minutes}} min {{seconds}} s": "{{minutes}} min {{seconds}} s",
+    "Success rate, last 24 h": "Success rate, last 24 h",
+    "Avg. generation time": "Avg. generation time",
+    "{{count}} models online": "{{count}} models online",
+    "Lower price on every call": "Lower price on every call",
+    "Video, image and chat models alike": "Video, image and chat models alike",
+    "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} tasks at once, standard is {{standard}}",
+    "More stable upstream, priority at peak hours": "More stable upstream, priority at peak hours",
+    "Served first": "Served first",
+    "Unlocked by top-ups · no monthly fee": "Unlocked by top-ups · no monthly fee",
+    "off every model": "off every model",
+    "already applied": "already applied",
+    "on every request": "on every request",
+    "View my benefits": "View my benefits"
   }
 }

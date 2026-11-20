@@ -41,6 +41,7 @@ const UNRESTRICTED_SUFFIX = '-P'
 type PricingHeroNoteProps = {
   /** Models the viewer's groups can use. */
   models: PricingModel[]
+  className?: string
 }
 
 /**
@@ -57,7 +58,12 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
 
   if (offersUnrestricted) {
     return (
-      <p className='text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm'>
+      <p
+        className={cn(
+          'text-muted-foreground/60 mx-auto mt-3 max-w-3xl text-xs leading-relaxed sm:text-sm',
+          props.className
+        )}
+      >
         {t(
           'Multi-channel groups billed per second, per token or per request, pick what fits; models ending in {{suffix}} offer unrestricted content.',
           { suffix: UNRESTRICTED_SUFFIX }
@@ -67,7 +73,12 @@ export function PricingHeroNote(props: PricingHeroNoteProps) {
   }
 
   return (
-    <div className='mx-auto mt-3 flex max-w-3xl flex-col items-center gap-2.5'>
+    <div
+      className={cn(
+        'mx-auto mt-3 flex max-w-3xl flex-col items-center gap-2.5',
+        props.className
+      )}
+    >
       <p className='text-muted-foreground/60 text-xs leading-relaxed sm:text-sm'>
         {t(
           'Multi-channel groups billed per second, per token or per request, pick what fits.'

@@ -807,6 +807,26 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* ── Live stat bars on the model plaza hero ── */
+.live-stat-bar {
+  transform-origin: bottom;
+  animation: live-stat-bar 1.1s ease-in-out infinite;
+}
+@keyframes live-stat-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-stat-bar {
+    animation: none;
+  }
+}
+
 /* ── Auto group flowing border ── */
 @property --auto-group-flow-angle {
   syntax: '<angle>';

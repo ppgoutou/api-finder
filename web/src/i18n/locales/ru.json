@@ -8644,6 +8644,20 @@
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.": "Выручка — сколько списано с пользователей по каналу. Расходы поставщику — его фактические списания, а если их нет, цена поставки, записанная при каждом списании. Успешность учитывает только асинхронные задачи; прочерк — баланс не получен.",
     "actual charge": "фактически",
     "What the supplier charged, read from its logs.": "Сколько списал поставщик, по его журналам.",
-    "At the supply price it comes to {{amount}}.": "По цене поставки — {{amount}}."
+    "At the supply price it comes to {{amount}}.": "По цене поставки — {{amount}}.",
+    "{{minutes}} min {{seconds}} s": "{{minutes}} мин {{seconds}} с",
+    "Success rate, last 24 h": "Успешность за 24 ч",
+    "Avg. generation time": "Среднее время генерации",
+    "{{count}} models online": "Моделей онлайн: {{count}}",
+    "Lower price on every call": "Дешевле при каждом вызове",
+    "Video, image and chat models alike": "Видео, изображения и чат-модели",
+    "{{vip}} tasks at once, standard is {{standard}}": "{{vip}} задач одновременно, в стандарте {{standard}}",
+    "More stable upstream, priority at peak hours": "Стабильнее апстрим, приоритет в часы пик",
+    "Served first": "В приоритете",
+    "Unlocked by top-ups · no monthly fee": "Открывается пополнениями · без абонплаты",
+    "off every model": "на все модели",
+    "already applied": "уже применено",
+    "on every request": "на каждый запрос",
+    "View my benefits": "Мои преимущества"
   }
 }

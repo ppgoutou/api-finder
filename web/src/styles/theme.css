@@ -115,6 +115,9 @@ For commercial licensing, please contact support@quantumnous.com
   --color-vip-from-hover: #1d4ed8;
   --color-vip-to: #7c3aed;
   --color-vip-to-hover: #6d28d9;
+  /* Deep indigo of the VIP card on the model plaza. */
+  --color-vip-deep: #1e1b4b;
+  --color-vip-deep-mid: #312e81;
   --color-night: #0b0f1f;
   --color-night-raised: #141833;
   --color-telegram: #229ed9;

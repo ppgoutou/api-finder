@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 export { MembershipCard } from './components/membership-card'
-export { MembershipPriceNote } from './components/membership-price-note'
+export { MembershipPriceCard } from './components/membership-price-card'
 export { VipActions } from './components/vip-actions'
 export { VipBenefitGrid } from './components/vip-benefit-grid'
 export { VipCelebration } from './components/vip-celebration'
