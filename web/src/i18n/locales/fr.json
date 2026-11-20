@@ -8658,6 +8658,15 @@
     "off every model": "sur tous les modèles",
     "already applied": "déjà appliqué",
     "on every request": "à chaque requête",
-    "View my benefits": "Voir mes avantages"
+    "View my benefits": "Voir mes avantages",
+    "Supplier wallet balances": "Soldes des portefeuilles fournisseurs",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "Lu en direct chez chaque fournisseur ayant un canal actif. Les jours restants reposent sur l'usage des 7 derniers jours. Lu à {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "Lu en direct chez chaque fournisseur ayant un canal actif. Les jours restants reposent sur l'usage des 7 derniers jours.",
+    "No supplier has an enabled channel": "Aucun fournisseur n'a de canal actif",
+    "Balance not set up": "Lecture du solde non configurée",
+    "No usage in the last 7 days": "Aucun usage ces 7 derniers jours",
+    "Failed to read the balance": "Échec de la lecture du solde",
+    "Add an upstream balance monitor or a supplier token to read it": "Ajoutez une alerte de solde amont ou un jeton fournisseur pour le lire",
+    "Channels: {{names}}": "Canaux : {{names}}"
   }
 }

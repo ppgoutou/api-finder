@@ -8658,6 +8658,15 @@
     "off every model": "off every model",
     "already applied": "already applied",
     "on every request": "on every request",
-    "View my benefits": "View my benefits"
+    "View my benefits": "View my benefits",
+    "Supplier wallet balances": "Supplier wallet balances",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.",
+    "No supplier has an enabled channel": "No supplier has an enabled channel",
+    "Balance not set up": "Balance not set up",
+    "No usage in the last 7 days": "No usage in the last 7 days",
+    "Failed to read the balance": "Failed to read the balance",
+    "Add an upstream balance monitor or a supplier token to read it": "Add an upstream balance monitor or a supplier token to read it",
+    "Channels: {{names}}": "Channels: {{names}}"
   }
 }

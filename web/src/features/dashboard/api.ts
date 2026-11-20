@@ -21,6 +21,7 @@ import { api } from '@/lib/api'
 import type {
   FlowQuotaDataItem,
   OpsDashboardData,
+  OpsSupplierBalances,
   QuotaDataItem,
   UptimeGroupResult,
 } from './types'
@@ -107,5 +108,15 @@ export async function getUptimeStatus() {
   const res = await api.get<{ success: boolean; data: UptimeGroupResult[] }>(
     '/api/uptime/status'
   )
+  return res.data
+}
+
+// Live wallet balance of every supplier with an enabled channel
+export async function getOpsSupplierBalances() {
+  const res = await api.get<{
+    success: boolean
+    data: OpsSupplierBalances
+    message?: string
+  }>('/api/data/ops/supplier_balances')
   return res.data
 }

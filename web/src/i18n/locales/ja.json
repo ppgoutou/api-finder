@@ -8658,6 +8658,15 @@
     "off every model": "全モデル",
     "already applied": "適用済み",
     "on every request": "毎回お得",
-    "View my benefits": "特典を見る"
+    "View my benefits": "特典を見る",
+    "Supplier wallet balances": "サプライヤーのウォレット残高",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "有効なチャネルがある各サプライヤーからリアルタイムで取得します。残り日数は直近 7 日間の使用量で見積もります。取得時刻 {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "有効なチャネルがある各サプライヤーからリアルタイムで取得します。残り日数は直近 7 日間の使用量で見積もります。",
+    "No supplier has an enabled channel": "有効なチャネルがあるサプライヤーはありません",
+    "Balance not set up": "残高の取得が未設定",
+    "No usage in the last 7 days": "直近 7 日間の使用なし",
+    "Failed to read the balance": "残高の取得に失敗しました",
+    "Add an upstream balance monitor or a supplier token to read it": "上流残高アラートまたはサプライヤートークンを追加すると取得できます",
+    "Channels: {{names}}": "チャネル：{{names}}"
   }
 }

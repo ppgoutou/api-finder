@@ -8658,6 +8658,15 @@
     "off every model": "на все модели",
     "already applied": "уже применено",
     "on every request": "на каждый запрос",
-    "View my benefits": "Мои преимущества"
+    "View my benefits": "Мои преимущества",
+    "Supplier wallet balances": "Балансы кошельков поставщиков",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "Читается в реальном времени у каждого поставщика с включённым каналом. Оставшиеся дни — по использованию за последние 7 дней. Прочитано {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "Читается в реальном времени у каждого поставщика с включённым каналом. Оставшиеся дни — по использованию за последние 7 дней.",
+    "No supplier has an enabled channel": "Нет поставщиков с включёнными каналами",
+    "Balance not set up": "Чтение баланса не настроено",
+    "No usage in the last 7 days": "Нет использования за последние 7 дней",
+    "Failed to read the balance": "Не удалось прочитать баланс",
+    "Add an upstream balance monitor or a supplier token to read it": "Добавьте оповещение о балансе или токен поставщика, чтобы читать его",
+    "Channels: {{names}}": "Каналы: {{names}}"
   }
 }

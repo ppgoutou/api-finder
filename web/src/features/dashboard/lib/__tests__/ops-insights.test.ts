@@ -24,7 +24,7 @@ import {
   opsCumulativeTrend,
   opsProfitBreakdown,
   opsTierLabel,
-  upstreamRunwayDays,
+  supplierRunwayDays,
 } from '../ops-insights'
 
 function upstream(overrides: Partial<OpsUpstream>): OpsUpstream {
@@ -96,41 +96,24 @@ describe('opsProfitBreakdown', () => {
   })
 })
 
-describe('upstreamRunwayDays', () => {
-  test('divides the balance by seven days of usage at the channel cost rate', () => {
-    // $14 charged in 7 days at an 50% cost rate is $1 a day.
-    const row = upstream({
-      quota: 200,
-      cost_quota: 100,
-      recent_quota: 14 * 500000,
-      balance: 30,
-      balance_updated_time: 1,
-    })
+describe('supplierRunwayDays', () => {
+  test('divides the wallet by seven days of usage on all its channels', () => {
+    // $14 in 7 days at a 50% cost rate plus $7 at full rate is $2 a day.
+    const channels = [
+      upstream({ quota: 200, cost_quota: 100, recent_quota: 14 * 500000 }),
+      upstream({
+        channel_id: 2,
+        cost_status: 'no_token',
+        recent_quota: 7 * 500000,
+      }),
+    ]
 
-    expect(upstreamRunwayDays(row, 500000)).toBeCloseTo(30)
+    expect(supplierRunwayDays(30, channels, 500000)).toBeCloseTo(15)
   })
 
-  test('prices usage at full rate when the supplier cost is unknown', () => {
-    const row = upstream({
-      cost_status: 'no_token',
-      recent_quota: 7 * 500000,
-      balance: 10,
-      balance_updated_time: 1,
-    })
-
-    expect(upstreamRunwayDays(row, 500000)).toBeCloseTo(10)
-  })
-
-  test('is unknown without a read balance or recent usage', () => {
-    expect(
-      upstreamRunwayDays(upstream({ recent_quota: 100, balance: 5 }), 500000)
-    ).toBeNull()
-    expect(
-      upstreamRunwayDays(
-        upstream({ balance: 5, balance_updated_time: 1 }),
-        500000
-      )
-    ).toBeNull()
+  test('is unknown without recent usage', () => {
+    expect(supplierRunwayDays(5, [upstream({})], 500000)).toBeNull()
+    expect(supplierRunwayDays(5, [], 500000)).toBeNull()
   })
 })
 
@@ -155,7 +138,10 @@ describe('opsTierLabel', () => {
 
 describe('opsCumulativeTrend', () => {
   test('adds up every top-up channel and usage day by day', () => {
-    const day = (topups: Record<string, number>, used: number): OpsTrendDay => ({
+    const day = (
+      topups: Record<string, number>,
+      used: number
+    ): OpsTrendDay => ({
       date: '2026-11-05',
       topups,
       used_quota: used,
