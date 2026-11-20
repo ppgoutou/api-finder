@@ -28,14 +28,14 @@ describe('SupportContacts', () => {
     const items = screen.getAllByRole('listitem')
     expect(items.map((item) => item.textContent)).toEqual([
       expect.stringContaining('Telegram:@APIFinder_Support'),
-      expect.stringContaining('discord.gg/4dVPvrx2J'),
+      expect.stringContaining('discord.gg/4ThRgPbn6Z'),
     ])
     expect(screen.queryByText(/QQ/)).toBeNull()
     expect(
       screen.getByRole('link', { name: '@APIFinder_Support' })
     ).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
     expect(
-      screen.getByRole('link', { name: 'discord.gg/4dVPvrx2J' })
-    ).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
+      screen.getByRole('link', { name: 'discord.gg/4ThRgPbn6Z' })
+    ).toHaveAttribute('href', 'https://discord.gg/4ThRgPbn6Z')
   })
 })
