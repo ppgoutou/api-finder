@@ -416,6 +416,22 @@ func GetSucceededTasksFinishedSince(sinceUnix int64, limit int) []*Task {
 	return tasks
 }
 
+// GetFailedTasksFinishedSince lists the fields the task error alert needs for
+// failed tasks finished at or after sinceUnix, oldest first.
+func GetFailedTasksFinishedSince(sinceUnix int64, limit int) []*Task {
+	var tasks []*Task
+	err := DB.Select("id", "task_id", "platform", "user_id", "channel_id", "action", "status", "fail_reason", "finish_time", "properties").
+		Where("status = ?", TaskStatusFailure).
+		Where("finish_time >= ?", sinceUnix).
+		Order("finish_time asc").
+		Limit(limit).
+		Find(&tasks).Error
+	if err != nil {
+		return nil
+	}
+	return tasks
+}
+
 // GetTaskByID loads a task by primary key.
 func GetTaskByID(id int64) (*Task, error) {
 	var task Task

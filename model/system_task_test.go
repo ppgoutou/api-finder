@@ -490,3 +490,69 @@ func runUpdateSystemTaskStateIdenticalPayloadKeepsLock(t *testing.T, taskType st
 	require.NotNil(t, finished)
 	assert.Equal(t, SystemTaskStatusSucceeded, finished.Status)
 }
+
+// The task error alert reads failed tasks and error logs by time; both
+// queries must return only the failures since the cutoff, oldest first.
+func TestTaskErrorAlertQueriesDatabaseMatrix(t *testing.T) {
+	for _, dialect := range []string{"sqlite", "mysql", "postgres"} {
+		t.Run(dialect, func(t *testing.T) {
+			var dialector gorm.Dialector
+			switch dialect {
+			case "sqlite":
+				dialector = sqlite.Open(":memory:")
+			case "mysql":
+				dsn := os.Getenv("TEST_MYSQL_DSN")
+				if dsn == "" {
+					t.Skip("TEST_MYSQL_DSN is not configured")
+				}
+				dialector = mysql.Open(dsn)
+			case "postgres":
+				dsn := os.Getenv("TEST_POSTGRES_DSN")
+				if dsn == "" {
+					t.Skip("TEST_POSTGRES_DSN is not configured")
+				}
+				dialector = postgres.Open(dsn)
+			}
+			db, err := gorm.Open(dialector, &gorm.Config{NamingStrategy: schema.NamingStrategy{TablePrefix: "alert_test_"}})
+			require.NoError(t, err)
+			sqlDB, err := db.DB()
+			require.NoError(t, err)
+			sqlDB.SetMaxOpenConns(1)
+			previousDB, previousLogDB := DB, LOG_DB
+			DB, LOG_DB = db, db
+			t.Cleanup(func() {
+				DB, LOG_DB = previousDB, previousLogDB
+				require.NoError(t, db.Migrator().DropTable(&Task{}, &Log{}))
+				require.NoError(t, sqlDB.Close())
+			})
+			require.NoError(t, db.AutoMigrate(&Task{}, &Log{}))
+
+			tasks := []Task{
+				{TaskID: "failed-old", Status: TaskStatusFailure, FinishTime: 100, FailReason: "old"},
+				{TaskID: "failed-late", Status: TaskStatusFailure, FinishTime: 300, FailReason: "late", Properties: Properties{OriginModelName: "seedance"}},
+				{TaskID: "failed-early", Status: TaskStatusFailure, FinishTime: 200, FailReason: "early"},
+				{TaskID: "succeeded", Status: TaskStatusSuccess, FinishTime: 250},
+			}
+			require.NoError(t, db.Create(&tasks).Error)
+			failed := GetFailedTasksFinishedSince(200, 10)
+			require.Len(t, failed, 2)
+			assert.Equal(t, "failed-early", failed[0].TaskID)
+			assert.Equal(t, "failed-late", failed[1].TaskID)
+			assert.Equal(t, "late", failed[1].FailReason)
+			assert.Equal(t, "seedance", failed[1].Properties.OriginModelName)
+
+			logs := []Log{
+				{Type: LogTypeError, CreatedAt: 100, Content: "old"},
+				{Type: LogTypeError, CreatedAt: 300, Content: "late", RequestId: "r2"},
+				{Type: LogTypeConsume, CreatedAt: 250, Content: "consume"},
+				{Type: LogTypeError, CreatedAt: 200, Content: "early", RequestId: "r1"},
+			}
+			require.NoError(t, db.Create(&logs).Error)
+			errorLogs, err := GetErrorLogsSince(200, 10)
+			require.NoError(t, err)
+			require.Len(t, errorLogs, 2)
+			assert.Equal(t, "early", errorLogs[0].Content)
+			assert.Equal(t, "r2", errorLogs[1].RequestId)
+		})
+	}
+}

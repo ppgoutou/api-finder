@@ -86,6 +86,33 @@ const (
 	MsgBalanceAlertReport      = "balance_alert.report"
 )
 
+// Task error alerts sent to the balance alert's Feishu bot, always in zh-CN.
+// Their level, category and source labels are task_error_alert.level.<severity>,
+// task_error_alert.category.<category> and task_error_alert.source.<source>.
+const (
+	MsgTaskErrorAlertSingle                 = "task_error_alert.single"
+	MsgTaskErrorAlertBatchCount             = "task_error_alert.batch_count"
+	MsgTaskErrorAlertMerged                 = "task_error_alert.merged"
+	MsgTaskErrorAlertSummary                = "task_error_alert.summary"
+	MsgTaskErrorAlertLevelCritical          = "task_error_alert.level.critical"
+	MsgTaskErrorAlertLevelUpstream          = "task_error_alert.level.upstream"
+	MsgTaskErrorAlertSourceTask             = "task_error_alert.source.task"
+	MsgTaskErrorAlertSourceRequest          = "task_error_alert.source.request"
+	MsgTaskErrorAlertCategoryUpstreamWallet = "task_error_alert.category.upstream_wallet"
+	MsgTaskErrorAlertCategoryUpstreamAuth   = "task_error_alert.category.upstream_auth"
+	MsgTaskErrorAlertCategorySettlement     = "task_error_alert.category.settlement"
+	MsgTaskErrorAlertCategoryInternal       = "task_error_alert.category.internal"
+	MsgTaskErrorAlertCategoryNoLine         = "task_error_alert.category.no_line"
+	MsgTaskErrorAlertCategoryUnavailable    = "task_error_alert.category.unavailable"
+	MsgTaskErrorAlertCategoryTimeout        = "task_error_alert.category.timeout"
+	MsgTaskErrorAlertCategoryGeneration     = "task_error_alert.category.generation"
+	MsgTaskErrorAlertCategoryBalance        = "task_error_alert.category.balance"
+	MsgTaskErrorAlertCategoryParameter      = "task_error_alert.category.parameter"
+	MsgTaskErrorAlertCategoryMaterial       = "task_error_alert.category.material"
+	MsgTaskErrorAlertCategoryModeration     = "task_error_alert.category.moderation"
+	MsgTaskErrorAlertCategoryCancelled      = "task_error_alert.category.cancelled"
+)
+
 // Channel notices sent to the root user and model update watchers
 const (
 	MsgChannelNotifyDisabledSubject = "channel.notify_disabled_subject"

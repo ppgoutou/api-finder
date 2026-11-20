@@ -22,6 +22,7 @@ import { BalanceAlertSettingsSection } from '../integrations/balance-alert-setti
 import { EmailSettingsSection } from '../integrations/email-settings-section'
 import { MediaStorageSettingsSection } from '../integrations/media-storage-settings-section'
 import { MonitoringSettingsSection } from '../integrations/monitoring-settings-section'
+import { TaskErrorAlertSettingsSection } from '../integrations/task-error-alert-settings-section'
 import { WorkerSettingsSection } from '../integrations/worker-settings-section'
 import { XPixelSettingsSection } from '../integrations/x-pixel-settings-section'
 import { LogSettingsSection } from '../maintenance/log-settings-section'
@@ -85,6 +86,23 @@ const OPERATIONS_SECTIONS = [
           monitors: parseBalanceAlertMonitors(
             settings['balance_alert_setting.monitors']
           ),
+        }}
+      />
+    ),
+  },
+  {
+    id: 'task-error-alert',
+    titleKey: 'Task error alerts',
+    build: (settings: OperationsSettings) => (
+      <TaskErrorAlertSettingsSection
+        defaultValues={{
+          enabled: settings['task_error_alert_setting.enabled'] ?? false,
+          merge_minutes:
+            settings['task_error_alert_setting.merge_minutes'] || 10,
+          user_summary_enabled:
+            settings['task_error_alert_setting.user_summary_enabled'] ?? true,
+          summary_minutes:
+            settings['task_error_alert_setting.summary_minutes'] || 60,
         }}
       />
     ),

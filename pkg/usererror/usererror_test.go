@@ -153,3 +153,22 @@ func TestEveryCodeIsTranslated(t *testing.T) {
 		}
 	}
 }
+
+// Every code must say who caused it, or a new code would be alerted with the
+// wrong urgency; every category needs its alert label in each language.
+func TestEveryCodeHasAnAlertClass(t *testing.T) {
+	for code := range messages {
+		class, ok := alertClasses[code]
+		require.True(t, ok, "code %s has no alert class", code)
+		assert.Contains(t, AlertCategories, class.category, code)
+	}
+	for _, lang := range []string{"en", "zh-CN", "zh-TW"} {
+		for _, category := range AlertCategories {
+			key := "task_error_alert.category." + category
+			assert.NotEqual(t, key, i18n.Translate(lang, key, nil), lang)
+		}
+	}
+	assert.Equal(t, SeverityUser, Result{Code: CodeModerationInput}.AlertSeverity())
+	assert.Equal(t, SeverityCritical, Result{Code: CodeServiceCannotProcess}.AlertSeverity())
+	assert.Equal(t, SeverityUpstream, Result{Code: "not_a_code"}.AlertSeverity())
+}
