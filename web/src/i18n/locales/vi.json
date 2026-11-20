@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "Thanh toán trong kỳ theo số tiền, gồm mã đổi",
     "No payments in this period": "Không có thanh toán trong kỳ này",
     "Cumulative": "Lũy kế",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí thượng nguồn là số nhà cung cấp đã trừ, nếu không thì theo giá cung cấp ghi lại ở mỗi lần trừ. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí thượng nguồn là số nhà cung cấp đã trừ, nếu không thì theo giá cung cấp ghi lại ở mỗi lần trừ. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ.",
+    "Covers all time": "Tính toàn thời gian"
   }
 }

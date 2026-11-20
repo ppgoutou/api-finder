@@ -99,7 +99,7 @@ export function OpsWalletSection(props: OpsSectionProps) {
         usedUp: testCredit?.used_up_users ?? 0,
         paid: testCredit?.paid_after_users ?? 0,
       }),
-      note: t('All time'),
+      note: t('Covers all time'),
     },
   ]
 

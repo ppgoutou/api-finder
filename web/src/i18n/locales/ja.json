@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "期間内の支払いを金額別に集計（引き換えコードを含む）",
     "No payments in this period": "この期間の支払いはありません",
     "Cumulative": "累計",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "収益はチャネルでユーザーに課金した額です。上流支出はサプライヤーの実際の課金額、取得できない場合は各課金時に記録した仕入れ価格で計算します。タスク成功率は非同期タスクのみが対象です。"
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "収益はチャネルでユーザーに課金した額です。上流支出はサプライヤーの実際の課金額、取得できない場合は各課金時に記録した仕入れ価格で計算します。タスク成功率は非同期タスクのみが対象です。",
+    "Covers all time": "全期間が対象"
   }
 }

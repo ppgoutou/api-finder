@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "Paiements de la période par montant, codes d'échange compris",
     "No payments in this period": "Aucun paiement sur cette période",
     "Cumulative": "Cumulé",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Le revenu est ce qui a été facturé aux utilisateurs sur le canal. Les dépenses amont sont ce que le fournisseur a facturé, sinon le prix d'achat enregistré sur chaque débit. Le taux de réussite ne couvre que les tâches asynchrones."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Le revenu est ce qui a été facturé aux utilisateurs sur le canal. Les dépenses amont sont ce que le fournisseur a facturé, sinon le prix d'achat enregistré sur chaque débit. Le taux de réussite ne couvre que les tâches asynchrones.",
+    "Covers all time": "Sur toute la durée"
   }
 }
