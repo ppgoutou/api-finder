@@ -27,6 +27,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { IconDiscord } from '@/assets/brand-icons'
 import { CopyButton } from '@/components/copy-button'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
@@ -36,7 +37,10 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { SUPPORT_TELEGRAM } from '@/features/home/lib/video-home'
+import {
+  SUPPORT_DISCORD_URL,
+  SUPPORT_TELEGRAM,
+} from '@/features/home/lib/video-home'
 import { useMembership } from '@/features/membership'
 import { cn } from '@/lib/utils'
 
@@ -49,7 +53,7 @@ const HIDDEN_PATH_PREFIXES = ['/setup', '/playground', '/chat', '/video-studio']
 /**
  * Floating support button in the bottom-right corner. It opens a card with
  * the support Telegram account: copy the handle, scan the QR code on a
- * phone, or open the chat directly.
+ * phone, or open the chat directly. It also links the Discord community.
  */
 export function SupportWidget() {
   const { t } = useTranslation()
@@ -168,6 +172,19 @@ export function SupportWidget() {
           >
             <HugeiconsIcon icon={TelegramIcon} className='size-4' aria-hidden />
             {t('Open Telegram')}
+          </a>
+
+          <a
+            href={SUPPORT_DISCORD_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'h-10 w-full'
+            )}
+          >
+            <IconDiscord className='size-4' aria-hidden />
+            {t('Join our Discord community')}
           </a>
         </div>
       </PopoverContent>

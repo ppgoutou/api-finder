@@ -22,20 +22,20 @@ import { describe, expect, it } from 'vitest'
 import { SupportContacts } from '../components/support-contacts'
 
 describe('SupportContacts', () => {
-  it('offers QQ and Telegram to every customer', () => {
+  it('offers Telegram and the Discord community without QQ', () => {
     render(<SupportContacts />)
 
     const items = screen.getAllByRole('listitem')
     expect(items.map((item) => item.textContent)).toEqual([
-      expect.stringContaining('QQ:3895235714'),
       expect.stringContaining('Telegram:@APIFinder_Support'),
+      expect.stringContaining('discord.gg/4dVPvrx2J'),
     ])
-    expect(screen.queryByText(/Mainland|International/)).toBeNull()
+    expect(screen.queryByText(/QQ/)).toBeNull()
     expect(
       screen.getByRole('link', { name: '@APIFinder_Support' })
     ).toHaveAttribute('href', 'https://t.me/APIFinder_Support')
     expect(
-      screen.getByRole('button', { name: 'Copy QQ number' })
-    ).toBeInTheDocument()
+      screen.getByRole('link', { name: 'discord.gg/4dVPvrx2J' })
+    ).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
   })
 })

@@ -16,12 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ArrowUpRight, MessageCircle, Send } from 'lucide-react'
+import { ArrowUpRight, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { IconDiscord } from '@/assets/brand-icons'
 import {
-  getSupportQqChatUrl,
-  SUPPORT_QQ,
+  SUPPORT_DISCORD_URL,
   SUPPORT_TELEGRAM,
 } from '@/features/home/lib/video-home'
 import { cn } from '@/lib/utils'
@@ -31,24 +31,22 @@ export function LandingContacts() {
 
   const contacts = [
     {
-      key: 'qq',
-      label: 'QQ',
-      value: SUPPORT_QQ,
-      href: getSupportQqChatUrl(navigator.userAgent),
-      external: false,
-      icon: MessageCircle,
-      tone: 'border-violet-400/35 hover:border-violet-400/70',
-      iconTone: 'bg-violet-600/20 text-violet-400',
-    },
-    {
       key: 'telegram',
       label: 'Telegram',
       value: `@${SUPPORT_TELEGRAM}`,
       href: `https://t.me/${SUPPORT_TELEGRAM}`,
-      external: true,
       icon: Send,
       tone: 'border-brand-on-dark/35 hover:border-brand-on-dark/70',
       iconTone: 'bg-brand/20 text-brand-on-dark',
+    },
+    {
+      key: 'discord',
+      label: t('Discord community'),
+      value: SUPPORT_DISCORD_URL.replace(/^https:\/\//, ''),
+      href: SUPPORT_DISCORD_URL,
+      icon: IconDiscord,
+      tone: 'border-violet-400/35 hover:border-violet-400/70',
+      iconTone: 'bg-violet-600/20 text-violet-400',
     },
   ]
 
@@ -65,9 +63,8 @@ export function LandingContacts() {
           <li key={contact.key}>
             <a
               href={contact.href}
-              {...(contact.external
-                ? { target: '_blank', rel: 'noopener noreferrer' }
-                : {})}
+              target='_blank'
+              rel='noopener noreferrer'
               className={cn(
                 'group flex items-center gap-3 rounded-xl border bg-ink-raised/60 px-4 py-3.5 backdrop-blur-sm transition-colors',
                 contact.tone

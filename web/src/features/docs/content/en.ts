@@ -423,8 +423,8 @@ Download links are temporary. Download and save the files soon after they are re
           type: 'markdown',
           text: `Reach us on whichever app is convenient for you:
 
-- QQ: **3895235714**
 - Telegram: [@APIFinder_Support](https://t.me/APIFinder_Support)
+- Discord community: [discord.gg/4dVPvrx2J](https://discord.gg/4dVPvrx2J)
 
 Include the task ID and request time when you report a problem. Our staff never message you first and never ask for your password or API key.`,
         },

@@ -25,19 +25,10 @@ For commercial licensing, please contact support@quantumnous.com
 export const HOME_MEDIA_BASE_URL: string = ''
 
 /** Official support channels; customers pick whichever suits them. */
-export const SUPPORT_QQ = '3895235714'
 export const SUPPORT_TELEGRAM = 'APIFinder_Support'
 
-/**
- * Link that opens a QQ chat with support: the mobile QQ app on phones and
- * tablets, the desktop QQ client elsewhere.
- */
-export function getSupportQqChatUrl(userAgent: string): string {
-  if (/Android|iPhone|iPad|iPod/i.test(userAgent)) {
-    return `mqqwpa://im/chat?chat_type=wpa&uin=${SUPPORT_QQ}&version=1&src_type=web`
-  }
-  return `tencent://message/?uin=${SUPPORT_QQ}&Site=api-finder&Menu=yes`
-}
+/** Invite link to the official Discord community. */
+export const SUPPORT_DISCORD_URL = 'https://discord.gg/4dVPvrx2J'
 
 /**
  * Seedance models presented on the home page, in display order. The
