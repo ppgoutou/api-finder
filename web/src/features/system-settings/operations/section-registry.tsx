@@ -103,6 +103,8 @@ const OPERATIONS_SECTIONS = [
             settings['task_error_alert_setting.user_summary_enabled'] ?? true,
           summary_minutes:
             settings['task_error_alert_setting.summary_minutes'] || 60,
+          hourly_stats_enabled:
+            settings['task_error_alert_setting.hourly_stats_enabled'] ?? true,
         }}
       />
     ),

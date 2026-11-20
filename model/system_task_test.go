@@ -541,6 +541,20 @@ func TestTaskErrorAlertQueriesDatabaseMatrix(t *testing.T) {
 			assert.Equal(t, "late", failed[1].FailReason)
 			assert.Equal(t, "seedance", failed[1].Properties.OriginModelName)
 
+			// The hourly task report counts finished tasks by status and
+			// submitted tasks within [start, end).
+			require.NoError(t, db.Model(&Task{}).Where("task_id = ?", "succeeded").Update("created_at", 250).Error)
+			counts, err := CountTasksFinishedBetween(200, 300)
+			require.NoError(t, err)
+			byStatus := map[TaskStatus]int64{}
+			for _, count := range counts {
+				byStatus[count.Status] = count.Count
+			}
+			assert.Equal(t, map[TaskStatus]int64{TaskStatusFailure: 1, TaskStatusSuccess: 1}, byStatus)
+			submitted, err := CountTasksCreatedBetween(200, 300)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), submitted)
+
 			logs := []Log{
 				{Type: LogTypeError, CreatedAt: 100, Content: "old"},
 				{Type: LogTypeError, CreatedAt: 300, Content: "late", RequestId: "r2"},

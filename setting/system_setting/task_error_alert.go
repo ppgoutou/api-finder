@@ -19,6 +19,10 @@ type TaskErrorAlertSettings struct {
 	// UserSummaryEnabled turns on the summary of customer-caused errors.
 	UserSummaryEnabled bool `json:"user_summary_enabled"`
 	SummaryMinutes     int  `json:"summary_minutes"`
+	// HourlyStatsEnabled sends, at the top of every hour, how many tasks the
+	// past hour had, their success rate and what the failures were. It does
+	// not need Enabled.
+	HourlyStatsEnabled bool `json:"hourly_stats_enabled"`
 }
 
 const (
@@ -30,6 +34,7 @@ var taskErrorAlertSettings = TaskErrorAlertSettings{
 	MergeMinutes:       DefaultTaskErrorAlertMergeMinutes,
 	UserSummaryEnabled: true,
 	SummaryMinutes:     DefaultTaskErrorAlertSummaryMinutes,
+	HourlyStatsEnabled: true,
 }
 
 func init() {

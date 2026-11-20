@@ -52,6 +52,7 @@ const taskErrorAlertSchema = z.object({
   merge_minutes: z.number().int().min(1),
   user_summary_enabled: z.boolean(),
   summary_minutes: z.number().int().min(1),
+  hourly_stats_enabled: z.boolean(),
 })
 
 export type TaskErrorAlertFormValues = z.infer<typeof taskErrorAlertSchema>
@@ -65,6 +66,7 @@ const FIELDS = [
   'merge_minutes',
   'user_summary_enabled',
   'summary_minutes',
+  'hourly_stats_enabled',
 ] as const
 
 /**
@@ -95,7 +97,7 @@ export function TaskErrorAlertSettingsSection(
   }
 
   const switchField = (
-    name: 'enabled' | 'user_summary_enabled',
+    name: 'enabled' | 'user_summary_enabled' | 'hourly_stats_enabled',
     label: string,
     description: string
   ) => (
@@ -172,6 +174,11 @@ export function TaskErrorAlertSettingsSection(
               'How often the customer error summary is sent. Nothing is sent when there were none.'
             )}
           </SettingsFormGrid>
+          {switchField(
+            'hourly_stats_enabled',
+            'Send an hourly task report',
+            'At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.'
+          )}
         </SettingsForm>
       </Form>
     </SettingsSection>

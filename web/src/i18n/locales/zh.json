@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Hourly task report": "每小时任务统计",
+    "Send an hourly task report": "每小时推送任务统计",
+    "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "每到整点推送上一小时的任务数、成功率、失败条数和主要失败原因。使用上游余额提醒的飞书机器人，不需要打开上面的开关。",
     "Report every (minutes)": "播报间隔（分钟）",
     "How often the balance report is sent. 0 sends one on every check.": "多久发一次余额播报。填 0 表示每次检查都发。",
     "Send a balance report on every check": "每次检查都发送余额播报",

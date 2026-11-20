@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Hourly task report": "Hourly task report",
+    "Send an hourly task report": "Send an hourly task report",
+    "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.",
     "Report every (minutes)": "Report every (minutes)",
     "How often the balance report is sent. 0 sends one on every check.": "How often the balance report is sent. 0 sends one on every check.",
     "Send a balance report on every check": "Send a balance report on every check",

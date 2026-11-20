@@ -113,6 +113,12 @@ const (
 	MsgTaskErrorAlertCategoryCancelled      = "task_error_alert.category.cancelled"
 )
 
+// Hourly task report sent to the balance alert's Feishu bot, always in zh-CN.
+const (
+	MsgTaskStatsReport   = "task_stats.report"
+	MsgTaskStatsFailures = "task_stats.failures"
+)
+
 // Channel notices sent to the root user and model update watchers
 const (
 	MsgChannelNotifyDisabledSubject = "channel.notify_disabled_subject"
