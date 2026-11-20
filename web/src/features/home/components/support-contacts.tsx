@@ -18,11 +18,9 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
-import { CopyButton } from '@/components/copy-button'
+import { SUPPORT_DISCORD_URL, SUPPORT_TELEGRAM } from '../lib/video-home'
 
-import { SUPPORT_QQ, SUPPORT_TELEGRAM } from '../lib/video-home'
-
-/** Support channels: QQ and Telegram, open to every customer. */
+/** Support channels: Telegram and the Discord community, open to every customer. */
 export function SupportContacts() {
   const { t } = useTranslation()
 
@@ -30,18 +28,6 @@ export function SupportContacts() {
     <div className='flex flex-col gap-1.5'>
       <p>{t('Contact us on whichever app is convenient for you:')}</p>
       <ul className='flex flex-col gap-1.5'>
-        <li className='flex flex-wrap items-center gap-x-2'>
-          <span>QQ:</span>
-          <span className='text-foreground font-mono font-semibold'>
-            {SUPPORT_QQ}
-          </span>
-          <CopyButton
-            value={SUPPORT_QQ}
-            size='sm'
-            className='size-7'
-            aria-label={t('Copy QQ number')}
-          />
-        </li>
         <li className='flex flex-wrap items-center gap-x-2'>
           <span>Telegram:</span>
           <a
@@ -51,6 +37,17 @@ export function SupportContacts() {
             className='text-foreground font-semibold'
           >
             @{SUPPORT_TELEGRAM}
+          </a>
+        </li>
+        <li className='flex flex-wrap items-center gap-x-2'>
+          <span>{t('Discord community')}:</span>
+          <a
+            href={SUPPORT_DISCORD_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-foreground font-semibold'
+          >
+            {SUPPORT_DISCORD_URL.replace(/^https:\/\//, '')}
           </a>
         </li>
       </ul>

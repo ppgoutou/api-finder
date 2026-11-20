@@ -19,8 +19,6 @@ For commercial licensing, please contact support@quantumnous.com
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { getSupportQqChatUrl } from '@/features/home/lib/video-home'
-
 import { LandingContacts } from '../components/landing-contacts'
 
 describe('LandingContacts', () => {
@@ -32,31 +30,17 @@ describe('LandingContacts', () => {
     expect(telegram).toHaveAttribute('target', '_blank')
   })
 
-  it('links the QQ card to a chat with the support QQ number', () => {
+  it('links the Discord card to the community invite in a new tab', () => {
     render(<LandingContacts />)
 
-    expect(screen.getByRole('link', { name: /3895235714/ })).toHaveAttribute(
-      'href',
-      getSupportQqChatUrl(navigator.userAgent)
-    )
-  })
-})
-
-describe('getSupportQqChatUrl', () => {
-  it('opens the desktop QQ client for a desktop browser', () => {
-    expect(
-      getSupportQqChatUrl(
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      )
-    ).toBe('tencent://message/?uin=3895235714&Site=api-finder&Menu=yes')
+    const discord = screen.getByRole('link', { name: /discord\.gg\/4dVPvrx2J/ })
+    expect(discord).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
+    expect(discord).toHaveAttribute('target', '_blank')
   })
 
-  it.each([
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
-    'Mozilla/5.0 (Linux; Android 14; Pixel 8)',
-  ])('opens mobile QQ for %s', (userAgent) => {
-    expect(getSupportQqChatUrl(userAgent)).toBe(
-      'mqqwpa://im/chat?chat_type=wpa&uin=3895235714&version=1&src_type=web'
-    )
+  it('shows no QQ contact', () => {
+    render(<LandingContacts />)
+
+    expect(screen.queryByText(/QQ|3895235714/)).not.toBeInTheDocument()
   })
 })

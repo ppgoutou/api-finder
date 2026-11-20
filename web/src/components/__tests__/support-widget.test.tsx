@@ -85,6 +85,19 @@ describe('support widget', () => {
     expect(screen.getByText('@APIFinder_Support')).toBeInTheDocument()
   })
 
+  it('links the Discord community in a new tab when the card is open', async () => {
+    const user = userEvent.setup()
+    render(<SupportWidget />)
+
+    await user.click(screen.getByRole('button', { name: 'Contact support' }))
+
+    const link = await screen.findByRole('link', {
+      name: /Join our Discord community/,
+    })
+    expect(link).toHaveAttribute('href', 'https://discord.gg/4dVPvrx2J')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
   it.each(['/setup', '/playground', '/chat', '/video-studio/abc'])(
     'renders no button on %s, which keeps its own controls in the corner',
     (pathname) => {
