@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/i18n"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/usererror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,4 +82,39 @@ func TestTaskErrorSummaryText(t *testing.T) {
 	assert.Contains(t, text, "过去 60 分钟共 3 次")
 	assert.Contains(t, text, "· 用户余额不足：1\n· 内容审核：2")
 	assert.Contains(t, text, "a (#1) ×2、b (#2) ×1")
+}
+
+// TestTaskHourlyStats builds one hour's report from status counts and failed
+// tasks, skipping a failure finished outside the hour.
+func TestTaskHourlyStats(t *testing.T) {
+	require.NoError(t, i18n.Init())
+	start := time.Date(2026, 11, 20, 9, 0, 0, 0, time.Local)
+	end := start.Add(time.Hour)
+	failed := func(reason string, at time.Time) *model.Task {
+		return &model.Task{FailReason: reason, FinishTime: at.Unix(), Properties: model.Properties{OriginModelName: "seedance"}}
+	}
+	counts := []model.TaskStatusCount{{Status: model.TaskStatusSuccess, Count: 17}, {Status: model.TaskStatusFailure, Count: 3}, {Status: model.TaskStatusInProgress, Count: 4}}
+	tasks := []*model.Task{
+		failed("Task timed out", start.Add(10*time.Minute)),
+		failed("Task timed out", start.Add(20*time.Minute)),
+		failed("生成的视频可能涉及版权限制。", start.Add(30*time.Minute)),
+		failed("Task timed out", end.Add(time.Minute)),
+	}
+	stats := collectTaskHourlyStats(start, end, 25, counts, tasks)
+	assert.Equal(t, int64(17), stats.Succeeded)
+	assert.Equal(t, int64(3), stats.Failed)
+	assert.Equal(t, 2, stats.Ours)
+	assert.Equal(t, 1, stats.Customer)
+	assert.Equal(t, 3, stats.ByModel["seedance"])
+
+	text := taskHourlyStatsText(stats)
+	assert.Contains(t, text, "任务统计 11-20 09:00–10:00")
+	assert.Contains(t, text, "新提交：25 条\n已完成：20 条（成功 17，失败 3）\n成功率：85.0%")
+	assert.Contains(t, text, "上游/系统 2 条，用户侧 1 条")
+	assert.Contains(t, text, "· 超时：2\n· 内容审核：1")
+	assert.Contains(t, text, "常见报错：\n· Task timed out ×2\n· 生成的视频可能涉及版权限制。 ×1")
+
+	quiet := taskHourlyStatsText(collectTaskHourlyStats(start, end, 2, []model.TaskStatusCount{{Status: model.TaskStatusSuccess, Count: 2}}, nil))
+	assert.Contains(t, quiet, "成功率：100.0%")
+	assert.NotContains(t, quiet, "失败原因")
 }

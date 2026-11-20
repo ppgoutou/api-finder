@@ -156,3 +156,7 @@ task_error_alert.category.parameter: "Invalid parameters"
 task_error_alert.category.material: "Asset problem"
 task_error_alert.category.moderation: "Content review"
 task_error_alert.category.cancelled: "Cancelled"
+
+# Hourly task report (Feishu bot)
+task_stats.report: "[{{.System}}] Task report {{.Period}}\nSubmitted: {{.Submitted}}\nFinished: {{.Finished}} ({{.Succeeded}} succeeded, {{.Failed}} failed)\nSuccess rate: {{.Rate}}"
+task_stats.failures: "Failures ({{.Ours}} upstream or system, {{.Customer}} customer):{{.Lines}}\nTop models: {{.Models}}\nTop channels: {{.Channels}}\nCommon errors:{{.Reasons}}"

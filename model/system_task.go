@@ -24,6 +24,7 @@ const (
 	SystemTaskTypeUpstreamPrice  = "upstream_price_check"
 	SystemTaskTypeBalanceAlert   = "upstream_balance_alert"
 	SystemTaskTypeTaskErrorAlert = "task_error_alert"
+	SystemTaskTypeTaskStats      = "task_hourly_stats"
 )
 
 var ErrSystemTaskLockLost = errors.New("system task lock lost")

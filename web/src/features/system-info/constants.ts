@@ -27,4 +27,5 @@ export const SYSTEM_TASK_TYPE_LABEL: Record<string, string> = {
   upstream_price_check: 'Supplier price check',
   upstream_balance_alert: 'Upstream balance alert',
   task_error_alert: 'Task error alert',
+  task_hourly_stats: 'Hourly task report',
 }

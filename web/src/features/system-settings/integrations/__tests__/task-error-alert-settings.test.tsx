@@ -35,6 +35,7 @@ const SAVED: TaskErrorAlertFormValues = {
   merge_minutes: 10,
   user_summary_enabled: true,
   summary_minutes: 60,
+  hourly_stats_enabled: true,
 }
 
 function Fixture(props: { values: TaskErrorAlertFormValues }) {

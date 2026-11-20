@@ -74,6 +74,7 @@ const defaultOperationsSettings: OperationsSettings = {
   'task_error_alert_setting.merge_minutes': 10,
   'task_error_alert_setting.user_summary_enabled': true,
   'task_error_alert_setting.summary_minutes': 60,
+  'task_error_alert_setting.hourly_stats_enabled': true,
   'media_storage.enabled': false,
   'media_storage.overseas_endpoint': '',
   'media_storage.overseas_region': 'auto',

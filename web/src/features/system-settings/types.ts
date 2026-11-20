@@ -429,6 +429,7 @@ export type OperationsSettings = {
   'task_error_alert_setting.merge_minutes': number
   'task_error_alert_setting.user_summary_enabled': boolean
   'task_error_alert_setting.summary_minutes': number
+  'task_error_alert_setting.hourly_stats_enabled': boolean
   'media_storage.enabled': boolean
   'media_storage.overseas_endpoint': string
   'media_storage.overseas_region': string

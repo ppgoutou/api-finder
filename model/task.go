@@ -432,6 +432,33 @@ func GetFailedTasksFinishedSince(sinceUnix int64, limit int) []*Task {
 	return tasks
 }
 
+// TaskStatusCount is how many tasks are in one status.
+type TaskStatusCount struct {
+	Status TaskStatus
+	Count  int64
+}
+
+// CountTasksFinishedBetween counts the tasks finished in [startUnix, endUnix)
+// by status, for the hourly task report.
+func CountTasksFinishedBetween(startUnix, endUnix int64) ([]TaskStatusCount, error) {
+	var rows []TaskStatusCount
+	err := DB.Model(&Task{}).
+		Select("status, count(*) as count").
+		Where("finish_time >= ? AND finish_time < ?", startUnix, endUnix).
+		Group("status").
+		Scan(&rows).Error
+	return rows, err
+}
+
+// CountTasksCreatedBetween counts the tasks submitted in [startUnix, endUnix).
+func CountTasksCreatedBetween(startUnix, endUnix int64) (int64, error) {
+	var count int64
+	err := DB.Model(&Task{}).
+		Where("created_at >= ? AND created_at < ?", startUnix, endUnix).
+		Count(&count).Error
+	return count, err
+}
+
 // GetTaskByID loads a task by primary key.
 func GetTaskByID(id int64) (*Task, error) {
 	var task Task

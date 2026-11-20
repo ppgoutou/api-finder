@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Hourly task report": "Rapport horaire des tâches",
+    "Send an hourly task report": "Envoyer un rapport horaire des tâches",
+    "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "Au début de chaque heure, envoie le nombre de tâches de l'heure écoulée, le taux de réussite, le nombre d'échecs et leurs principales causes. Utilise le bot Feishu des alertes de solde amont et fonctionne sans l'interrupteur ci-dessus.",
     "Report every (minutes)": "Relevé toutes les (minutes)",
     "How often the balance report is sent. 0 sends one on every check.": "Fréquence d'envoi du relevé de solde. 0 en envoie un à chaque vérification.",
     "Send a balance report on every check": "Envoyer un relevé de solde à chaque vérification",

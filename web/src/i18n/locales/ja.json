@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Hourly task report": "毎時タスク統計",
+    "Send an hourly task report": "毎時タスク統計を送信",
+    "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "毎正時に、直前1時間のタスク数・成功率・失敗件数と主な失敗原因を送信します。上流残高通知の Feishu ボットを使い、上のスイッチがオフでも動作します。",
     "Report every (minutes)": "レポート間隔（分）",
     "How often the balance report is sent. 0 sends one on every check.": "残高レポートを送る頻度です。0 なら確認のたびに送ります。",
     "Send a balance report on every check": "確認のたびに残高レポートを送信",

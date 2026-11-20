@@ -157,3 +157,7 @@ task_error_alert.category.parameter: "参数不合规"
 task_error_alert.category.material: "素材问题"
 task_error_alert.category.moderation: "内容审核"
 task_error_alert.category.cancelled: "已取消"
+
+# 每小时任务统计（飞书机器人）
+task_stats.report: "【{{.System}}】任务统计 {{.Period}}\n新提交：{{.Submitted}} 条\n已完成：{{.Finished}} 条（成功 {{.Succeeded}}，失败 {{.Failed}}）\n成功率：{{.Rate}}"
+task_stats.failures: "失败原因（上游/系统 {{.Ours}} 条，用户侧 {{.Customer}} 条）：{{.Lines}}\n失败最多的模型：{{.Models}}\n失败最多的渠道：{{.Channels}}\n常见报错：{{.Reasons}}"

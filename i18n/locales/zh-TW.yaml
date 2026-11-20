@@ -157,3 +157,7 @@ task_error_alert.category.parameter: "參數不合規"
 task_error_alert.category.material: "素材問題"
 task_error_alert.category.moderation: "內容審核"
 task_error_alert.category.cancelled: "已取消"
+
+# 每小時任務統計（飛書機器人）
+task_stats.report: "【{{.System}}】任務統計 {{.Period}}\n新提交：{{.Submitted}} 筆\n已完成：{{.Finished}} 筆（成功 {{.Succeeded}}，失敗 {{.Failed}}）\n成功率：{{.Rate}}"
+task_stats.failures: "失敗原因（上游/系統 {{.Ours}} 筆，使用者端 {{.Customer}} 筆）：{{.Lines}}\n失敗最多的模型：{{.Models}}\n失敗最多的渠道：{{.Channels}}\n常見錯誤：{{.Reasons}}"

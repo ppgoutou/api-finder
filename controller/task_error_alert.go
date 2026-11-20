@@ -300,6 +300,11 @@ func taskErrorAlertText(message taskErrorAlertMessage, mergeMinutes int) string 
 
 // topAlertCounts lists the largest counts as "name ×n", largest first.
 func topAlertCounts(counts map[string]int, limit int) string {
+	return strings.Join(rankAlertCounts(counts, limit), "、")
+}
+
+// rankAlertCounts returns the largest counts as "name ×n", largest first.
+func rankAlertCounts(counts map[string]int, limit int) []string {
 	names := make([]string, 0, len(counts))
 	for name := range counts {
 		names = append(names, name)
@@ -314,7 +319,7 @@ func topAlertCounts(counts map[string]int, limit int) string {
 	for _, name := range names[:min(limit, len(names))] {
 		parts = append(parts, fmt.Sprintf("%s ×%d", name, counts[name]))
 	}
-	return strings.Join(parts, "、")
+	return parts
 }
 
 func taskErrorSummaryText(summary *taskErrorUserSummary) string {
