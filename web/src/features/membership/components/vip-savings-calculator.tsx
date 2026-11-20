@@ -32,7 +32,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import {
   VIP_DISPLAY_FONT,
-  VIP_LIME_TEXT,
+  VIP_NIGHT_TEXT,
   VIP_NIGHT_PANEL,
 } from '../lib/vip-style'
 
@@ -73,7 +73,7 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
       <div className='flex items-center gap-2'>
         <HugeiconsIcon
           icon={Calculator01Icon}
-          className={cn('size-5', VIP_LIME_TEXT)}
+          className={cn('size-5', VIP_NIGHT_TEXT)}
           aria-hidden
         />
         <h3 className='text-lg font-semibold tracking-tight'>
@@ -100,7 +100,7 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
             className={cn(
               'mt-2 text-2xl leading-none tabular-nums',
               VIP_DISPLAY_FONT,
-              VIP_LIME_TEXT
+              VIP_NIGHT_TEXT
             )}
             aria-live='polite'
           >

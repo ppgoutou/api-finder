@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 import { getVipSavingPercent } from '../lib/progress'
 import {
   VIP_DISPLAY_FONT,
-  VIP_LIME_TEXT,
+  VIP_NIGHT_TEXT,
   VIP_NIGHT_PANEL,
 } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
@@ -109,7 +109,7 @@ export function VipHighlights(props: VipHighlightsProps) {
               'text-3xl leading-none tabular-nums',
               VIP_DISPLAY_FONT,
               large && 'text-4xl sm:text-6xl',
-              highlight.id === 'price' ? VIP_LIME_TEXT : 'text-white'
+              highlight.id === 'price' ? VIP_NIGHT_TEXT : 'text-white'
             )}
           >
             {highlight.value}

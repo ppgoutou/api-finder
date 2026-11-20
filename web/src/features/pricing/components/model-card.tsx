@@ -89,7 +89,7 @@ import { RollingPrice } from './rolling-price'
 const CARD_ACCENT_CLASS = 'border-brand bg-brand text-white'
 const STABLE_CARD_ACCENT_CLASS =
   'border-success bg-success text-success-foreground'
-// VIP prices take the VIP gold, matching the VIP badge elsewhere.
+// VIP prices take the VIP violet, matching the VIP badge elsewhere.
 const VIP_ACCENT_CLASS = 'border-vip bg-vip text-vip-foreground'
 const VIP_PRICE_TEXT_CLASS = 'text-vip'
 

@@ -37,11 +37,12 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
-        /* VIP gold, for upgrading and VIP-only actions on light surfaces. */
-        vip: 'bg-vip text-vip-foreground hover:bg-vip-hover font-semibold',
-        /* Lime call-to-action, only on dark marketing stages. */
+        /* VIP gradient (brand blue into violet), for upgrading and
+         * VIP-only actions. */
+        vip: 'bg-linear-135 from-vip-from to-vip-to text-white hover:from-vip-from-hover hover:to-vip-to-hover font-semibold',
+        /* The same gradient on dark marketing stages, with a violet ring. */
         night:
-          'bg-accent-night text-accent-night-foreground hover:bg-accent-night/90 focus-visible:ring-accent-night/50 font-semibold',
+          'bg-linear-135 from-vip-from to-vip-to text-white hover:from-vip-from-hover hover:to-vip-to-hover focus-visible:ring-accent-night/50 font-semibold',
         /* No surface: a clickable name, preview or reason inside a table
          * cell or a line of text. Pair with size="inline"; it keeps the
          * focus ring and text wrapping of the content it wraps. */

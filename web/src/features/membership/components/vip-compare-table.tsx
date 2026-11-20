@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 
 import { VIP_BENEFIT_ICONS } from '../lib/benefit-icons'
 import { getVipBenefits, type VipBenefit } from '../lib/benefits'
-import { VIP_LIME_TEXT } from '../lib/vip-style'
+import { VIP_NIGHT_TEXT } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipCompareTableProps {
@@ -89,7 +89,7 @@ export function VipCompareTable(props: VipCompareTableProps) {
         <span
           className={cn(
             'inline-flex items-center gap-1 text-xs font-semibold',
-            VIP_LIME_TEXT
+            VIP_NIGHT_TEXT
           )}
         >
           <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
@@ -103,7 +103,7 @@ export function VipCompareTable(props: VipCompareTableProps) {
         <span
           className={cn(
             'flex items-start gap-1.5 font-semibold',
-            VIP_LIME_TEXT
+            VIP_NIGHT_TEXT
           )}
         >
           <HugeiconsIcon

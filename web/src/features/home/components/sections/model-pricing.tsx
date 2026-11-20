@@ -39,8 +39,8 @@ import {
 import {
   getVipSavingPercent,
   useMembership,
-  VIP_GOLD_SURFACE,
-  VIP_GOLD_TEXT,
+  VIP_SURFACE,
+  VIP_TEXT,
   VipCompareButton,
 } from '@/features/membership'
 import { useModelDisplayName } from '@/features/pricing/hooks'
@@ -336,10 +336,10 @@ function SeriesCard(props: SeriesCardProps) {
       <div
         className={cn(
           'mt-3 flex min-h-14 items-center justify-between gap-3 rounded-xl border px-3 py-2',
-          VIP_GOLD_SURFACE
+          VIP_SURFACE
         )}
       >
-        <p className={cn('min-w-0', VIP_GOLD_TEXT)}>
+        <p className={cn('min-w-0', VIP_TEXT)}>
           <span className='flex items-center gap-1 text-xs font-medium'>
             <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />
             {t('VIP from')}
@@ -364,8 +364,8 @@ function SeriesCard(props: SeriesCardProps) {
       <p
         className={cn(
           'mt-3 flex min-h-14 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold',
-          VIP_GOLD_SURFACE,
-          VIP_GOLD_TEXT
+          VIP_SURFACE,
+          VIP_TEXT
         )}
       >
         <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />

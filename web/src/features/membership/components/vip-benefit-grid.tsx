@@ -23,14 +23,14 @@ import { cn } from '@/lib/utils'
 
 import { VIP_BENEFIT_ICONS } from '../lib/benefit-icons'
 import { getVipBenefits } from '../lib/benefits'
-import { VIP_LIME_TEXT, VIP_NIGHT_PANEL } from '../lib/vip-style'
+import { VIP_NIGHT_TEXT, VIP_NIGHT_PANEL } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipBenefitGridProps {
   info: MembershipInfo
   /** Show only the first few benefits, such as on the home page. */
   limit?: number
-  /** Glassy cards with lime icons, for the dark VIP page. */
+  /** Glassy cards with violet icons, for the dark VIP page. */
   night?: boolean
   className?: string
 }
@@ -60,7 +60,7 @@ export function VipBenefitGrid(props: VipBenefitGridProps) {
               props.night
                 ? cn(
                     'flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-night/10',
-                    VIP_LIME_TEXT
+                    VIP_NIGHT_TEXT
                   )
                 : 'bg-vip-soft text-vip flex size-10 shrink-0 items-center justify-center rounded-xl'
             }

@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
-import { VIP_LIME_TEXT } from '../lib/vip-style'
+import { VIP_NIGHT_TEXT } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 
 interface VipActionsProps {
@@ -36,7 +36,7 @@ interface VipActionsProps {
   showLearnMore?: boolean
   /** Called before navigating, such as to close a dialog. */
   onNavigate?: () => void
-  /** Lime buttons for the dark VIP page and dialog. */
+  /** Violet buttons for the dark VIP page and dialog. */
   night?: boolean
   className?: string
 }
@@ -84,7 +84,7 @@ export function VipActions(props: VipActionsProps) {
           props.night
             ? cn(
                 'rounded-control border-accent-night/30 bg-accent-night/10 inline-flex h-11 items-center gap-1.5 border px-5 text-sm font-semibold',
-                VIP_LIME_TEXT
+                VIP_NIGHT_TEXT
               )
             : 'rounded-control border-vip/40 text-vip inline-flex h-10 items-center gap-1.5 border px-4 text-sm font-semibold'
         }

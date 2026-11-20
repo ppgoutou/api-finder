@@ -33,8 +33,8 @@ import { getVipBenefits, getVipUpgradeRule } from '../lib/benefits'
 import { getVipSavingPercent } from '../lib/progress'
 import {
   VIP_DISPLAY_FONT,
-  VIP_LIME_FILL,
-  VIP_LIME_TEXT,
+  VIP_NIGHT_FILL,
+  VIP_NIGHT_TEXT,
   VIP_NIGHT_PANEL,
 } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
@@ -47,7 +47,7 @@ interface VipTierCardsProps {
 
 /**
  * Standard and VIP as two plan cards on the dark VIP page, the VIP card lit
- * in lime. Both list the same benefits in the same order so rows line up.
+ * in violet. Both list the same benefits in the same order so rows line up.
  */
 export function VipTierCards(props: VipTierCardsProps) {
   const { t } = useTranslation()
@@ -120,16 +120,16 @@ export function VipTierCards(props: VipTierCardsProps) {
         </ul>
       </article>
 
-      <article className='border-accent-night/45 rounded-panel bg-night-raised relative flex flex-col overflow-hidden border p-6 shadow-[0_0_90px_-25px_rgba(209,254,23,0.55)] sm:p-8'>
+      <article className='border-accent-night/45 rounded-panel bg-night-raised relative flex flex-col overflow-hidden border p-6 shadow-[0_0_90px_-25px_rgba(124,58,237,0.55)] sm:p-8'>
         <div
           aria-hidden
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,rgba(209,254,23,0.26),transparent_62%)]'
+          className='pointer-events-none absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,rgba(124,58,237,0.3),transparent_62%)]'
         />
         <div className='relative flex items-start justify-between gap-3'>
           <h3 className='font-display text-heading-2 flex items-center gap-2 leading-none font-medium'>
             <HugeiconsIcon
               icon={CrownIcon}
-              className={cn('size-7', VIP_LIME_TEXT)}
+              className={cn('size-7', VIP_NIGHT_TEXT)}
               aria-hidden
             />
             VIP
@@ -137,7 +137,7 @@ export function VipTierCards(props: VipTierCardsProps) {
           <span
             className={cn(
               'rounded-full px-2.5 py-1 text-xs font-semibold',
-              VIP_LIME_FILL
+              VIP_NIGHT_FILL
             )}
           >
             {t('Recommended')}
@@ -150,7 +150,7 @@ export function VipTierCards(props: VipTierCardsProps) {
           className={cn(
             'relative mt-8 text-4xl leading-none',
             VIP_DISPLAY_FONT,
-            VIP_LIME_TEXT
+            VIP_NIGHT_TEXT
           )}
         >
           {savingPercent > 0 ? `-${savingPercent}%` : t('No fee')}
@@ -166,7 +166,7 @@ export function VipTierCards(props: VipTierCardsProps) {
             <li key={benefit.id} className='flex min-h-14 gap-3'>
               <HugeiconsIcon
                 icon={Tick02Icon}
-                className={cn('mt-0.5 size-4 shrink-0', VIP_LIME_TEXT)}
+                className={cn('mt-0.5 size-4 shrink-0', VIP_NIGHT_TEXT)}
                 aria-hidden
               />
               <div className='min-w-0'>
