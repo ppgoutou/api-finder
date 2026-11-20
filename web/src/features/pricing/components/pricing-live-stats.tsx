@@ -16,8 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Activity01Icon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -47,12 +45,8 @@ const STAT_CARD =
   'bg-card flex min-w-0 items-center gap-2.5 rounded-card border px-3 py-2.5 text-left sm:gap-3 sm:px-4 sm:py-3'
 const STAT_ICON =
   'relative flex size-8 shrink-0 items-center justify-center rounded-control sm:size-10'
-// Staggered so the three bars rise one after another.
-const LIVE_BAR_DELAYS = [
-  '[animation-delay:0ms]',
-  '[animation-delay:250ms]',
-  '[animation-delay:500ms]',
-]
+// Three bars; index.css staggers them so they rise one after another.
+const LIVE_BARS = [0, 1, 2]
 const STAT_VALUE =
   'font-display text-xl leading-tight font-bold tracking-tight tabular-nums sm:text-2xl'
 
@@ -85,7 +79,18 @@ export function PricingLiveStats(props: { className?: string }) {
             aria-hidden
             className='bg-success absolute top-1.5 right-1.5 size-1.5 rounded-full'
           />
-          <HugeiconsIcon icon={Activity01Icon} className='size-5' aria-hidden />
+          <svg
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            className='size-4 sm:size-5'
+            aria-hidden
+          >
+            <path d='M3 12h4l3-7 4 14 3-7h4' />
+          </svg>
         </span>
         <div className='min-w-0'>
           <dt className='text-muted-foreground text-xs'>
@@ -97,15 +102,15 @@ export function PricingLiveStats(props: { className?: string }) {
       <div className={STAT_CARD}>
         <span
           aria-hidden
-          className={cn(STAT_ICON, 'bg-brand-soft items-end gap-0.5 pb-2.5')}
+          className={cn(
+            STAT_ICON,
+            'bg-brand-soft items-end gap-0.75 pb-2 sm:pb-2.75'
+          )}
         >
-          {LIVE_BAR_DELAYS.map((delay) => (
+          {LIVE_BARS.map((bar) => (
             <span
-              key={delay}
-              className={cn(
-                'bg-brand live-stat-bar h-4 w-1 rounded-full',
-                delay
-              )}
+              key={bar}
+              className='bg-brand live-stat-bar h-3 w-0.75 rounded-full sm:h-4 sm:w-1'
             />
           ))}
         </span>
