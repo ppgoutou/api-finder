@@ -23,6 +23,7 @@ const (
 	SystemTaskTypeAsyncTaskPoll  = "async_task_poll"
 	SystemTaskTypeUpstreamPrice  = "upstream_price_check"
 	SystemTaskTypeBalanceAlert   = "upstream_balance_alert"
+	SystemTaskTypeTaskErrorAlert = "task_error_alert"
 )
 
 var ErrSystemTaskLockLost = errors.New("system task lock lost")

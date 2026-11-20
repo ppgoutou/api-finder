@@ -425,6 +425,10 @@ export type OperationsSettings = {
   'balance_alert_setting.report_enabled': boolean
   'balance_alert_setting.report_minutes': number
   'balance_alert_setting.monitors': string
+  'task_error_alert_setting.enabled': boolean
+  'task_error_alert_setting.merge_minutes': number
+  'task_error_alert_setting.user_summary_enabled': boolean
+  'task_error_alert_setting.summary_minutes': number
   'media_storage.enabled': boolean
   'media_storage.overseas_endpoint': string
   'media_storage.overseas_region': string

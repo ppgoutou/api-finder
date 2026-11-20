@@ -101,6 +101,18 @@ func createLog(log *Log) error {
 	return LOG_DB.Create(log).Error
 }
 
+// GetErrorLogsSince lists error logs created at or after sinceUnix, oldest
+// first, for the task error alert.
+func GetErrorLogsSince(sinceUnix int64, limit int) ([]*Log, error) {
+	var logs []*Log
+	err := LOG_DB.Where("type = ?", LogTypeError).
+		Where("created_at >= ?", sinceUnix).
+		Order("created_at asc").
+		Limit(limit).
+		Find(&logs).Error
+	return logs, err
+}
+
 func clickHouseLogOrder(prefix string) string {
 	return prefix + "created_at desc, " + prefix + "request_id desc"
 }
