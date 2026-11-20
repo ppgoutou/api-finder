@@ -97,14 +97,24 @@ export function opsDashboardProfit(data: OpsDashboardData, allTime: boolean) {
  * the channel's cost rate when its supplier cost is known. Null when the
  * balance was never read or the channel had no recent usage.
  */
-export function upstreamRunwayDays(row: OpsUpstream, quotaPerUnit: number) {
-  if (row.balance_updated_time <= 0 || row.recent_quota <= 0) return null
+/**
+ * Days a supplier wallet lasts at the last seven days of usage on its
+ * channels, each priced at the channel's cost rate (full rate when the
+ * supplier cost is unknown). Null without recent usage.
+ */
+export function supplierRunwayDays(
+  balanceUSD: number,
+  channels: OpsUpstream[],
+  quotaPerUnit: number
+) {
   if (quotaPerUnit <= 0) return null
-  const costRate =
-    row.cost_status === 'ok' && row.quota > 0 ? row.cost_quota / row.quota : 1
-  const dailyUSD = (row.recent_quota * costRate) / quotaPerUnit / 7
+  const dailyUSD = channels.reduce((sum, row) => {
+    const costRate =
+      row.cost_status === 'ok' && row.quota > 0 ? row.cost_quota / row.quota : 1
+    return sum + (row.recent_quota * costRate) / quotaPerUnit / 7
+  }, 0)
   if (dailyUSD <= 0) return null
-  return row.balance / dailyUSD
+  return balanceUSD / dailyUSD
 }
 
 function shortDate(date: string) {

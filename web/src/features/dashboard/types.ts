@@ -437,6 +437,25 @@ export interface OpsModelDuration {
   p90_seconds: number
 }
 
+/** One supplier account shared by every enabled channel on its host. */
+export interface OpsSupplierBalance {
+  host: string
+  channels: { id: number; name: string }[]
+  /** How the balance is read; empty when no reader is set up. */
+  source: 'monitor' | 'new_api' | ''
+  /** The balance as the supplier holds it. */
+  amount?: number
+  currency?: 'CNY' | 'USD'
+  /** The balance in the site's internal dollars. */
+  balance_usd?: number
+  error?: string
+}
+
+export interface OpsSupplierBalances {
+  suppliers: OpsSupplierBalance[]
+  checked_at: number
+}
+
 export interface OpsDashboardData {
   current: OpsPeriodStats
   previous: OpsPeriodStats

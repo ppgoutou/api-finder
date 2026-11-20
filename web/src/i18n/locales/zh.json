@@ -8658,6 +8658,15 @@
     "off every model": "全站模型",
     "already applied": "已为您生效",
     "on every request": "每次都省",
-    "View my benefits": "查看我的权益"
+    "View my benefits": "查看我的权益",
+    "Supplier wallet balances": "供应商钱包余额",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "实时读取每个有启用渠道的供应商。可用天数按近 7 天用量估算。读取于 {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "实时读取每个有启用渠道的供应商。可用天数按近 7 天用量估算。",
+    "No supplier has an enabled channel": "没有供应商有启用中的渠道",
+    "Balance not set up": "未设置余额读取",
+    "No usage in the last 7 days": "近 7 天无用量",
+    "Failed to read the balance": "余额读取失败",
+    "Add an upstream balance monitor or a supplier token to read it": "添加上游余额提醒或供应商令牌后即可读取",
+    "Channels: {{names}}": "渠道：{{names}}"
   }
 }

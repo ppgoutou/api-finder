@@ -20,18 +20,16 @@ import { ChartPie } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getCurrencyDisplay } from '@/lib/currency'
-import { formatCurrencyUSD, formatPercent } from '@/lib/format'
+import { formatPercent } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
+import { formatOpsMoney } from '../../lib/ops'
 import {
   buildOpsChannelProfitSpec,
   OPS_STRIPE_FEE_RATE,
   opsDashboardProfit,
-  upstreamRunwayDays,
   type OpsProfitBreakdown,
 } from '../../lib/ops-insights'
-import { formatOpsMoney } from '../../lib/ops'
 import type { OpsUpstream } from '../../types'
 import { PanelWrapper } from '../ui/panel-wrapper'
 import { OpsChart } from './ops-chart'
@@ -41,11 +39,10 @@ import {
   type OpsSectionProps,
   type OpsStat,
 } from './ops-stat-grid'
+import { OpsSupplierWalletsPanel } from './ops-supplier-wallets'
 import { OpsUpstreamPanel } from './ops-upstream-panels'
 
 const STRIPE_FEE_PERCENT = `${OPS_STRIPE_FEE_RATE * 100}%`
-// A balance that runs out within this many days is flagged.
-const RUNWAY_WARNING_DAYS = 7
 
 export function OpsProfitSection(props: OpsSectionProps) {
   const { t } = useTranslation()
@@ -115,6 +112,7 @@ export function OpsProfitSection(props: OpsSectionProps) {
       )}
     >
       <OpsStatGrid stats={stats} loading={props.loading} />
+      <OpsSupplierWalletsPanel upstream={data?.upstream ?? []} />
       <div className='grid gap-3 xl:grid-cols-2'>
         <OpsWaterfallPanel
           profit={profit}
@@ -126,8 +124,10 @@ export function OpsProfitSection(props: OpsSectionProps) {
           loading={props.loading}
         />
       </div>
-      <OpsRunwayPanel upstream={data?.upstream ?? []} loading={props.loading} />
-      <OpsUpstreamPanel upstream={data?.upstream ?? []} loading={props.loading} />
+      <OpsUpstreamPanel
+        upstream={data?.upstream ?? []}
+        loading={props.loading}
+      />
     </OpsSection>
   )
 }
@@ -318,62 +318,6 @@ function OpsChannelProfitPanel(props: {
       className='min-w-0'
     >
       <OpsChart spec={spec} label={t('Profit by channel')} />
-    </PanelWrapper>
-  )
-}
-
-function OpsRunwayPanel(props: { upstream: OpsUpstream[]; loading: boolean }) {
-  const { t } = useTranslation()
-  const quotaPerUnit = getCurrencyDisplay().config.quotaPerUnit
-  const rows = props.upstream
-    .filter((row) => row.balance_updated_time > 0)
-    .map((row) => ({ row, days: upstreamRunwayDays(row, quotaPerUnit) }))
-    .sort((a, b) => (a.days ?? Infinity) - (b.days ?? Infinity))
-
-  return (
-    <PanelWrapper
-      title={t('Upstream balance runway')}
-      description={t(
-        'Days each supplier balance lasts at the last 7 days of usage. Only channels whose balance was read.'
-      )}
-      loading={props.loading}
-      empty={rows.length === 0}
-      emptyMessage={t('No upstream balance has been read yet')}
-      height='h-32'
-    >
-      <ul className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
-        {rows.map(({ row, days }) => {
-          const low = days != null && days < RUNWAY_WARNING_DAYS
-          return (
-            <li
-              key={row.channel_id}
-              className={cn(
-                'rounded-control border px-3 py-2',
-                low && 'border-destructive/50 bg-destructive/5'
-              )}
-            >
-              <div className='truncate text-sm' title={row.name}>
-                {row.name}
-              </div>
-              <div
-                className={cn(
-                  'font-mono text-lg font-semibold tabular-nums',
-                  low && 'text-destructive'
-                )}
-              >
-                {days == null
-                  ? '—'
-                  : t('{{days}} days', { days: Math.floor(days) })}
-              </div>
-              <div className='text-muted-foreground font-mono text-xs tabular-nums'>
-                {t('Balance {{amount}}', {
-                  amount: formatCurrencyUSD(row.balance),
-                })}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
     </PanelWrapper>
   )
 }

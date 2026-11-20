@@ -8658,6 +8658,15 @@
     "off every model": "mọi mô hình",
     "already applied": "đã áp dụng",
     "on every request": "mỗi yêu cầu",
-    "View my benefits": "Xem quyền lợi của tôi"
+    "View my benefits": "Xem quyền lợi của tôi",
+    "Supplier wallet balances": "Số dư ví nhà cung cấp",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}": "Đọc trực tiếp từ mỗi nhà cung cấp có kênh đang bật. Số ngày còn lại tính theo mức dùng 7 ngày gần nhất. Đọc lúc {{time}}",
+    "Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.": "Đọc trực tiếp từ mỗi nhà cung cấp có kênh đang bật. Số ngày còn lại tính theo mức dùng 7 ngày gần nhất.",
+    "No supplier has an enabled channel": "Không có nhà cung cấp nào có kênh đang bật",
+    "Balance not set up": "Chưa thiết lập đọc số dư",
+    "No usage in the last 7 days": "Không có mức dùng trong 7 ngày gần nhất",
+    "Failed to read the balance": "Không đọc được số dư",
+    "Add an upstream balance monitor or a supplier token to read it": "Thêm cảnh báo số dư thượng nguồn hoặc token nhà cung cấp để đọc",
+    "Channels: {{names}}": "Kênh: {{names}}"
   }
 }
