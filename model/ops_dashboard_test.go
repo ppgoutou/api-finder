@@ -155,31 +155,35 @@ func assertOpsDashboardFigures(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, OpsPeriodStats{
-		TopupQuota:       18 * opsTestUnit,
-		TopupOrders:      3,
-		RefundQuota:      2 * opsTestUnit,
-		RefundOrders:     1,
-		DisputedOrders:   1,
-		ClosedOrders:     2,
-		NewUsers:         1,
-		Payers:           2,
-		NewPayers:        2,
-		ActiveUsers:      2,
-		UsedQuota:        100,
-		OtherCreditQuota: 320,
-		TestCreditQuota:  240,
-		RegisteredPayers: 1,
-		RepeatPayers:     1,
-		Redemptions:      1,
-		RedemptionQuota:  1000,
-		TaskSuccess:      1,
-		TaskFailure:      2,
+		TopupQuota:     18 * opsTestUnit,
+		TopupOrders:    3,
+		RefundQuota:    2 * opsTestUnit,
+		RefundOrders:   1,
+		DisputedOrders: 1,
+		ClosedOrders:   2,
+		NewUsers:       1,
+		Payers:         2,
+		// ops_new first paid with a redemption code before the period.
+		NewPayers:         1,
+		ActiveUsers:       2,
+		UsedQuota:         100,
+		OtherCreditQuota:  320,
+		TestCreditQuota:   240,
+		RegisteredPayers:  1,
+		RepeatPayers:      1,
+		Redemptions:       1,
+		RedemptionQuota:   1000,
+		TaskSuccess:       1,
+		TaskFailure:       2,
+		TaskAvgSeconds:    300,
+		TaskMedianSeconds: 300,
 	}, got.Current)
 	assert.Equal(t, OpsPeriodStats{
-		TopupQuota:       7 * opsTestUnit,
-		TopupOrders:      1,
-		Payers:           1,
-		NewPayers:        1,
+		TopupQuota:  7 * opsTestUnit,
+		TopupOrders: 1,
+		// A redemption code is a payment: ops_new redeemed one in this period.
+		Payers:           2,
+		NewPayers:        2,
 		NewUsers:         3,
 		ActiveUsers:      1,
 		UsedQuota:        5,
@@ -204,6 +208,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	assert.Equal(t, OpsUsers{Registered: 4, TotalPayers: 3, RepeatPayer: 1, Dormant: 1}, got.Users)
 	assert.Equal(t, OpsPending{Pending: 1, Overdue: 1}, got.Pending)
 	assert.Equal(t, OpsAlerts{OverdueOrders: 1, USDTExceptions: 1, DisputedOrders: 1, LowBalanceChannels: 1}, got.Alerts)
+	assert.Equal(t, OpsLive{TasksQueued: 1}, got.Live)
 
 	assert.Equal(t, []OpsChannelStats{
 		{Channel: PaymentProviderStripe, TotalQuota: 17 * opsTestUnit, TopupQuota: 10 * opsTestUnit, TopupOrders: 1, Pending: 1, ClosedOrders: 1, FailedOrders: 1, RefundOrders: 1, DisputedOrders: 1},
@@ -213,7 +218,7 @@ func assertOpsDashboardFigures(t *testing.T) {
 	}, got.Channels)
 
 	assert.Equal(t, []OpsTrendDay{
-		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit, OpsChannelRedemption: 1000}, UsedQuota: 70, NewUsers: 1, ActiveUsers: 1, NewPayers: 1, TaskSuccess: 1, TaskFailure: 2},
+		{Date: "1970-01-21", Topups: map[string]int64{PaymentProviderStripe: 10 * opsTestUnit, OpsChannelRedemption: 1000}, UsedQuota: 70, NewUsers: 1, ActiveUsers: 1, TaskSuccess: 1, TaskFailure: 2},
 		{Date: "1970-01-22", Topups: map[string]int64{PaymentProviderUSDT: 5 * opsTestUnit}, UsedQuota: 30, ActiveUsers: 1},
 		{Date: "1970-01-23", Topups: map[string]int64{PaymentProviderEpay: 3 * opsTestUnit}, NewPayers: 1},
 	}, got.Trend)
@@ -280,21 +285,23 @@ func TestGetOpsDashboardBreaksDownUsersOrdersAndTasks(t *testing.T) {
 	got, err := GetOpsDashboard(opsTestQuery(OpsChannelAll))
 	require.NoError(t, err)
 
-	// Only ops_new registered in the period: Google, invited by ops_paid, two paid orders.
+	// Only ops_new registered in the period: Google, invited by ops_paid, two
+	// paid orders and two redeemed codes.
 	assert.Equal(t, OpsFunnel{Registered: 1, Active: 1, Paid: 1, Repeat: 1}, got.Funnel)
 	assert.Equal(t, []OpsSource{
-		{Method: OpsSourceGoogle, Invited: true, Users: 1, Payers: 1, Quota: 15 * opsTestUnit},
+		{Method: OpsSourceGoogle, Invited: true, Users: 1, Payers: 1, Quota: 15*opsTestUnit + 1500},
 		{Method: OpsSourceGoogle},
 		{Method: OpsSourceDirect, Invited: true},
 		{Method: OpsSourceDirect},
 	}, got.Sources)
-	assert.Equal(t, []OpsInviter{{UserId: 3, Username: "ops_paid", Invited: 1, Payers: 1, Quota: 15 * opsTestUnit}}, got.Inviters)
+	assert.Equal(t, []OpsInviter{{UserId: 3, Username: "ops_paid", Invited: 1, Payers: 1, Quota: 15*opsTestUnit + 1500}}, got.Inviters)
 
-	// ops_new pays $10 by Stripe first, then $5 by USDT; the $3 epay order is
+	// ops_new first paid with a code before the period, so the code, the $10
+	// Stripe and the $5 USDT payments in it are repeats; the $3 epay order is
 	// the first paid order of ops_paid, whose earlier order was refunded.
 	assert.Equal(t, []OpsTopupTier{
-		{MaxUSD: 5, FirstOrders: 1, FirstQuota: 3 * opsTestUnit, RepeatOrders: 1, RepeatQuota: 5 * opsTestUnit},
-		{MaxUSD: 10, FirstOrders: 1, FirstQuota: 10 * opsTestUnit},
+		{MaxUSD: 5, FirstOrders: 1, FirstQuota: 3 * opsTestUnit, RepeatOrders: 2, RepeatQuota: 5*opsTestUnit + 1000},
+		{MaxUSD: 10, RepeatOrders: 1, RepeatQuota: 10 * opsTestUnit},
 		{MaxUSD: 20}, {MaxUSD: 50}, {MaxUSD: 100}, {},
 	}, got.TopupTiers)
 	assert.Equal(t, []OpsModelDuration{{ModelName: "video-a", Tasks: 1, P50Seconds: 300, P90Seconds: 300}}, got.ModelDurations)

@@ -36,6 +36,7 @@ import {
 } from '../../lib/ops'
 import { OpsAlertBar } from './ops-alert-bar'
 import { OpsFilterBar } from './ops-filter-bar'
+import { OpsLiveSection } from './ops-live-section'
 import { OpsOverviewSection } from './ops-overview-section'
 import { OpsProfitSection } from './ops-profit-section'
 import { OpsSectionNav } from './ops-section-nav'
@@ -140,7 +141,7 @@ export function OpsDashboard() {
       key: 'balance',
       n: data?.alerts.low_balance_channels ?? 0,
       label: t('upstream channels low on balance'),
-      href: '#ops-upstream',
+      href: '#ops-live',
     },
   ].filter((alert) => alert.n > 0)
 
@@ -160,9 +161,12 @@ export function OpsDashboard() {
     />
   )
 
+  const live = <OpsLiveSection data={data} loading={query.isLoading} />
+
   if (customIssue != null) {
     return (
-      <div className='space-y-5'>
+      <div className='space-y-4'>
+        {live}
         {filterBar}
         <EmptyState
           bordered
@@ -178,6 +182,8 @@ export function OpsDashboard() {
 
   return (
     <div className='space-y-4'>
+      <OpsAlertBar alerts={alerts} />
+      {live}
       {filterBar}
 
       {query.isError && (
@@ -188,7 +194,6 @@ export function OpsDashboard() {
         />
       )}
 
-      <OpsAlertBar alerts={alerts} />
       <OpsSectionNav items={navItems} />
 
       <OpsOverviewSection {...sectionProps} />

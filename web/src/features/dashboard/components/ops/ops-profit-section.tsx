@@ -39,7 +39,6 @@ import {
   type OpsSectionProps,
   type OpsStat,
 } from './ops-stat-grid'
-import { OpsSupplierWalletsPanel } from './ops-supplier-wallets'
 import { OpsUpstreamPanel } from './ops-upstream-panels'
 
 const STRIPE_FEE_PERCENT = `${OPS_STRIPE_FEE_RATE * 100}%`
@@ -52,12 +51,6 @@ export function OpsProfitSection(props: OpsSectionProps) {
     value == null ? '—' : formatOpsMoney(value)
 
   const stats: OpsStat[] = [
-    {
-      key: 'net',
-      label: t('Net profit (estimated)'),
-      value: money(profit?.net),
-      hint: t('Margin {{rate}}', { rate: formatPercent(profit?.margin) }),
-    },
     {
       key: 'revenue',
       label: t('Usage revenue'),
@@ -111,8 +104,7 @@ export function OpsProfitSection(props: OpsSectionProps) {
         'Covers every top-up channel. USDT and redemption codes have no fees.'
       )}
     >
-      <OpsStatGrid stats={stats} loading={props.loading} />
-      <OpsSupplierWalletsPanel upstream={data?.upstream ?? []} />
+      <OpsStatGrid stats={stats} loading={props.loading} columns={5} />
       <div className='grid gap-3 xl:grid-cols-2'>
         <OpsWaterfallPanel
           profit={profit}

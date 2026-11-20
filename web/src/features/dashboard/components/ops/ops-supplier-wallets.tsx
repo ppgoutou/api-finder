@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { getCurrencyDisplay } from '@/lib/currency'
 import { formatCurrencyUSD, formatTimestampToDate } from '@/lib/format'
@@ -29,12 +30,12 @@ import { cn } from '@/lib/utils'
 import { getOpsSupplierBalances } from '../../api'
 import { supplierRunwayDays } from '../../lib/ops-insights'
 import type { OpsSupplierBalance, OpsUpstream } from '../../types'
-import { PanelWrapper } from '../ui/panel-wrapper'
 
 // A wallet that runs out within this many days is flagged.
 const RUNWAY_WARNING_DAYS = 7
 
-export function OpsSupplierWalletsPanel(props: { upstream: OpsUpstream[] }) {
+/** One compact row of supplier wallets, read live from each supplier. */
+export function OpsSupplierWallets(props: { upstream: OpsUpstream[] }) {
   const { t } = useTranslation()
   // Balances are read live from each supplier, apart from the dashboard
   // figures, so a slow supplier never holds up the rest of the page.
@@ -47,42 +48,21 @@ export function OpsSupplierWalletsPanel(props: { upstream: OpsUpstream[] }) {
   const suppliers = query.data?.suppliers ?? []
   const checkedAt = query.data?.checked_at
 
-  return (
-    <PanelWrapper
-      title={t('Supplier wallet balances')}
-      description={
-        checkedAt
-          ? t(
-              'Read live from each supplier with an enabled channel. Days left use the last 7 days of usage. Read at {{time}}',
-              { time: formatTimestampToDate(checkedAt) }
-            )
-          : t(
-              'Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.'
-            )
-      }
-      loading={query.isLoading}
-      empty={!query.isLoading && suppliers.length === 0}
-      emptyMessage={
-        query.isError
-          ? query.error.message
-          : t('No supplier has an enabled channel')
-      }
-      height='h-24'
-      headerActions={
-        <Button
-          variant='ghost'
-          size='icon'
-          className='size-8'
-          onClick={() => void query.refetch()}
-          disabled={query.isFetching}
-          aria-label={t('Refresh')}
-        >
-          <RefreshCw
-            className={query.isFetching ? 'animate-spin' : undefined}
-          />
-        </Button>
-      }
-    >
+  let content
+  if (query.isLoading) {
+    content = <Skeleton className='h-14 w-full' />
+  } else if (query.isError) {
+    content = (
+      <p className='text-destructive text-xs'>{query.error.message}</p>
+    )
+  } else if (suppliers.length === 0) {
+    content = (
+      <p className='text-muted-foreground text-xs'>
+        {t('No supplier has an enabled channel')}
+      </p>
+    )
+  } else {
+    content = (
       <ul className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
         {suppliers.map((supplier) => (
           <OpsSupplierWalletCard
@@ -92,7 +72,40 @@ export function OpsSupplierWalletsPanel(props: { upstream: OpsUpstream[] }) {
           />
         ))}
       </ul>
-    </PanelWrapper>
+    )
+  }
+
+  return (
+    <div className='space-y-2 border-t px-3 py-2.5 sm:px-5'>
+      <div className='flex items-center gap-2'>
+        <span className='text-muted-foreground text-xs font-medium'>
+          {t('Supplier wallet balances')}
+        </span>
+        <span
+          className='text-muted-foreground hidden min-w-0 truncate text-xs sm:inline'
+          title={t(
+            'Read live from each supplier with an enabled channel. Days left use the last 7 days of usage.'
+          )}
+        >
+          {checkedAt
+            ? t('Read at {{time}}', { time: formatTimestampToDate(checkedAt) })
+            : null}
+        </span>
+        <Button
+          variant='ghost'
+          size='icon'
+          className='ml-auto size-7'
+          onClick={() => void query.refetch()}
+          disabled={query.isFetching}
+          aria-label={t('Refresh supplier balances')}
+        >
+          <RefreshCw
+            className={query.isFetching ? 'animate-spin' : undefined}
+          />
+        </Button>
+      </div>
+      {content}
+    </div>
   )
 }
 
@@ -103,6 +116,7 @@ function OpsSupplierWalletCard(props: {
   const { t } = useTranslation()
   const supplier = props.supplier
   const channelIds = new Set(supplier.channels.map((channel) => channel.id))
+  const channelNames = supplier.channels.map((channel) => channel.name).join(', ')
   const balance = supplier.balance_usd
   const days =
     balance == null
@@ -116,7 +130,7 @@ function OpsSupplierWalletCard(props: {
   const failed = supplier.source !== '' && balance == null
 
   let status = t('Balance not set up')
-  if (supplier.source !== '' && days != null) {
+  if (days != null) {
     status = t('About {{days}} days left', { days: Math.floor(days) })
   } else if (balance != null) {
     status = t('No usage in the last 7 days')
@@ -127,42 +141,34 @@ function OpsSupplierWalletCard(props: {
   return (
     <li
       className={cn(
-        'rounded-control flex flex-col gap-0.5 border px-3 py-2',
+        'rounded-control flex items-baseline justify-between gap-3 border px-3 py-2',
         (low || failed) && 'border-destructive/50 bg-destructive/5'
       )}
+      title={t('Channels: {{names}}', { names: channelNames })}
     >
-      <div className='truncate text-sm font-medium' title={supplier.host}>
-        {supplier.host}
+      <div className='min-w-0'>
+        <div className='truncate text-sm font-medium'>{supplier.host}</div>
+        <div
+          className={cn(
+            'truncate text-xs',
+            low || failed ? 'text-destructive' : 'text-muted-foreground'
+          )}
+          title={
+            supplier.source === ''
+              ? t('Add an upstream balance monitor or a supplier token to read it')
+              : supplier.error
+          }
+        >
+          {status}
+        </div>
       </div>
       <div
         className={cn(
-          'font-mono text-lg font-semibold tabular-nums',
+          'shrink-0 font-mono text-lg font-semibold tabular-nums',
           low && 'text-destructive'
         )}
       >
         {balance == null ? '—' : formatCurrencyUSD(balance)}
-      </div>
-      <div
-        className={cn(
-          'text-xs',
-          low || failed ? 'text-destructive' : 'text-muted-foreground'
-        )}
-        title={supplier.error}
-      >
-        {status}
-      </div>
-      {supplier.source === '' && (
-        <div className='text-muted-foreground text-xs'>
-          {t('Add an upstream balance monitor or a supplier token to read it')}
-        </div>
-      )}
-      <div
-        className='text-muted-foreground truncate text-xs'
-        title={supplier.channels.map((channel) => channel.name).join(', ')}
-      >
-        {t('Channels: {{names}}', {
-          names: supplier.channels.map((channel) => channel.name).join(', '),
-        })}
       </div>
     </li>
   )

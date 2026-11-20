@@ -2,6 +2,7 @@ package model
 
 import (
 	"cmp"
+	"math"
 	"slices"
 	"strconv"
 	"time"
@@ -72,6 +73,10 @@ type OpsPeriodStats struct {
 	RedemptionQuota int64 `json:"redemption_quota"`
 	TaskSuccess     int64 `json:"task_success"`
 	TaskFailure     int64 `json:"task_failure"`
+	// TaskAvgSeconds and TaskMedianSeconds are how long the successful tasks
+	// created in the period took from submission to completion; 0 without any.
+	TaskAvgSeconds    int64 `json:"task_avg_seconds"`
+	TaskMedianSeconds int64 `json:"task_median_seconds"`
 }
 
 // OpsOtherCredit breaks down wallet credits that did not come from an order.
@@ -222,6 +227,12 @@ type OpsTopUser struct {
 	LastUsedAt int64  `json:"last_used_at"`
 }
 
+// OpsLive holds figures of the present moment, which no period changes.
+type OpsLive struct {
+	TasksInProgress int64 `json:"tasks_in_progress"`
+	TasksQueued     int64 `json:"tasks_queued"`
+}
+
 type OpsAlerts struct {
 	OverdueOrders      int64 `json:"overdue_orders"`
 	USDTExceptions     int64 `json:"usdt_exceptions"`
@@ -243,6 +254,7 @@ type OpsDashboard struct {
 	Upstream []OpsUpstream     `json:"upstream"`
 	TopUsers []OpsTopUser      `json:"top_users"`
 	Alerts   OpsAlerts         `json:"alerts"`
+	Live     OpsLive           `json:"live"`
 
 	Funnel         OpsFunnel          `json:"funnel"`
 	Sources        []OpsSource        `json:"sources"`
@@ -371,6 +383,79 @@ func opsUsedRedemptions(scope opsScope) *gorm.DB {
 	)
 }
 
+// opsPayment is one paid top-up: a successful order, or a used redemption
+// code, which customers buy as a way to pay.
+type opsPayment struct {
+	UserId  int
+	Channel string
+	Time    int64
+	Quota   int64
+}
+
+// opsLoadPayments reads every paid top-up on every channel, oldest first.
+func opsLoadPayments(scope opsScope) ([]opsPayment, error) {
+	var orders []struct {
+		UserId          int
+		PaymentProvider string
+		PaymentMethod   string
+		CompleteTime    int64
+		Amount          int64
+		Money           float64
+	}
+	err := opsOrders(scope).
+		Select("user_id, payment_provider, payment_method, complete_time, amount, money").
+		Where("status = ?", common.TopUpStatusSuccess).
+		Scan(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	var codes []struct {
+		UsedUserId   int
+		RedeemedTime int64
+		Quota        int64
+	}
+	err = opsUsedRedemptions(scope).Select("used_user_id, redeemed_time, quota").Scan(&codes).Error
+	if err != nil {
+		return nil, err
+	}
+	payments := make([]opsPayment, 0, len(orders)+len(codes))
+	for _, order := range orders {
+		channel := opsOrderChannel(order.PaymentProvider, order.PaymentMethod)
+		payments = append(payments, opsPayment{
+			UserId:  order.UserId,
+			Channel: channel,
+			Time:    order.CompleteTime,
+			Quota:   opsCreditedQuota(channel, order.Amount, order.Money),
+		})
+	}
+	for _, code := range codes {
+		payments = append(payments, opsPayment{UserId: code.UsedUserId, Channel: OpsChannelRedemption, Time: code.RedeemedTime, Quota: code.Quota})
+	}
+	slices.SortStableFunc(payments, func(a, b opsPayment) int { return cmp.Compare(a.Time, b.Time) })
+	return payments, nil
+}
+
+// opsPaymentsOn keeps the payments of the channels a filter selects.
+func opsPaymentsOn(payments []opsPayment, channel string) []opsPayment {
+	if channel == OpsChannelAll {
+		return payments
+	}
+	return slices.DeleteFunc(slices.Clone(payments), func(payment opsPayment) bool {
+		return payment.Channel != channel
+	})
+}
+
+// opsPaymentCounts counts each user's payments in [start, end].
+func opsPaymentCounts(payments []opsPayment, start int64, end int64) map[int]int64 {
+	counts := make(map[int]int64)
+	for _, payment := range payments {
+		if payment.Time >= start && payment.Time <= end {
+			counts[payment.UserId]++
+		}
+	}
+	return counts
+}
+
 func opsQuotaData(scope opsScope, start int64, end int64) *gorm.DB {
 	query := DB.Table("quota_data").Where("created_at >= ? AND created_at <= ?", start, end)
 	return scope.excludeUsers(query, "user_id")
@@ -438,7 +523,8 @@ type opsPayerRow struct {
 	FirstPaid int64
 }
 
-func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end int64, payers []opsPayerRow) (OpsPeriodStats, error) {
+// payments are the paid top-ups on the page's channels, payers their users.
+func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end int64, payments []opsPayment, payers []opsPayerRow) (OpsPeriodStats, error) {
 	var stats OpsPeriodStats
 	orders, err := opsOrdersInRange(scope, start, end)
 	if err != nil {
@@ -446,21 +532,19 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 	}
 	opsApplyOrderAggregates(&stats, orders, query.Channel)
 
-	paid := opsOrders(scope).Where("status = ? AND complete_time >= ? AND complete_time <= ?", common.TopUpStatusSuccess, start, end)
-	err = opsChannelFilter(query.Channel).apply(paid).Distinct("user_id").Count(&stats.Payers).Error
-	if err != nil {
-		return stats, err
+	periodPayments := opsPaymentCounts(payments, start, end)
+	stats.Payers = int64(len(periodPayments))
+	for _, count := range periodPayments {
+		if count >= 2 {
+			stats.RepeatPayers++
+		}
 	}
+	everPaid := make(map[int]bool, len(payers))
 	for _, payer := range payers {
+		everPaid[payer.UserId] = true
 		if payer.FirstPaid >= start && payer.FirstPaid <= end {
 			stats.NewPayers++
 		}
-	}
-	repeat := opsChannelFilter(query.Channel).apply(
-		opsOrders(scope).Where("status = ? AND complete_time >= ? AND complete_time <= ?", common.TopUpStatusSuccess, start, end),
-	).Select("user_id").Group("user_id").Having("count(*) >= 2")
-	if err = DB.Table("(?) as repeat_payers", repeat).Count(&stats.RepeatPayers).Error; err != nil {
-		return stats, err
 	}
 
 	registered := func() *gorm.DB {
@@ -473,11 +557,14 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 	if err = registered().Count(&stats.NewUsers).Error; err != nil {
 		return stats, err
 	}
-	everPaid := opsChannelFilter(query.Channel).apply(
-		opsOrders(scope).Where("status = ?", common.TopUpStatusSuccess),
-	).Select("user_id")
-	if err = registered().Where("id IN (?)", everPaid).Count(&stats.RegisteredPayers).Error; err != nil {
+	var registeredIds []int
+	if err = registered().Pluck("id", &registeredIds).Error; err != nil {
 		return stats, err
+	}
+	for _, id := range registeredIds {
+		if everPaid[id] {
+			stats.RegisteredPayers++
+		}
 	}
 
 	err = opsQuotaData(scope, start, end).Where("user_id > 0").Distinct("user_id").Count(&stats.ActiveUsers).Error
@@ -534,10 +621,29 @@ func opsPeriodStats(scope opsScope, query OpsDashboardQuery, start int64, end in
 			stats.TaskFailure = row.Total
 		}
 	}
+
+	durations, err := opsTaskDurations(scope, start, end)
+	if err != nil {
+		return stats, err
+	}
+	var all []int64
+	var total int64
+	for _, values := range durations {
+		all = append(all, values...)
+		for _, seconds := range values {
+			total += seconds
+		}
+	}
+	if len(all) > 0 {
+		slices.Sort(all)
+		stats.TaskAvgSeconds = int64(math.Round(float64(total) / float64(len(all))))
+		stats.TaskMedianSeconds = opsPercentile(all, 50)
+	}
 	return stats, nil
 }
 
-func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
+// payments are every paid top-up, on every channel.
+func opsLoadTestCredit(scope opsScope, result *OpsDashboard, payments []opsPayment) error {
 	var grants []struct {
 		UserId      int
 		Quota       int64
@@ -567,21 +673,9 @@ func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
 	for _, user := range users {
 		usedByUser[user.Id] = user.UsedQuota
 	}
-	var lastPaid []struct {
-		UserId   int
-		LastPaid int64
-	}
-	err = DB.Model(&TopUp{}).
-		Select("user_id, max(complete_time) as last_paid").
-		Where("amount > 0 AND status = ? AND user_id IN ?", common.TopUpStatusSuccess, ids).
-		Group("user_id").
-		Scan(&lastPaid).Error
-	if err != nil {
-		return err
-	}
-	lastPaidByUser := make(map[int]int64, len(lastPaid))
-	for _, row := range lastPaid {
-		lastPaidByUser[row.UserId] = row.LastPaid
+	lastPaidByUser := make(map[int]int64)
+	for _, payment := range payments {
+		lastPaidByUser[payment.UserId] = max(lastPaidByUser[payment.UserId], payment.Time)
 	}
 	credit := &result.Wallet.TestCredit
 	credit.Users = int64(len(grants))
@@ -599,7 +693,9 @@ func opsLoadTestCredit(scope opsScope, result *OpsDashboard) error {
 	return nil
 }
 
-func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, payers []opsPayerRow) error {
+// payments are every paid top-up, on every channel; payers are the users of
+// the page's channels.
+func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, payments []opsPayment, payers []opsPayerRow) error {
 	users := func() *gorm.DB {
 		q := DB.Model(&User{})
 		if query.ExcludeInternal {
@@ -618,11 +714,27 @@ func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsD
 	}
 
 	dormantSince := query.Now - opsDormantSeconds
-	paidUsers := opsOrders(scope).Where("status = ?", common.TopUpStatusSuccess).Select("user_id")
-	recentUsers := DB.Table("quota_data").Where("created_at >= ?", dormantSince).Select("user_id")
-	err := users().Where("quota > 0 AND id IN (?) AND id NOT IN (?)", paidUsers, recentUsers).Count(&result.Users.Dormant).Error
+	var recentIds []int
+	err := DB.Table("quota_data").Where("created_at >= ?", dormantSince).Distinct("user_id").Pluck("user_id", &recentIds).Error
 	if err != nil {
 		return err
+	}
+	recent := make(map[int]bool, len(recentIds))
+	for _, id := range recentIds {
+		recent[id] = true
+	}
+	var funded []int
+	if err = users().Where("quota > 0").Pluck("id", &funded).Error; err != nil {
+		return err
+	}
+	everPaid := make(map[int]bool)
+	for _, payment := range payments {
+		everPaid[payment.UserId] = true
+	}
+	for _, id := range funded {
+		if everPaid[id] && !recent[id] {
+			result.Users.Dormant++
+		}
 	}
 
 	// Usage of a deleted account stays part of what its top-ups paid for.
@@ -648,7 +760,7 @@ func opsLoadUsersAndWallet(scope opsScope, query OpsDashboardQuery, result *OpsD
 	if result.Wallet.OtherCredit, err = opsOtherCredit(scope, 0, 0); err != nil {
 		return err
 	}
-	if err = opsLoadTestCredit(scope, result); err != nil {
+	if err = opsLoadTestCredit(scope, result, payments); err != nil {
 		return err
 	}
 	result.Wallet.RecentUsedSeconds = opsRunwayWindowSeconds
@@ -1024,6 +1136,26 @@ func opsLoadTasks(scope opsScope, query OpsDashboardQuery, result *OpsDashboard)
 		}
 	}
 
+	var live []struct {
+		Status string
+		Total  int64
+	}
+	err = scope.excludeUsers(DB.Model(&Task{}), "user_id").
+		Select("status, count(*) as total").
+		Where("status IN ?", []string{TaskStatusInProgress, string(TaskStatusNotStart), TaskStatusSubmitted, TaskStatusQueued}).
+		Group("status").
+		Scan(&live).Error
+	if err != nil {
+		return err
+	}
+	for _, row := range live {
+		if row.Status == TaskStatusInProgress {
+			result.Live.TasksInProgress += row.Total
+		} else {
+			result.Live.TasksQueued += row.Total
+		}
+	}
+
 	result.Tasks.Reasons = make([]OpsFailReason, 0, opsFailReasonLimit)
 	err = tasks().
 		Select("fail_reason as reason, count(*) as count").
@@ -1286,29 +1418,36 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 	}
 	result := &OpsDashboard{}
 
-	var payers []opsPayerRow
-	allPaid := opsOrders(scope).Where("status = ?", common.TopUpStatusSuccess)
-	err := opsChannelFilter(query.Channel).apply(allPaid).
-		Select("user_id, count(*) as orders, min(complete_time) as first_paid").
-		Group("user_id").
-		Scan(&payers).Error
+	allPayments, err := opsLoadPayments(scope)
 	if err != nil {
 		return nil, err
+	}
+	payments := opsPaymentsOn(allPayments, query.Channel)
+	payerIndex := make(map[int]int)
+	var payers []opsPayerRow
+	for _, payment := range payments {
+		index, ok := payerIndex[payment.UserId]
+		if !ok {
+			index = len(payers)
+			payerIndex[payment.UserId] = index
+			payers = append(payers, opsPayerRow{UserId: payment.UserId, FirstPaid: payment.Time})
+		}
+		payers[index].Orders++
 	}
 
 	if query.AllTime {
 		query.Start = 0
 	}
-	if result.Current, err = opsPeriodStats(scope, query, query.Start, query.End, payers); err != nil {
+	if result.Current, err = opsPeriodStats(scope, query, query.Start, query.End, payments, payers); err != nil {
 		return nil, err
 	}
 	if !query.AllTime {
 		length := query.End - query.Start + 1
-		if result.Previous, err = opsPeriodStats(scope, query, query.Start-length, query.Start-1, payers); err != nil {
+		if result.Previous, err = opsPeriodStats(scope, query, query.Start-length, query.Start-1, payments, payers); err != nil {
 			return nil, err
 		}
 	}
-	if err = opsLoadUsersAndWallet(scope, query, result, payers); err != nil {
+	if err = opsLoadUsersAndWallet(scope, query, result, allPayments, payers); err != nil {
 		return nil, err
 	}
 	periodOrders, err := opsOrdersInRange(scope, query.Start, query.End)
@@ -1350,12 +1489,10 @@ func GetOpsDashboard(query OpsDashboardQuery) (*OpsDashboard, error) {
 	if err = opsLoadTopUsers(scope, query, result, refunds); err != nil {
 		return nil, err
 	}
-	if err = opsLoadUserSources(scope, query, result); err != nil {
+	if err = opsLoadUserSources(query, result, allPayments); err != nil {
 		return nil, err
 	}
-	if err = opsLoadTopupTiers(scope, query, result); err != nil {
-		return nil, err
-	}
+	opsLoadTopupTiers(query, result, allPayments)
 	if err = opsLoadModelDurations(scope, query, result); err != nil {
 		return nil, err
 	}

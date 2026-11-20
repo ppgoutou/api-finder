@@ -28,7 +28,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  formatCurrencyUSD,
   formatPercent,
   formatTimestampToDate,
 } from '@/lib/format'
@@ -54,7 +53,7 @@ export function OpsUpstreamPanel(props: {
     <PanelWrapper
       title={t('Upstream channels')}
       description={t(
-        'Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks; a dash means no balance was fetched.'
+        'Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.'
       )}
       loading={props.loading}
       empty={props.upstream.length === 0}
@@ -62,7 +61,7 @@ export function OpsUpstreamPanel(props: {
       className='min-w-0'
       contentClassName='max-h-[32rem] overflow-y-auto p-0 sm:p-0'
     >
-      <Table className='min-w-[760px]'>
+      <Table className='min-w-[660px]'>
         <TableHeader>
           <TableRow>
             <TableHead>{t('Channel')}</TableHead>
@@ -72,9 +71,6 @@ export function OpsUpstreamPanel(props: {
             <TableHead className='text-right'>{t('Profit margin')}</TableHead>
             <TableHead className='text-right'>
               {t('Task success rate')}
-            </TableHead>
-            <TableHead className='text-right'>
-              {t('Upstream balance')}
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -94,18 +90,6 @@ export function OpsUpstreamPanel(props: {
                   )
                 )}
               </TableCell>
-              <TableCell
-                className={CELL}
-                title={
-                  row.balance_updated_time > 0
-                    ? formatTimestampToDate(row.balance_updated_time)
-                    : undefined
-                }
-              >
-                {row.balance_updated_time > 0
-                  ? formatCurrencyUSD(row.balance)
-                  : '—'}
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -117,7 +101,6 @@ export function OpsUpstreamPanel(props: {
             <TableCell className={CELL}>{formatOpsMoney(revenue)}</TableCell>
             <TableCell className={CELL}>{formatOpsMoney(cost)}</TableCell>
             <OpsProfitCells revenue={revenue} cost={cost} />
-            <TableCell />
             <TableCell />
           </TableRow>
         </TableFooter>

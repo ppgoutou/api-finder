@@ -111,12 +111,20 @@ export function OpsSection(props: {
   )
 }
 
+// Wide-screen column counts, chosen so each grid fills whole rows.
+const GRID_COLUMNS = {
+  4: 'sm:grid-cols-4',
+  5: 'sm:grid-cols-3 xl:grid-cols-5',
+  6: 'sm:grid-cols-3 xl:grid-cols-6',
+  7: 'sm:grid-cols-4 xl:grid-cols-7',
+} as const
+
 export function OpsStatGrid(props: {
   stats: OpsStat[]
   loading: boolean
   footer?: ReactNode
-  /** Four columns on wide screens instead of six, for an even two rows of eight. */
-  fourColumns?: boolean
+  /** Columns on wide screens; six by default. */
+  columns?: keyof typeof GRID_COLUMNS
 }) {
   return (
     <div className='bg-card overflow-hidden rounded-lg border'>
@@ -124,7 +132,7 @@ export function OpsStatGrid(props: {
       <div
         className={cn(
           '-mr-px -mb-px grid grid-cols-2',
-          props.fourColumns ? 'sm:grid-cols-4' : 'sm:grid-cols-3 xl:grid-cols-6'
+          GRID_COLUMNS[props.columns ?? 6]
         )}
       >
         {props.stats.map((stat) => (

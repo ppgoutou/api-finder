@@ -79,39 +79,22 @@ type opsUserPayment struct {
 	orders int64
 }
 
-// opsPaymentsByUser sums the paid orders of the users the subquery selects,
-// over every channel.
-func opsPaymentsByUser(scope opsScope, userIds *gorm.DB) (map[int]opsUserPayment, error) {
-	var rows []struct {
-		UserId          int
-		PaymentProvider string
-		PaymentMethod   string
-		Orders          int64
-		Amount          int64
-		Money           float64
+// opsPaymentTotals sums each user's payments.
+func opsPaymentTotals(payments []opsPayment) map[int]opsUserPayment {
+	totals := make(map[int]opsUserPayment)
+	for _, payment := range payments {
+		total := totals[payment.UserId]
+		total.quota += payment.Quota
+		total.orders++
+		totals[payment.UserId] = total
 	}
-	err := opsOrders(scope).
-		Select("user_id, payment_provider, payment_method, count(*) as orders, coalesce(sum(amount), 0) as amount, coalesce(sum(money), 0) as money").
-		Where("status = ? AND user_id IN (?)", common.TopUpStatusSuccess, userIds).
-		Group("user_id, payment_provider, payment_method").
-		Scan(&rows).Error
-	if err != nil {
-		return nil, err
-	}
-	payments := make(map[int]opsUserPayment)
-	for _, row := range rows {
-		payment := payments[row.UserId]
-		payment.quota += opsCreditedQuota(opsOrderChannel(row.PaymentProvider, row.PaymentMethod), row.Amount, row.Money)
-		payment.orders += row.Orders
-		payments[row.UserId] = payment
-	}
-	return payments, nil
+	return totals
 }
 
 // opsLoadUserSources fills the funnel, the sign-up sources and the inviter
-// ranking from the users registered in the period. Payments follow every
-// channel, whatever the page filters on.
-func opsLoadUserSources(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+// ranking from the users registered in the period. payments are every paid
+// top-up on every channel, whatever the page filters on.
+func opsLoadUserSources(query OpsDashboardQuery, result *OpsDashboard, payments []opsPayment) error {
 	cohort := func() *gorm.DB {
 		users := DB.Model(&User{}).Where("created_at >= ? AND created_at <= ?", query.Start, query.End)
 		if query.ExcludeInternal {
@@ -127,12 +110,9 @@ func opsLoadUserSources(scope opsScope, query OpsDashboardQuery, result *OpsDash
 	if err := cohort().Select("id, oidc_id, inviter_id").Scan(&users).Error; err != nil {
 		return err
 	}
-	payments, err := opsPaymentsByUser(scope, cohort().Select("id"))
-	if err != nil {
-		return err
-	}
+	totals := opsPaymentTotals(payments)
 	var activeIds []int
-	err = DB.Table("quota_data").Distinct("user_id").Where("user_id IN (?)", cohort().Select("id")).Pluck("user_id", &activeIds).Error
+	err := DB.Table("quota_data").Distinct("user_id").Where("user_id IN (?)", cohort().Select("id")).Pluck("user_id", &activeIds).Error
 	if err != nil {
 		return err
 	}
@@ -149,7 +129,7 @@ func opsLoadUserSources(scope opsScope, query OpsDashboardQuery, result *OpsDash
 	}
 	inviters := make(map[int]*OpsInviter)
 	for _, user := range users {
-		payment := payments[user.Id]
+		payment := totals[user.Id]
 		funnel := &result.Funnel
 		funnel.Registered++
 		if active[user.Id] {
@@ -210,7 +190,7 @@ func opsLoadUserSources(scope opsScope, query OpsDashboardQuery, result *OpsDash
 		Id       int
 		Username string
 	}
-	if err = DB.Model(&User{}).Unscoped().Select("id, username").Where("id IN ?", ids).Scan(&names).Error; err != nil {
+	if err := DB.Model(&User{}).Unscoped().Select("id, username").Where("id IN ?", ids).Scan(&names).Error; err != nil {
 		return err
 	}
 	for i := range result.Inviters {
@@ -223,67 +203,43 @@ func opsLoadUserSources(scope opsScope, query OpsDashboardQuery, result *OpsDash
 	return nil
 }
 
-// opsLoadTopupTiers groups the orders paid in the period by amount. An order
-// is a first top-up when it is the user's earliest paid order on any channel.
-func opsLoadTopupTiers(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+// opsLoadTopupTiers groups the payments of the period on the page's channels
+// by amount. A payment is a first top-up when it is the user's earliest on any
+// channel. payments are every paid top-up on every channel.
+func opsLoadTopupTiers(query OpsDashboardQuery, result *OpsDashboard, payments []opsPayment) {
 	result.TopupTiers = make([]OpsTopupTier, 0, len(opsTopupTierLimitsUSD)+1)
 	for _, limit := range opsTopupTierLimitsUSD {
 		result.TopupTiers = append(result.TopupTiers, OpsTopupTier{MaxUSD: limit})
 	}
 	result.TopupTiers = append(result.TopupTiers, OpsTopupTier{})
 
-	var orders []struct {
-		UserId          int
-		PaymentProvider string
-		PaymentMethod   string
-		Amount          int64
-		Money           float64
-		CompleteTime    int64
-	}
-	paid := opsOrders(scope).Where("status = ? AND complete_time >= ? AND complete_time <= ?", common.TopUpStatusSuccess, query.Start, query.End)
-	err := opsChannelFilter(query.Channel).apply(paid).
-		Select("user_id, payment_provider, payment_method, amount, money, complete_time").
-		Scan(&orders).Error
-	if err != nil || len(orders) == 0 {
-		return err
-	}
-	var firsts []struct {
-		UserId    int
-		FirstPaid int64
-	}
-	err = opsOrders(scope).
-		Select("user_id, min(complete_time) as first_paid").
-		Where("status = ?", common.TopUpStatusSuccess).
-		Group("user_id").
-		Scan(&firsts).Error
-	if err != nil {
-		return err
-	}
-	firstPaid := make(map[int]int64, len(firsts))
-	for _, row := range firsts {
-		firstPaid[row.UserId] = row.FirstPaid
-	}
-
-	for _, order := range orders {
-		quota := opsCreditedQuota(opsOrderChannel(order.PaymentProvider, order.PaymentMethod), order.Amount, order.Money)
-		usd := float64(quota) / common.QuotaPerUnit
+	seen := make(map[int]bool)
+	for _, payment := range payments {
+		first := !seen[payment.UserId]
+		seen[payment.UserId] = true
+		if payment.Time < query.Start || payment.Time > query.End {
+			continue
+		}
+		if query.Channel != OpsChannelAll && payment.Channel != query.Channel {
+			continue
+		}
+		usd := float64(payment.Quota) / common.QuotaPerUnit
 		tier := &result.TopupTiers[len(result.TopupTiers)-1]
 		for i, limit := range opsTopupTierLimitsUSD {
-			// Half a cent of slack keeps a $10.00 order in the $10 tier.
+			// Half a cent of slack keeps a $10.00 payment in the $10 tier.
 			if usd <= limit+0.005 {
 				tier = &result.TopupTiers[i]
 				break
 			}
 		}
-		if order.CompleteTime == firstPaid[order.UserId] {
+		if first {
 			tier.FirstOrders++
-			tier.FirstQuota += quota
+			tier.FirstQuota += payment.Quota
 		} else {
 			tier.RepeatOrders++
-			tier.RepeatQuota += quota
+			tier.RepeatQuota += payment.Quota
 		}
 	}
-	return nil
 }
 
 // opsPercentile is the nearest-rank percentile of sorted values.
@@ -292,9 +248,9 @@ func opsPercentile(sorted []int64, percent float64) int64 {
 	return sorted[min(max(rank-1, 0), len(sorted)-1)]
 }
 
-// opsLoadModelDurations measures the successful tasks created in the period,
-// for the models with the most of them.
-func opsLoadModelDurations(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+// opsTaskDurations reads how long each successful task created in [start,
+// end] took, by model.
+func opsTaskDurations(scope opsScope, start int64, end int64) (map[string][]int64, error) {
 	var tasks []struct {
 		SubmitTime int64
 		FinishTime int64
@@ -302,10 +258,10 @@ func opsLoadModelDurations(scope opsScope, query OpsDashboardQuery, result *OpsD
 	}
 	err := scope.excludeUsers(DB.Model(&Task{}), "user_id").
 		Select("submit_time, finish_time, properties").
-		Where("created_at >= ? AND created_at <= ? AND status = ? AND submit_time > 0 AND finish_time > submit_time", query.Start, query.End, TaskStatusSuccess).
+		Where("created_at >= ? AND created_at <= ? AND status = ? AND submit_time > 0 AND finish_time > submit_time", start, end, TaskStatusSuccess).
 		Scan(&tasks).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 	durations := make(map[string][]int64)
 	for _, task := range tasks {
@@ -323,7 +279,16 @@ func opsLoadModelDurations(scope opsScope, query OpsDashboardQuery, result *OpsD
 		}
 		durations[name] = append(durations[name], seconds)
 	}
+	return durations, nil
+}
 
+// opsLoadModelDurations measures the successful tasks created in the period,
+// for the models with the most of them.
+func opsLoadModelDurations(scope opsScope, query OpsDashboardQuery, result *OpsDashboard) error {
+	durations, err := opsTaskDurations(scope, query.Start, query.End)
+	if err != nil {
+		return err
+	}
 	result.ModelDurations = make([]OpsModelDuration, 0, len(durations))
 	for name, values := range durations {
 		slices.Sort(values)
