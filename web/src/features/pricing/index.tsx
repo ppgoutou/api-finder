@@ -268,23 +268,25 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          {/* Option A of the plaza redesign: the title and note, the live
-           * figures, the search at full width, then the VIP band. Each row
+          {/* Option A of the plaza redesign: the title and note with the live
+           * figures on their right, the search at full width, then the VIP band. Each row
            * rises in after the one above it. */}
           <header className='mb-6 flex flex-col gap-6 pt-5 sm:mb-10 sm:gap-8 sm:pt-10'>
-            <div className='flex flex-col gap-4'>
-              <h1 className='plaza-rise font-display text-heading-1'>
-                {t('Model Square')}
-              </h1>
-              <PricingHeroNote
-                models={models || []}
-                className='plaza-rise [animation-delay:0.08s]'
+            <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-10'>
+              <div className='flex min-w-0 flex-col gap-4'>
+                <h1 className='plaza-rise font-display text-heading-1'>
+                  {t('Model Square')}
+                </h1>
+                <PricingHeroNote
+                  models={models || []}
+                  className='plaza-rise [animation-delay:0.08s]'
+                />
+              </div>
+              <PricingLiveStats
+                modelCount={models?.length || 0}
+                className='plaza-rise [animation-delay:0.12s]'
               />
             </div>
-            <PricingLiveStats
-              modelCount={models?.length || 0}
-              className='plaza-rise -mb-1 [animation-delay:0.12s] sm:-mb-2'
-            />
             <div className='plaza-rise flex flex-col gap-3.5 [animation-delay:0.16s]'>
               <SearchBar
                 size='lg'
