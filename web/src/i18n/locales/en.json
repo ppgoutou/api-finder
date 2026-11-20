@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "Payments in the period by amount, redemption codes included",
     "No payments in this period": "No payments in this period",
     "Cumulative": "Cumulative",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.",
+    "Covers all time": "Covers all time"
   }
 }

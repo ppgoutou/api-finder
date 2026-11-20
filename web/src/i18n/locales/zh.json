@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "本期支付按金额分档，含兑换码",
     "No payments in this period": "本期没有支付",
     "Cumulative": "累计",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "收入是用户在该渠道被扣的费用。上游支出优先用供应商实际扣费，读不到时按每笔扣费时记录的供货价计算。任务成功率只统计异步任务。"
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "收入是用户在该渠道被扣的费用。上游支出优先用供应商实际扣费，读不到时按每笔扣费时记录的供货价计算。任务成功率只统计异步任务。",
+    "Covers all time": "统计全部时间"
   }
 }

@@ -8692,6 +8692,7 @@
     "Payments in the period by amount, redemption codes included": "Платежи периода по сумме, включая коды",
     "No payments in this period": "Нет платежей за этот период",
     "Cumulative": "Накопительно",
-    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Выручка — то, что списано с пользователей по каналу. Расходы — то, что списал поставщик, иначе цена закупки, записанная при каждом списании. Успешность задач учитывает только асинхронные задачи."
+    "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Выручка — то, что списано с пользователей по каналу. Расходы — то, что списал поставщик, иначе цена закупки, записанная при каждом списании. Успешность задач учитывает только асинхронные задачи.",
+    "Covers all time": "За всё время"
   }
 }
