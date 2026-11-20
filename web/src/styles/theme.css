@@ -108,10 +108,15 @@ For commercial licensing, please contact support@quantumnous.com
   --color-vip-soft: var(--vip-soft);
   --color-accent-night: var(--accent-night);
   --color-accent-night-foreground: var(--accent-night-foreground);
-  /* Fixed colours that do not follow light / dark mode: the dark VIP stage,
+  /* Fixed colours that do not follow light / dark mode: the VIP gradient
+   * (brand blue into violet, white text 5.2:1 or more), the dark VIP stage,
    * the Telegram brand and the NSFW category marker. */
-  --color-night: #0d0e10;
-  --color-night-raised: #11130a;
+  --color-vip-from: #2563eb;
+  --color-vip-from-hover: #1d4ed8;
+  --color-vip-to: #7c3aed;
+  --color-vip-to-hover: #6d28d9;
+  --color-night: #0b0f1f;
+  --color-night-raised: #141833;
   --color-telegram: #229ed9;
   --color-telegram-hover: #1a8bc2;
   --color-nsfw: #d6246e;
@@ -296,14 +301,14 @@ For commercial licensing, please contact support@quantumnous.com
   --chart-7: oklch(0.62 0.17 20);
   --chart-8: oklch(0.6 0.05 250);
   --chart-ink-mix: 75%;
-  /* VIP gold: the VIP identity on every light surface. */
-  --vip: #b45309;
-  --vip-hover: #92400e;
-  --vip-foreground: #fffbeb;
-  --vip-soft: #fef3c7;
-  /* Lime call-to-action, only on dark marketing stages. */
-  --accent-night: #d1fe17;
-  --accent-night-foreground: #111214;
+  /* VIP violet: the VIP identity, one step past the brand blue. */
+  --vip: #6d28d9;
+  --vip-hover: #5b21b6;
+  --vip-foreground: #ffffff;
+  --vip-soft: #f1edff;
+  /* Violet accent on the dark VIP stage. */
+  --accent-night: #a78bfa;
+  --accent-night-foreground: #1e1b4b;
   --overview-accent-1: oklch(0.72 0.18 250);
   --overview-accent-2: oklch(0.65 0.15 200);
   --overview-accent-3: oklch(0.7 0.12 280);
@@ -391,12 +396,12 @@ For commercial licensing, please contact support@quantumnous.com
   --chart-7: oklch(0.72 0.16 20);
   --chart-8: oklch(0.72 0.05 250);
   --chart-ink-mix: 100%;
-  --vip: #fcd34d;
-  --vip-hover: #fde68a;
-  --vip-foreground: #451a03;
-  --vip-soft: rgb(251 191 36 / 15%);
-  --accent-night: #d1fe17;
-  --accent-night-foreground: #111214;
+  --vip: #c4b5fd;
+  --vip-hover: #ddd6fe;
+  --vip-foreground: #1e1b4b;
+  --vip-soft: rgb(139 92 246 / 15%);
+  --accent-night: #a78bfa;
+  --accent-night-foreground: #1e1b4b;
   --sidebar: oklch(0.225 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
   --sidebar-primary: var(--brand);

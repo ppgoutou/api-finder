@@ -49,7 +49,7 @@ import { getVipUpgradeRule } from './lib/benefits'
 import { getVipSavingPercent } from './lib/progress'
 import {
   VIP_DISPLAY_FONT,
-  VIP_LIME_TEXT,
+  VIP_NIGHT_TEXT,
   VIP_NIGHT_PANEL,
   VIP_NIGHT_STAGE,
 } from './lib/vip-style'
@@ -173,11 +173,11 @@ function VipPageContent(props: { info: MembershipInfo }) {
         />
         <div
           aria-hidden
-          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(ellipse_55%_50%_at_50%_20%,rgba(209,254,23,0.16),transparent_70%)]'
+          className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(ellipse_55%_50%_at_50%_20%,rgba(124,58,237,0.28),transparent_70%)]'
         />
         <div className='mx-auto max-w-4xl text-center'>
           <span className='text-eyebrow inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 uppercase'>
-            <span className='bg-accent-night size-1.5 rounded-full shadow-[0_0_10px_#d1fe17]' />
+            <span className='bg-accent-night size-1.5 rounded-full shadow-[0_0_10px_var(--color-accent-night)]' />
             {t('VIP membership')}
           </span>
           {savingPercent > 0 ? (
@@ -187,8 +187,8 @@ function VipPageContent(props: { info: MembershipInfo }) {
               </span>
               <span
                 className={cn(
-                  'mt-2 block text-[clamp(5rem,16vw,10rem)] drop-shadow-[0_0_40px_rgba(209,254,23,0.35)]',
-                  VIP_LIME_TEXT
+                  'mt-2 block text-[clamp(5rem,16vw,10rem)] drop-shadow-[0_0_40px_rgba(167,139,250,0.4)]',
+                  VIP_NIGHT_TEXT
                 )}
               >
                 {savingPercent}%
@@ -225,7 +225,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
               <li key={promise} className='flex items-center gap-1.5'>
                 <HugeiconsIcon
                   icon={Tick02Icon}
-                  className={cn('size-4', VIP_LIME_TEXT)}
+                  className={cn('size-4', VIP_NIGHT_TEXT)}
                   aria-hidden
                 />
                 {promise}
@@ -281,7 +281,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
                     className={cn(
                       'text-4xl leading-none text-white/20',
                       VIP_DISPLAY_FONT,
-                      index === steps.length - 1 && VIP_LIME_TEXT
+                      index === steps.length - 1 && VIP_NIGHT_TEXT
                     )}
                   >
                     {String(index + 1).padStart(2, '0')}
@@ -339,14 +339,14 @@ function VipPageContent(props: { info: MembershipInfo }) {
       </section>
 
       <section className='px-6 pt-8 pb-20 md:pb-28'>
-        <div className='border-accent-night/35 rounded-panel bg-night-raised relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden border px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(209,254,23,0.5)]'>
+        <div className='border-accent-night/35 rounded-panel bg-night-raised relative mx-auto flex max-w-5xl flex-col items-center gap-4 overflow-hidden border px-6 py-14 text-center shadow-[0_0_100px_-30px_rgba(124,58,237,0.55)]'>
           <div
             aria-hidden
-            className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(209,254,23,0.22),transparent_65%)]'
+            className='pointer-events-none absolute inset-0 bg-[radial-gradient(80%_90%_at_50%_0%,rgba(124,58,237,0.3),transparent_65%)]'
           />
           <HugeiconsIcon
             icon={CrownIcon}
-            className={cn('relative size-9', VIP_LIME_TEXT)}
+            className={cn('relative size-9', VIP_NIGHT_TEXT)}
             aria-hidden
           />
           <h2

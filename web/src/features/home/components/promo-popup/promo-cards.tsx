@@ -437,14 +437,9 @@ function VipPromoCard(props: PromoCardProps) {
   }
   return (
     <article className={CARD_CLASS}>
-      <div
-        className={cn(
-          MEDIA_CLASS,
-          'bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600'
-        )}
-      >
+      <div className={cn(MEDIA_CLASS, 'bg-linear-135 from-vip-from to-vip-to')}>
         <div className='flex items-center gap-2 pr-10 sm:pr-8'>
-          <span className='rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-700'>
+          <span className='text-vip-to-hover rounded-full bg-white px-2.5 py-1 text-xs font-semibold'>
             {t('VIP membership')}
           </span>
           {endLabel && <span className='text-body-sm'>{endLabel}</span>}
@@ -478,7 +473,7 @@ function VipPromoCard(props: PromoCardProps) {
                 <li key={benefit.id} className='flex items-center gap-2'>
                   <HugeiconsIcon
                     icon={CheckmarkCircle02Icon}
-                    className='size-4 shrink-0 text-amber-500'
+                    className='text-vip size-4 shrink-0'
                     aria-hidden
                   />
                   <span className='font-medium'>{benefit.title}</span>

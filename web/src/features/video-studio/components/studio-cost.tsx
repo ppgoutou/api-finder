@@ -21,10 +21,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import {
-  VIP_GOLD_SURFACE,
-  VIP_GOLD_TEXT,
-} from '@/features/membership/lib/vip-style'
+import { VIP_SURFACE, VIP_TEXT } from '@/features/membership/lib/vip-style'
 import { VIDEO_PRICE_FRACTION_DIGITS } from '@/features/pricing/lib/video-pricing'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -59,8 +56,8 @@ export function StudioCost(props: StudioCostProps) {
           title={t('Top up to upgrade')}
           className={cn(
             'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium hover:brightness-95',
-            VIP_GOLD_SURFACE,
-            VIP_GOLD_TEXT
+            VIP_SURFACE,
+            VIP_TEXT
           )}
         >
           <HugeiconsIcon icon={CrownIcon} className='size-3.5' aria-hidden />

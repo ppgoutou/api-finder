@@ -16,32 +16,36 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-/** The gold fill of VIP buttons and chips, readable in both themes. */
-export const VIP_GOLD_FILL = 'bg-vip text-vip-foreground hover:bg-vip-hover'
+/**
+ * The VIP gradient fill of buttons and chips: brand blue into violet, the
+ * same in both themes.
+ */
+export const VIP_FILL =
+  'bg-linear-135 from-vip-from to-vip-to text-white hover:from-vip-from-hover hover:to-vip-to-hover'
 
-/** Gold text on the page background, such as VIP prices. */
-export const VIP_GOLD_TEXT = 'text-vip'
+/** Violet text on the page background, such as VIP prices. */
+export const VIP_TEXT = 'text-vip'
 
-/** The soft gold panel behind VIP banners and highlighted cells. */
-export const VIP_GOLD_SURFACE =
+/** The soft violet panel behind VIP banners and highlighted cells. */
+export const VIP_SURFACE =
   'border-vip/30 bg-gradient-to-r from-vip/15 via-vip/10 to-vip/5'
 
 /*
- * The night look of the VIP page and the compare dialog: a near-black stage,
- * the site font for text, Space Grotesk for display figures and a lime accent. The
- * `dark` class switches the theme tokens of everything inside to dark.
+ * The night look of the VIP page and the compare dialog: a deep indigo stage,
+ * the site font for text, Space Grotesk for display figures and a violet
+ * accent. The `dark` class switches the theme tokens of everything inside to
+ * dark.
  */
 export const VIP_NIGHT_STAGE = 'dark bg-night text-white'
 
 /** Large figures and headlines on the night stage. */
 export const VIP_DISPLAY_FONT = 'font-display font-bold tracking-[-0.03em]'
 
-/** The lime call-to-action fill. */
-export const VIP_LIME_FILL =
-  'bg-accent-night text-accent-night-foreground hover:bg-accent-night/90 focus-visible:ring-accent-night/50'
+/** The call-to-action fill on the night stage: the VIP gradient. */
+export const VIP_NIGHT_FILL = `${VIP_FILL} focus-visible:ring-accent-night/50`
 
-/** Lime text, such as VIP values and checks. */
-export const VIP_LIME_TEXT = 'text-accent-night'
+/** Violet text on the night stage, such as VIP values and checks. */
+export const VIP_NIGHT_TEXT = 'text-accent-night'
 
 /** A glassy panel on the night stage. */
 export const VIP_NIGHT_PANEL =

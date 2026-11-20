@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils'
 
 import { getVipUpgradeRule } from '../lib/benefits'
 import { getVipSavingPercent } from '../lib/progress'
-import { VIP_GOLD_FILL, VIP_GOLD_SURFACE } from '../lib/vip-style'
+import { VIP_FILL, VIP_SURFACE } from '../lib/vip-style'
 import type { MembershipInfo } from '../types'
 import { VipCompareButton } from './vip-compare-button'
 
@@ -36,7 +36,7 @@ interface MembershipPriceNoteProps {
 }
 
 /**
- * The gold VIP banner at the top of the pricing page: VIP users learn the
+ * The violet VIP banner at the top of the pricing page: VIP users learn the
  * prices shown are theirs, everyone else how much VIP saves and how to get it.
  */
 export function MembershipPriceNote(props: MembershipPriceNoteProps) {
@@ -72,7 +72,7 @@ export function MembershipPriceNote(props: MembershipPriceNoteProps) {
       aria-label={t('VIP membership')}
       className={cn(
         'mx-auto mt-4 flex max-w-3xl flex-col gap-3 rounded-2xl border px-4 py-3 text-left sm:flex-row sm:items-center sm:px-5',
-        VIP_GOLD_SURFACE
+        VIP_SURFACE
       )}
     >
       <span className='bg-vip text-vip-foreground flex size-9 shrink-0 items-center justify-center rounded-full shadow-sm max-sm:hidden'>
@@ -90,7 +90,7 @@ export function MembershipPriceNote(props: MembershipPriceNoteProps) {
         <VipCompareButton source='pricing-banner' className='text-sm' />
         <Button
           size='sm'
-          className={cn('rounded-full px-3 font-semibold', VIP_GOLD_FILL)}
+          className={cn('rounded-full px-3 font-semibold', VIP_FILL)}
           render={
             <Link
               to='/vip'

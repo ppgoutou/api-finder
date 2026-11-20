@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 import { useMembership } from '../hooks/use-membership'
 import { useVipCompare } from '../hooks/use-vip-compare'
 import { getVipUpgradeRule } from '../lib/benefits'
-import { VIP_LIME_FILL, VIP_NIGHT_STAGE } from '../lib/vip-style'
+import { VIP_NIGHT_FILL, VIP_NIGHT_STAGE } from '../lib/vip-style'
 import { VipActions } from './vip-actions'
 import { VipCompareTable } from './vip-compare-table'
 import { VipHighlights } from './vip-highlights'
@@ -74,7 +74,7 @@ export function VipCompareDialog() {
           <span
             className={cn(
               'flex size-9 items-center justify-center rounded-xl',
-              VIP_LIME_FILL
+              VIP_NIGHT_FILL
             )}
           >
             <HugeiconsIcon icon={CrownIcon} className='size-4' aria-hidden />

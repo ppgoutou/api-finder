@@ -25,12 +25,12 @@ import { cn } from '@/lib/utils'
 
 import { useMembership } from '../hooks/use-membership'
 import { useVipCompare } from '../hooks/use-vip-compare'
-import { VIP_GOLD_FILL, VIP_GOLD_TEXT } from '../lib/vip-style'
+import { VIP_FILL, VIP_TEXT } from '../lib/vip-style'
 
 interface VipCompareButtonProps {
   /** Where the button sits, for analytics. */
   source: string
-  /** "link" reads as inline text; "chip" is a small gold pill. */
+  /** "link" reads as inline text; "chip" is a small VIP gradient pill. */
   variant?: 'link' | 'chip' | 'outline'
   /** Replaces the default "Compare VIP benefits" label. */
   label?: string
@@ -60,7 +60,7 @@ export function VipCompareButton(props: VipCompareButtonProps) {
         onClick={onClick}
         className={cn(
           'inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline',
-          VIP_GOLD_TEXT,
+          VIP_TEXT,
           props.className
         )}
       >
@@ -78,7 +78,7 @@ export function VipCompareButton(props: VipCompareButtonProps) {
       onClick={onClick}
       className={cn(
         'rounded-full font-semibold',
-        variant === 'chip' ? VIP_GOLD_FILL : cn('border-vip/50', VIP_GOLD_TEXT),
+        variant === 'chip' ? VIP_FILL : cn('border-vip/50', VIP_TEXT),
         props.className
       )}
     >

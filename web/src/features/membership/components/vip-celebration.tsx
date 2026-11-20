@@ -31,7 +31,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { useMembership } from '../hooks/use-membership'
 import { getVipBenefits } from '../lib/benefits'
 import { vipCelebrationKey } from '../lib/vip-celebration'
-import { VIP_GOLD_FILL } from '../lib/vip-style'
+import { VIP_FILL } from '../lib/vip-style'
 import { VipSupportContact } from './vip-support-contact'
 
 /**
@@ -82,7 +82,7 @@ export function VipCelebration() {
       descriptionClassName='text-center'
       footer={
         <Button
-          className={cn('w-full font-semibold', VIP_GOLD_FILL)}
+          className={cn('w-full font-semibold', VIP_FILL)}
           render={<Link to='/video-studio' onClick={() => setOpen(false)} />}
         >
           {t('Start creating')}

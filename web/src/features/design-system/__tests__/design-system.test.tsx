@@ -42,7 +42,7 @@ describe('design system page', () => {
     )
   })
 
-  it('shows the VIP and lime colour tokens', () => {
+  it('shows the VIP and night accent colour tokens', () => {
     render(<DesignSystem />)
 
     const colors = screen.getByRole('region', { name: 'Colors' })

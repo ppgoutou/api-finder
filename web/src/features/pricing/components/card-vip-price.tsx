@@ -59,7 +59,7 @@ const SEGMENT_CLASS =
 
 /**
  * Switches a card between standard and VIP prices. Both choices stay named;
- * a sliding thumb in brand blue or VIP gold marks the one in use.
+ * a sliding thumb in brand blue or VIP violet marks the one in use.
  */
 export function CardVipToggle(props: CardVipToggleProps) {
   const { t } = useTranslation()
@@ -110,7 +110,7 @@ interface CardVipPanelGlowProps {
 }
 
 /**
- * The gold layer behind a price panel showing VIP prices, and the one light
+ * The violet layer behind a price panel showing VIP prices, and the one light
  * sweep across it when the viewer switches to them.
  */
 export function CardVipPanelGlow(props: CardVipPanelGlowProps) {

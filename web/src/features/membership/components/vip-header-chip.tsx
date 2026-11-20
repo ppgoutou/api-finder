@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 
 import { useMembership } from '../hooks/use-membership'
 import { useVipCompare } from '../hooks/use-vip-compare'
-import { VIP_GOLD_FILL } from '../lib/vip-style'
+import { VIP_FILL } from '../lib/vip-style'
 
 interface VipHeaderChipProps {
   /** Show the crown and "VIP" only, for narrow headers. */
@@ -56,7 +56,7 @@ export function VipHeaderChip(props: VipHeaderChipProps) {
       className={cn(
         'inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap transition-colors',
         isVip
-          ? VIP_GOLD_FILL
+          ? VIP_FILL
           : 'border border-vip/50 bg-vip-soft text-vip hover:bg-vip/20',
         props.className
       )}
