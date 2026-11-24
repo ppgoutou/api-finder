@@ -100,7 +100,7 @@ export const DOC_SAMPLES = {
 
   officialText: JSON.stringify(
     {
-      model: 'doubao-seedance-2-0-261111',
+      model: 'doubao-seedance-2-5-261111',
       prompt: 'A red sports car drifts through a rainy neon street at night',
       seconds: 5,
       resolution: '1080p',

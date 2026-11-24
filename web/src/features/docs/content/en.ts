@@ -96,7 +96,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
       blocks: [
         {
           type: 'markdown',
-          text: `Video models come in two groups. **All of them take the same request parameters**, see Creating a task; the few extras of the official models are in Official model notes.
+          text: `**All video models take the same request parameters**, see Creating a task; the few extras of the official model are in Official model notes.
 
 | Model | Resolution | Duration | Billing |
 | --- | --- | --- | --- |
@@ -107,22 +107,18 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
 | \`seedance-2.5-stable-YH\` | 480p–1080p | 4–30 s | Per second |
 | \`seedance-2.5-flash-YH\` | 480p–720p | 4–30 s | Per second |
 | \`wan3-YH\` | 480p–720p | 2–30 s | Per second |
-| \`doubao-seedance-2-0-261111\` | 480p–4k | 4–15 s | Per token |
-| \`doubao-seedance-2-0-fast-261111\` | 480p–720p | 4–15 s | Per token |
-| \`doubao-seedance-2-0-mini-261111\` | 480p–720p | 4–15 s | Per token |
 | \`doubao-seedance-2-5-261111\` | 480p–1080p | 4–30 s | Per token |
 
 **Reference limits**: the Seedance 2.0 models take up to 9 images, 3 videos and 3 audios; \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` up to 30 images, 10 videos and 10 audios; \`seedance-2.5-flash-YH\` and \`wan3-YH\` up to 10 images, 5 videos and 5 audios.
 
 **Which one to pick**
 
-- **4K**: only the official \`doubao-seedance-2-0-261111\`;
 - **Long videos**: the Seedance 2.5 models and \`wan3-YH\` go up to 30 seconds per clip;
 - **Faster and cheaper**: models with \`fast\`, \`mini\` or \`flash\` in the name;
 - **Many references**: \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` take up to 30 reference images, 10 reference videos and 10 reference audios;
-- **Official models**: \`doubao-\` models run on ByteDance Volcano Engine and can generate sound.
+- **Official model**: \`doubao-seedance-2-5-261111\` runs on ByteDance Volcano Engine and can generate sound.
 
-**Aspect ratios**: \`seedance-2.5-stable-YH\` and \`seedance-2.5-flash-YH\` take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the other \`-YH\` models also take \`9:21\`; the official models take \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\` and \`9:16\`, and Seedance 2.5 also takes \`adaptive\`.`,
+**Aspect ratios**: \`seedance-2.5-stable-YH\` and \`seedance-2.5-flash-YH\` take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the other \`-YH\` models also take \`9:21\`; the official model takes \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\`, \`9:16\` and \`adaptive\`.`,
         },
       ],
     },
@@ -132,7 +128,7 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
       blocks: [
         {
           type: 'markdown',
-          text: `\`POST /v1/videos\` with a JSON body (\`Content-Type: application/json\`). The table applies to every video model; the extras of the official models are in Official model notes.
+          text: `\`POST /v1/videos\` with a JSON body (\`Content-Type: application/json\`). The table applies to every video model; the extras of the official model are in Official model notes.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -200,14 +196,14 @@ A duration or resolution outside the model's range, or a prompt that is too long
       blocks: [
         {
           type: 'markdown',
-          text: `The 4 official models starting with \`doubao-\` take the same parameters as the other models (see Creating a task and Reference media and first/last frames), plus:
+          text: `The official model \`doubao-seedance-2-5-261111\` takes the same parameters as the other models (see Creating a task and Reference media and first/last frames), plus:
 
 | Parameter | Description |
 | --- | --- |
 | \`seconds\` | Besides the model's durations, also takes \`-1\` to let the model choose; the submission reserves the model's longest duration, and completion settles the actual usage |
 | \`metadata.generate_audio\` | Whether to generate sound, on by default; \`false\` makes a silent video |
 
-- A reference audio needs a reference image or video with it (Seedance 2.5 takes audio alone);
+- A reference audio can be used alone, without a reference image or video;
 - Without \`resolution\` the model chooses; the submission reserves the model's highest tier up to 1080p, and completion settles the actual usage;
 - Other native Ark parameters can be passed through as is in \`metadata\`; \`resolution\` and \`ratio\` in \`metadata\` take precedence over the top-level ones.`,
         },
@@ -338,7 +334,7 @@ If the download is slow, download it over several connections: the endpoint supp
 | Billing | Calculation | Models |
 | --- | --- | --- |
 | Per second | Video length in seconds × the per-second price of the resolution | \`-YH\` models (same price with or without reference media) |
-| Per token | Tokens × token price; tokens = (output seconds + reference video seconds) × width × height × 24 ÷ 1024, at a lower price with a reference video | Official models (\`doubao-\`) |
+| Per token | Tokens × token price; tokens = (output seconds + reference video seconds) × width × height × 24 ÷ 1024, at a lower price with a reference video | Official model \`doubao-seedance-2-5-261111\` |
 | Per image | Images returned × price per image, regardless of size or quality | Image models |
 
 - A video is charged when the task is created; per-token models settle the actual usage on completion;
