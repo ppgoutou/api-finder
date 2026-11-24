@@ -88,6 +88,9 @@ func ProcessChannelError(c *gin.Context, channelError types.ChannelError, err *t
 		AppendRelayLogAdminInfo(c, relayInfo, other)
 		AppendResponseModelLogInfo(relayInfo, other)
 		AppendTaskPluginContextAuditInfo(c, other)
+		if common.GetContextKeyBool(c, constant.ContextKeyRelayWillRetry) {
+			other.SetAdmin(model.LogOtherWillRetryKey, true)
+		}
 		startTime := common.GetContextKeyTime(c, constant.ContextKeyRequestStartTime)
 		if startTime.IsZero() {
 			startTime = time.Now()

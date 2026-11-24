@@ -1,13 +1,20 @@
 package model
 
 import (
+	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/pkg/usererror"
 
+	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // TestFormatUserLogsStripsQuotaSaturation verifies the admin-only quota
@@ -366,4 +373,86 @@ func TestRefundLogHidesRawReasonFromOwner(t *testing.T) {
 	require.NoError(t, common.UnmarshalJsonStr(owner.Other, &other))
 	assert.Equal(t, usererror.Result{Code: usererror.CodeGenerationFailed}.Key(), other["reason"])
 	assert.Equal(t, "task_1", other["task_id"])
+}
+
+// TestUserLogsHideRetriedAttemptErrors verifies that the error log of an
+// attempt the gateway retried stays for administrators but is left out of the
+// owner's log list, export and token log view, on every supported database.
+func TestUserLogsHideRetriedAttemptErrors(t *testing.T) {
+	for _, dialect := range []string{"sqlite", "mysql", "postgres"} {
+		t.Run(dialect, func(t *testing.T) {
+			var driver gorm.Dialector
+			switch dialect {
+			case "sqlite":
+				driver = sqlite.Open(filepath.Join(t.TempDir(), "logs.db"))
+			case "mysql":
+				dsn := os.Getenv("TEST_MYSQL_DSN")
+				if dsn == "" {
+					t.Skip("TEST_MYSQL_DSN is not configured")
+				}
+				driver = mysql.Open(dsn)
+			case "postgres":
+				dsn := os.Getenv("TEST_POSTGRES_DSN")
+				if dsn == "" {
+					t.Skip("TEST_POSTGRES_DSN is not configured")
+				}
+				driver = postgres.Open(dsn)
+			}
+			db, err := gorm.Open(driver, &gorm.Config{})
+			require.NoError(t, err)
+			sqlDB, err := db.DB()
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, sqlDB.Close()) })
+			require.NoError(t, db.Migrator().DropTable(&Log{}))
+			require.NoError(t, db.AutoMigrate(&Log{}))
+			t.Cleanup(func() { require.NoError(t, db.Migrator().DropTable(&Log{})) })
+			originalLogDB := LOG_DB
+			LOG_DB = db
+			t.Cleanup(func() { LOG_DB = originalLogDB })
+
+			retried := NewLogOther()
+			retried.SetPublic("error_code", "do_request_failed")
+			retried.SetAdmin(LogOtherWillRetryKey, true)
+			final := NewLogOther()
+			final.SetPublic("error_code", "do_request_failed")
+			final.SetAdmin(LogOtherWillRetryKey, false)
+			rows := []*Log{
+				{UserId: 7, TokenId: 3, Type: LogTypeError, Content: "status_code=500, upstream error: do request failed", Other: retried.JSONString(), RequestId: "r1", CreatedAt: 1},
+				{UserId: 7, TokenId: 3, Type: LogTypeConsume, Quota: 100, RequestId: "r1", CreatedAt: 2},
+				{UserId: 7, TokenId: 3, Type: LogTypeError, Content: "status_code=500, upstream error: do request failed", Other: final.JSONString(), RequestId: "r2", CreatedAt: 3},
+				{UserId: 7, TokenId: 3, Type: LogTypeError, Content: "status_code=502, bad gateway", RequestId: "r3", CreatedAt: 4},
+			}
+			require.NoError(t, db.Create(rows).Error)
+
+			requestIds := func(logs []*Log) []string {
+				ids := make([]string, 0, len(logs))
+				for _, log := range logs {
+					ids = append(ids, log.RequestId+":"+strconv.Itoa(log.Type))
+				}
+				return ids
+			}
+			want := []string{"r3:5", "r2:5", "r1:2"}
+
+			userLogs, total, err := GetUserLogs(7, LogFilter{}, 0, 10)
+			require.NoError(t, err)
+			assert.EqualValues(t, 3, total)
+			assert.Equal(t, want, requestIds(userLogs))
+
+			var streamed []*Log
+			require.NoError(t, StreamUserLogs(t.Context(), 7, LogFilter{}, func(log *Log) error {
+				streamed = append(streamed, log)
+				return nil
+			}))
+			assert.Equal(t, want, requestIds(streamed))
+
+			tokenLogs, err := GetLogByTokenId(3)
+			require.NoError(t, err)
+			assert.Equal(t, want, requestIds(tokenLogs))
+
+			adminLogs, adminTotal, err := GetAllLogs(LogFilter{Type: LogTypeError}, 0, 10)
+			require.NoError(t, err)
+			assert.EqualValues(t, 3, adminTotal, "administrators keep every attempt's error log")
+			assert.Len(t, adminLogs, 3)
+		})
+	}
 }

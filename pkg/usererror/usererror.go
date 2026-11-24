@@ -183,7 +183,7 @@ var codeRules = map[string]string{
 var (
 	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long", "characters, at most"}
 	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as", "识别为视频编辑"}
-	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核"}
+	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核", "素材不符合社区规范"}
 	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}
 	// A reference the supplier could not fetch or open, in its own words.
 	materialUnreachablePatterns = []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败",
@@ -191,7 +191,8 @@ var (
 	materialFrameRatePatterns = []string{"frame rate must", "参考视频帧率"}
 	// Checked after copyright, which names an asset: these name neither side,
 	// and a supplier uses them for the result.
-	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation", "内容审核未通过"}
+	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation", "内容审核未通过",
+		"不符合平台规范", "后审不通过", "safety checks"}
 )
 
 // Patterns are lower case and checked in order; the first match wins. Specific
