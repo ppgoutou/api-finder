@@ -82,7 +82,6 @@
     "Calls": "Appels",
     "Channel: {{channel}}": "Canal : {{channel}}",
     "Close support": "Fermer le support",
-    "Confirm upstream price": "Confirmer le prix amont",
     "Contact support": "Contacter le support",
     "Copy Telegram account": "Copier le compte Telegram",
     "Could not fetch the latest price: {{error}}": "Impossible de récupérer le dernier prix : {{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "Exclure les comptes admin",
     "Failed or expired": "Échouées ou expirées",
     "Failed to load the business dashboard": "Échec du chargement du tableau de bord",
-    "Fetch latest price": "Récupérer le dernier prix",
     "First payment in this period": "Premier paiement sur la période",
     "Get unrestricted content models: contact support": "Accéder aux modèles à contenu sans restriction : contactez le support",
     "Grant test credit": "Accorder un crédit de test",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "Aucun paiement sur cette période",
     "Cumulative": "Cumulé",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Le revenu est ce qui a été facturé aux utilisateurs sur le canal. Les dépenses amont sont ce que le fournisseur a facturé, sinon le prix d'achat enregistré sur chaque débit. Le taux de réussite ne couvre que les tâches asynchrones.",
-    "Covers all time": "Sur toute la durée"
+    "Covers all time": "Sur toute la durée",
+    "Fetch latest upstream price": "Récupérer le dernier prix amont",
+    "Keep current price": "Garder le prix actuel",
+    "Apply upstream price": "Appliquer le prix amont",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}} : vérifiez le changement, puis décidez de l'appliquer ou non. Rien ne change avant cela.",
+    "Current supply price": "Prix fournisseur actuel",
+    "Latest supply price": "Dernier prix fournisseur",
+    "Current final price": "Prix final actuel",
+    "Final price after applying": "Prix final après application",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Les prix fournisseur incluent déjà le ratio du groupe de la clé. Les prix finaux concernent le groupe par défaut ; les ajustements enregistrés restent inchangés.",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "La liste de prix de {{name}} ne contient plus ce modèle : aucun prix amont à appliquer. Le prix actuel reste inchangé.",
+    "The supplier's price list has no price for this model.": "La liste de prix du fournisseur n'a pas de prix pour ce modèle."
   }
 }

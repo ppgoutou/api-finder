@@ -87,12 +87,22 @@ function ChangeKindBadge(props: { kind: UpstreamPriceChange['kind'] }) {
   return <StatusBadge size='sm' variant='warning' label={t('Price changed')} />
 }
 
-function ChangeFields(props: { change: UpstreamPriceChange }) {
+// Expressions are unreadable as raw text: a model's details show them as
+// price tables instead.
+const EXPRESSION_FIELDS = new Set(['billing_expr', 'billing_plugin_variants'])
+
+export function ChangeFields(props: {
+  change: UpstreamPriceChange
+  hideExpressions?: boolean
+}) {
   const { t } = useTranslation()
-  if (props.change.fields.length === 0) return null
+  const fields = props.hideExpressions
+    ? props.change.fields.filter((field) => !EXPRESSION_FIELDS.has(field.field))
+    : props.change.fields
+  if (fields.length === 0) return null
   return (
     <dl className='grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs'>
-      {props.change.fields.map((field) => (
+      {fields.map((field) => (
         <div key={field.field} className='contents'>
           <dt className='text-muted-foreground'>
             {upstreamFieldLabel(field.field, t)}

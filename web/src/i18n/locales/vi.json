@@ -82,7 +82,6 @@
     "Calls": "Lượt gọi",
     "Channel: {{channel}}": "Kênh: {{channel}}",
     "Close support": "Đóng hỗ trợ",
-    "Confirm upstream price": "Xác nhận dùng giá nhà cung cấp",
     "Contact support": "Liên hệ hỗ trợ",
     "Copy Telegram account": "Sao chép tài khoản Telegram",
     "Could not fetch the latest price: {{error}}": "Không lấy được giá mới nhất: {{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "Loại trừ tài khoản quản trị",
     "Failed or expired": "Thất bại hoặc hết hạn",
     "Failed to load the business dashboard": "Không tải được bảng điều hành",
-    "Fetch latest price": "Lấy giá mới nhất",
     "First payment in this period": "Thanh toán lần đầu trong kỳ",
     "Get unrestricted content models: contact support": "Mở mô hình nội dung không giới hạn: liên hệ hỗ trợ",
     "Grant test credit": "Cấp tiền thử nghiệm",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "Không có thanh toán trong kỳ này",
     "Cumulative": "Lũy kế",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Doanh thu là số tiền người dùng bị trừ trên kênh. Chi phí thượng nguồn là số nhà cung cấp đã trừ, nếu không thì theo giá cung cấp ghi lại ở mỗi lần trừ. Tỷ lệ thành công chỉ tính tác vụ bất đồng bộ.",
-    "Covers all time": "Tính toàn thời gian"
+    "Covers all time": "Tính toàn thời gian",
+    "Fetch latest upstream price": "Lấy giá thượng nguồn mới nhất",
+    "Keep current price": "Giữ giá hiện tại",
+    "Apply upstream price": "Áp dụng giá thượng nguồn",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}}: kiểm tra thay đổi rồi quyết định có áp dụng hay không. Chưa áp dụng thì không có gì thay đổi.",
+    "Current supply price": "Giá cung cấp hiện tại",
+    "Latest supply price": "Giá cung cấp mới nhất",
+    "Current final price": "Giá cuối hiện tại",
+    "Final price after applying": "Giá cuối sau khi áp dụng",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Giá cung cấp đã gồm tỷ lệ nhóm của khóa. Giá cuối tính cho nhóm mặc định; các điều chỉnh giá đã lưu giữ nguyên.",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "Bảng giá của {{name}} không còn mô hình này nên không có giá thượng nguồn để áp dụng. Giá hiện tại giữ nguyên.",
+    "The supplier's price list has no price for this model.": "Bảng giá của nhà cung cấp không có giá cho mô hình này."
   }
 }

@@ -59,6 +59,7 @@ import {
 import { useOnboardingSync } from '../../hooks/use-onboarding-sync'
 import { modelsQueryKeys, vendorsQueryKeys } from '../../lib'
 import {
+  delistedPriceModels,
   hasEffectivePricing,
   matchesOnboardingFilter,
   onboardingStatus,
@@ -155,9 +156,10 @@ export function OnboardingSection() {
   const allRows = useMemo<OnboardingRow[]>(() => {
     const owners = pricingCategoryOwners(categories)
     const repriced = new Set(priceChanges.map((change) => change.model_name))
+    const delisted = delistedPriceModels(priceChanges)
     return (overview.data?.items ?? []).map((item) => ({
       item,
-      status: onboardingStatus(item, priced, owners, repriced),
+      status: onboardingStatus(item, priced, owners, repriced, delisted),
     }))
   }, [overview.data, priced, categories, priceChanges])
   const workbenchModels = useMemo(
@@ -461,19 +463,20 @@ export function OnboardingSection() {
                 ignored: !current.status.ignored,
               })
             }
-            upstreamPrice={
-              upstreamPrices.data?.models?.[current.item.model_name]
-            }
-            markup={upstreamPrices.data?.markups?.[current.item.model_name]}
-            priceFactor={upstreamPrices.data?.price_factor ?? 1}
+            priceReport={upstreamPrices.data}
             groupRatios={groupRatios}
             applyingUpstreamPrice={applyPrice.isPending}
-            onApplyUpstreamPrice={() =>
-              applyPrice.mutate(current.item.model_name)
+            onApplyUpstreamPrice={(onApplied) =>
+              applyPrice.mutate(current.item.model_name, {
+                onSuccess: onApplied,
+              })
             }
             acknowledgingUpstreamPrice={acknowledge.isPending}
-            onAcknowledgeUpstreamPrice={() =>
-              acknowledge.mutate({ model_names: [current.item.model_name] })
+            onAcknowledgeUpstreamPrice={(onAcknowledged) =>
+              acknowledge.mutate(
+                { model_names: [current.item.model_name] },
+                { onSuccess: onAcknowledged }
+              )
             }
           />
         ) : (

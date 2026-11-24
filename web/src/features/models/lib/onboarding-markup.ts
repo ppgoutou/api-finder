@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { ModelPricingEntry } from '@/features/model-pricing/api'
 import type { ParsedTaskTier } from '@/features/pricing/lib/billing-expr'
 import { getTaskPricingDisplayTiers } from '@/features/pricing/lib/task-matrix-display'
 import {
@@ -31,7 +32,7 @@ import type {
   PricingModel,
 } from '@/features/pricing/types'
 
-import type { TierMarkup } from '../types'
+import type { OnboardingMarkup, TierMarkup } from '../types'
 
 /**
  * One price tier of a video model, in USD per second of video, or the fixed
@@ -248,4 +249,75 @@ export function officialSecondPrice(
   if (match.referenceSecondPrice) return match.referenceSecondPrice
   if (!match.referencePricePerMillion) return undefined
   return (match.referencePricePerMillion * row.tokensPerSecond) / 1_000_000
+}
+
+/**
+ * One tier before and after taking the supplier's latest price, in USD per
+ * second or per request. A side is absent when that price lacks the tier.
+ */
+export type PriceComparisonRow = {
+  row: MarkupRow
+  currentSupply?: number
+  currentFinal?: number
+  latestSupply?: number
+  latestFinal?: number
+}
+
+/**
+ * The supply price and the default-group final price of every tier, now and
+ * with the supplier's latest price. The saved adjustments stay as they are.
+ * Prices without per-second or fixed rows, or without a tier in common, return
+ * none.
+ */
+export function comparePriceRows(
+  entry: ModelPricingEntry,
+  markup: OnboardingMarkup | undefined,
+  latest: Record<string, unknown>,
+  priceFactor: number
+): PriceComparisonRow[] {
+  const examples =
+    entry.usage_examples ?? entry.plugin_variants?.[0]?.usage_examples
+  const rowsOf = (
+    pricing: Record<string, unknown>,
+    base: OnboardingMarkup | undefined
+  ): MarkupRow[] => {
+    const configured = pricing['billing_setting.billing_expr']
+    const expression =
+      base?.base_expr ??
+      (typeof configured === 'string' ? configured : undefined)
+    const tiers = markupRows(expression, entry.usage_schema, examples)
+    return tiers.length > 0 ? tiers : fixedPriceRows(pricing, base?.base_price)
+  }
+  const latestRows = rowsOf(latest, undefined)
+  if (latestRows.length === 0) return []
+  const currentRows = new Map(
+    rowsOf(entry.configured, markup).map((row) => [row.tier, row])
+  )
+  // A rewritten local price can name every tier differently: nothing lines up.
+  if (
+    currentRows.size > 0 &&
+    !latestRows.some((row) => currentRows.has(row.tier))
+  ) {
+    return []
+  }
+  const final = (row: MarkupRow): number =>
+    row.supply * priceFactor +
+    ((row.tier === FIXED_PRICE_ROW
+      ? markup?.per_request
+      : markup?.tiers?.[row.tier]?.per_second) ?? 0)
+  const rows: PriceComparisonRow[] = latestRows.map((row) => {
+    const current = currentRows.get(row.tier)
+    currentRows.delete(row.tier)
+    return {
+      row,
+      currentSupply: current?.supply,
+      currentFinal: current ? final(current) : undefined,
+      latestSupply: row.supply,
+      latestFinal: final(row),
+    }
+  })
+  for (const row of currentRows.values()) {
+    rows.push({ row, currentSupply: row.supply, currentFinal: final(row) })
+  }
+  return rows
 }

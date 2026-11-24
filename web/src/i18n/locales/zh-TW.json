@@ -82,7 +82,6 @@
     "Calls": "呼叫次數",
     "Channel: {{channel}}": "目前通路：{{channel}}",
     "Close support": "關閉客服",
-    "Confirm upstream price": "確認使用上游價格",
     "Contact support": "聯絡客服",
     "Copy Telegram account": "複製 Telegram 帳號",
     "Could not fetch the latest price: {{error}}": "取得最新價格失敗：{{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "排除管理員帳號",
     "Failed or expired": "失敗/過期",
     "Failed to load the business dashboard": "營運看板載入失敗",
-    "Fetch latest price": "取得最新價格",
     "First payment in this period": "本週期首次儲值",
     "Get unrestricted content models: contact support": "開通無限制內容模型，聯絡客服",
     "Grant test credit": "發放測試金",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "本期沒有支付",
     "Cumulative": "累計",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "收入是使用者在該渠道被扣的費用。上游支出優先用供應商實際扣費，讀不到時按每筆扣費時記錄的供貨價計算。任務成功率只統計非同步任務。",
-    "Covers all time": "統計全部時間"
+    "Covers all time": "統計全部時間",
+    "Fetch latest upstream price": "獲取上游最新價格",
+    "Keep current price": "保留目前價格",
+    "Apply upstream price": "套用上游價格",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}}：請核對變動，再決定是否套用。套用前不會改動任何價格。",
+    "Current supply price": "目前供貨價",
+    "Latest supply price": "最新供貨價",
+    "Current final price": "目前最終價",
+    "Final price after applying": "套用後最終價",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "供貨價已包含權杖分組倍率。最終價按預設分組計算，已儲存的價格調整保持不變。",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "{{name}} 的價格表裡已沒有這個模型，因此沒有可套用的上游價格。目前價格保持不變。",
+    "The supplier's price list has no price for this model.": "供應商價格表裡沒有這個模型的價格。"
   }
 }
