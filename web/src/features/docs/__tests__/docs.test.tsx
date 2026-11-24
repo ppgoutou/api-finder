@@ -53,6 +53,13 @@ describe('Docs', () => {
     expect(JSON.stringify(docs)).not.toMatch(/nsfw|720p-P/i)
   })
 
+  it.each([
+    ['English', EN_DOCS],
+    ['Chinese', ZH_DOCS],
+  ])('keeps models no longer sold out of the %s docs', (_language, docs) => {
+    expect(JSON.stringify(docs)).not.toMatch(/doubao-seedance-2-0/)
+  })
+
   it('shows the English docs with the site address for non-Chinese interfaces', () => {
     render(<Docs />)
 
