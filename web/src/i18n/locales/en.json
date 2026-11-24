@@ -82,7 +82,6 @@
     "Calls": "Calls",
     "Channel: {{channel}}": "Channel: {{channel}}",
     "Close support": "Close support",
-    "Confirm upstream price": "Confirm upstream price",
     "Contact support": "Contact support",
     "Copy Telegram account": "Copy Telegram account",
     "Could not fetch the latest price: {{error}}": "Could not fetch the latest price: {{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "Exclude admin accounts",
     "Failed or expired": "Failed or expired",
     "Failed to load the business dashboard": "Failed to load the business dashboard",
-    "Fetch latest price": "Fetch latest price",
     "First payment in this period": "First payment in this period",
     "Get unrestricted content models: contact support": "Get unrestricted content models: contact support",
     "Grant test credit": "Grant test credit",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "No payments in this period",
     "Cumulative": "Cumulative",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.",
-    "Covers all time": "Covers all time"
+    "Covers all time": "Covers all time",
+    "Fetch latest upstream price": "Fetch latest upstream price",
+    "Keep current price": "Keep current price",
+    "Apply upstream price": "Apply upstream price",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.",
+    "Current supply price": "Current supply price",
+    "Latest supply price": "Latest supply price",
+    "Current final price": "Current final price",
+    "Final price after applying": "Final price after applying",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.",
+    "The supplier's price list has no price for this model.": "The supplier's price list has no price for this model."
   }
 }

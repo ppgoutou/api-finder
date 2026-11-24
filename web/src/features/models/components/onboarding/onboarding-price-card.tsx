@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -17,13 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { ErrorState } from '@/components/error-state'
 import { LoadingState } from '@/components/loading-state'
-import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { TitledCard } from '@/components/ui/titled-card'
 import {
@@ -31,46 +31,63 @@ import {
   useModelPricing,
 } from '@/features/model-pricing/api'
 import { modelPricingDisplay } from '@/features/model-pricing/pricing'
-import { DynamicPricingBreakdown } from '@/features/pricing/components/dynamic-pricing-breakdown'
-import { ModelPriceCell } from '@/features/pricing/components/model-price-cell'
-import { isDynamicPricingModel } from '@/features/pricing/lib/dynamic-price'
-import type {
-  BillingUsageSchema,
-  PricingCategory,
-  PricingModel,
-} from '@/features/pricing/types'
+import type { PricingCategory } from '@/features/pricing/types'
 import { requireServerSuccess } from '@/lib/server-error-message'
+import { cn } from '@/lib/utils'
 
 import { checkUpstreamPrices } from '../../api'
-import { hasEffectivePricing, undeclaredUsageKeys } from '../../lib/onboarding'
+import { hasEffectivePricing } from '../../lib/onboarding'
 import { modelsQueryKeys } from '../../lib/query-keys'
-import type { OnboardingMarkup, UpstreamModelPrice } from '../../types'
+import type { OnboardingModel, UpstreamPriceReport } from '../../types'
 import { OnboardingMarkupTable } from './onboarding-markup-table'
+import {
+  PriceSummary,
+  UpstreamPriceDialog,
+  UpstreamPriceStatus,
+} from './onboarding-upstream-price-dialog'
 
 /**
  * Read-only price of an onboarding model. Prices follow the supplier. Local
  * prices may rewrite the supplier's expression, so they are never compared
- * with it by code: once the supplier changes its price, the admin fetches the
- * latest price, reads it next to the current one, and either confirms it or
- * marks the change handled after updating the local price.
+ * with it by code: the admin fetches the latest supplier price, reads it next
+ * to the current one, and decides whether to apply it.
  */
 export function OnboardingPriceCard(props: {
-  modelName: string
-  upstream: UpstreamModelPrice | undefined
-  markup: OnboardingMarkup | undefined
-  priceFactor: number
+  item: OnboardingModel
+  report: UpstreamPriceReport | undefined
   groupRatios: Record<string, number>
   categories: PricingCategory[]
   applying: boolean
-  onApply: () => void
+  onApply: (onApplied: () => void) => void
   acknowledging: boolean
-  onAcknowledge: () => void
+  onAcknowledge: (onAcknowledged: () => void) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const canEdit = useCanEditModelPricing()
-  const query = useModelPricing([props.modelName], canEdit)
-  const [fetchedModel, setFetchedModel] = useState<string | null>(null)
+  const modelName = props.item.model_name
+  const query = useModelPricing([modelName], canEdit)
+  const [reviewing, setReviewing] = useState(false)
+  const upstream = props.report?.models?.[modelName]
+  const markup = props.report?.markups?.[modelName]
+  const priceFactor = props.report?.price_factor ?? 1
+  const channelIds = [
+    ...props.item.channels,
+    ...props.item.pending_channels,
+  ].map((channel) => channel.id)
+  const watched = (props.report?.channels ?? []).filter(
+    (channel) => channel.has_token && channelIds.includes(channel.id)
+  )
+  const changes = (props.report?.changes ?? []).filter(
+    (item) => item.model_name === modelName
+  )
+  // The change of the channel the price comes from, else the one that dropped
+  // the model; another channel's change still waits to be marked handled.
+  const change =
+    changes.find((item) => item.channel_id === upstream?.channel_id) ??
+    changes.find((item) => item.kind === 'removed') ??
+    changes[0]
+
   const fetchLatest = useMutation({
     mutationFn: async () =>
       requireServerSuccess(await checkUpstreamPrices()).data,
@@ -80,13 +97,15 @@ export function OnboardingPriceCard(props: {
       await queryClient.invalidateQueries({
         queryKey: ['model-pricing-config'],
       })
+      const source = report?.models?.[modelName]?.channel_id
       const failed = report?.channels.find(
         (channel) =>
-          channel.id === props.upstream?.channel_id &&
-          channel.status === 'error'
+          channel.status === 'error' &&
+          (source === undefined
+            ? channelIds.includes(channel.id)
+            : channel.id === source)
       )
       if (failed) {
-        setFetchedModel(null)
         toast.error(
           t('Could not fetch the latest price: {{error}}', {
             error: failed.error ?? '',
@@ -94,12 +113,15 @@ export function OnboardingPriceCard(props: {
         )
         return
       }
-      setFetchedModel(props.modelName)
+      setReviewing(true)
     },
   })
   const entry = query.data?.entries.find(
-    (item) => item.model_name === props.modelName
+    (item) => item.model_name === modelName
   )
+  const priced = entry ? hasEffectivePricing(entry) : false
+  const acknowledgeable =
+    change !== undefined && (priced || change.kind === 'removed')
 
   let body = <LoadingState />
   if (!canEdit) {
@@ -116,79 +138,62 @@ export function OnboardingPriceCard(props: {
       />
     )
   } else if (query.isSuccess) {
-    const priced = entry ? hasEffectivePricing(entry) : false
-    const current =
-      entry && priced ? (
-        <PriceSummary
-          model={modelPricingDisplay(entry)}
-          usageSchema={entry.usage_schema}
-        />
-      ) : null
-    const latestPricing =
-      fetchedModel === props.modelName &&
-      !props.upstream?.in_sync &&
-      !props.upstream?.error
-        ? props.upstream?.pricing
-        : undefined
-    const latestExpr = latestPricing?.['billing_setting.billing_expr']
-    const undeclared = undeclaredUsageKeys(latestExpr, entry?.usage_schema)
-    // A schema that lacks the price's fields would misread its tiers.
-    const latestSchema = undeclared.length ? undefined : entry?.usage_schema
     body = (
       <div className='space-y-3'>
-        <UpstreamPriceStatus
-          upstream={props.upstream}
-          priced={priced}
-          fetching={fetchLatest.isPending}
-          onFetch={() => fetchLatest.mutate()}
-          canConfirm={latestPricing !== undefined && undeclared.length === 0}
-          applying={props.applying}
-          onApply={props.onApply}
-          acknowledging={props.acknowledging}
-          onAcknowledge={props.onAcknowledge}
-        />
-        {undeclared.length > 0 && latestPricing && (
-          <p role='alert' className='text-destructive text-sm'>
-            {t(
-              'The task plugin does not declare these usage fields yet: {{fields}}. Update the plugin first.',
-              { fields: undeclared.join(', ') }
+        {props.report && (
+          <div className='flex flex-wrap items-start justify-between gap-2'>
+            <UpstreamPriceStatus
+              upstream={upstream}
+              change={change}
+              priced={priced}
+              watched={watched.length > 0}
+            />
+            {acknowledgeable && (
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={props.acknowledging || props.applying}
+                onClick={() => props.onAcknowledge(() => setReviewing(false))}
+              >
+                {t('Mark handled')}
+              </Button>
             )}
-          </p>
-        )}
-        {latestPricing ? (
-          <div className='grid gap-4 lg:grid-cols-2'>
-            <section className='min-w-0 space-y-2'>
-              <h4 className='text-sm font-medium'>{t('Current price')}</h4>
-              {current ?? (
-                <p className='text-muted-foreground text-sm'>
-                  {t('No price yet')}
-                </p>
-              )}
-            </section>
-            <section className='min-w-0 space-y-2'>
-              <h4 className='text-sm font-medium'>
-                {t('Latest upstream price')}
-              </h4>
-              <PriceSummary
-                model={modelPricingDisplay({
-                  model_name: props.modelName,
-                  effective: latestPricing,
-                  usage_schema: latestSchema,
-                })}
-                usageSchema={latestSchema}
-              />
-            </section>
           </div>
-        ) : (
-          current
         )}
         {entry && priced && (
-          <OnboardingMarkupTable
+          <>
+            <PriceSummary
+              model={modelPricingDisplay(entry)}
+              usageSchema={entry.usage_schema}
+            />
+            <OnboardingMarkupTable
+              entry={entry}
+              markup={markup}
+              priceFactor={priceFactor}
+              groupRatios={props.groupRatios}
+              categories={props.categories}
+            />
+          </>
+        )}
+        {props.report && (
+          <UpstreamPriceDialog
+            open={reviewing}
+            onOpenChange={setReviewing}
+            modelName={modelName}
             entry={entry}
-            markup={props.markup}
-            priceFactor={props.priceFactor}
-            groupRatios={props.groupRatios}
-            categories={props.categories}
+            priced={priced}
+            upstream={upstream}
+            change={change}
+            markup={markup}
+            priceFactor={priceFactor}
+            busy={props.applying || props.acknowledging}
+            applying={props.applying}
+            onApply={() => props.onApply(() => setReviewing(false))}
+            onAcknowledge={
+              acknowledgeable
+                ? () => props.onAcknowledge(() => setReviewing(false))
+                : undefined
+            }
           />
         )}
       </div>
@@ -201,115 +206,31 @@ export function OnboardingPriceCard(props: {
       description={t(
         'Prices follow the upstream. Customers pay the group ratio price plus any extra markup.'
       )}
-    >
-      {body}
-    </TitledCard>
-  )
-}
-
-function PriceSummary(props: {
-  model: PricingModel
-  usageSchema: BillingUsageSchema | undefined
-}) {
-  return (
-    <div className='space-y-2'>
-      <div className='max-w-xs'>
-        <ModelPriceCell
-          model={props.model}
-          options={{ tokenUnit: 'M' }}
-          showExpression={false}
-        />
-      </div>
-      {isDynamicPricingModel(props.model) && (
-        <DynamicPricingBreakdown
-          compact
-          sortTiersBySchema
-          billingExpr={props.model.billing_expr}
-          usageSchema={props.usageSchema}
-        />
-      )}
-    </div>
-  )
-}
-
-function UpstreamPriceStatus(props: {
-  upstream: UpstreamModelPrice | undefined
-  priced: boolean
-  fetching: boolean
-  onFetch: () => void
-  canConfirm: boolean
-  applying: boolean
-  onApply: () => void
-  acknowledging: boolean
-  onAcknowledge: () => void
-}) {
-  const { t } = useTranslation()
-  if (!props.upstream) {
-    return (
-      <p className='text-muted-foreground text-sm'>
-        {t(
-          'No upstream price yet. Add the supplier token, then check upstream prices.'
-        )}
-      </p>
-    )
-  }
-  if (props.upstream.error) {
-    return (
-      <p role='alert' className='text-destructive text-sm'>
-        {t(props.upstream.error)}
-      </p>
-    )
-  }
-  if (props.upstream.in_sync) {
-    return (
-      <StatusBadge
-        size='sm'
-        variant='success'
-        label={t('Upstream price of {{name}} unchanged', {
-          name: props.upstream.channel_name,
-        })}
-      />
-    )
-  }
-  const busy = props.fetching || props.applying || props.acknowledging
-  return (
-    <div className='flex flex-wrap items-center justify-between gap-2'>
-      <StatusBadge
-        size='sm'
-        variant='warning'
-        label={
-          props.priced
-            ? t('Upstream price of {{name}} changed', {
-                name: props.upstream.channel_name,
-              })
-            : t('No price yet')
-        }
-      />
-      <div className='flex flex-wrap gap-2'>
-        {props.priced && (
+      action={
+        canEdit && (
           <Button
             size='sm'
             variant='outline'
-            disabled={busy}
-            onClick={props.onAcknowledge}
+            disabled={
+              fetchLatest.isPending ||
+              props.applying ||
+              props.acknowledging ||
+              watched.length === 0
+            }
+            onClick={() => fetchLatest.mutate()}
           >
-            {t('Mark handled')}
+            <RefreshCw
+              aria-hidden
+              className={cn('size-4', fetchLatest.isPending && 'animate-spin')}
+            />
+            {fetchLatest.isPending
+              ? t('Fetching...')
+              : t('Fetch latest upstream price')}
           </Button>
-        )}
-        <Button
-          size='sm'
-          variant={props.canConfirm ? 'outline' : 'default'}
-          disabled={busy}
-          onClick={props.onFetch}
-        >
-          {props.fetching ? t('Fetching...') : t('Fetch latest price')}
-        </Button>
-        {props.canConfirm && (
-          <Button size='sm' disabled={busy} onClick={props.onApply}>
-            {props.applying ? t('Saving...') : t('Confirm upstream price')}
-          </Button>
-        )}
-      </div>
-    </div>
+        )
+      }
+    >
+      {body}
+    </TitledCard>
   )
 }

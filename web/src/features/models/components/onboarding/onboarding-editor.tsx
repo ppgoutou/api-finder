@@ -47,8 +47,7 @@ import { PRESSED_BADGE_CLASSES } from '../../lib/pricing-categories'
 import type {
   OnboardingChannel,
   OnboardingModel,
-  OnboardingMarkup,
-  UpstreamModelPrice,
+  UpstreamPriceReport,
   Vendor,
 } from '../../types'
 import { OnboardingGoLiveCard, type GoLiveSavers } from './onboarding-go-live'
@@ -67,14 +66,12 @@ export function OnboardingEditor(props: {
   onDirtyChange: (dirty: boolean) => void
   changingIgnored: boolean
   onToggleIgnored: () => void
-  upstreamPrice: UpstreamModelPrice | undefined
-  markup: OnboardingMarkup | undefined
-  priceFactor: number
+  priceReport: UpstreamPriceReport | undefined
   groupRatios: Record<string, number>
   applyingUpstreamPrice: boolean
-  onApplyUpstreamPrice: () => void
+  onApplyUpstreamPrice: (onApplied: () => void) => void
   acknowledgingUpstreamPrice: boolean
-  onAcknowledgeUpstreamPrice: () => void
+  onAcknowledgeUpstreamPrice: (onAcknowledged: () => void) => void
 }) {
   const { t } = useTranslation()
   const savers = useRef<GoLiveSavers>({})
@@ -138,7 +135,7 @@ export function OnboardingEditor(props: {
       </div>
       <OnboardingGoLiveCard
         item={props.item}
-        upstreamPrice={props.upstreamPrice}
+        upstreamPrice={props.priceReport?.models?.[props.item.model_name]}
         metadataDirty={metadataDirty}
         categoryChosen={categoryChosen}
         savers={savers}
@@ -163,10 +160,8 @@ export function OnboardingEditor(props: {
         onChosenChange={setCategoryChosen}
       />
       <OnboardingPriceCard
-        modelName={props.item.model_name}
-        upstream={props.upstreamPrice}
-        markup={props.markup}
-        priceFactor={props.priceFactor}
+        item={props.item}
+        report={props.priceReport}
         groupRatios={props.groupRatios}
         categories={props.categories}
         applying={props.applyingUpstreamPrice}

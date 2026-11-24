@@ -454,7 +454,8 @@ func applyUpstreamModelPrice(name string, entry model.ModelPricingEntry, pricing
 }
 
 // acceptUpstreamBaseline marks the latest supplier rows of the given models as
-// handled on every channel, so applied prices stop showing as changes.
+// handled on every channel, so applied prices stop showing as changes. A model
+// the supplier's list dropped leaves the baseline too.
 func acceptUpstreamBaseline(snapshots map[string]upstreamPriceSnapshot, names []string) {
 	for key, snapshot := range snapshots {
 		if snapshot.LatestTime == 0 {
@@ -466,6 +467,8 @@ func acceptUpstreamBaseline(snapshots map[string]upstreamPriceSnapshot, names []
 		for _, name := range names {
 			if latest, ok := snapshot.Latest[name]; ok {
 				snapshot.Baseline[name] = latest
+			} else {
+				delete(snapshot.Baseline, name)
 			}
 		}
 		snapshots[key] = snapshot

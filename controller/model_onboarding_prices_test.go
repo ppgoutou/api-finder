@@ -386,6 +386,7 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 	service.InitHttpClient()
 	expr := "tier(\"base\", p * 2 + c * 8)"
 	supplierPrice := "0.3"
+	pricedModel := "priced-model"
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/status" {
 			_, _ = w.Write([]byte(`{"success":true,"data":{"quota_display_type":"USD","usd_exchange_rate":7.3}}`))
@@ -398,7 +399,7 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 		assert.Equal(t, "Bearer supplier-token", r.Header.Get("Authorization"))
 		_, _ = w.Write([]byte(`{"success":true,"group_ratio":{"default":1},"data":[
 			{"model_name":"new-model","quota_type":0,"model_ratio":1,"billing_mode":"tiered_expr","billing_expr":"tier(\"base\", p * 2 + c * 8)"},
-			{"model_name":"priced-model","quota_type":1,"model_price":` + supplierPrice + `},
+			{"model_name":"` + pricedModel + `","quota_type":1,"model_price":` + supplierPrice + `},
 			{"model_name":"unserved-model","quota_type":1,"model_price":0.9},
 			{"model_name":"pending-model","quota_type":1,"model_price":0.7}
 		]}`))
@@ -475,6 +476,30 @@ func TestUpstreamPriceCheckPricesNewModelsAndTracksSupplierChanges(t *testing.T)
 
 	assert.Equal(t, model.PricingValues{"ModelPrice": 0.7}, pricing("pending-model"), "the admin can confirm a pending model's price")
 	assert.Equal(t, true, models["pending-model"].(map[string]any)["in_sync"])
+
+	changes := func() []any {
+		t.Helper()
+		channels, err := upstreamPriceChannels()
+		require.NoError(t, err)
+		report, err := upstreamPriceReport(upstreamPriceChannelRows(channels))
+		require.NoError(t, err)
+		kinds := make([]any, 0)
+		for _, change := range report["changes"].([]upstreamPriceChange) {
+			if change.ModelName == "priced-model" {
+				kinds = append(kinds, change.Kind)
+			}
+		}
+		return kinds
+	}
+	pricedModel = "renamed-model"
+	models = call(CheckOnboardingUpstreamPrices, "")
+	assert.NotContains(t, models, "priced-model", "a price the supplier no longer lists cannot be applied")
+	assert.Equal(t, []any{"removed"}, changes())
+
+	call(AcknowledgeOnboardingUpstreamPrices, `{"model_names":["priced-model"]}`)
+
+	assert.Empty(t, changes(), "a removed price is handled on every channel")
+	assert.Equal(t, model.PricingValues{"ModelPrice": 0.5}, pricing("priced-model"), "handling a removal keeps the charged price")
 }
 
 func TestSetModelOnboardingIgnoredMovesModelsAside(t *testing.T) {

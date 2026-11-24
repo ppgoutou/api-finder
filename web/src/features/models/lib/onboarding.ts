@@ -26,6 +26,7 @@ import type {
   MetadataSyncValues,
   OnboardingChannel,
   OnboardingModel,
+  UpstreamPriceChange,
   Vendor,
 } from '../types'
 import { parseModelTags } from './model-utils'
@@ -35,6 +36,8 @@ export type OnboardingStatus = {
   pending: boolean
   removed: boolean
   priceChanged: boolean
+  /** The supplier's price list dropped the model, so it has no new price. */
+  priceRemoved: boolean
   onChannel: boolean
   hasMetadata: boolean
   hasPrice: boolean | undefined
@@ -80,9 +83,11 @@ export function onboardingStatus(
   item: OnboardingModel,
   priced: Set<string> | undefined,
   categoryOwners: Map<string, string>,
-  repriced: Set<string> = new Set()
+  repriced: Set<string> = new Set(),
+  delistedPrices: Set<string> = new Set()
 ): OnboardingStatus {
   return {
+    priceRemoved: delistedPrices.has(item.model_name),
     priceChanged: repriced.has(item.model_name),
     pending: item.pending_channels.length > 0,
     removed: item.removed_channels.length > 0,
@@ -92,6 +97,20 @@ export function onboardingStatus(
     category: categoryOwners.get(item.model_name),
     ignored: Boolean(item.ignored),
   }
+}
+
+/** Models that every recorded supplier change drops from its price list. */
+export function delistedPriceModels(
+  changes: UpstreamPriceChange[]
+): Set<string> {
+  const names = new Set<string>()
+  for (const change of changes) {
+    if (change.kind === 'removed') names.add(change.model_name)
+  }
+  for (const change of changes) {
+    if (change.kind !== 'removed') names.delete(change.model_name)
+  }
+  return names
 }
 
 /** Unfinished means it still waits on a channel, metadata, or a price, or its upstream dropped or repriced it. */

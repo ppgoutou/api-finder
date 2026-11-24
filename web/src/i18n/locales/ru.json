@@ -82,7 +82,6 @@
     "Calls": "Вызовы",
     "Channel: {{channel}}": "Канал: {{channel}}",
     "Close support": "Закрыть поддержку",
-    "Confirm upstream price": "Подтвердить цену поставщика",
     "Contact support": "Связаться с поддержкой",
     "Copy Telegram account": "Скопировать аккаунт Telegram",
     "Could not fetch the latest price: {{error}}": "Не удалось получить последнюю цену: {{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "Без учётных записей админов",
     "Failed or expired": "Сбой или истекли",
     "Failed to load the business dashboard": "Не удалось загрузить бизнес-панель",
-    "Fetch latest price": "Получить последнюю цену",
     "First payment in this period": "Первая оплата за период",
     "Get unrestricted content models: contact support": "Доступ к моделям с контентом без ограничений — обратитесь в поддержку",
     "Grant test credit": "Выдать тестовый баланс",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "Нет платежей за этот период",
     "Cumulative": "Накопительно",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "Выручка — то, что списано с пользователей по каналу. Расходы — то, что списал поставщик, иначе цена закупки, записанная при каждом списании. Успешность задач учитывает только асинхронные задачи.",
-    "Covers all time": "За всё время"
+    "Covers all time": "За всё время",
+    "Fetch latest upstream price": "Получить последнюю цену поставщика",
+    "Keep current price": "Оставить текущую цену",
+    "Apply upstream price": "Применить цену поставщика",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}}: проверьте изменение и решите, применять ли его. До применения ничего не меняется.",
+    "Current supply price": "Текущая цена поставки",
+    "Latest supply price": "Последняя цена поставки",
+    "Current final price": "Текущая итоговая цена",
+    "Final price after applying": "Итоговая цена после применения",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Цены поставки уже учитывают коэффициент группы ключа. Итоговые цены указаны для группы по умолчанию; сохранённые корректировки не меняются.",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "В прайс-листе {{name}} больше нет этой модели, поэтому применять нечего. Текущая цена не меняется.",
+    "The supplier's price list has no price for this model.": "В прайс-листе поставщика нет цены для этой модели."
   }
 }

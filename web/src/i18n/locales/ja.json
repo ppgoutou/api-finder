@@ -82,7 +82,6 @@
     "Calls": "呼び出し回数",
     "Channel: {{channel}}": "チャネル：{{channel}}",
     "Close support": "サポートを閉じる",
-    "Confirm upstream price": "上流価格の使用を確定",
     "Contact support": "サポートに連絡",
     "Copy Telegram account": "Telegram アカウントをコピー",
     "Could not fetch the latest price: {{error}}": "最新価格を取得できませんでした：{{error}}",
@@ -100,7 +99,6 @@
     "Exclude admin accounts": "管理者アカウントを除外",
     "Failed or expired": "失敗／期限切れ",
     "Failed to load the business dashboard": "経営ダッシュボードの読み込みに失敗しました",
-    "Fetch latest price": "最新価格を取得",
     "First payment in this period": "期間内に初回支払い",
     "Get unrestricted content models: contact support": "制限なしのコンテンツ対応モデルを利用するには、サポートへお問い合わせ",
     "Grant test credit": "テストクレジットを付与",
@@ -8707,6 +8705,17 @@
     "No payments in this period": "この期間の支払いはありません",
     "Cumulative": "累計",
     "Revenue is what users were charged on the channel. Upstream spending is what the supplier reported charging, and otherwise the supply price recorded on each charge. Task success rate only covers async tasks.": "収益はチャネルでユーザーに課金した額です。上流支出はサプライヤーの実際の課金額、取得できない場合は各課金時に記録した仕入れ価格で計算します。タスク成功率は非同期タスクのみが対象です。",
-    "Covers all time": "全期間が対象"
+    "Covers all time": "全期間が対象",
+    "Fetch latest upstream price": "上流の最新価格を取得",
+    "Keep current price": "現在の価格を維持",
+    "Apply upstream price": "上流価格を適用",
+    "{{model}}: check the change, then decide whether to apply it. Nothing changes until you apply it.": "{{model}}：変更内容を確認し、適用するか決めてください。適用するまで何も変わりません。",
+    "Current supply price": "現在の仕入価格",
+    "Latest supply price": "最新の仕入価格",
+    "Current final price": "現在の最終価格",
+    "Final price after applying": "適用後の最終価格",
+    "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "仕入価格にはキーのグループ倍率が含まれています。最終価格はデフォルトグループの価格で、保存済みの価格調整は変わりません。",
+    "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "{{name}} の価格表にこのモデルはなくなったため、適用できる上流価格がありません。現在の価格はそのままです。",
+    "The supplier's price list has no price for this model.": "仕入先の価格表にこのモデルの価格はありません。"
   }
 }

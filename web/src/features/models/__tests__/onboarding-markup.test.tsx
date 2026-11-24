@@ -31,6 +31,7 @@ import { api } from '@/lib/api'
 import { OnboardingMarkupTable } from '../components/onboarding/onboarding-markup-table'
 import {
   batchAdjustment,
+  comparePriceRows,
   markupRows,
   officialSecondPrice,
   onboardingOfficialPricing,
@@ -272,6 +273,75 @@ describe('batchAdjustment', () => {
       expect(batchAdjustment(operation, value, 0.6256)).toBe(expected)
     }
   )
+})
+
+describe('comparePriceRows', () => {
+  const latest = (expression: string) => ({
+    'billing_setting.billing_mode': 'tiered_expr',
+    'billing_setting.billing_expr': expression,
+  })
+  const markup: OnboardingMarkup = {
+    base_expr: secondExpr,
+    tiers: { '480p': { field: 'seconds', per_second: 0.05 } },
+  }
+  // The charged expression already holds the markup; the supply price is the
+  // stored base.
+  const entry = pricingEntry(secondExpr.replace('* 0.1)', '* 0.14)'), {
+    usage_schema: secondSchema,
+  })
+
+  it('compares supply prices without the markup and keeps the markup in both final prices', () => {
+    const rows = comparePriceRows(
+      entry,
+      markup,
+      latest(secondExpr.replace('* 0.1)', '* 0.2)')),
+      1.2
+    )
+    const row = rows.find((item) => item.row.tier === '480p')
+
+    expect(row?.currentSupply).toBeCloseTo(0.1)
+    expect(row?.latestSupply).toBeCloseTo(0.2)
+    expect(row?.currentFinal).toBeCloseTo(0.17)
+    expect(row?.latestFinal).toBeCloseTo(0.29)
+  })
+
+  it('leaves a side empty for a tier only one price has', () => {
+    const rows = comparePriceRows(
+      entry,
+      markup,
+      latest('tier("480p", u("seconds") * 0.1)'),
+      1.2
+    )
+
+    const dropped = rows.find((item) => item.row.tier === '480p·video')
+    expect(dropped?.currentSupply).toBeCloseTo(0.13)
+    expect(dropped?.latestSupply).toBeUndefined()
+  })
+
+  it('returns nothing when the two prices share no tier name', () => {
+    expect(
+      comparePriceRows(
+        entry,
+        markup,
+        latest('tier("base", u("seconds") * 0.1)'),
+        1.2
+      )
+    ).toEqual([])
+  })
+
+  it('compares a fixed price with its per-request adjustment', () => {
+    const [row] = comparePriceRows(
+      pricingEntry('', { configured: { ModelPrice: 0.15 } }),
+      { tiers: null, base_price: 0.1, per_request: 0.02 },
+      { ModelPrice: 0.12 },
+      1.2
+    )
+
+    expect(row.currentSupply).toBeCloseTo(0.1)
+    expect(row.latestSupply).toBeCloseTo(0.12)
+    expect(row.currentFinal).toBeCloseTo(0.14)
+    expect(row.latestFinal).toBeCloseTo(0.164)
+  })
 })
 
 describe('OnboardingMarkupTable', () => {

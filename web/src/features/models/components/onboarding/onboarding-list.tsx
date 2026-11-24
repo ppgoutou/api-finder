@@ -194,8 +194,12 @@ function OnboardingStatusBadges(props: { status: OnboardingStatus }) {
       {status.priceChanged && (
         <StatusBadge
           size='sm'
-          variant='warning'
-          label={t('Upstream repriced')}
+          variant={status.priceRemoved ? 'danger' : 'warning'}
+          label={
+            status.priceRemoved
+              ? t('Gone from price list')
+              : t('Upstream repriced')
+          }
         />
       )}
       {!status.onChannel && (
