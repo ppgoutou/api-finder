@@ -53,8 +53,9 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { usePricingPreferencesStore } from '@/stores/pricing-preferences-store'
 
-import { DEFAULT_TOKEN_UNIT } from '../constants'
+import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { usePricingData } from '../hooks/use-pricing-data'
+import { useVipPriceContext } from '../hooks/use-vip-price-context'
 import type { ParsedTaskTier } from '../lib/billing-expr'
 import { formatBillingCondition } from '../lib/billing-expression/condition-display'
 import {
@@ -71,6 +72,7 @@ import {
 import { parseTags } from '../lib/filters'
 import {
   getAvailableGroups,
+  isImagePricingModel,
   isTokenBasedModel,
   modelDisplayName,
 } from '../lib/model-helpers'
@@ -92,9 +94,11 @@ import {
   pricingDisplayFallbackKey,
 } from '../lib/task-price-display'
 import {
+  getImagePricing,
   getOfficialVideoPricing,
   getPerVideoPricing,
   getVideoPricing,
+  imagePriceFractionDigits,
 } from '../lib/video-pricing'
 import {
   getCardVipRatios,
@@ -109,6 +113,7 @@ import type {
   PricingModel,
   TokenUnit,
 } from '../types'
+import { ImagePricingTable } from './image-pricing-table'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelDetailsApi } from './model-details-api'
 import { ModelDetailsPerformance } from './model-details-performance'
@@ -863,6 +868,7 @@ function ProviderGroupPricingSection(
             usdExchangeRate: props.usdExchangeRate,
             groupRatioMultiplier: ratio,
             usageSchema: props.model.billing_usage_schema,
+            fractionDigits: imagePriceFractionDigits(props.model),
           }),
         ] as const
       })
@@ -1017,6 +1023,9 @@ function ProviderGroupPricingSection(
                               priceRate: props.priceRate,
                               usdExchangeRate: props.usdExchangeRate,
                               groupRatioMultiplier: ratio,
+                              fractionDigits: imagePriceFractionDigits(
+                                props.model
+                              ),
                             })}`,
                         },
                       ]}
@@ -1162,7 +1171,7 @@ export interface ModelDetailsContentProps {
   showRechargePrice?: boolean
   /** The pricing page's group filter, which picks the VIP pair like the cards do. */
   selectedGroup?: string
-  /** VIP pricing for the viewer; video prices follow the cards' VIP switch. */
+  /** VIP pricing for the viewer; image prices list it beside the standard price and video prices follow the cards' VIP switch. */
   vip?: VipPriceContext
 }
 
@@ -1181,11 +1190,11 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
   const vipPriceView = usePricingPreferencesStore((state) => state.vipPriceView)
   const showVip = vipRatios !== null && showsVipPrices(vipRatios, vipPriceView)
   const vipGroups = new Set(props.vip?.pairs.map((pair) => pair.vipGroup))
-  const videoGroups = showVip
-    ? [VIP_DISPLAY_GROUP]
-    : getAvailableGroups(props.model, props.usableGroup).filter(
-        (group) => vipRatios === null || !vipGroups.has(group)
-      )
+  const standardGroups = getAvailableGroups(
+    props.model,
+    props.usableGroup
+  ).filter((group) => vipRatios === null || !vipGroups.has(group))
+  const videoGroups = showVip ? [VIP_DISPLAY_GROUP] : standardGroups
   const videoGroupRatio = showVip
     ? { [VIP_DISPLAY_GROUP]: vipRatios.vipRatio }
     : props.groupRatio
@@ -1194,6 +1203,15 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
     : undefined
 
   const videoPricing = getVideoPricing(props.model)
+  // An image model at a fixed price per request has that one price.
+  const isFixedPriceImage =
+    isImagePricingModel(props.model) &&
+    props.model.quota_type === QUOTA_TYPE_VALUES.REQUEST &&
+    !isDynamicPricingModel(props.model) &&
+    !props.model.billing_plugin_variants?.length
+  const imagePricing = isFixedPriceImage
+    ? { rows: [{ price: props.model.model_price ?? 0 }] }
+    : getImagePricing(props.model)
   // Video models with an official price show one table of both prices.
   const priceComparison = getPriceComparison(props.model)
   // Models billed by video tokens keep their token breakdown below, with the
@@ -1272,7 +1290,20 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
                 showRechargePrice={showRechargePrice}
               />
             )}
-            {!priceComparison && !videoPricing && (
+            {imagePricing && (
+              <ImagePricingTable
+                model={props.model}
+                pricing={imagePricing}
+                groups={standardGroups}
+                groupRatio={props.groupRatio}
+                vipRatios={vipRatios}
+                vip={props.vip}
+                priceRate={props.priceRate}
+                usdExchangeRate={props.usdExchangeRate}
+                showRechargePrice={showRechargePrice}
+              />
+            )}
+            {!priceComparison && !videoPricing && !imagePricing && (
               <GroupPricingSection
                 model={props.model}
                 groupRatio={props.groupRatio}
@@ -1353,6 +1384,7 @@ export function ModelDetails() {
     priceRate,
     usdExchangeRate,
   } = usePricingData()
+  const vip = useVipPriceContext()
 
   const tokenUnit: TokenUnit =
     search.tokenUnit === 'K' ? 'K' : DEFAULT_TOKEN_UNIT
@@ -1431,6 +1463,7 @@ export function ModelDetails() {
           usdExchangeRate={usdExchangeRate ?? 1}
           tokenUnit={tokenUnit}
           showRechargePrice={search.rechargePrice ?? false}
+          vip={vip}
           endpointMap={
             (endpointMap as Record<
               string,

@@ -298,12 +298,15 @@ it.each([false, true])(
       </QueryClientProvider>
     )
     await act(() => i18next.changeLanguage('zhCN'))
-    expect(screen.getAllByText('图片生成单价')).toHaveLength(1)
-    expect(screen.getAllByText(configured ? '/ 张' : '张')).toHaveLength(1)
     expect(screen.queryByText('image_count')).not.toBeInTheDocument()
     if (configured) {
+      expect(screen.getAllByRole('columnheader')).toHaveLength(1)
+      expect(screen.getByRole('columnheader')).toHaveTextContent(/\/ 张$/)
       // A USD site shows the Chinese interface in CNY (default rate 1).
       expect(screen.getByText('¥0.4')).toBeVisible()
+    } else {
+      expect(screen.getAllByText('图片生成单价')).toHaveLength(1)
+      expect(screen.getAllByText('张')).toHaveLength(1)
     }
   }
 )

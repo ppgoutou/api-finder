@@ -455,4 +455,42 @@ describe('image model card', () => {
       screen.queryByRole('group', { name: 'Price view' })
     ).not.toBeInTheDocument()
   })
+
+  it('rounds every image price to three decimals', async () => {
+    const user = userEvent.setup()
+    renderCard(
+      imageModel({
+        billing_expr:
+          'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.04126) : u("resolution") == "2K" ? tier("2K", u("image_count") * 0.05) : tier("4K", u("image_count") * 0.09)',
+      })
+    )
+
+    expect(screen.getAllByText('$0.041').length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: 'VIP' }))
+
+    // 0.04126 × 0.9 = 0.037134
+    expect(screen.getAllByText('$0.037').length).toBeGreaterThan(0)
+    expect(screen.getByText('$0.041').tagName).toBe('S')
+  })
+
+  it('rounds the price of a fixed-price image model to three decimals', async () => {
+    const user = userEvent.setup()
+    renderCard(
+      imageModel({
+        quota_type: 1,
+        billing_mode: undefined,
+        billing_expr: undefined,
+        billing_usage_schema: undefined,
+        model_price: 0.04126,
+        supported_endpoint_types: ['image-generation'],
+      })
+    )
+
+    expect(screen.getByText('$0.041')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'VIP' }))
+
+    expect(screen.getByText('$0.037')).toBeInTheDocument()
+  })
 })

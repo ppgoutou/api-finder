@@ -52,7 +52,11 @@ import {
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
 import { isTokenBasedModel, modelDisplayName } from '../lib/model-helpers'
-import { formatPrice, formatRequestPrice } from '../lib/price'
+import {
+  formatPrice,
+  formatRequestPrice,
+  requestPriceFractionDigits,
+} from '../lib/price'
 import {
   taskEnumLabel,
   taskPriceLabel,
@@ -62,6 +66,7 @@ import {
   getImagePricing,
   getTokenVideoPricing,
   getVideoPricing,
+  imagePriceFractionDigits,
   IMAGE_COUNT_FIELD,
   IMAGE_PRICE_FRACTION_DIGITS,
   VIDEO_PRICE_FRACTION_DIGITS,
@@ -146,6 +151,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         props.model,
         props.selectedGroup
       ),
+      fractionDigits: imagePriceFractionDigits(props.model),
     }),
     [
       props.model,
@@ -527,7 +533,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       formatTaskUsageUnitPrice(props.model.model_price ?? 0, {
         ...dynamicPriceOptions,
         groupRatioMultiplier,
-        fractionDigits: 4,
+        fractionDigits: requestPriceFractionDigits(props.model),
       })
     const showVipRequestPrice =
       vipRatios !== null && props.model.quota_type === QUOTA_TYPE_VALUES.REQUEST
