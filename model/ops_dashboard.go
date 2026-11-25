@@ -1176,6 +1176,32 @@ func opsLoadTasks(scope opsScope, query OpsDashboardQuery, result *OpsDashboard)
 	return nil
 }
 
+// opsBilledRevenue is what users were charged by channel, net of refunds, from
+// the billing logs.
+func opsBilledRevenue(scope opsScope, start, end int64) (map[int]int64, error) {
+	var billed []struct {
+		ChannelId int
+		Type      int
+		Quota     int64
+	}
+	billedQuery := LOG_DB.Table("logs").
+		Select("channel_id, type, coalesce(sum(quota), 0) as quota").
+		Where("type IN ? AND created_at >= ? AND created_at <= ? AND channel_id > 0", []int{LogTypeConsume, LogTypeRefund}, start, end).
+		Group("channel_id, type")
+	if err := scope.excludeUsers(billedQuery, "user_id").Scan(&billed).Error; err != nil {
+		return nil, err
+	}
+	revenueByChannel := make(map[int]int64)
+	for _, row := range billed {
+		if row.Type == LogTypeRefund {
+			revenueByChannel[row.ChannelId] -= row.Quota
+		} else {
+			revenueByChannel[row.ChannelId] += row.Quota
+		}
+	}
+	return revenueByChannel, nil
+}
+
 func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboard, refunds []opsRefundLog) error {
 	var usage []struct {
 		ChannelId int
@@ -1247,25 +1273,9 @@ func opsLoadUpstream(scope opsScope, query OpsDashboardQuery, result *OpsDashboa
 	// the latest calls would reach the supplier's charges before the revenue.
 	// Each source can only miss charges (late batches, or consume logging
 	// turned off), so revenue is the larger of the two.
-	var billed []struct {
-		ChannelId int
-		Type      int
-		Quota     int64
-	}
-	billedQuery := LOG_DB.Table("logs").
-		Select("channel_id, type, coalesce(sum(quota), 0) as quota").
-		Where("type IN ? AND created_at >= ? AND created_at <= ? AND channel_id > 0", []int{LogTypeConsume, LogTypeRefund}, query.Start, query.End).
-		Group("channel_id, type")
-	if err = scope.excludeUsers(billedQuery, "user_id").Scan(&billed).Error; err != nil {
+	revenueByChannel, err := opsBilledRevenue(scope, query.Start, query.End)
+	if err != nil {
 		return err
-	}
-	revenueByChannel := make(map[int]int64)
-	for _, row := range billed {
-		if row.Type == LogTypeRefund {
-			revenueByChannel[row.ChannelId] -= row.Quota
-		} else {
-			revenueByChannel[row.ChannelId] += row.Quota
-		}
 	}
 	for channelId, revenue := range revenueByChannel {
 		target := upstream(channelId)

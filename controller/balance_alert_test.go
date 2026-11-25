@@ -2,14 +2,20 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
+	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 // TestNextBalanceAlertSequence walks one channel through a low balance that
@@ -194,13 +200,85 @@ func TestEstimateBalanceRunway(t *testing.T) {
 		want     balanceRunway
 	}{
 		{name: "no history yet", readings: []balanceReading{{Upstream: 100}}, want: balanceRunway{}},
-		{name: "less than an hour of history", readings: []balanceReading{{Upstream: 100}, {Upstream: 90, Time: hour - 1}}, want: balanceRunway{}},
-		{name: "steady spending", readings: []balanceReading{{Upstream: 140}, {Upstream: 120, Time: hour}, {Upstream: 100, Time: 2 * hour}}, want: balanceRunway{Known: true, Hours: 5}},
-		{name: "a top-up interval is left out", readings: []balanceReading{{Upstream: 40}, {Upstream: 20, Time: hour}, {Upstream: 520, Time: 2 * hour}, {Upstream: 500, Time: 3 * hour}}, want: balanceRunway{Known: true, Hours: 25}},
-		{name: "nothing spent", readings: []balanceReading{{Upstream: 100}, {Upstream: 100, Time: 2 * hour}}, want: balanceRunway{Known: true, Idle: true}},
-		{name: "overdrawn balance has no time left", readings: []balanceReading{{Upstream: 10}, {Upstream: -10, Time: hour}}, want: balanceRunway{Known: true}},
+		{name: "a few quiet hours say nothing about the day", readings: []balanceReading{{Upstream: 100}, {Upstream: 99, Time: 5 * hour}}, want: balanceRunway{}},
+		{name: "steady spending", readings: []balanceReading{{Upstream: 140}, {Upstream: 120, Time: 10 * hour}, {Upstream: 100, Time: 20 * hour}}, want: balanceRunway{Known: true, Hours: 50}},
+		{name: "a top-up interval is left out", readings: []balanceReading{{Upstream: 40}, {Upstream: 20, Time: 10 * hour}, {Upstream: 520, Time: 11 * hour}, {Upstream: 500, Time: 21 * hour}}, want: balanceRunway{Known: true, Hours: 250}},
+		{name: "nothing spent", readings: []balanceReading{{Upstream: 100}, {Upstream: 100, Time: 20 * hour}}, want: balanceRunway{Known: true, Idle: true}},
+		{name: "overdrawn balance has no time left", readings: []balanceReading{{Upstream: 10}, {Upstream: -10, Time: 20 * hour}}, want: balanceRunway{Known: true}},
 	}
 	for _, tt := range tests {
 		assert.Equal(t, tt.want, estimateBalanceRunway(tt.readings), tt.name)
+	}
+}
+
+// TestBilledBalanceRunway checks that the runway counts the supply price of
+// every channel on the wallet's host over the last day, and only that.
+func TestBilledBalanceRunway(t *testing.T) {
+	previousDB, previousLogDB, previousMainType := model.DB, model.LOG_DB, common.MainDatabaseType()
+	previousRate, previousQuotaPerUnit := operation_setting.USDExchangeRate, common.QuotaPerUnit
+	t.Cleanup(func() {
+		model.DB, model.LOG_DB = previousDB, previousLogDB
+		common.SetMainDatabaseType(previousMainType)
+		operation_setting.USDExchangeRate, common.QuotaPerUnit = previousRate, previousQuotaPerUnit
+	})
+	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	sqlDB.SetMaxOpenConns(1)
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	common.SetMainDatabaseType(common.DatabaseTypeSQLite)
+	model.DB, model.LOG_DB = db, db
+	operation_setting.USDExchangeRate, common.QuotaPerUnit = 7, 500000
+	require.NoError(t, db.AutoMigrate(&model.Channel{}, &model.Log{}, &model.Task{}))
+
+	for id, baseURL := range map[int]string{
+		11: "https://supplier.example/open/v1",
+		12: "https://SUPPLIER.example/open/v1",
+		20: "https://other.example",
+		30: "https://unpriced.example",
+	} {
+		require.NoError(t, db.Create(&model.Channel{Id: id, Name: "channel", Key: "key", BaseURL: &baseURL}).Error)
+	}
+	require.NoError(t, db.Create(&[]model.Task{
+		{TaskID: "task-ok", ChannelId: 12, Status: model.TaskStatusSuccess},
+		{TaskID: "task-failed", ChannelId: 12, Status: model.TaskStatusFailure},
+	}).Error)
+	now := time.Unix(1795595028, 0)
+	charge := func(channelId int, age time.Duration, supply int, taskId string) model.Log {
+		return model.Log{
+			Type: model.LogTypeConsume, ChannelId: channelId, Quota: 2 * supply, CreatedAt: now.Add(-age).Unix(),
+			Other: fmt.Sprintf(`{"task_id":%q,"admin_info":{"gross_margin":{"revenue_quota":%d,"supply_quota":%d}}}`, taskId, 2*supply, supply),
+		}
+	}
+	require.NoError(t, db.Create(&[]model.Log{
+		charge(11, time.Hour, 500000, ""),
+		charge(12, 20*time.Hour, 1500000, "task-ok"),
+		// The supplier refunds a failed task.
+		charge(12, 3*time.Hour, 900000, "task-failed"),
+		{Type: model.LogTypeRefund, ChannelId: 12, Quota: 1800000, CreatedAt: now.Add(-2 * time.Hour).Unix(), Other: `{"task_id":"task-failed"}`},
+		// Before the window, and on another supplier.
+		charge(11, 25*time.Hour, 5000000, ""),
+		charge(20, time.Hour, 5000000, ""),
+		{Type: model.LogTypeConsume, ChannelId: 30, Quota: 100, CreatedAt: now.Unix()},
+	}).Error)
+
+	tests := []struct {
+		name      string
+		channelId int
+		unit      string
+		balance   float64
+		want      balanceRunway
+	}{
+		{name: "4 dollars a day are 28 yuan a day", channelId: 11, unit: "元", balance: 56, want: balanceRunway{Known: true, Hours: 48}},
+		{name: "a dollar wallet is not converted", channelId: 12, unit: "USD", balance: 56, want: balanceRunway{Known: true, Hours: 336}},
+		{name: "overdrawn balance has no time left", channelId: 11, unit: "元", balance: -5, want: balanceRunway{Known: true}},
+		{name: "billing without supply prices is unknown", channelId: 30, unit: "元", balance: 56, want: balanceRunway{}},
+		{name: "a missing channel is unknown", channelId: 99, unit: "元", balance: 56, want: balanceRunway{}},
+	}
+	for _, tt := range tests {
+		got, err := billedBalanceRunway(balanceCheckResult{ChannelId: tt.channelId, Unit: tt.unit}, tt.balance, now)
+		require.NoError(t, err, tt.name)
+		assert.Equal(t, tt.want, got, tt.name)
 	}
 }
