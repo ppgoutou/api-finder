@@ -216,6 +216,8 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		}
 	}
 
+	service.RecordFinalRelayError(c, newAPIError, relayInfo)
+
 	useChannel := c.GetStringSlice("use_channel")
 	if len(useChannel) > 1 {
 		retryLogStr := common.LogText("retry: %s", strings.Trim(strings.Join(strings.Fields(fmt.Sprint(useChannel)), "->"), "[]"))
@@ -476,7 +478,7 @@ func executeTaskSubmissionWith(
 	c *gin.Context,
 	relayInfo *relaycommon.RelayInfo,
 	submit taskSubmitAttempt,
-) (*taskSubmissionOutcome, *taskdto.TaskError) {
+) (outcome *taskSubmissionOutcome, submissionErr *taskdto.TaskError) {
 	policy := service.RequestPolicy(c)
 	diagnostics := newTaskPluginSubmitDiagnostics(c)
 	diagnostics.start(relayInfo)
@@ -484,6 +486,11 @@ func executeTaskSubmissionWith(
 	var taskErr *taskdto.TaskError
 	durable := false
 	stage := "start"
+	defer func() {
+		if submissionErr != nil {
+			service.RecordFinalRelayError(c, taskSubmissionAPIError(submissionErr), relayInfo)
+		}
+	}()
 	defer func() {
 		if !durable && relayInfo.Billing != nil {
 			diagnostics.refund(stage)
@@ -562,8 +569,8 @@ func executeTaskSubmissionWith(
 		relayInfo.LastError = taskAPIError
 		decision := decideTaskRetry(c, taskErr, common.RetryTimes-retryParam.GetRetry())
 		service.RecordPolicyFailure(c, channel.Id, taskAPIError, decision)
-		common.SetContextKey(c, constant.ContextKeyRelayWillRetry, decision.Action == "retry")
 		if !taskErr.LocalError {
+			common.SetContextKey(c, constant.ContextKeyRelayWillRetry, decision.Action == "retry")
 			processChannelError(c,
 				*types.NewChannelError(channel.Id, channel.Type, channel.Name, channel.ChannelInfo.IsMultiKey,
 					common.GetContextKeyString(c, constant.ContextKeyChannelKey), channel.GetAutoBan()),

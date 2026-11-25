@@ -288,6 +288,9 @@ func RefundTaskQuota(ctx context.Context, task *model.Task, reason string) bool 
 	other := taskBillingOther(task)
 	other.SetPublic("task_id", task.TaskID)
 	other.SetPublic("reason", reason)
+	if task.SubmitTime > 0 && task.FinishTime > task.SubmitTime {
+		other.SetPublic(model.LogOtherTaskElapsedKey, task.FinishTime-task.SubmitTime)
+	}
 	model.RecordTaskBillingLog(model.RecordTaskBillingLogParams{
 		UserId:    task.UserId,
 		LogType:   model.LogTypeRefund,

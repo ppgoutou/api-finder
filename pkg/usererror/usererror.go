@@ -34,6 +34,9 @@ const (
 	CodeMaterialFrameRate         = "material_frame_rate"
 	CodeMaterialPixels            = "material_pixels"
 	CodeMaterialRequirements      = "material_requirements"
+	CodeMaterialDuration          = "material_duration"
+	CodeMaterialDuration30s       = "material_duration_30s"
+	CodeMaterialProcessing        = "material_processing"
 	CodeModerationRealPerson      = "moderation_real_person"
 	CodeModerationInput           = "moderation_input"
 	CodeModerationMusicCopyright  = "moderation_music_copyright"
@@ -42,6 +45,7 @@ const (
 	CodeModerationPrompt          = "moderation_prompt"
 	CodeViolationFee              = "violation_fee"
 	CodeNoReferenceVideo          = "no_reference_video"
+	CodeNoFrames                  = "no_frames"
 	CodeLineNoDuration            = "line_no_duration"
 	CodeNoLineForSpec             = "no_line_spec"
 	CodeModelUnavailable          = "model_unavailable"
@@ -53,6 +57,7 @@ const (
 	CodeSubmitTimeout             = "submit_timeout"
 	CodeTaskTimeout               = "task_timeout"
 	CodeTaskTimeoutLegacy         = "task_timeout_legacy"
+	CodeTaskServiceUnavailable    = "task_service_unavailable"
 	CodeGenerationMaybeContent    = "generation_maybe_content"
 	CodeGenerationFailed          = "generation_failed"
 	CodeTaskCancelledByAdmin      = "task_cancelled_admin"
@@ -86,6 +91,9 @@ var messages = map[string]string{
 	CodeMaterialFrameRate:         "Video assets must be 24-60 FPS. Please adjust and upload again.",
 	CodeMaterialPixels:            "An asset's resolution is too low or too high. Please adjust it and upload again.",
 	CodeMaterialRequirements:      "An asset does not meet the requirements: images must be wider than 300 pixels, and reference audio or video must be 2-15 seconds each and at most 15 seconds in total. Any charge has been refunded. Please adjust and submit again.",
+	CodeMaterialDuration:          "A reference audio or video is too long or too short for this model. Any charge has been refunded. Please trim it and submit again.",
+	CodeMaterialDuration30s:       "Each reference audio or video can be at most 30 seconds. Any charge has been refunded. Please trim it and submit again.",
+	CodeMaterialProcessing:        "An asset could not be processed. Any charge has been refunded. Please upload it again and submit again.",
 	CodeModerationRealPerson:      "An asset may contain a real person's face or private information and did not pass the content review, so generation did not start. Any charge has been refunded. Please use another asset or edit the prompt, then submit again.",
 	CodeModerationInput:           "An uploaded asset did not pass the content review, so generation did not start. Any charge has been refunded. Please replace that asset and submit again.",
 	CodeModerationMusicCopyright:  "The generated audio was blocked because it may involve music copyright. Any charge has been refunded. Turn off audio generation, or remove music, song and lyric descriptions from the prompt, then submit again.",
@@ -94,6 +102,7 @@ var messages = map[string]string{
 	CodeModerationPrompt:          "The prompt did not pass review. Please change it and try again.",
 	CodeViolationFee:              "The content violates the usage rules, and a violation fee was charged under those rules. Contact support if you have questions.",
 	CodeNoReferenceVideo:          "This model does not support reference videos right now. Please remove the reference video or use another model. You were not charged.",
+	CodeNoFrames:                  "This model does not support first or last frame images right now. Any charge has been refunded. Please use reference assets or another model.",
 	CodeLineNoDuration:            "This model does not support this duration right now. Please choose another duration or model. You were not charged.",
 	CodeNoLineForSpec:             "This model cannot generate this combination of resolution, duration and assets right now. Please adjust it and retry, or use another model. You were not charged.",
 	CodeModelUnavailable:          "Model {{model}} is temporarily unavailable. Please try again later or use another model. You were not charged.",
@@ -105,6 +114,7 @@ var messages = map[string]string{
 	CodeSubmitTimeout:             "Task submission timed out before generation started. Your charge has been refunded. Please submit again.",
 	CodeTaskTimeout:               "The task timed out before finishing. Your charge has been refunded. Please submit again.",
 	CodeTaskTimeoutLegacy:         "The task timed out before finishing, and this charge was not refunded. Contact support if you have questions.",
+	CodeTaskServiceUnavailable:    "The service was temporarily unavailable and the task did not finish. Your charge has been refunded. Please submit again later or use another model.",
 	CodeGenerationMaybeContent:    "Video generation failed, possibly because of the prompt or assets. Your charge has been refunded. Please adjust and submit again.",
 	CodeGenerationFailed:          "Video generation failed. Your charge has been refunded. Please submit again later. If it keeps failing, send the request ID to support.",
 	CodeTaskCancelledByAdmin:      "This task was cancelled. Your charge has been refunded. Contact support if you have questions.",
@@ -188,6 +198,7 @@ var (
 	// A reference the supplier could not fetch or open, in its own words.
 	materialUnreachablePatterns = []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败",
 		"source video could not be resolved", "video file cannot be read"}
+	noFramesPatterns          = []string{"不支持首帧", "takes reference media only"}
 	materialFrameRatePatterns = []string{"frame rate must", "参考视频帧率"}
 	// Checked after copyright, which names an asset: these name neither side,
 	// and a supplier uses them for the result.
@@ -201,6 +212,7 @@ var textRules = []rule{
 	{CodeServiceCannotProcess, []string{"insufficient_balance", "insufficient_credits", "平台积分不足", "余额不足"}},
 	{CodeViolationFee, []string{"violation_fee"}},
 	{CodeNoReferenceVideo, []string{"line_no_refvideo"}},
+	{CodeNoFrames, noFramesPatterns},
 	{CodeLineNoDuration, []string{"line_no_seconds"}},
 	{CodeNoLineForSpec, []string{"no_line_for_request", "没有线路能接这一单"}},
 	{CodeModelUnavailable, []string{"model_not_found", "no available channel", "无可用渠道", "無可用管道", "可用渠道不存在"}},
@@ -245,11 +257,12 @@ var textRules = []rule{
 var failReasonRules = []rule{
 	{CodeSubmitTimeout, []string{"视频任务提交超时", "提交10分钟", "请求超时"}},
 	{CodeTaskTimeoutLegacy, []string{"not refunded"}},
-	{CodeTaskTimeout, []string{"task timed out"}},
+	{CodeTaskTimeout, []string{"task timed out", "系统自动熔断", "生成超时"}},
 	{CodeTaskCancelledByAdmin, []string{"按管理员要求驳回"}},
 	{CodeTaskResultUnavailable, []string{"upstream task not found", "failed to query the upstream task status"}},
+	{CodeNoFrames, noFramesPatterns},
 	// "shark block" is the supplier's risk control refusing the prompt or assets.
-	{CodeGenerationMaybeContent, []string{"请检查提示词和素材", "shark block"}},
+	{CodeGenerationMaybeContent, []string{checkPromptAndAssets, "shark block"}},
 	{CodePromptTooLong, promptTooLongPatterns},
 	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
@@ -263,7 +276,21 @@ var failReasonRules = []rule{
 	{CodeMaterialFrameRate, materialFrameRatePatterns},
 	{CodeMaterialPixels, []string{"pixel count must"}},
 	{CodeMaterialRequirements, []string{"请检查上传素材"}},
+	{CodeMaterialDuration30s, []string{"要求大于 0 且不超过 30 秒"}},
+	{CodeMaterialDuration, []string{"素材时长"}},
+	{CodeMaterialProcessing, []string{"上传资产库失败"}},
+	// Last: a busy line can wrap a specific reason, which wins.
+	{CodeTaskServiceUnavailable, []string{"all_platforms_paused", "暂不可用", "生成服务暂时不可用", "线路繁忙"}},
 }
+
+// A supplier that stops tasks after 30 minutes reported the stop with the text
+// it uses for a bad prompt. A failure inside this window is that stop; the
+// window covers the polling delay.
+const (
+	checkPromptAndAssets     = "请检查提示词和素材"
+	supplierTimeoutFromSecs  = 29 * 60
+	supplierTimeoutUntilSecs = 35 * 60
+)
 
 var (
 	statusPrefix = regexp.MustCompile(`^status_code=\d+,\s*`)
@@ -386,4 +413,16 @@ func ClassifyFailReason(reason string) Result {
 		return Result{Code: code}
 	}
 	return Result{Code: CodeGenerationFailed}
+}
+
+// ClassifyTaskFailure is ClassifyFailReason for a reason whose task ran for
+// elapsedSeconds, which tells a supplier timeout from the content failure it is
+// worded as. Zero or less means the time is unknown.
+func ClassifyTaskFailure(reason string, elapsedSeconds int64) Result {
+	result := ClassifyFailReason(reason)
+	if result.Code == CodeGenerationMaybeContent && strings.Contains(reason, checkPromptAndAssets) &&
+		elapsedSeconds >= supplierTimeoutFromSecs && elapsedSeconds <= supplierTimeoutUntilSecs {
+		return Result{Code: CodeTaskTimeout}
+	}
+	return result
 }
