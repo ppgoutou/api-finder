@@ -93,9 +93,10 @@ export const ASSET_ACCEPT: Readonly<Record<AssetKind, string>> = {
 
 /**
  * Days a generated video or image is shown as kept, mirrored from the server
- * (service.MediaDisplayRetentionDays).
+ * (service.VideoDisplayRetentionDays and service.ImageDisplayRetentionDays).
  */
-export const MEDIA_RETENTION_DAYS = 15
+export const VIDEO_RETENTION_DAYS = 15
+export const IMAGE_RETENTION_DAYS = 7
 
 /** Days an uploaded reference file stays available. */
 export const ASSET_RETENTION_DAYS = 7

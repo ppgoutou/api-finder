@@ -56,7 +56,7 @@
     "Enter a channel ID": "Saisissez un ID de canal",
     "Enter the balance path": "Saisissez le chemin du solde",
     "Enter the balance field": "Saisissez le champ du solde",
-    "Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.": "Les vidéos et images que vous créez sont conservées {{days}} jours. Téléchargez celles que vous voulez garder avant leur expiration.",
+    "Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.": "Les vidéos que vous créez sont conservées {{videoDays}} jours et les images {{imageDays}} jours. Téléchargez celles que vous voulez garder avant leur expiration.",
     "360": "360",
     "1000": "1000",
     "10000": "10000",

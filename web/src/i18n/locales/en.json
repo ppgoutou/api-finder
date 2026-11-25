@@ -56,7 +56,7 @@
     "Enter a channel ID": "Enter a channel ID",
     "Enter the balance path": "Enter the balance path",
     "Enter the balance field": "Enter the balance field",
-    "Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.": "Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.",
+    "Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.": "Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.",
     "360": "360",
     "1000": "1000",
     "10000": "10000",
