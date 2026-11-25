@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
@@ -55,8 +57,10 @@ const (
 	// balanceRunwayWindow is how much spending history the remaining hours
 	// are estimated from.
 	balanceRunwayWindow = 24 * time.Hour
-	// balanceRunwayMinSeconds of history are needed before estimating.
-	balanceRunwayMinSeconds = 3600
+	// balanceRunwayMinSeconds of readings are needed before estimating from
+	// them. Spending follows the time of day, so a few quiet or busy hours
+	// say nothing about the rest of the day.
+	balanceRunwayMinSeconds = 18 * 3600
 )
 
 // balanceRunway is how long a balance lasts at its recent spending rate.
@@ -90,6 +94,46 @@ func estimateBalanceRunway(readings []balanceReading) balanceRunway {
 	}
 	balance := max(readings[len(readings)-1].Upstream, 0)
 	return balanceRunway{Known: true, Hours: balance / spent * float64(seconds) / 3600}
+}
+
+// billedBalanceRunway divides a wallet's balance by the supply price of
+// everything billed, over the window, on the channels that draw on it: every
+// channel on the monitored channel's host. Unlike balance readings it covers
+// the whole window at once and neither top-ups nor refunds blur it. The
+// estimate is unknown when the billing logs do not tell what was spent.
+func billedBalanceRunway(result balanceCheckResult, balance float64, now time.Time) (balanceRunway, error) {
+	var channels []*model.Channel
+	if err := model.DB.Select("id", "type", "base_url").Find(&channels).Error; err != nil {
+		return balanceRunway{}, err
+	}
+	hosts := make(map[int]string, len(channels))
+	for _, channel := range channels {
+		if parsed, err := url.Parse(channel.GetBaseURL()); err == nil {
+			hosts[channel.Id] = strings.ToLower(parsed.Hostname())
+		}
+	}
+	host := hosts[result.ChannelId]
+	if host == "" {
+		return balanceRunway{}, nil
+	}
+	var channelIds []int
+	for channelId, channelHost := range hosts {
+		if channelHost == host {
+			channelIds = append(channelIds, channelId)
+		}
+	}
+	cost, known, err := model.GetSupplyCost(channelIds, now.Add(-balanceRunwayWindow).Unix(), now.Unix())
+	if err != nil || !known || cost <= 0 || common.QuotaPerUnit <= 0 {
+		return balanceRunway{}, err
+	}
+	spent := float64(cost) / common.QuotaPerUnit
+	if supplierCurrencyOf(result.Unit) == "CNY" {
+		spent *= operation_setting.USDExchangeRate
+	}
+	if spent <= 0 {
+		return balanceRunway{}, nil
+	}
+	return balanceRunway{Known: true, Hours: max(balance, 0) / spent * balanceRunwayWindow.Hours()}, nil
 }
 
 // loadBalanceReadings returns the readings of past checks since a time,
@@ -310,6 +354,7 @@ func runBalanceAlertCheck(ctx context.Context) balanceAlertSummary {
 	history, err := loadBalanceReadings(time.Now().Add(-balanceRunwayWindow))
 	if err != nil {
 		common.SysLog(common.LogText("failed to load upstream balance history: %s", err.Error()))
+		history = map[int][]balanceReading{}
 	}
 	for _, monitor := range settings.Monitors {
 		if ctx.Err() != nil {
@@ -318,13 +363,12 @@ func runBalanceAlertCheck(ctx context.Context) balanceAlertSummary {
 		result, balance, checkErr := fetchUpstreamBalance(ctx, monitor)
 		now := time.Now()
 		summary.Checked++
-		var runway balanceRunway
 		if checkErr != nil {
 			summary.Failed++
 		} else {
 			reading := balanceReading{ChannelId: monitor.ChannelId, Upstream: result.upstream, Time: now.Unix()}
 			summary.Readings = append(summary.Readings, reading)
-			runway = estimateBalanceRunway(append(history[monitor.ChannelId], reading))
+			history[monitor.ChannelId] = append(history[monitor.ChannelId], reading)
 		}
 
 		balanceAlertStatesMu.Lock()
@@ -342,6 +386,16 @@ func runBalanceAlertCheck(ctx context.Context) balanceAlertSummary {
 		balanceAlertStatesMu.Unlock()
 		if event == balanceAlertNone {
 			continue
+		}
+		var runway balanceRunway
+		if event == balanceAlertReport {
+			runway, err = billedBalanceRunway(result, balance, now)
+			if err != nil {
+				common.SysLog(common.LogText("failed to load upstream spending for channel %d: %s", monitor.ChannelId, err.Error()))
+			}
+			if !runway.Known {
+				runway = estimateBalanceRunway(history[monitor.ChannelId])
+			}
 		}
 		text := balanceAlertMessage(event, result, runway, checkErr)
 		if err := service.SendFeishuText(settings.FeishuWebhookURL, settings.FeishuSignSecret, text); err != nil {
