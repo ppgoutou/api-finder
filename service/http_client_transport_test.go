@@ -15,6 +15,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/relaykit/dto"
@@ -573,28 +575,22 @@ func TestNormalizeHTTPTransportPolicyClampsWithoutPanic(t *testing.T) {
 	assert.Equal(t, HTTPTransportPolicy{Protocol: dto.HTTPProtocolAuto, Shards: 8}, NormalizeHTTPTransportPolicy(dto.ChannelSettings{HTTP2ConnectionShards: 99}))
 }
 
-func TestTimeoutRedialerOnlyRepeatsTimeouts(t *testing.T) {
+func TestStaggeredDialer(t *testing.T) {
 	refused := errors.New("connection refused")
+	timeout := os.ErrDeadlineExceeded
 	for _, tc := range []struct {
 		name      string
 		results   []error
-		canceled  bool
 		wantDials int
 		wantErr   error
 	}{
-		{name: "recovers on a new dial", results: []error{os.ErrDeadlineExceeded, os.ErrDeadlineExceeded, nil}, wantDials: 3},
-		{name: "stops at the limit", results: []error{os.ErrDeadlineExceeded, os.ErrDeadlineExceeded, os.ErrDeadlineExceeded}, wantDials: 3, wantErr: os.ErrDeadlineExceeded},
-		{name: "refusal is final", results: []error{refused}, wantDials: 1, wantErr: refused},
-		{name: "caller left", results: []error{os.ErrDeadlineExceeded}, canceled: true, wantDials: 1, wantErr: os.ErrDeadlineExceeded},
+		{name: "a timeout leads to a new dial", results: []error{timeout, timeout, nil}, wantDials: 3},
+		{name: "stops at the limit", results: []error{timeout, timeout, timeout}, wantDials: 3, wantErr: timeout},
+		{name: "a refusal is final", results: []error{refused}, wantDials: 1, wantErr: refused},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(t.Context())
-			defer cancel()
-			if tc.canceled {
-				cancel()
-			}
 			dials := 0
-			redialer := timeoutRedialer{attempts: 3, dial: func(context.Context, string, string) (net.Conn, error) {
+			dialer := staggeredDialer{attempts: 3, parallel: 1, stagger: time.Hour, dial: func(context.Context, string, string) (net.Conn, error) {
 				dials++
 				if err := tc.results[dials-1]; err != nil {
 					return nil, &net.OpError{Op: "dial", Err: err}
@@ -602,11 +598,87 @@ func TestTimeoutRedialerOnlyRepeatsTimeouts(t *testing.T) {
 				return &net.TCPConn{}, nil
 			}}
 
-			conn, err := redialer.DialContext(ctx, "tcp", "provider.example:443")
+			conn, err := dialer.DialContext(t.Context(), "tcp", "provider.example:443")
 
 			assert.Equal(t, tc.wantDials, dials)
 			require.ErrorIs(t, err, tc.wantErr)
 			assert.Equal(t, tc.wantErr == nil, conn != nil)
 		})
 	}
+}
+
+// closeSignalConn reports when the loser of a dial race is closed.
+type closeSignalConn struct {
+	net.Conn
+	closed chan struct{}
+}
+
+func (c *closeSignalConn) Close() error {
+	close(c.closed)
+	return nil
+}
+
+func TestStaggeredDialerRacesAStalledDial(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		winner := &net.TCPConn{}
+		late := &closeSignalConn{closed: make(chan struct{})}
+		var dials atomic.Int32
+		dialer := staggeredDialer{attempts: 12, parallel: 3, stagger: time.Second, dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			if dials.Add(1) == 1 {
+				// Connects at the very moment it is given up.
+				<-ctx.Done()
+				return late, nil
+			}
+			return winner, nil
+		}}
+
+		start := time.Now()
+		conn, err := dialer.DialContext(t.Context(), "tcp", "provider.example:443")
+
+		require.NoError(t, err)
+		assert.Same(t, winner, conn)
+		assert.Equal(t, time.Second, time.Since(start))
+		assert.EqualValues(t, 2, dials.Load())
+		<-late.closed
+	})
+}
+
+func TestStaggeredDialerBoundsAnUnreachableUpstream(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var active, peak, dials int
+		var mu sync.Mutex
+		stall := func(ctx context.Context, _, _ string) (net.Conn, error) {
+			mu.Lock()
+			dials++
+			active++
+			peak = max(peak, active)
+			mu.Unlock()
+			defer func() {
+				mu.Lock()
+				active--
+				mu.Unlock()
+			}()
+			select {
+			case <-time.After(5 * time.Second):
+				return nil, &net.OpError{Op: "dial", Err: os.ErrDeadlineExceeded}
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+		dialer := staggeredDialer{attempts: 12, parallel: 3, stagger: time.Second, dial: stall}
+
+		start := time.Now()
+		_, err := dialer.DialContext(t.Context(), "tcp", "provider.example:443")
+		require.ErrorIs(t, err, os.ErrDeadlineExceeded)
+		assert.Equal(t, 22*time.Second, time.Since(start))
+		assert.Equal(t, 12, dials)
+		assert.Equal(t, 3, peak)
+
+		ctx, cancel := context.WithTimeout(t.Context(), 1500*time.Millisecond)
+		defer cancel()
+		_, err = dialer.DialContext(ctx, "tcp", "provider.example:443")
+		require.ErrorIs(t, err, context.DeadlineExceeded, "the caller's deadline ends the dial")
+		synctest.Wait()
+		assert.Zero(t, active, "no dial is left behind")
+	})
 }
