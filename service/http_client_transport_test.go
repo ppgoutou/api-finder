@@ -1,14 +1,17 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -568,4 +571,42 @@ func TestNormalizeHTTPTransportPolicyClampsWithoutPanic(t *testing.T) {
 	assert.Equal(t, HTTPTransportPolicy{Protocol: dto.HTTPProtocolAuto, Shards: 1}, NormalizeHTTPTransportPolicy(dto.ChannelSettings{HTTPProtocol: "http3"}))
 	assert.Equal(t, HTTPTransportPolicy{Protocol: dto.HTTPProtocolAuto, Shards: 1}, NormalizeHTTPTransportPolicy(dto.ChannelSettings{HTTP2ConnectionShards: -3}))
 	assert.Equal(t, HTTPTransportPolicy{Protocol: dto.HTTPProtocolAuto, Shards: 8}, NormalizeHTTPTransportPolicy(dto.ChannelSettings{HTTP2ConnectionShards: 99}))
+}
+
+func TestTimeoutRedialerOnlyRepeatsTimeouts(t *testing.T) {
+	refused := errors.New("connection refused")
+	for _, tc := range []struct {
+		name      string
+		results   []error
+		canceled  bool
+		wantDials int
+		wantErr   error
+	}{
+		{name: "recovers on a new dial", results: []error{os.ErrDeadlineExceeded, os.ErrDeadlineExceeded, nil}, wantDials: 3},
+		{name: "stops at the limit", results: []error{os.ErrDeadlineExceeded, os.ErrDeadlineExceeded, os.ErrDeadlineExceeded}, wantDials: 3, wantErr: os.ErrDeadlineExceeded},
+		{name: "refusal is final", results: []error{refused}, wantDials: 1, wantErr: refused},
+		{name: "caller left", results: []error{os.ErrDeadlineExceeded}, canceled: true, wantDials: 1, wantErr: os.ErrDeadlineExceeded},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if tc.canceled {
+				cancel()
+			}
+			dials := 0
+			redialer := timeoutRedialer{attempts: 3, dial: func(context.Context, string, string) (net.Conn, error) {
+				dials++
+				if err := tc.results[dials-1]; err != nil {
+					return nil, &net.OpError{Op: "dial", Err: err}
+				}
+				return &net.TCPConn{}, nil
+			}}
+
+			conn, err := redialer.DialContext(ctx, "tcp", "provider.example:443")
+
+			assert.Equal(t, tc.wantDials, dials)
+			require.ErrorIs(t, err, tc.wantErr)
+			assert.Equal(t, tc.wantErr == nil, conn != nil)
+		})
+	}
 }

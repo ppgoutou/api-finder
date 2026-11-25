@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"regexp"
 	"strings"
 	"sync"
@@ -610,8 +611,23 @@ func DoTaskApiRequest(a TaskAdaptor, c *gin.Context, info *common.RelayInfo, req
 	if err != nil {
 		return nil, fmt.Errorf("setup request header failed: %w", err)
 	}
+	connected := false
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), &httptrace.ClientTrace{
+		GotConn: func(httptrace.GotConnInfo) { connected = true },
+	}))
 	resp, err := doRequest(c, req, info)
 	if err != nil {
+		// A submission that never got a connection did not reach the upstream and
+		// is safe to send again. Once connected, the upstream may have accepted
+		// the order without answering, and sending it again could place a second
+		// paid order; 504 is never retried.
+		statusCode := http.StatusBadGateway
+		if connected {
+			statusCode = http.StatusGatewayTimeout
+		}
+		if apiErr, ok := errors.AsType[*types.NewAPIError](err); ok {
+			apiErr.StatusCode = statusCode
+		}
 		return nil, fmt.Errorf("do request failed: %w", err)
 	}
 	return resp, nil

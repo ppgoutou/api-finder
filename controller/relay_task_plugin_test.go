@@ -691,6 +691,9 @@ export function buildQueryRequest(){throw new Error("completed submissions must 
 func TestAcceptedSubmitStreamNeverRetries(t *testing.T) {
 	c := taskSubmissionTestContext()
 	assert.Equal(t, service.PolicyDecision{Action: "stop", Reason: "task_accepted", Source: "system"}, decideTaskRetry(c, &dto.TaskError{StatusCode: 502, LocalError: true, NoRetry: true}, 3))
+	// A connected submission without an answer may have been accepted too.
+	assert.Equal(t, service.PolicyDecision{Action: "stop", Reason: "system_retry_exclusion", Source: "system"}, decideTaskRetry(c, &dto.TaskError{Code: "do_request_failed", StatusCode: http.StatusGatewayTimeout}, 3))
+	assert.Equal(t, "retry", decideTaskRetry(c, &dto.TaskError{Code: "do_request_failed", StatusCode: http.StatusBadGateway}, 3).Action, "never connected")
 }
 
 // Local task rejections carry a message but no cause; the response and the
