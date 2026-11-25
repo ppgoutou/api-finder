@@ -38,6 +38,10 @@ type seoPage struct {
 
 const seoHomeDescription = "AI video creation platform powered by ByteDance Seedance. Turn a prompt, an image or a reference clip into cinematic video up to 4K and 30 seconds, billed by the second."
 
+// seoShareImagePath is the link preview image in web/public. Social sites keep
+// their copy by URL, so a new picture needs a new file name.
+const seoShareImagePath = "/share-card-v1.jpg"
+
 var seoPages = map[string]seoPage{
 	"/": {
 		Title:       "AI Video Generator powered by Seedance",
@@ -96,15 +100,17 @@ var seoHeadTemplate = template.Must(template.New("seo-head").Parse(`<title>{{.Fu
     <meta property="og:site_name" content="{{.SiteName}}" />
     <meta property="og:title" content="{{.FullTitle}}" />
     <meta property="og:description" content="{{.Description}}" />
-    {{- if .Image}}
-    <meta property="og:image" content="{{.Image}}" />
-    {{- end}}
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="{{.ShareImage}}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@APIfinder_AI" />
     <meta name="twitter:title" content="{{.FullTitle}}" />
     <meta name="twitter:description" content="{{.Description}}" />
-    {{- if .Image}}
-    <meta name="twitter:image" content="{{.Image}}" />
-    {{- end}}
+    <meta name="twitter:image" content="{{.ShareImage}}" />
+    <meta name="twitter:image:alt" content="Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset" />
     {{- if .JSONLD}}
     <script type="application/ld+json">{{.JSONLD}}</script>
     {{- end}}
@@ -252,7 +258,7 @@ type seoView struct {
 	FullTitle   string
 	Description string
 	URL         string
-	Image       string
+	ShareImage  string
 	// JSONLD is schema.org data built by seoStructuredData.
 	JSONLD     template.JS
 	Contact    template.HTML
@@ -371,7 +377,7 @@ func renderIndexPage(c *gin.Context, indexPage []byte, path string) (int, []byte
 		FullTitle:   page.Title + " | " + snap.siteName,
 		Description: page.Description,
 		URL:         snap.baseURL + path,
-		Image:       snap.baseURL + "/logo.png",
+		ShareImage:  snap.baseURL + seoShareImagePath,
 		LegalLinks:  snap.legalLinks,
 		Models:      models,
 		Model:       current,
@@ -421,7 +427,7 @@ func seoStructuredData(snap seoSnapshot, view seoView, path string) template.JS 
 		data = map[string]any{
 			"@context": "https://schema.org",
 			"@graph": []any{
-				map[string]any{"@type": "Organization", "@id": orgID, "name": snap.siteName, "url": home, "logo": view.Image},
+				map[string]any{"@type": "Organization", "@id": orgID, "name": snap.siteName, "url": home, "logo": snap.baseURL + "/logo.png"},
 				map[string]any{"@type": "WebSite", "name": snap.siteName, "url": home, "publisher": map[string]any{"@id": orgID}},
 			},
 		}

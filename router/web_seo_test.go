@@ -1,6 +1,9 @@
 package router
 
 import (
+	"fmt"
+	"image"
+	_ "image/jpeg"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -72,7 +75,11 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	home := getBody(t, engine, "/")
 	assert.Contains(t, home, "<title>AI Video Generator powered by Seedance | Acme &lt;Video&gt;</title>")
 	assert.Contains(t, home, `<link rel="canonical" href="https://video.example.com/" />`)
-	assert.Contains(t, home, `<meta property="og:image" content="https://video.example.com/logo.png" />`)
+	assert.Contains(t, home, `<meta name="twitter:card" content="summary_large_image" />`)
+	assert.Contains(t, home, `<meta name="twitter:site" content="@APIfinder_AI" />`)
+	assert.Contains(t, home, `<meta property="og:image" content="https://video.example.com/share-card-v1.jpg" />`)
+	assert.Contains(t, home, `<meta name="twitter:image" content="https://video.example.com/share-card-v1.jpg" />`)
+	assert.Contains(t, home, `"logo":"https://video.example.com/logo.png"`)
 	assert.Contains(t, home, `<script type="application/ld+json">{`)
 	assert.Contains(t, home, `"@type":"Organization"`)
 	assert.Contains(t, home, `"@id":"https://video.example.com/#organization"`)
@@ -100,6 +107,21 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	assert.NotContains(t, landing, `id="prerender"`)
 
 	assert.Equal(t, seoTestIndex, getBody(t, engine, "/dashboard"))
+}
+
+func TestShareImageIsServedAtTheSizeThePageDeclares(t *testing.T) {
+	engine := setupSEOTest(t, "", "")
+	file, err := os.Open(filepath.Join("..", "web", "public", filepath.FromSlash(seoShareImagePath)))
+	require.NoError(t, err)
+	defer file.Close()
+	config, format, err := image.DecodeConfig(file)
+	require.NoError(t, err)
+	assert.Equal(t, "jpeg", format)
+
+	pricing := getBody(t, engine, "/pricing")
+	assert.Contains(t, pricing, `<meta property="og:image:type" content="image/jpeg" />`)
+	assert.Contains(t, pricing, fmt.Sprintf(`<meta property="og:image:width" content="%d" />`, config.Width))
+	assert.Contains(t, pricing, fmt.Sprintf(`<meta property="og:image:height" content="%d" />`, config.Height))
 }
 
 func TestRenderIndexPageSkipsHomeCopyWhenCustomHomeIsConfigured(t *testing.T) {
