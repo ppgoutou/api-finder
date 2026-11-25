@@ -445,6 +445,21 @@ func GetUserTask(c *gin.Context) {
 	common.ApiSuccess(c, pageInfo)
 }
 
+// DeleteUserTaskPrompt removes the prompt and settings kept with one of the
+// user's tasks. The task itself stays as a usage record.
+func DeleteUserTaskPrompt(c *gin.Context) {
+	exist, err := model.ClearTaskPrompt(c.GetInt("id"), c.Param("task_id"))
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if !exist {
+		common.ApiErrorT(c, "Task not found")
+		return
+	}
+	common.ApiSuccess(c, nil)
+}
+
 func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskDto {
 	var userIDMap map[int]*model.UserBase
 	if fillUser {
@@ -498,7 +513,14 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 			item.Properties = model.Properties{
 				Input:           task.Properties.Input,
 				OriginModelName: task.Properties.OriginModelName,
+				ConsoleRequest:  task.Properties.ConsoleRequest,
 			}
+		} else if task.Properties.ConsoleRequest != "" {
+			// Kept for its owner only; administrators do not read it here.
+			properties := task.Properties
+			properties.Input = ""
+			properties.ConsoleRequest = ""
+			item.Properties = properties
 		}
 		if viewerRole >= common.RoleAdminUser {
 			adminInfo := &dto.TaskAdminInfo{}

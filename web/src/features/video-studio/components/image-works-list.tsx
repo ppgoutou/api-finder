@@ -38,9 +38,9 @@ import type { TaskLog } from '@/features/usage-logs/types'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
+import { useDeleteWork } from '../hooks/use-delete-work'
 import { useUnixNow } from '../hooks/use-expiring-works'
 import { restoredAssets } from '../lib/draft'
-import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
 import {
   imageRetention,
@@ -81,7 +81,7 @@ export function ImageWorksList(props: {
   const images = useStudioImageWorks((state) => state.works)
   const pending = useStudioImageWorks((state) => state.pending)
   const removeImage = useStudioImageWorks((state) => state.remove)
-  const [hidden, setHidden] = useState(readHiddenTasks)
+  const { hidden, deleteWork } = useDeleteWork()
   const [deleting, setDeleting] = useState<Listed | null>(null)
   const [pageSize, setPageSize] = useState(IMAGE_TASKS_PAGE_SIZE)
   const now = useUnixNow()
@@ -140,10 +140,15 @@ export function ImageWorksList(props: {
     if (deleting && 'image' in deleting) {
       removeImage(deleting.image.id)
       // Its task would otherwise be listed in its place.
-      if (deleting.image.taskId) setHidden(hideTask(deleting.image.taskId))
+      if (deleting.image.taskId) {
+        void deleteWork(
+          deleting.image.taskId,
+          imageTaskOf(deleting.image, loaded)
+        )
+      }
     }
     if (deleting && 'task' in deleting) {
-      setHidden(hideTask(deleting.task.task_id))
+      void deleteWork(deleting.task.task_id, deleting.task)
     }
     setDeleting(null)
   }
@@ -279,7 +284,7 @@ export function ImageWorksList(props: {
         desc={
           deleting && 'task' in deleting
             ? t(
-                'The image is removed from your works in this browser. Its usage record is kept.'
+                'The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.'
               )
             : t(
                 'The image is removed from this browser. Download it first if you want to keep it.'

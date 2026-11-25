@@ -39,11 +39,11 @@ import type { TaskLog } from '@/features/usage-logs/types'
 import { useStudioPending } from '@/stores/studio-pending-store'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
+import { useDeleteWork } from '../hooks/use-delete-work'
 import { useUnixNow } from '../hooks/use-expiring-works'
 import { useVideoSubmit } from '../hooks/use-video-submit'
 import { useWorkText, type WorkText } from '../hooks/use-work-text'
 import { draftFromVideoRequest } from '../lib/draft'
-import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
 import { typicalSeconds } from '../lib/work-progress'
 import {
@@ -101,7 +101,7 @@ export function WorksList(props: {
   const textOf = useWorkText()
   const pendingVideos = useStudioPending((state) => state.videos)
   const { submit } = useVideoSubmit()
-  const [hidden, setHidden] = useState(readHiddenTasks)
+  const { hidden, deleteWork } = useDeleteWork()
   const [deleting, setDeleting] = useState<string | null>(null)
   const [viewing, setViewing] = useState<string | null>(null)
   const [regenerating, setRegenerating] = useState<VideoTaskRequest | null>(
@@ -311,11 +311,16 @@ export function WorksList(props: {
         }}
         title={t('Delete this video?')}
         desc={t(
-          'The video is removed from your works in this browser. Its usage record is kept.'
+          'The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.'
         )}
         confirmText={t('Delete')}
         handleConfirm={() => {
-          if (deleting) setHidden(hideTask(deleting))
+          if (deleting) {
+            void deleteWork(
+              deleting,
+              loaded.find((task) => task.task_id === deleting)
+            )
+          }
           if (deleting === viewing) setViewing(null)
           setDeleting(null)
         }}

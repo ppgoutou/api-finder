@@ -61,6 +61,7 @@ const SITE_SECTIONS = [
           legal: {
             user_agreement: settings['legal.user_agreement'],
             privacy_policy: settings['legal.privacy_policy'],
+            store_prompts: settings['legal.store_prompts'],
             refund_policy: settings['legal.refund_policy'],
           },
         }}

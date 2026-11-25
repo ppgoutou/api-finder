@@ -8772,6 +8772,11 @@
     "Your video is ready": "動画ができました",
     "{{count}} generating": "生成中 {{count}}",
     "{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.": "{{name}} は {{size}} MB です。上限は画像 10 MB、動画 50 MB、音声 15 MB です。",
-    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}～{{longest}} 秒・最大 {{resolution}}"
+    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}～{{longest}} 秒・最大 {{resolution}}",
+    "Could not delete the work": "作品を削除できませんでした",
+    "Keep creation prompts": "作成プロンプトを保存",
+    "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.": "作成ページの作品のプロンプトと設定を保存し、どの端末でも表示します。プライバシーポリシーに明記し、告知期間が過ぎてから有効にしてください。",
+    "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "動画はこのブラウザの作品から削除され、サーバーに保存されたプロンプトも削除されます。利用記録は残ります。",
+    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "画像はこのブラウザの作品から削除され、サーバーに保存されたプロンプトも削除されます。利用記録は残ります。"
   }
 }

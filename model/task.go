@@ -86,6 +86,10 @@ type Properties struct {
 	Input             string `json:"input"`
 	UpstreamModelName string `json:"upstream_model_name,omitempty"`
 	OriginModelName   string `json:"origin_model_name,omitempty"`
+	// ConsoleRequest is the JSON of what the owner submitted on the creation
+	// page, kept with Input so the work can be named and submitted again.
+	// Only the owner is shown it.
+	ConsoleRequest string `json:"console_request,omitempty"`
 }
 
 func (m *Properties) Scan(val any) error {
@@ -505,6 +509,19 @@ func GetTaskByID(id int64) (*Task, error) {
 
 // UpdateStoredMedia writes only the private data of a successful task, so the
 // media copy job never rewrites status, quota or result fields.
+// ClearTaskPrompt removes the prompt and settings kept with the user's task,
+// and reports whether the task exists.
+func ClearTaskPrompt(userId int, taskId string) (bool, error) {
+	task, exist, err := GetByTaskId(userId, taskId)
+	if err != nil || !exist {
+		return false, err
+	}
+	properties := task.Properties
+	properties.Input = ""
+	properties.ConsoleRequest = ""
+	return true, DB.Model(&Task{}).Where("id = ?", task.ID).Update("properties", properties).Error
+}
+
 func (t *Task) UpdateStoredMedia() error {
 	return DB.Model(&Task{}).Where("id = ? AND status = ?", t.ID, TaskStatusSuccess).
 		Update("private_data", t.PrivateData).Error
@@ -687,8 +704,11 @@ func (t *Task) UpdateQuota() error {
 // Uses Model().Select("*").Updates() instead of Save() because GORM's Save
 // falls back to INSERT ON CONFLICT when the WHERE-guarded UPDATE matches
 // zero rows, which silently bypasses the CAS guard.
+//
+// Properties are written once, on insert, so a poll that read the task before
+// its owner deleted the prompt cannot bring it back.
 func (t *Task) UpdateWithStatus(fromStatus TaskStatus) (bool, error) {
-	result := DB.Model(t).Where("status = ?", fromStatus).Select("*").Updates(t)
+	result := DB.Model(t).Where("status = ?", fromStatus).Select("*").Omit("properties").Updates(t)
 	if result.Error != nil {
 		return false, result.Error
 	}

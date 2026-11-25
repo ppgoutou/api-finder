@@ -8772,6 +8772,11 @@
     "Your video is ready": "影片生成好了",
     "{{count}} generating": "生成中 {{count}}",
     "{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.": "{{name}} 有 {{size}} MB。圖片需在 10 MB 以內，影片 50 MB 以內，音訊 15 MB 以內。",
-    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}} 秒 · 最高 {{resolution}}"
+    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}} 秒 · 最高 {{resolution}}",
+    "Could not delete the work": "無法刪除作品",
+    "Keep creation prompts": "儲存創作提示詞",
+    "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.": "儲存創作頁作品的提示詞和參數，使用者換裝置也能看到。請先在隱私政策中寫明，並等政策裡的公告期滿後再開啟。",
+    "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "影片會從本瀏覽器的作品中移除；如果伺服器儲存了提示詞，也會一併刪除。消費記錄會保留。",
+    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "圖片會從本瀏覽器的作品中移除；如果伺服器儲存了提示詞，也會一併刪除。消費記錄會保留。"
   }
 }
