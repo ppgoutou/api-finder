@@ -162,6 +162,10 @@ func serveTaskPluginImageProtocol(c *gin.Context, pinned pluginruntime.PinnedEnd
 			item["b64_json"] = encoded
 		}
 	}
+	// A web console request stores its images in StorePlaygroundImages.
+	if !common.GetContextKeyBool(c, constant.ContextKeyPlayground) {
+		storeTaskPluginImages(c.Request.Context(), data)
+	}
 	c.JSON(http.StatusOK, response)
 }
 

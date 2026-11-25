@@ -116,7 +116,8 @@ export function ImageWorksList(props: {
               </p>
               <div className='flex items-center gap-2'>
                 <p className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
-                  {displayName(work.model)} · {work.size.replace('x', '×')} ·{' '}
+                  {displayName(work.model)} ·{' '}
+                  {work.size && `${work.size.replace('x', '×')} · `}
                   {formatTimestamp(work.createdAt)}
                 </p>
                 {props.onEdit && (

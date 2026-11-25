@@ -145,6 +145,18 @@ export interface StudioImageModel extends StudioModelAvailability {
   label?: string
   /** Category name from the model plaza; empty for uncategorized models. */
   group?: string
+  /** What a model served by a task plugin takes; unset for other models. */
+  plugin?: StudioImagePluginOptions
+}
+
+/** Options of an image model served by a task plugin, one image per request. */
+export interface StudioImagePluginOptions {
+  /** Size tiers such as 2K; empty when the model draws a single size. */
+  resolutions: readonly string[]
+  /** Aspect ratios; empty when the model decides the shape itself. */
+  ratios: readonly string[]
+  /** Most reference images, 0 when the model takes none. */
+  maxReferences: number
 }
 
 /** Output sizes offered for image generation, as width x height. */

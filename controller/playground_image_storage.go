@@ -119,6 +119,38 @@ func storePlaygroundImageResponse(ctx context.Context, body []byte) []byte {
 	return rewritten
 }
 
+// storeTaskPluginImages points each image link of a task plugin's image
+// response at a copy in media storage, so API clients get this site's links
+// rather than the supplier's, which expire. A link that cannot be copied stays
+// as it is.
+func storeTaskPluginImages(ctx context.Context, data []any) {
+	if !service.GetTaskArtifactStore().Enabled() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), playgroundImageStoreTimeout)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	for _, raw := range data {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		link, _ := item["url"].(string)
+		wg.Go(func() {
+			storedURL, err := storePlaygroundImage(ctx, map[string]any{"url": link})
+			if err != nil {
+				common.SysError(common.LogText("playground image copy failed: %s", common.MaskSensitiveInfo(err.Error())))
+				return
+			}
+			if storedURL != "" {
+				item["url"] = storedURL
+			}
+		})
+	}
+	wg.Wait()
+}
+
 // storePlaygroundImage copies one image entry, given as a link or inline
 // base64, and returns the copy's URL.
 func storePlaygroundImage(ctx context.Context, item map[string]any) (string, error) {

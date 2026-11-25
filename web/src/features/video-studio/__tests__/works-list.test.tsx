@@ -121,6 +121,22 @@ describe('WorksList', () => {
     expect(onEdit).toHaveBeenCalledWith({ model: 'seedance-2.0' })
   })
 
+  it('leaves out image tasks, which are listed with the generated images', async () => {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...failedTask('task_img', 'plugin-image'),
+            action: 'text_to_image',
+          },
+        ],
+      },
+    } as never)
+    renderList(vi.fn())
+
+    expect(await screen.findByText('No videos yet')).toBeInTheDocument()
+  })
+
   it('hides a work in this browser after the delete is confirmed', async () => {
     vi.mocked(getUserTaskLogs).mockResolvedValue({
       data: { items: [failedTask('task_1', 'seedance-2.0')] },
