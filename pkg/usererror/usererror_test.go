@@ -47,6 +47,7 @@ func TestClassifyProductionErrors(t *testing.T) {
 		{"no line for the spec without a code", Input{Raw: `当前没有线路能接这一单（seedance-2.5 / 1080p / 4 秒）`, StatusCode: 400}, CodeNoLineForSpec},
 		{"first and last frame", Input{Raw: `{"error":{"message":"first_frame and last_frame must be provided together"}}`, StatusCode: 400}, CodeFramesPaired},
 		{"invalid parameter", Input{Raw: `{"error":{"code":"InvalidParameter","message":"请求参数无效：role must be specified for image"}}`, StatusCode: 400}, CodeInvalidFormat},
+		{"first or last frame on a line without it", Input{Raw: `status_code=400, {"success":false,"code":"UPSTREAM_ERROR","message":"生成失败，请检查提示词和素材规范后重新提交。","detail":{"error":{"message":"该线路只支持参考素材（reference_image_urls），不支持首帧/尾帧（input_reference / last_frame）"}}}`, ErrorCode: bad, ErrorType: "openai_error", StatusCode: 400}, CodeNoFrames},
 		{"prompt over the gateway limit", Input{Raw: "prompt has 5001 characters, at most 5000 are allowed", ErrorCode: "prompt_too_long", StatusCode: 400}, CodePromptTooLong},
 		{"prompt too long at submission", Input{Raw: `提示词共 6457 字符，最多允许 5000 字符。`, StatusCode: 400}, CodePromptTooLong},
 		{"unknown text", Input{Raw: "secret supplier group internal-group did something", StatusCode: 400}, CodeFallback},
@@ -121,12 +122,43 @@ func TestClassifyFailReason(t *testing.T) {
 		"upstream task failed (60109): 后审不通过": CodeModerationOutput,
 		"生成未完成，请查看任务中的具体失败原因。 原始原因：The video generation was blocked by the service's safety checks, so no clip was created.": CodeModerationOutput,
 		"视频素材不符合社区规范，素材上传失败。请更换符合规范的视频素材后重试。":                                                                                CodeModerationInput,
-		"上游提交失败，已退回本次冻结额度":                         CodeGenerationFailed,
-		"upstream rejected (-6): shark block only": CodeGenerationMaybeContent,
-		"该线路上游将本单识别为视频编辑，已自动切换其他线路（CAV-UP-BUSY）":   CodeTaskTypeMismatch,
+		"上游提交失败，已退回本次冻结额度":                                                                             CodeGenerationFailed,
+		"upstream rejected (-6): shark block only":                                                     CodeGenerationMaybeContent,
+		"生成时间已超过30分钟，系统自动熔断，请重新提交。":                                                                    CodeTaskTimeout,
+		"生成超时（超过 18 分钟未出结果），已自动切换其他线路（CAV-UP-BUSY）":                                                    CodeTaskTimeout,
+		`upstream status 503: {"error":{"code":"all_platforms_paused","message":"当前生成服务暂不可用，请稍后重试。"}}`: CodeTaskServiceUnavailable,
+		"生成服务暂时不可用，请稍后重试。":                                                                             CodeTaskServiceUnavailable,
+		"线路繁忙，上游生成失败：生成失败，已自动切换其他线路":                                                                   CodeTaskServiceUnavailable,
+		"线路繁忙，上游生成失败：后审不通过":                                                                            CodeModerationOutput,
+		"第1个视频素材：素材时长 49.834 秒，要求大于 0 且不超过 30 秒":                                                       CodeMaterialDuration30s,
+		"第1个视频素材：素材时长 49.834 秒，要求大于 0 且不超过 15 秒":                                                       CodeMaterialDuration,
+		"生成服务：第1个视频素材：上传资产库失败；素材上传失败：上传资产库失败":                                                          CodeMaterialProcessing,
+		"生成请求确认未完成。":                                                                                   CodeGenerationFailed,
+		"该线路上游将本单识别为视频编辑，已自动切换其他线路（CAV-UP-BUSY）":                                                       CodeTaskTypeMismatch,
 		"上游生成失败：The parameter `inner_generation__classification` specified in the request is not valid: You requested the reference generation task type, but 上游 classified your task as first-frame-to-video": CodeTaskTypeMismatch,
 	} {
 		assert.Equal(t, want, ClassifyFailReason(reason).Code, reason)
+	}
+}
+
+// The supplier words its 30-minute stop like a content failure, so only the
+// task's running time tells them apart.
+func TestClassifyTaskFailureTellsTimeoutFromContent(t *testing.T) {
+	worded := "生成失败，请检查提示词和素材后请重新提交。"
+	for _, tc := range []struct {
+		reason  string
+		elapsed int64
+		want    string
+	}{
+		{worded, 1802, CodeTaskTimeout},
+		{worded, 1819, CodeTaskTimeout},
+		{worded, 1739, CodeGenerationMaybeContent},
+		{worded, 2101, CodeGenerationMaybeContent},
+		{worded, 0, CodeGenerationMaybeContent},
+		{"upstream rejected (-6): shark block only", 1802, CodeGenerationMaybeContent},
+		{"后审不通过", 1802, CodeModerationOutput},
+	} {
+		assert.Equal(t, tc.want, ClassifyTaskFailure(tc.reason, tc.elapsed).Code, "%s after %d", tc.reason, tc.elapsed)
 	}
 }
 

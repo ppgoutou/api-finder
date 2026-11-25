@@ -373,6 +373,11 @@ func TestRefundLogHidesRawReasonFromOwner(t *testing.T) {
 	require.NoError(t, common.UnmarshalJsonStr(owner.Other, &other))
 	assert.Equal(t, usererror.Result{Code: usererror.CodeGenerationFailed}.Key(), other["reason"])
 	assert.Equal(t, "task_1", other["task_id"])
+
+	timedOut := &Log{Type: LogTypeRefund, Other: `{"task_id":"task_2","reason":"生成失败，请检查提示词和素材后请重新提交。","task_elapsed_seconds":1806}`}
+	formatUserLog(timedOut)
+	require.NoError(t, common.UnmarshalJsonStr(timedOut.Other, &other))
+	assert.Equal(t, usererror.Result{Code: usererror.CodeTaskTimeout}.Key(), other["reason"])
 }
 
 // TestUserLogsHideRetriedAttemptErrors verifies that the error log of an

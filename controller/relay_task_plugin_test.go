@@ -327,6 +327,74 @@ func TestExecuteTaskSubmissionRefundsCancellationBeforeDurableBarrier(t *testing
 	assert.False(t, c.Writer.Written())
 }
 
+// The owner does not see the log of a retried attempt, so a request that ends
+// without another recorded attempt must leave a visible log of its own.
+func TestExecuteTaskSubmissionRecordsTheEndOfARetriedRequest(t *testing.T) {
+	upstreamFailure := func() *dto.TaskError {
+		return service.TaskErrorWrapper(errors.New("upstream error: do request failed"), "do_request_failed", http.StatusInternalServerError)
+	}
+	for _, tc := range []struct {
+		name        string
+		second      func(cancel context.CancelFunc) *dto.TaskError
+		wantContent []string
+	}{
+		{"client leaves during the retry", func(cancel context.CancelFunc) *dto.TaskError {
+			cancel()
+			return upstreamFailure()
+		}, []string{"status_code=408, context canceled"}},
+		{"local rejection on the retry", func(context.CancelFunc) *dto.TaskError {
+			return service.TaskErrorWrapperLocal(errors.New("bad local state"), "local", http.StatusBadRequest)
+		}, []string{"status_code=400, bad local state"}},
+		{"upstream failure on the retry is logged once", func(context.CancelFunc) *dto.TaskError {
+			return service.TaskErrorWrapper(errors.New("refused"), "refused", http.StatusBadRequest)
+		}, []string{"status_code=400, refused"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			database, _ := openTaskDialectDatabase(t, &model.Task{}, &model.Log{}, &model.User{})
+			previousDB, previousLogDB := model.DB, model.LOG_DB
+			previousRetry, previousErrorLog, previousRedis := common.RetryTimes, constant.ErrorLogEnabled, common.RedisEnabled
+			model.DB, model.LOG_DB = database, database
+			common.RetryTimes, constant.ErrorLogEnabled, common.RedisEnabled = 1, true, false
+			t.Cleanup(func() {
+				model.DB, model.LOG_DB = previousDB, previousLogDB
+				common.RetryTimes, constant.ErrorLogEnabled, common.RedisEnabled = previousRetry, previousErrorLog, previousRedis
+			})
+
+			events := make([]string, 0, 1)
+			billing := &taskSubmissionTestBilling{events: &events}
+			c := taskSubmissionTestContext()
+			c.Set("id", 1)
+			requestContext, cancel := context.WithCancel(c.Request.Context())
+			t.Cleanup(cancel)
+			c.Request = c.Request.WithContext(requestContext)
+			attempts := 0
+
+			outcome, taskErr := executeTaskSubmissionWith(c, taskSubmissionRelayInfo(billing), func(*gin.Context, *relaycommon.RelayInfo) (*relay.TaskSubmitResult, *dto.TaskError) {
+				attempts++
+				if attempts == 1 {
+					return nil, upstreamFailure()
+				}
+				return nil, tc.second(cancel)
+			})
+
+			assert.Nil(t, outcome)
+			require.NotNil(t, taskErr)
+			assert.Equal(t, 2, attempts)
+			assert.Equal(t, 1, billing.refunds)
+			var logs []model.Log
+			require.NoError(t, database.Where("type = ?", model.LogTypeError).Order("id").Find(&logs).Error)
+			visible := make([]string, 0, 1)
+			for _, log := range logs {
+				if !strings.Contains(log.Other, `"will_retry":true`) {
+					visible = append(visible, log.Content)
+				}
+			}
+			assert.Len(t, logs, 2)
+			assert.Equal(t, tc.wantContent, visible)
+		})
+	}
+}
+
 func TestExecuteTaskSubmissionDisconnectBeforeUpstreamAcceptanceSkipsSubmitAndRefunds(t *testing.T) {
 	events := make([]string, 0, 1)
 	setupTaskSubmissionDatabase(t, true, &events)

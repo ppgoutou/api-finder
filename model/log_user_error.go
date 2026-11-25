@@ -21,6 +21,15 @@ func excludeRetriedAttemptErrors(tx *gorm.DB) *gorm.DB {
 		LogTypeError, `%"`+LogOtherWillRetryKey+`":true%`)
 }
 
+// LogOtherTaskElapsedKey is how many seconds a refunded task ran, which its
+// failure reason is classified with.
+const LogOtherTaskElapsedKey = "task_elapsed_seconds"
+
+// UserFailure is a failed task's reason as its owner may read it.
+func (t *Task) UserFailure() usererror.Result {
+	return usererror.ClassifyTaskFailure(t.FailReason, t.FinishTime-t.SubmitTime)
+}
+
 func parseLogOtherValues(value string) map[string]any {
 	values := map[string]any{}
 	if value != "" {
@@ -72,7 +81,8 @@ func applyUserErrorView(log *Log) {
 		if strings.TrimSpace(reason) == "" {
 			return
 		}
-		values["reason"] = usererror.ClassifyFailReason(reason).Key()
+		elapsed, _ := values[LogOtherTaskElapsedKey].(float64)
+		values["reason"] = usererror.ClassifyTaskFailure(reason, int64(elapsed)).Key()
 		marshalLogOtherValues(log, values)
 	}
 }

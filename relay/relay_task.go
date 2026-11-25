@@ -495,7 +495,7 @@ func videoFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 	}
 
 	// The response below is for the task's owner; nothing saves this task after this point.
-	originTask.FailReason = service.UserFacingFailReason(c, originTask.FailReason)
+	originTask.FailReason = service.UserFacingFailReason(c, originTask)
 
 	// OpenAI Video API 格式: 走各 adaptor 的 ConvertToOpenAIVideo
 	if isOpenAIVideoAPI {

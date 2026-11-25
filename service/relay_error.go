@@ -72,6 +72,22 @@ func ProcessChannelError(c *gin.Context, channelError types.ChannelError, err *t
 		})
 	}
 
+	recordRelayErrorLog(c, channelError.ChannelId, err, relayInfo)
+}
+
+// RecordFinalRelayError records the error that ended a request whose last
+// recorded attempt was to be retried. Owners do not see that attempt's log, so
+// without this one a request that ended before another attempt was recorded,
+// for example because the client left, would leave them no trace.
+func RecordFinalRelayError(c *gin.Context, err *types.NewAPIError, relayInfo *relaycommon.RelayInfo) {
+	if err == nil || !common.GetContextKeyBool(c, constant.ContextKeyRelayWillRetry) {
+		return
+	}
+	common.SetContextKey(c, constant.ContextKeyRelayWillRetry, false)
+	recordRelayErrorLog(c, common.GetContextKeyInt(c, constant.ContextKeyChannelId), err, relayInfo)
+}
+
+func recordRelayErrorLog(c *gin.Context, channelId int, err *types.NewAPIError, relayInfo *relaycommon.RelayInfo) {
 	if constant.ErrorLogEnabled && types.IsRecordErrorLog(err) {
 		userId := c.GetInt("id")
 		tokenName := c.GetString("token_name")
@@ -96,6 +112,6 @@ func ProcessChannelError(c *gin.Context, channelError types.ChannelError, err *t
 			startTime = time.Now()
 		}
 		useTimeSeconds := int(time.Since(startTime).Seconds())
-		model.RecordErrorLog(c, userId, channelError.ChannelId, modelName, tokenName, err.MaskSensitiveErrorWithStatusCode(), tokenId, useTimeSeconds, common.GetContextKeyBool(c, constant.ContextKeyIsStream), userGroup, other)
+		model.RecordErrorLog(c, userId, channelId, modelName, tokenName, err.MaskSensitiveErrorWithStatusCode(), tokenId, useTimeSeconds, common.GetContextKeyBool(c, constant.ContextKeyIsStream), userGroup, other)
 	}
 }

@@ -219,7 +219,7 @@ func loadTaskErrorEvents(sinceUnix int64) ([]taskErrorEvent, error) {
 			Key:       "task:" + strconv.FormatInt(task.ID, 10),
 			Source:    taskErrorSourceTask,
 			At:        task.FinishTime,
-			Result:    usererror.ClassifyFailReason(task.FailReason),
+			Result:    task.UserFailure(),
 			ChannelId: task.ChannelId,
 			Model:     task.Properties.OriginModelName,
 			UserId:    task.UserId,

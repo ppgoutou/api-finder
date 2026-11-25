@@ -51,11 +51,10 @@ func GetTask(c *gin.Context) {
 	if createdAt == 0 {
 		createdAt = task.SubmitTime
 	}
-	failReason := task.FailReason
-	if task.Status == model.TaskStatusSuccess && taskFailReasonIsLegacyResultURL(task.FailReason) {
-		failReason = ""
+	failReason := ""
+	if task.Status != model.TaskStatusSuccess || !taskFailReasonIsLegacyResultURL(task.FailReason) {
+		failReason = service.UserFacingFailReason(c, task)
 	}
-	failReason = service.UserFacingFailReason(c, failReason)
 	// A task plugin key or channel-type platform names the supplier; suno
 	// stays because clients tell its clips apart by platform.
 	platform := ""
@@ -474,7 +473,7 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 		}
 		// The raw reason names the supplier and quotes its responses, so only
 		// administrators read it; they also see what the owner is shown.
-		userFailReason := usererror.ClassifyFailReason(item.FailReason).Key()
+		userFailReason := usererror.ClassifyTaskFailure(item.FailReason, item.FinishTime-item.SubmitTime).Key()
 		if viewerRole >= common.RoleAdminUser {
 			item.UserFailReason = userFailReason
 		} else {

@@ -59,7 +59,7 @@ func collectTaskHourlyStats(start, end time.Time, submitted int64, counts []mode
 		if task.FinishTime < start.Unix() || task.FinishTime >= end.Unix() {
 			continue
 		}
-		result := usererror.ClassifyFailReason(task.FailReason)
+		result := task.UserFailure()
 		stats.ByCategory[result.AlertCategory()]++
 		switch result.AlertSeverity() {
 		case usererror.SeverityCritical, usererror.SeverityUpstream:

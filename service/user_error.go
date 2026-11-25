@@ -44,8 +44,8 @@ func ApplyKnownUserFacingTaskError(c *gin.Context, taskErr *dto.TaskError) {
 }
 
 // UserFacingFailReason returns a failed task's reason as its owner may read it.
-func UserFacingFailReason(c *gin.Context, reason string) string {
-	result := usererror.ClassifyFailReason(reason)
+func UserFacingFailReason(c *gin.Context, task *model.Task) string {
+	result := task.UserFailure()
 	if result.Code == "" {
 		return ""
 	}
@@ -59,7 +59,7 @@ func BuildClientTaskPluginView(c *gin.Context, task *model.Task) (dto.TaskView, 
 	if err != nil {
 		return view, err
 	}
-	view.FailReason = UserFacingFailReason(c, view.FailReason)
+	view.FailReason = UserFacingFailReason(c, task)
 	view.Data = HideUpstreamResultURL(task, view.Data)
 	return view, nil
 }
