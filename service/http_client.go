@@ -78,29 +78,70 @@ func ValidateSSRFProtectedFetchURL(urlStr string) error {
 const maxTimeoutSeconds = int(math.MaxInt64 / int64(time.Second))
 
 // A lossy path to an upstream drops the handshake packets of one connection for
-// a long time while a new connection gets through at once, so several short
-// dials recover sooner than one long dial.
+// a long time while a new connection gets through at once, so a dial that has
+// not finished after relayDialStagger gets company instead of being waited for.
 const (
 	relayDialTimeout  = 5 * time.Second
-	relayDialAttempts = 4
+	relayDialStagger  = time.Second
+	relayDialParallel = 3
+	relayDialAttempts = 12
 )
 
-// timeoutRedialer dials again when a dial times out. No request byte has been
-// sent at that point, so a new dial cannot repeat a request.
-type timeoutRedialer struct {
+// staggeredDialer races a few dials and keeps the first connection. No request
+// byte is sent while dialing, so an extra dial cannot repeat a request. Only a
+// timeout leads to another dial; any other failure is the answer.
+type staggeredDialer struct {
 	dial     func(ctx context.Context, network, address string) (net.Conn, error)
+	stagger  time.Duration
+	parallel int
 	attempts int
 }
 
-func (d timeoutRedialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	for attempt := 1; ; attempt++ {
-		conn, err := d.dial(ctx, network, address)
-		if err == nil {
-			return conn, nil
+type dialResult struct {
+	conn net.Conn
+	err  error
+}
+
+func (d staggeredDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	dialCtx, cancel := context.WithCancel(ctx)
+	results := make(chan dialResult)
+	started, pending := 0, 0
+	// The dials left behind must not leak a connection that arrives late.
+	defer func() {
+		cancel()
+		go func() {
+			for range pending {
+				if late := <-results; late.conn != nil {
+					_ = late.conn.Close()
+				}
+			}
+		}()
+	}()
+
+	ticker := time.NewTicker(d.stagger)
+	defer ticker.Stop()
+	for {
+		if started < d.attempts && pending < d.parallel {
+			started++
+			pending++
+			go func() {
+				conn, err := d.dial(dialCtx, network, address)
+				results <- dialResult{conn: conn, err: err}
+			}()
 		}
-		netErr, ok := errors.AsType[net.Error](err)
-		if attempt >= d.attempts || ctx.Err() != nil || !ok || !netErr.Timeout() {
-			return nil, err
+		select {
+		case result := <-results:
+			pending--
+			if result.err == nil {
+				return result.conn, nil
+			}
+			netErr, ok := errors.AsType[net.Error](result.err)
+			if ctx.Err() != nil || !ok || !netErr.Timeout() || started >= d.attempts && pending == 0 {
+				return nil, result.err
+			}
+		case <-ticker.C:
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 }
@@ -117,8 +158,18 @@ func newRelayHTTPTransport() *http.Transport {
 			ExpectContinueTimeout: time.Second,
 		}
 	}
-	dialer := &net.Dialer{Timeout: relayDialTimeout, KeepAlive: 30 * time.Second}
-	transport.DialContext = timeoutRedialer{dial: dialer.DialContext, attempts: relayDialAttempts}.DialContext
+	// Probe quiet connections so that a pooled one whose path died is dropped
+	// before a request is written into it.
+	dialer := &net.Dialer{
+		Timeout:         relayDialTimeout,
+		KeepAliveConfig: net.KeepAliveConfig{Enable: true, Idle: 15 * time.Second, Interval: 5 * time.Second, Count: 4},
+	}
+	transport.DialContext = staggeredDialer{
+		dial:     dialer.DialContext,
+		stagger:  relayDialStagger,
+		parallel: relayDialParallel,
+		attempts: relayDialAttempts,
+	}.DialContext
 	transport.MaxIdleConns = common.RelayMaxIdleConns
 	transport.MaxIdleConnsPerHost = common.RelayMaxIdleConnsPerHost
 	transport.IdleConnTimeout = time.Duration(common.RelayIdleConnTimeout) * time.Second
