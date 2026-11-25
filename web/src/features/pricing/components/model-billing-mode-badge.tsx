@@ -47,7 +47,8 @@ export function ModelBillingModeBadge(props: ModelBillingModeBadgeProps) {
   const isCaption = props.appearance === 'caption'
   let variant: StatusVariant = 'purple'
 
-  if (isDynamicPricingModel(props.model)) {
+  // Models sharing the label share its color, however their price is stored.
+  if (labelKey !== 'Per Request' && isDynamicPricingModel(props.model)) {
     variant = 'warning'
   } else if (labelKey === 'Token-based') {
     variant = 'info'

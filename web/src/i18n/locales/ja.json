@@ -319,6 +319,7 @@
     "{{value}}s": "{{value}}秒",
     "@lobehub/icons key": "@lobehub/icons キー",
     "@lobehub/icons key name": "@lobehub/icons キー名",
+    "/ {{unit}} from": "/ {{unit}}から",
     "/s from": "/秒から",
     "/status/": "/status/",
     "/your/endpoint": "/your/endpoint",

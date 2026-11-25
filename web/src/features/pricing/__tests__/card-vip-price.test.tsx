@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -360,5 +360,99 @@ describe('card VIP ratios', () => {
         isVip: false,
       })
     ).toBeNull()
+  })
+})
+
+describe('image model card', () => {
+  function imageModel(overrides: Partial<PricingModel> = {}): PricingModel {
+    return {
+      id: 2,
+      model_name: 'image-2.6',
+      quota_type: 0,
+      model_ratio: 1,
+      completion_ratio: 1,
+      billing_mode: 'tiered_expr',
+      billing_expr:
+        'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.04) : u("resolution") == "2K" ? tier("2K", u("image_count") * 0.04) : tier("4K", u("image_count") * 0.09)',
+      billing_usage_schema: {
+        image_count: { type: 'number', unit: 'count' },
+        resolution: { enum: ['1K', '2K', '4K'] },
+      },
+      enable_groups: ['default', 'vip'],
+      group_ratio: { default: 1 },
+      ...overrides,
+    }
+  }
+  const singlePrice: Partial<PricingModel> = {
+    billing_expr: 'tier("image", u("image_count") * 0.04)',
+    billing_usage_schema: { image_count: { type: 'number', unit: 'count' } },
+  }
+  const renderCard = (model: PricingModel) =>
+    render(<ModelCard model={model} vip={visitorVip} onClick={vi.fn()} />)
+
+  it('lists every resolution with its standard price under the lowest one', () => {
+    renderCard(imageModel())
+
+    const list = screen.getByLabelText('Per image')
+    expect(
+      within(list)
+        .getAllByRole('term')
+        .map((term) => term.textContent)
+    ).toEqual(['1K', '2K', '4K'])
+    expect(screen.getAllByText('$0.04')).toHaveLength(3)
+    expect(screen.getByText('$0.09')).toBeInTheDocument()
+    expect(screen.getByText(/image from.*1K/)).toBeInTheDocument()
+  })
+
+  it('shows every resolution at its VIP price when VIP is pressed', async () => {
+    const user = userEvent.setup()
+    renderCard(imageModel())
+
+    await user.click(screen.getByRole('button', { name: 'VIP' }))
+
+    expect(screen.getAllByText('$0.036')).toHaveLength(3)
+    expect(screen.getByText('$0.081')).toBeInTheDocument()
+    expect(screen.getByText('$0.04').tagName).toBe('S')
+    expect(screen.getByText('Save 10%')).toBeInTheDocument()
+  })
+
+  it('shows one standard and VIP price without options for a single-price model', async () => {
+    const user = userEvent.setup()
+    renderCard(imageModel(singlePrice))
+
+    expect(screen.getByText('$0.04')).toBeInTheDocument()
+    expect(screen.getByText('/ image')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Per image')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'VIP' }))
+
+    expect(screen.getByText('$0.036')).toBeInTheDocument()
+    expect(screen.getByText('$0.04').tagName).toBe('S')
+  })
+
+  it('offers no VIP switch when the model has no VIP group', () => {
+    renderCard(imageModel({ enable_groups: ['default'] }))
+
+    expect(screen.getAllByText('$0.04').length).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole('group', { name: 'Price view' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps the generic price display when two options set the price', () => {
+    renderCard(
+      imageModel({
+        billing_usage_schema: {
+          image_count: { type: 'number', unit: 'count' },
+          resolution: { enum: ['1K', '2K', '4K'] },
+          quality: { enum: ['low', 'high'] },
+        },
+      })
+    )
+
+    expect(screen.queryByLabelText('Per image')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('group', { name: 'Price view' })
+    ).not.toBeInTheDocument()
   })
 })

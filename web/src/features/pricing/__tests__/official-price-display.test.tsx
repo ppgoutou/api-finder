@@ -100,3 +100,12 @@ it('shows the inherited per-second table on a line billed by video tokens', () =
   expect(screen.getByText('720p')).toBeVisible()
   expect(screen.queryByText('480p')).toBeNull()
 })
+
+it('shows no throughput, latency or success rate above the pricing', () => {
+  renderDetails(tokenModel)
+
+  expect(screen.getByText('Pricing')).toBeVisible()
+  expect(screen.queryByText('TPS')).not.toBeInTheDocument()
+  expect(screen.queryByText('Average latency')).not.toBeInTheDocument()
+  expect(screen.queryByText('Success rate')).not.toBeInTheDocument()
+})

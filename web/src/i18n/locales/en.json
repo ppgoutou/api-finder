@@ -319,6 +319,7 @@
     "{{value}}s": "{{value}}s",
     "@lobehub/icons key": "@lobehub/icons key",
     "@lobehub/icons key name": "@lobehub/icons key name",
+    "/ {{unit}} from": "/ {{unit}} from",
     "/s from": "/s from",
     "/status/": "/status/",
     "/your/endpoint": "/your/endpoint",

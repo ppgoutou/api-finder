@@ -22,6 +22,7 @@ import type { BillingUsageSchema, PricingModel } from '../types'
 import { splitBillingExprAndRequestRules } from './billing-expr'
 import { getTaskEnumFields, getTaskNumberFields } from './task-expr'
 import { getTaskPricingDisplayTiers } from './task-matrix-display'
+import { hasSimpleTaskPricing } from './task-price-display'
 
 /**
  * Reference video tokens per output second, by output resolution:
@@ -62,6 +63,9 @@ export function videoTokensPerSecond(
 
 /** Video prices are shown rounded to two decimal places. */
 export const VIDEO_PRICE_FRACTION_DIGITS = 2
+
+/** Per-image prices keep the decimals per-request prices are shown with. */
+export const IMAGE_PRICE_FRACTION_DIGITS = 4
 
 /** Output duration range, in seconds, the model's task plugin declares. */
 export function getModelDurationRange(
@@ -481,13 +485,41 @@ export function getPerVideoPricing(model: PricingModel): VideoPricing | null {
   ) {
     return null
   }
-  const split = splitBillingExprAndRequestRules(model.billing_expr)
+  const optionField = enumFields[0][0]
+  const prices = countPricesByOption(
+    model.billing_expr,
+    schema,
+    numberFields[0][0],
+    optionField
+  )
+  if (!prices) return null
+  return {
+    optionField,
+    hasReferencePricing: false,
+    durationRange: getModelDurationRange(model),
+    rows: prices.map((row): VideoPricingRow => ({
+      option: row.option,
+      secondPrice: 0,
+      videoPrice: row.price,
+    })),
+  }
+}
+
+/**
+ * USD per counted item for each option, in schema order. Null unless every
+ * priced option has one plain unit price and nothing else is charged.
+ */
+function countPricesByOption(
+  expression: string,
+  schema: BillingUsageSchema,
+  countField: string,
+  optionField: string
+): { option: string; price: number }[] | null {
+  const split = splitBillingExprAndRequestRules(expression)
   if (split.requestRuleExpr?.trim()) return null
 
-  const countField = numberFields[0][0]
-  const optionField = enumFields[0][0]
-  const options = enumFields[0][1].enum ?? []
-  const rowsByOption = new Map<string, VideoPricingRow>()
+  const options = schema[optionField]?.enum ?? []
+  const prices = new Map<string, number>()
   for (const tier of getTaskPricingDisplayTiers(split.billingExpr, schema)) {
     const option =
       tier.conditions.length === 0 && options.length === 1
@@ -498,31 +530,75 @@ export function getPerVideoPricing(model: PricingModel): VideoPricing | null {
       tier.conditions.length > 1 ||
       (tier.conditions.length === 1 &&
         tier.conditions[0].field !== optionField) ||
+      tier.conditionText ||
       tier.constant !== 0 ||
-      rowsByOption.has(option) ||
+      prices.has(option) ||
       Object.keys(tier.unitPrices).some((field) => field !== countField)
     ) {
       return null
     }
-    rowsByOption.set(option, {
-      option,
-      secondPrice: 0,
-      videoPrice: tier.unitPrices[countField] ?? 0,
-    })
+    prices.set(option, tier.unitPrices[countField] ?? 0)
   }
 
   const rows = options.flatMap((option) => {
-    const row = rowsByOption.get(option)
-    return row ? [row] : []
+    const price = prices.get(option)
+    return price === undefined ? [] : [{ option, price }]
   })
-  if (rows.length === 0 || rows.length !== rowsByOption.size) return null
+  return rows.length > 0 && rows.length === prices.size ? rows : null
+}
 
-  return {
-    optionField,
-    hasReferencePricing: false,
-    durationRange: getModelDurationRange(model),
-    rows,
+export type ImagePricing = {
+  /** The enum the price depends on, such as resolution; unset for one price. */
+  optionField?: string
+  /** USD per image, before group and recharge adjustments. */
+  rows: { option?: string; price: number }[]
+}
+
+/**
+ * Prices of an image model billed per image: one price, or one per option of
+ * a single enum such as resolution. Returns null for any other schema,
+ * per-request charges or request rules.
+ */
+export function getImagePricing(model: PricingModel): ImagePricing | null {
+  if (model.billing_mode !== 'tiered_expr' || !model.billing_expr) return null
+  // Several plugins can price one model differently; no single price applies.
+  if (model.billing_plugin_variants?.length) return null
+  const schema = model.billing_usage_schema
+  const numberFields = getTaskNumberFields(schema)
+  const enumFields = getTaskEnumFields(schema)
+  if (
+    !schema ||
+    numberFields.length !== 1 ||
+    numberFields[0][0] !== IMAGE_COUNT_FIELD ||
+    enumFields.length > 1
+  ) {
+    return null
   }
+  const tiers = getTaskPricingDisplayTiers(
+    splitBillingExprAndRequestRules(model.billing_expr).billingExpr,
+    schema
+  )
+  // One price for every order, whether or not the schema lists options.
+  if (tiers.length === 1 && tiers[0].conditions.length === 0) {
+    const tier = tiers[0]
+    if (
+      !hasSimpleTaskPricing(model) ||
+      tier.constant !== 0 ||
+      tier.unitPrices[IMAGE_COUNT_FIELD] === undefined
+    ) {
+      return null
+    }
+    return { rows: [{ price: tier.unitPrices[IMAGE_COUNT_FIELD] }] }
+  }
+  if (enumFields.length === 0) return null
+  const optionField = enumFields[0][0]
+  const rows = countPricesByOption(
+    model.billing_expr,
+    schema,
+    IMAGE_COUNT_FIELD,
+    optionField
+  )
+  return rows && { optionField, rows }
 }
 
 /**
