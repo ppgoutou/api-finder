@@ -319,6 +319,7 @@
     "{{value}}s": "{{value}} с",
     "@lobehub/icons key": "Ключ @lobehub/icons",
     "@lobehub/icons key name": "Имя ключа @lobehub/icons",
+    "/ {{unit}} from": "/ {{unit}} от",
     "/s from": "/с от",
     "/status/": "/status/",
     "/your/endpoint": "/your/endpoint",

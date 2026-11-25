@@ -59,8 +59,11 @@ import {
   taskUsageUnitLabel,
 } from '../lib/task-price-display'
 import {
+  getImagePricing,
   getTokenVideoPricing,
   getVideoPricing,
+  IMAGE_COUNT_FIELD,
+  IMAGE_PRICE_FRACTION_DIGITS,
   VIDEO_PRICE_FRACTION_DIGITS,
 } from '../lib/video-pricing'
 import {
@@ -75,6 +78,7 @@ import type {
   PriceType,
   TokenUnit,
 } from '../types'
+import { CardOptionPrices, VIP_PRICE_TEXT_CLASS } from './card-option-prices'
 import {
   CardVipFootnote,
   CardVipPanelGlow,
@@ -89,9 +93,6 @@ import { RollingPrice } from './rolling-price'
 const CARD_ACCENT_CLASS = 'border-brand bg-brand text-white'
 const STABLE_CARD_ACCENT_CLASS =
   'border-success bg-success text-success-foreground'
-// VIP prices take the VIP violet, matching the VIP badge elsewhere.
-const VIP_ACCENT_CLASS = 'border-vip bg-vip text-vip-foreground'
-const VIP_PRICE_TEXT_CLASS = 'text-vip'
 
 export interface ModelCardProps {
   model: PricingModel
@@ -203,6 +204,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     () => getVideoPricing(props.model) ?? getTokenVideoPricing(props.model),
     [props.model]
   )
+  const imagePricing = useMemo(
+    () => getImagePricing(props.model),
+    [props.model]
+  )
   const tryKind = useMemo((): StudioKind | null => {
     if (studioModelsFromPricing([props.model]).length > 0) return 'video'
     if (studioImageModelsFromPricing([props.model]).length > 0) return 'image'
@@ -220,7 +225,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     props.model.unavailable_reason?.trim() ||
     t('Temporarily unavailable. Try another model for now.')
   let priceSummary: ReactNode
-  // Only the video and per-request summaries price VIP; the toggle and the
+  // Only the video, image and per-request summaries price VIP; the toggle and the
   // VIP panel colors appear on those alone.
   let pricesVip = false
   if (videoPricing) {
@@ -258,48 +263,29 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       : formatSecondPrice
     priceSummary = (
       <>
-        <p className='col-span-full flex min-w-0 flex-wrap items-end gap-x-2'>
-          <RollingPrice
-            value={formatShownSecondPrice(lowestRow.secondPrice)}
-            className={cn(
-              'font-price text-price tabular-nums',
-              showVip && VIP_PRICE_TEXT_CLASS
-            )}
-          />
-          <span className='text-muted-foreground pb-0.5 text-xs'>
-            {t('/s from')} ·{' '}
-            {taskEnumLabel(optionDefinition, lowestRow.option, i18n.language)}
-          </span>
-          {showVip && vipRatios && (
-            <CardVipSaving
-              standardPrice={formatStandardSecondPriceBesideVip(
-                lowestRow.secondPrice
-              )}
-              savingPercent={vipRatios.savingPercent}
-            />
-          )}
-        </p>
-        <dl
-          aria-label={t('Video billing (per second)')}
-          className='col-span-full flex flex-wrap gap-1.5'
-        >
-          {videoPricing.rows.map((row) => (
-            <div
-              key={row.option}
-              className={cn(
-                'border-border bg-card flex min-w-0 items-baseline gap-1 rounded-full border px-2.5 py-0.5',
-                row === lowestRow && (showVip ? VIP_ACCENT_CLASS : accentClass)
-              )}
-            >
-              <dt className='shrink-0 text-xs font-medium'>
-                {taskEnumLabel(optionDefinition, row.option, i18n.language)}
-              </dt>
-              <dd className='font-price truncate text-xs font-bold tabular-nums'>
-                <RollingPrice value={formatShownSecondPrice(row.secondPrice)} />
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <CardOptionPrices
+          label={t('Video billing (per second)')}
+          unit={t('/s from')}
+          rows={videoPricing.rows.map((row) => ({
+            key: row.option,
+            label: taskEnumLabel(optionDefinition, row.option, i18n.language),
+            price: formatShownSecondPrice(row.secondPrice),
+          }))}
+          lowestIndex={videoPricing.rows.indexOf(lowestRow)}
+          showVip={showVip}
+          accentClass={accentClass}
+          saving={
+            showVip &&
+            vipRatios && (
+              <CardVipSaving
+                standardPrice={formatStandardSecondPriceBesideVip(
+                  lowestRow.secondPrice
+                )}
+                savingPercent={vipRatios.savingPercent}
+              />
+            )
+          }
+        />
         {videoPricing.hasReferencePricing && (
           <span className='text-muted-foreground col-span-full text-xs'>
             {t('Orders with reference videos are priced separately')}
@@ -313,6 +299,58 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           </span>
         )}
       </>
+    )
+  } else if (imagePricing) {
+    const optionDefinition = imagePricing.optionField
+      ? props.model.billing_usage_schema?.[imagePricing.optionField]
+      : undefined
+    const imageUnit = taskUsageUnitLabel(
+      props.model.billing_usage_schema?.[IMAGE_COUNT_FIELD],
+      i18n.language,
+      t('image')
+    )
+    const formatImagePrice = (price: number, vip: boolean) =>
+      formatTaskUsageUnitPrice(price, {
+        ...dynamicPriceOptions,
+        ...(vipRatios && {
+          groupRatioMultiplier: vip
+            ? vipRatios.vipRatio
+            : vipRatios.standardRatio,
+        }),
+        fractionDigits: IMAGE_PRICE_FRACTION_DIGITS,
+      })
+    const lowestRow = imagePricing.rows.reduce((lowest, row) =>
+      row.price < lowest.price ? row : lowest
+    )
+    pricesVip = vipRatios !== null
+    priceSummary = (
+      <CardOptionPrices
+        label={t('Per image')}
+        unit={
+          imagePricing.optionField
+            ? t('/ {{unit}} from', { unit: imageUnit })
+            : `/ ${imageUnit}`
+        }
+        rows={imagePricing.rows.map((row) => ({
+          key: row.option ?? '',
+          label:
+            row.option &&
+            taskEnumLabel(optionDefinition, row.option, i18n.language),
+          price: formatImagePrice(row.price, showVip),
+        }))}
+        lowestIndex={imagePricing.rows.indexOf(lowestRow)}
+        showVip={showVip}
+        accentClass={accentClass}
+        saving={
+          showVip &&
+          vipRatios && (
+            <CardVipSaving
+              standardPrice={formatImagePrice(lowestRow.price, false)}
+              savingPercent={vipRatios.savingPercent}
+            />
+          )
+        }
+      />
     )
   } else if (dynamicSummary) {
     const cacheReadEntries = dynamicSummary.secondaryEntries.filter(

@@ -319,6 +319,7 @@
     "{{value}}s": "{{value}} s",
     "@lobehub/icons key": "@lobehub/icons khóa",
     "@lobehub/icons key name": "@lobehub/icons tên khóa",
+    "/ {{unit}} from": "/ {{unit}}, từ",
     "/s from": "/giây, từ",
     "/status/": "/status/",
     "/your/endpoint": "/điểm cuối của bạn",

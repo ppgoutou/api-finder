@@ -319,6 +319,7 @@
     "{{value}}s": "{{value}} 秒",
     "@lobehub/icons key": "@lobehub/icons 键",
     "@lobehub/icons key name": "@lobehub/icons 键名",
+    "/ {{unit}} from": "/ {{unit}} 起",
     "/s from": "/秒 起",
     "/status/": "/status/",
     "/your/endpoint": "/your/endpoint",
