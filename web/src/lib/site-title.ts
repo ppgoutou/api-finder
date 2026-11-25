@@ -16,12 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-
 export type SiteTitle = {
   /** Sets the site name shown on pages the server did not title. */
   setSiteName: (name: string) => void
   /** Tells the title which path the app now shows. */
   setPath: (path: string) => void
+  /** Sets a note shown in front of the title, or clears it with ''. */
+  setNote: (note: string) => void
+}
+
+let current: SiteTitle | undefined
+
+/** Sets the note on the page's title, such as how many works are running. */
+export function setSiteTitleNote(note: string) {
+  current?.setNote(note)
 }
 
 /**
@@ -36,6 +44,7 @@ export function createSiteTitle(doc: Document, initialPath: string): SiteTitle {
   const hasServerTitle = doc.querySelector('link[rel="canonical"]') !== null
   const serverTitle = doc.title
   let siteName = ''
+  let note = ''
   // The router may drop a trailing slash the address bar had.
   const serverPath = initialPath.replace(/\/+$/, '')
   let path = initialPath
@@ -46,11 +55,11 @@ export function createSiteTitle(doc: Document, initialPath: string): SiteTitle {
         ? serverTitle
         : siteName
     if (!title) return
-    doc.title = title
+    doc.title = note ? `${note} · ${title}` : title
     doc.querySelector('meta[name="title"]')?.setAttribute('content', title)
   }
 
-  return {
+  const siteTitle: SiteTitle = {
     setSiteName: (name) => {
       siteName = name
       render()
@@ -59,5 +68,11 @@ export function createSiteTitle(doc: Document, initialPath: string): SiteTitle {
       path = nextPath
       render()
     },
+    setNote: (nextNote) => {
+      note = nextNote
+      render()
+    },
   }
+  current = siteTitle
+  return siteTitle
 }

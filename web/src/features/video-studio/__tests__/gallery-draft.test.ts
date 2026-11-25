@@ -117,7 +117,7 @@ describe('draftFromGalleryItem', () => {
       },
       STUDIO
     )
-    expect(draft.mode).toBe('frames')
+    expect(draft.mode).toBe('image')
     expect(draft.firstFrame).toMatchObject({
       kind: 'image',
       status: 'ready',

@@ -16,7 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-
 export type AssetKind = 'image' | 'video' | 'audio'
 
 /** A reference file on the canvas, uploaded or still uploading. */
@@ -29,12 +28,20 @@ export interface StudioAsset {
   previewUrl: string
   status: 'uploading' | 'ready' | 'error'
   progress: number
+  /** Uploads the file again, when the upload failed for a passing reason. */
+  retry?: () => void
   /** Public URL returned by the upload, once ready. */
   url?: string
+  /** Unix seconds of the upload, so a saved draft knows when the file expires. */
+  uploadedAt?: number
   error?: string
 }
 
-export type StudioMode = 'reference' | 'frames'
+/**
+ * How a video starts: from the prompt alone, from a first frame, between a
+ * first and a last frame, or from any mix of reference files.
+ */
+export type StudioMode = 'text' | 'image' | 'frames' | 'reference'
 
 /** Ratio sent to the API; 'auto' leaves the choice to the model. */
 export type StudioRatio =
@@ -57,7 +64,7 @@ export interface StudioDraft {
   count: number
   /** Reference mode: images, videos and audio in upload order. */
   references: StudioAsset[]
-  /** Frames mode: first frame (required) and last frame (optional). */
+  /** Image mode uses the first frame; frames mode needs both. */
   firstFrame?: StudioAsset
   lastFrame?: StudioAsset
 }

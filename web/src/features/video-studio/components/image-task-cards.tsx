@@ -19,16 +19,17 @@ For commercial licensing, please contact support@quantumnous.com
 import { useTranslation } from 'react-i18next'
 
 import { Skeleton } from '@/components/ui/skeleton'
-import { Spinner } from '@/components/ui/spinner'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
 import { translateServerText } from '@/lib/server-error-message'
 
 import { useWorkArtifacts } from '../hooks/use-work-artifacts'
+import { taskStage } from '../lib/work-progress'
 import { taskRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
 import { ImageNotice, ImageWorkCard, WorkImage } from './image-work-card'
+import { WorkProgress } from './work-progress'
 
 /**
  * Cards of an image task the browser has no images of, such as one still
@@ -65,11 +66,11 @@ export function ImageTaskCards(props: {
     props.onEdit && model ? () => props.onEdit?.({ model }, '') : undefined
 
   let state = (
-    <div className='text-muted-foreground flex size-full flex-col items-center justify-center gap-2 text-xs'>
-      <Spinner className='size-5' />
-      {t('Generating')}
-      {task.progress && <span className='font-semibold'>{task.progress}</span>}
-    </div>
+    <WorkProgress
+      stage={taskStage(task)}
+      startedAt={task.submit_time}
+      typical={null}
+    />
   )
   if (succeeded) {
     state = artifacts.isLoading ? (

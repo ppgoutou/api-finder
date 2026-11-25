@@ -38,3 +38,14 @@ export function useWorkArtifacts(taskId: string, enabled = true) {
     meta: { errorToast: false },
   })
 }
+
+/** Address of a finished video work, once its artifacts are read. */
+export function useWorkVideoUrl(taskId: string) {
+  const artifacts = useWorkArtifacts(taskId)
+  return {
+    isLoading: artifacts.isLoading,
+    url:
+      artifacts.data?.artifacts.find((artifact) => artifact.type === 'video')
+        ?.content_url ?? artifacts.data?.legacyContentUrl,
+  }
+}

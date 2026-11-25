@@ -51,10 +51,13 @@ import {
 import type { StudioDraft, StudioImage } from '../types'
 import { ImageTaskCards } from './image-task-cards'
 import { ImageWorkCard, WorkImage } from './image-work-card'
+import { WorkProgress } from './work-progress'
 
 const IMAGE_TASKS_PAGE_SIZE = 24
 const POLL_INTERVAL_MS = 5000
 const SKELETON_COUNT = 8
+/** How far the browser's clock may be ahead of the server's. */
+const CLOCK_SKEW_SECONDS = 60
 const GRID_CLASS_NAME =
   'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 min-[112.5rem]:grid-cols-8'
 
@@ -76,7 +79,7 @@ export function ImageWorksList(props: {
   const language = i18n.resolvedLanguage || i18n.language
   const displayName = useModelDisplayName()
   const images = useStudioImageWorks((state) => state.works)
-  const generating = useStudioImageWorks((state) => state.generating)
+  const pending = useStudioImageWorks((state) => state.pending)
   const removeImage = useStudioImageWorks((state) => state.remove)
   const [hidden, setHidden] = useState(readHiddenTasks)
   const [deleting, setDeleting] = useState<Listed | null>(null)
@@ -97,7 +100,7 @@ export function ImageWorksList(props: {
     },
     placeholderData: keepPreviousData,
     refetchInterval: (query) =>
-      generating > 0 ||
+      pending.length > 0 ||
       query.state.data?.items.some((task) => !isFinishedTask(task))
         ? POLL_INTERVAL_MS
         : false,
@@ -112,6 +115,27 @@ export function ImageWorksList(props: {
     })),
   ].sort((a, b) => b.createdAt - a.createdAt)
 
+  // A plugin model's request also shows up as running tasks; each of those
+  // takes the place of one waiting card, oldest request first.
+  const unmatched = loaded.filter((task) => !isFinishedTask(task))
+  const waiting = [...pending].reverse().flatMap((request) => {
+    let count = request.count
+    while (count > 0) {
+      const index = unmatched.findIndex(
+        (task) =>
+          task.properties?.origin_model_name === request.model &&
+          task.submit_time >= request.startedAt - CLOCK_SKEW_SECONDS
+      )
+      if (index < 0) break
+      unmatched.splice(index, 1)
+      count -= 1
+    }
+    return Array.from({ length: count }, (_, index) => ({
+      key: `${request.id}-${index}`,
+      request,
+    }))
+  })
+
   const confirmDelete = () => {
     if (deleting && 'image' in deleting) {
       removeImage(deleting.image.id)
@@ -124,7 +148,7 @@ export function ImageWorksList(props: {
     setDeleting(null)
   }
 
-  if (listed.length === 0 && works.isLoading) {
+  if (listed.length === 0 && waiting.length === 0 && works.isLoading) {
     return (
       <div className={GRID_CLASS_NAME}>
         {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -135,7 +159,7 @@ export function ImageWorksList(props: {
   }
   return (
     <>
-      {listed.length === 0 ? (
+      {listed.length === 0 && waiting.length === 0 ? (
         <Empty className='border'>
           <EmptyHeader>
             <EmptyMedia variant='icon'>
@@ -151,6 +175,30 @@ export function ImageWorksList(props: {
         </Empty>
       ) : (
         <div className={GRID_CLASS_NAME}>
+          {waiting.map(({ key, request }) => (
+            <article
+              key={key}
+              className='bg-card border-border/60 overflow-hidden rounded-xl border'
+            >
+              <div className='relative aspect-square overflow-hidden'>
+                <WorkProgress
+                  stage='generating'
+                  startedAt={request.startedAt}
+                  typical={null}
+                />
+              </div>
+              <div className='flex flex-col p-2'>
+                <p className='truncate text-xs font-medium'>
+                  {localizeMentions(request.prompt, language)}
+                </p>
+                <p className='text-muted-foreground text-caption truncate'>
+                  {[displayName(request.model), request.size.replace('x', '×')]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            </article>
+          ))}
           {listed.map((work) => {
             if ('task' in work) {
               return (

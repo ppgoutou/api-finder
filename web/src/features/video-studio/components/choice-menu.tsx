@@ -45,7 +45,13 @@ interface ChoiceMenuProps<T extends string> {
     icon?: ReactNode
     group?: string
     unavailableLabel?: string
+    /** Second line, such as what a model can do. */
+    description?: string
+    /** Text at the end of the row, such as the price. */
+    detail?: string
   }[]
+  /** Shown after the label on the trigger. */
+  triggerDetail?: string
   onChange: (value: T) => void
 }
 
@@ -70,17 +76,27 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
             size='sm'
             aria-label={`${props.label}: ${selected?.label ?? props.value}`}
             className={cn(
-              'h-8 gap-1.5 rounded-full px-2.5 text-xs',
+              'h-8 max-w-full gap-1.5 rounded-full px-2.5 text-xs',
               selected?.unavailableLabel && 'text-warning hover:text-warning'
             )}
           />
         }
       >
         {selected?.icon}
-        {selected?.label ?? props.value}
+        <span className='max-w-48 truncate'>
+          {selected?.label ?? props.value}
+        </span>
+        {props.triggerDetail && (
+          <span className='text-muted-foreground font-normal tabular-nums'>
+            {props.triggerDetail}
+          </span>
+        )}
         <ChevronDown className='size-3.5 opacity-60' aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='start' className='w-auto min-w-48'>
+      <DropdownMenuContent
+        align='start'
+        className='w-auto max-w-[calc(100vw-1.5rem)] min-w-48'
+      >
         <DropdownMenuGroup>
           <DropdownMenuLabel>{props.label}</DropdownMenuLabel>
         </DropdownMenuGroup>
@@ -91,7 +107,7 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
           {sections.map((section) => (
             <DropdownMenuGroup key={section.options[0].value}>
               {section.group && (
-                <DropdownMenuLabel className='text-muted-foreground pt-2 text-caption'>
+                <DropdownMenuLabel className='text-muted-foreground text-caption pt-2'>
                   {section.group}
                 </DropdownMenuLabel>
               )}
@@ -103,9 +119,23 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
                   className='whitespace-nowrap'
                 >
                   {option.icon}
-                  {option.label}
+                  {option.description ? (
+                    <span className='flex flex-col'>
+                      <span>{option.label}</span>
+                      <span className='text-muted-foreground text-caption'>
+                        {option.description}
+                      </span>
+                    </span>
+                  ) : (
+                    option.label
+                  )}
+                  {option.detail && !option.unavailableLabel && (
+                    <span className='text-muted-foreground ml-auto pl-6 text-xs tabular-nums'>
+                      {option.detail}
+                    </span>
+                  )}
                   {option.unavailableLabel && (
-                    <span className='bg-warning/15 text-warning ml-auto rounded-md px-1.5 py-0.5 text-micro leading-4'>
+                    <span className='bg-warning/15 text-warning text-micro ml-auto rounded-md px-1.5 py-0.5 leading-4'>
                       {option.unavailableLabel}
                     </span>
                   )}

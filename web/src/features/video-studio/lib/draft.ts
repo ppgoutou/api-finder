@@ -219,6 +219,16 @@ export function fitStudioSeconds(model: StudioModel, seconds: number): number {
   )
 }
 
+/** Every length the model takes, in seconds. */
+export function studioDurations(model: StudioModel): readonly number[] {
+  if (model.durations?.length) return model.durations
+  const [shortest, longest] = model.duration
+  return Array.from(
+    { length: longest - shortest + 1 },
+    (_, index) => shortest + index
+  )
+}
+
 /**
  * Keeps model, ratio, resolution and duration inside what the available
  * models support. Leaves the draft unchanged while there are no models.
@@ -290,17 +300,54 @@ export function draftFromVideoRequest(
       'image',
       request.last_image_url ? [request.last_image_url] : []
     )
-    return { ...draft, mode: 'frames', firstFrame, lastFrame, references: [] }
+    return {
+      ...draft,
+      mode: lastFrame ? 'frames' : 'image',
+      firstFrame,
+      lastFrame,
+      references: [],
+    }
   }
+  const references = [
+    ...restoredAssets('image', request.images ?? []),
+    ...restoredAssets('video', request.videos ?? []),
+    ...restoredAssets('audio', request.audios ?? []),
+  ]
   return {
     ...draft,
-    mode: 'reference',
-    references: [
-      ...restoredAssets('image', request.images ?? []),
-      ...restoredAssets('video', request.videos ?? []),
-      ...restoredAssets('audio', request.audios ?? []),
-    ],
+    mode: references.length ? 'reference' : 'text',
+    references,
   }
+}
+
+/** The files the draft's mode sends with the request. */
+export function draftAssets(draft: StudioDraft): StudioAsset[] {
+  if (draft.mode === 'text') return []
+  if (draft.mode === 'reference') return draft.references
+  const frames =
+    draft.mode === 'image'
+      ? [draft.firstFrame]
+      : [draft.firstFrame, draft.lastFrame]
+  return frames.flatMap((asset) => (asset ? [asset] : []))
+}
+
+/** Most reference files of each kind the model takes. */
+export function referenceLimitsOf(
+  model?: Pick<StudioModel, 'referenceLimits'>
+): Readonly<Record<AssetKind, number>> {
+  return model?.referenceLimits ?? REFERENCE_LIMITS
+}
+
+/** References past the model's limit of their kind, in upload order. */
+export function excessReferences(
+  references: readonly StudioAsset[],
+  limits: Readonly<Record<AssetKind, number>>
+): StudioAsset[] {
+  const seen: Record<AssetKind, number> = { image: 0, video: 0, audio: 0 }
+  return references.filter((asset) => {
+    seen[asset.kind] += 1
+    return seen[asset.kind] > limits[asset.kind]
+  })
 }
 
 export function countReferences(
@@ -317,28 +364,24 @@ export function validateDraft(
   model?: Pick<StudioModel, 'referenceLimits'>
 ): string | null {
   if (!draft.prompt.trim()) return 'Describe the video you want'
-  const assets =
-    draft.mode === 'frames'
-      ? [draft.firstFrame, draft.lastFrame].flatMap((asset) =>
-          asset ? [asset] : []
-        )
-      : draft.references
+  const assets = draftAssets(draft)
   if (assets.some((asset) => asset.status === 'uploading')) {
     return 'Wait for the uploads to finish'
   }
   if (assets.some((asset) => asset.status !== 'ready' || !asset.url)) {
     return 'Remove the files that failed to upload'
   }
-  if (draft.mode === 'frames') {
-    return draft.firstFrame ? null : 'Add a first frame image'
+  if (draft.mode === 'text') return null
+  if (draft.mode === 'image' || draft.mode === 'frames') {
+    if (!draft.firstFrame) return 'Add a first frame image'
+    return draft.mode === 'frames' && !draft.lastFrame
+      ? 'Add a last frame image'
+      : null
+  }
+  if (excessReferences(draft.references, referenceLimitsOf(model)).length > 0) {
+    return 'Too many reference files'
   }
   const counts = countReferences(draft.references)
-  for (const kind of Object.keys(counts) as AssetKind[]) {
-    const limit = model?.referenceLimits?.[kind] ?? REFERENCE_LIMITS[kind]
-    if (counts[kind] > limit) {
-      return 'Too many reference files'
-    }
-  }
   if (counts.audio > 0 && counts.image + counts.video === 0) {
     return 'Audio needs an image or video reference too'
   }
@@ -355,9 +398,12 @@ export function buildVideoRequest(fitted: StudioDraft): VideoTaskRequest {
   }
   if (fitted.ratio !== 'auto') body.ratio = fitted.ratio
 
-  if (fitted.mode === 'frames') {
+  if (fitted.mode === 'text') return body
+  if (fitted.mode === 'image' || fitted.mode === 'frames') {
     if (fitted.firstFrame?.url) body.first_image_url = fitted.firstFrame.url
-    if (fitted.lastFrame?.url) body.last_image_url = fitted.lastFrame.url
+    if (fitted.mode === 'frames' && fitted.lastFrame?.url) {
+      body.last_image_url = fitted.lastFrame.url
+    }
     return body
   }
   const urlsOf = (kind: AssetKind) =>

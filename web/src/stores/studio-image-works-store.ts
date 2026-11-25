@@ -42,12 +42,22 @@ function readStoredWorks(): StudioImage[] {
   }
 }
 
+/** An image request of this page that is still waiting for its reply. */
+export interface PendingImages {
+  id: string
+  prompt: string
+  model: string
+  size: string
+  count: number
+  /** Unix seconds. */
+  startedAt: number
+}
+
 interface ImageWorksState {
   works: StudioImage[]
-  /** Image requests of this page that are still waiting for their reply. */
-  generating: number
-  startGenerating: () => void
-  stopGenerating: () => void
+  pending: PendingImages[]
+  startGenerating: (request: PendingImages) => void
+  stopGenerating: (id: string) => void
   add: (images: StudioImage[]) => void
   remove: (id: string) => void
 }
@@ -60,9 +70,13 @@ interface ImageWorksState {
  */
 export const useStudioImageWorks = create<ImageWorksState>((set) => ({
   works: readStoredWorks(),
-  generating: 0,
-  startGenerating: () => set((state) => ({ generating: state.generating + 1 })),
-  stopGenerating: () => set((state) => ({ generating: state.generating - 1 })),
+  pending: [],
+  startGenerating: (request) =>
+    set((state) => ({ pending: [request, ...state.pending] })),
+  stopGenerating: (id) =>
+    set((state) => ({
+      pending: state.pending.filter((request) => request.id !== id),
+    })),
   add: (images) =>
     set((state) => {
       const works = [...images, ...state.works].slice(

@@ -29,6 +29,7 @@ import {
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import {
+  draftAssets,
   estimateDraftCostUSD,
   estimateVideoCostByExpressionUSD,
 } from '../lib/draft'
@@ -46,66 +47,66 @@ export interface StudioPrice {
 }
 
 /**
- * Estimated charge of the draft in the site currency, after the viewer's group
- * discount, or null while prices are loading or the model has no video price.
+ * Estimates the charge of any draft in the site currency, after the viewer's
+ * group discount; null while prices are loading or the model has no video
+ * price.
  */
-export function useStudioPrice(draft: StudioDraft): StudioPrice | null {
+export function useStudioPricer(): (draft: StudioDraft) => StudioPrice | null {
   const pricing = usePricingData()
   const vipRate = useVipUpsellRate()
   // Prices are formatted in the site currency; re-render when it changes.
   useSystemConfigStore((state) => state.config.currency)
 
-  const model = pricing.models.find(
-    (candidate) => candidate.model_name === draft.model
-  )
-  const videoPricing = model
-    ? (getVideoPricing(model) ??
-      getPerVideoPricing(model) ??
-      getTokenVideoPricing(model))
-    : null
-  const row = videoPricing?.rows.find(
-    (candidate) => candidate.option === draft.resolution
-  )
-  if (!model) return null
+  return (draft) => {
+    const model = pricing.models.find(
+      (candidate) => candidate.model_name === draft.model
+    )
+    const videoPricing = model
+      ? (getVideoPricing(model) ??
+        getPerVideoPricing(model) ??
+        getTokenVideoPricing(model))
+      : null
+    const row = videoPricing?.rows.find(
+      (candidate) => candidate.option === draft.resolution
+    )
+    if (!model) return null
 
-  const hasReferenceVideo =
-    draft.mode === 'reference' &&
-    draft.references.some((asset) => asset.kind === 'video')
-  const inputImages =
-    draft.mode === 'reference'
-      ? draft.references.filter((asset) => asset.kind === 'image').length
-      : [draft.firstFrame, draft.lastFrame].filter(Boolean).length
-  // A price the pricing page cannot lay out as a table is run as an expression.
-  const costUSD = row
-    ? estimateDraftCostUSD(
-        row,
-        draft.seconds,
-        draft.count,
-        hasReferenceVideo,
-        inputImages
-      )
-    : estimateVideoCostByExpressionUSD(model, {
-        resolution: draft.resolution,
-        seconds: draft.seconds,
-        count: draft.count,
-        hasReferenceVideo,
-        inputImages,
+    const assets = draftAssets(draft)
+    const hasReferenceVideo = assets.some((asset) => asset.kind === 'video')
+    const inputImages = assets.filter((asset) => asset.kind === 'image').length
+    // A price the pricing page cannot lay out as a table is run as an
+    // expression.
+    const costUSD = row
+      ? estimateDraftCostUSD(
+          row,
+          draft.seconds,
+          draft.count,
+          hasReferenceVideo,
+          inputImages
+        )
+      : estimateVideoCostByExpressionUSD(model, {
+          resolution: draft.resolution,
+          seconds: draft.seconds,
+          count: draft.count,
+          hasReferenceVideo,
+          inputImages,
+        })
+    if (costUSD === null) return null
+    const groupRatio = getDisplayGroupRatio(model)
+    const format = (ratio: number) =>
+      formatTaskUsageUnitPrice(costUSD, {
+        tokenUnit: 'M',
+        showRechargePrice: false,
+        priceRate: pricing.priceRate,
+        usdExchangeRate: pricing.usdExchangeRate,
+        groupRatioMultiplier: ratio,
+        fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
       })
-  if (costUSD === null) return null
-  const groupRatio = getDisplayGroupRatio(model)
-  const format = (ratio: number) =>
-    formatTaskUsageUnitPrice(costUSD, {
-      tokenUnit: 'M',
-      showRechargePrice: false,
-      priceRate: pricing.priceRate,
-      usdExchangeRate: pricing.usdExchangeRate,
-      groupRatioMultiplier: ratio,
-      fractionDigits: VIDEO_PRICE_FRACTION_DIGITS,
-    })
-  return {
-    label: format(groupRatio),
-    costUSD: costUSD * groupRatio,
-    vipLabel: vipRate ? format(groupRatio * vipRate) : null,
+    return {
+      label: format(groupRatio),
+      costUSD: costUSD * groupRatio,
+      vipLabel: vipRate ? format(groupRatio * vipRate) : null,
+    }
   }
 }
 

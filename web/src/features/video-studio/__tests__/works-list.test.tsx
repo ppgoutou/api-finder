@@ -23,10 +23,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getTaskArtifacts, getUserTaskLogs } from '@/features/usage-logs/api'
 import type { TaskLog } from '@/features/usage-logs/types'
+import { useStudioPending } from '@/stores/studio-pending-store'
 
+import { createVideoTask } from '../api'
 import { WorksList } from '../components/works-list'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 
+vi.mock('../api', () => ({ createVideoTask: vi.fn() }))
+vi.mock('@/features/pricing/hooks', () => ({
+  useModelDisplayName: () => (name: string) => name,
+}))
+vi.mock('../hooks/use-studio-price', () => ({
+  useStudioPricer: () => () => ({ label: '¥5.24', costUSD: 0.77 }),
+}))
 vi.mock('@/features/usage-logs/api', () => ({
   getUserTaskLogs: vi.fn(),
   getTaskArtifacts: vi.fn(),
@@ -62,6 +71,7 @@ function renderList(onEdit: () => void) {
 
 beforeEach(() => {
   window.localStorage.clear()
+  useStudioPending.setState({ videos: [] })
   vi.mocked(getTaskArtifacts).mockResolvedValue({ artifacts: [] } as never)
 })
 
@@ -220,5 +230,154 @@ describe('WorksList', () => {
     expect(
       screen.queryByRole('button', { name: 'Load more' })
     ).not.toBeInTheDocument()
+  })
+
+  const REQUEST = {
+    model: 'seedance-2.5',
+    prompt: 'a cat in @图片1',
+    seconds: 8,
+    resolution: '1080p',
+  }
+
+  function finishedTask(taskId: string, expiresIn: number): TaskLog {
+    return {
+      ...failedTask(taskId, 'seedance-2.5'),
+      status: 'SUCCESS',
+      fail_reason: '',
+      media_expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+    }
+  }
+
+  function listTasks(items: TaskLog[]) {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: { items, total: items.length },
+    } as never)
+  }
+
+  it('asks with the fee before a failed work is submitted and charged again', async () => {
+    rememberTaskPrompt('task_1', REQUEST, 'seedance-2.5 · 1080p · 8s')
+    listTasks([failedTask('task_1', 'seedance-2.5')])
+    vi.mocked(createVideoTask).mockResolvedValue('task_2')
+    const user = userEvent.setup()
+    renderList(vi.fn())
+
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+    const dialog = screen.getByRole('alertdialog')
+    expect(dialog).toHaveTextContent('¥5.24')
+    expect(createVideoTask).not.toHaveBeenCalled()
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Generate again' })
+    )
+
+    await waitFor(() => expect(createVideoTask).toHaveBeenCalledWith(REQUEST))
+  })
+
+  it('names a work after its model when the prompt is unknown here', async () => {
+    listTasks([failedTask('task_old', 'seedance-2.0')])
+    renderList(vi.fn())
+
+    expect(
+      await within(await screen.findByRole('article')).findByTitle(
+        'seedance-2.0'
+      )
+    ).toBeInTheDocument()
+  })
+
+  it('offers no player or download for an expired video and does not load it', async () => {
+    rememberTaskPrompt('task_1', REQUEST, 'seedance-2.5 · 1080p · 8s')
+    listTasks([finishedTask('task_1', -60)])
+    renderList(vi.fn())
+
+    expect(await screen.findByText('Expired')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Play/ })).toBeNull()
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(getTaskArtifacts).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole('button', { name: 'Generate again' })
+    ).toBeInTheDocument()
+  })
+
+  it('plays a finished video with its prompt, and steps to the next one', async () => {
+    rememberTaskPrompt('task_1', REQUEST, 'seedance-2.5 · 1080p · 8s')
+    rememberTaskPrompt(
+      'task_2',
+      { ...REQUEST, prompt: 'a dog' },
+      'seedance-2.5 · 1080p · 8s'
+    )
+    listTasks([finishedTask('task_1', 86400), finishedTask('task_2', 86400)])
+    vi.mocked(getTaskArtifacts).mockResolvedValue({
+      artifacts: [
+        { key: 'video', type: 'video', content_url: 'https://cdn/v.mp4' },
+      ],
+    } as never)
+    const user = userEvent.setup()
+    renderList(vi.fn())
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Play: a cat in @Image1' })
+    )
+    const dialog = screen.getByRole('dialog')
+    // Kept out of the flow, or a portrait video would stretch its card.
+    expect(
+      screen.getByRole('button', {
+        name: 'Play: a cat in @Image1',
+        hidden: true,
+      })
+    ).toHaveClass('absolute', 'inset-0')
+    expect(within(dialog).getByText('a cat in @Image1')).toBeInTheDocument()
+    expect(
+      within(dialog).queryByRole('button', { name: 'Previous work' })
+    ).toBeNull()
+    await user.click(within(dialog).getByRole('button', { name: 'Next work' }))
+
+    expect(within(dialog).getByText('a dog')).toBeInTheDocument()
+  })
+
+  it('shows submissions without a task ahead of the works, until the task is listed', async () => {
+    useStudioPending.setState({
+      videos: [
+        { id: 'p1', request: REQUEST, spec: 'seedance-2.5', startedAt: 0 },
+        {
+          id: 'p2',
+          request: REQUEST,
+          spec: 'seedance-2.5',
+          startedAt: 0,
+          taskId: 'task_1',
+        },
+      ],
+    })
+    listTasks([failedTask('task_1', 'seedance-2.5')])
+    renderList(vi.fn())
+
+    expect(await screen.findByText('Submitting')).toBeInTheDocument()
+    const cards = screen.getAllByRole('article')
+    expect(cards).toHaveLength(2)
+    expect(within(cards[0]).getByText('Submitting')).toBeInTheDocument()
+  })
+
+  it('narrows the loaded works by state and by words of the prompt', async () => {
+    rememberTaskPrompt('task_1', REQUEST, 'seedance-2.5 · 1080p · 8s')
+    listTasks([
+      failedTask('task_1', 'seedance-2.5'),
+      finishedTask('task_2', -60),
+    ])
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const user = userEvent.setup()
+    render(
+      <QueryClientProvider client={client}>
+        <WorksList loadMore onEdit={vi.fn()} />
+      </QueryClientProvider>
+    )
+    expect(await screen.findAllByRole('article')).toHaveLength(2)
+
+    await user.click(screen.getByRole('button', { name: 'Failed' }))
+    expect(screen.getAllByRole('article')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    await user.type(screen.getByRole('searchbox'), 'A CAT')
+    expect(screen.getAllByRole('article')).toHaveLength(1)
+    await user.type(screen.getByRole('searchbox'), ' nothing')
+    expect(screen.getByText('No works match')).toBeInTheDocument()
   })
 })

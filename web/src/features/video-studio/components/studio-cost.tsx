@@ -30,6 +30,8 @@ import type { StudioPrice } from '../hooks/use-studio-price'
 
 interface StudioCostProps {
   price: StudioPrice | null
+  /** What the fee covers, such as "720P · 5s × 2". */
+  detail?: string
   /** How much the wallet lacks for the price in USD, or null when it is enough. */
   shortfallUSD: number | null
 }
@@ -49,6 +51,11 @@ export function StudioCost(props: StudioCostProps) {
           {props.price.label}
         </span>
       </span>
+      {props.detail && (
+        <span className='text-muted-foreground text-caption tabular-nums'>
+          {props.detail}
+        </span>
+      )}
       {props.price.vipLabel && (
         <Link
           to='/wallet'

@@ -193,7 +193,7 @@ export function draftFromGalleryItem(
     const [firstFrame] = restoredAssets('image', [image])
     return {
       ...draft,
-      mode: 'frames',
+      mode: 'image',
       firstFrame,
       lastFrame: undefined,
       references: [],

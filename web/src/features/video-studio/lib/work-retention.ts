@@ -135,3 +135,27 @@ export function remainingParts(
   }
   return { value: Math.max(1, Math.ceil(seconds / 60)), unit: 'minute' }
 }
+
+/** States the works list can be narrowed to. */
+export type WorkFilter =
+  | 'all'
+  | 'running'
+  | 'done'
+  | 'expiring'
+  | 'failed'
+  | 'expired'
+
+/** Whether the task is in the state. `now` is in Unix seconds. */
+export function matchesWork(
+  task: TaskLog,
+  filter: WorkFilter,
+  now: number
+): boolean {
+  if (filter === 'all') return true
+  if (filter === 'running') return !isFinishedTask(task)
+  if (filter === 'failed') return task.status === TASK_STATUS.FAILURE
+  if (task.status !== TASK_STATUS.SUCCESS) return false
+  const state = taskRetention(task, now)?.state
+  if (filter === 'done') return state !== 'expired'
+  return state === filter
+}

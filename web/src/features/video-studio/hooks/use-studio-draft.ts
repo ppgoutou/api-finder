@@ -16,11 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+import { useAuthStore } from '@/stores/auth-store'
 
 import { DEFAULT_DRAFT } from '../constants'
 import { removeReferenceFromPrompt } from '../lib/draft'
-import type { StudioAsset, StudioDraft } from '../types'
+import { readDraft, saveDraft } from '../lib/draft-storage'
+import type { StudioAsset, StudioDraft, StudioKind } from '../types'
 
 type FrameSlot = 'first' | 'last'
 
@@ -28,15 +31,50 @@ type FrameSlot = 'first' | 'last'
  * Draft state of the composer, as the user picked it; readers fit it to the
  * available models. Upload callbacks keep reporting progress after a file is
  * removed, so removed assets are remembered and their late updates ignored.
- * Initial fields, such as a model picked on entry or a past request being
- * edited again, replace the defaults.
+ *
+ * The draft is saved in this browser on every change and comes back on the
+ * next visit. A past work loaded for editing takes its place; a model picked
+ * on entry only replaces its model.
  */
-export function useStudioDraft(initial?: Partial<StudioDraft>) {
+export function useStudioDraft(
+  kind: StudioKind,
+  initial: { draft?: Partial<StudioDraft>; model?: string; size?: string } = {}
+) {
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const [saved] = useState(() =>
+    initial.draft
+      ? null
+      : readDraft(kind, userId, Math.floor(Date.now() / 1000))
+  )
   const [draft, setDraft] = useState<StudioDraft>(() => ({
-    ...DEFAULT_DRAFT,
-    ...initial,
+    ...(saved?.draft ?? DEFAULT_DRAFT),
+    ...initial.draft,
+    ...(!initial.draft && initial.model ? { model: initial.model } : {}),
   }))
+  const [size, setSize] = useState(initial.size ?? saved?.size)
+  const [stored, setStored] = useState(true)
+  const changed = useRef(false)
   const removedIds = useRef(new Set<string>())
+
+  useEffect(() => {
+    // Opening the page alone saves nothing.
+    if (!changed.current && !initial.draft) {
+      changed.current = true
+      return
+    }
+    changed.current = true
+    setStored(saveDraft(kind, userId, draft, size))
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- initial is read once
+  }, [kind, userId, draft, size])
+
+  const clear = () =>
+    setDraft((current) => ({
+      ...current,
+      prompt: '',
+      references: [],
+      firstFrame: undefined,
+      lastFrame: undefined,
+    }))
 
   const update = (patch: Partial<StudioDraft>) =>
     setDraft((current) => ({ ...current, ...patch }))
@@ -93,5 +131,18 @@ export function useStudioDraft(initial?: Partial<StudioDraft>) {
     })
   }
 
-  return { draft, update, putReference, removeReference, putFrame, removeFrame }
+  return {
+    draft,
+    /** Whether the browser keeps the draft, for the saved hint. */
+    stored,
+    /** Image size kept with the draft. */
+    size,
+    setSize,
+    clear,
+    update,
+    putReference,
+    removeReference,
+    putFrame,
+    removeFrame,
+  }
 }

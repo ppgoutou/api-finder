@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { getUserTaskLogs } from '@/features/usage-logs/api'
 import type { TaskLog } from '@/features/usage-logs/types'
@@ -25,6 +25,8 @@ import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { readHiddenTasks } from '../lib/hidden-works'
+import { rememberedTaskIds } from '../lib/prompt-history'
+import { runningTasks } from '../lib/work-progress'
 import {
   imageRetention,
   isImageTask,
@@ -35,27 +37,29 @@ import {
 /** Recent tasks checked for expiry; older ones have long expired. */
 const REMINDER_TASK_COUNT = 50
 
-/** The current time in Unix seconds, refreshed every minute. */
-export function useUnixNow() {
+const IDLE_POLL_MS = 5 * 60 * 1000
+const RUNNING_POLL_MS = 10 * 1000
+
+/** The current time in Unix seconds, refreshed every minute by default. */
+export function useUnixNow(intervalMs = 60 * 1000) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   useEffect(() => {
     const timer = window.setInterval(
       () => setNow(Math.floor(Date.now() / 1000)),
-      60 * 1000
+      intervalMs
     )
     return () => window.clearInterval(timer)
-  }, [])
+  }, [intervalMs])
   return now
 }
 
 /**
- * How many of the user's works expire soon and should be downloaded: recent
- * tasks the server reports as expiring, and images linked from this browser.
- * Works the user deleted are left out.
+ * The user's recent tasks. They are read often, and also while the page is
+ * hidden, as long as a task this browser submitted is running, so its end can
+ * be announced.
  */
-export function useExpiringWorks() {
-  const now = useUnixNow()
-  const images = useStudioImageWorks((state) => state.works)
+export function useRecentTasks() {
+  const [running, setRunning] = useState(false)
   const tasks = useQuery({
     queryKey: [...STUDIO_WORKS_QUERY_KEY, 'reminder'],
     queryFn: async () => {
@@ -66,11 +70,29 @@ export function useExpiringWorks() {
       return (response.data?.items ?? []) as TaskLog[]
     },
     staleTime: 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: running ? RUNNING_POLL_MS : IDLE_POLL_MS,
+    refetchIntervalInBackground: running,
     meta: { errorToast: false },
   })
+  const recent = tasks.data
+  const runningCount = useMemo(
+    () => (recent ? runningTasks(recent, rememberedTaskIds()).length : 0),
+    [recent]
+  )
+  if (running !== runningCount > 0) setRunning(runningCount > 0)
+  return { tasks: recent, runningCount }
+}
+
+/**
+ * How many of the user's works expire soon and should be downloaded: recent
+ * tasks the server reports as expiring, and images linked from this browser.
+ * Works the user deleted are left out.
+ */
+export function useExpiringWorks() {
+  const now = useUnixNow()
+  const images = useStudioImageWorks((state) => state.works)
+  const recent = useRecentTasks().tasks ?? []
   const hidden = readHiddenTasks()
-  const recent = tasks.data ?? []
   const videos = recent.filter(
     (task) =>
       !hidden.includes(task.task_id) &&

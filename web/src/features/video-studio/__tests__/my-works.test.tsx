@@ -21,7 +21,10 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { MyWorks } from '../my-works'
 
-vi.mock('@tanstack/react-router', () => ({ Link: () => null }))
+vi.mock('@tanstack/react-router', () => ({
+  Link: () => null,
+  useNavigate: () => vi.fn(),
+}))
 vi.mock('../components/works-list', () => ({ WorksList: () => null }))
 vi.mock('../components/image-works-list', () => ({
   ImageWorksList: () => null,
