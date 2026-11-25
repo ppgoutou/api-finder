@@ -138,7 +138,7 @@ type TaskPrivateData struct {
 	// and every retrieval surface treats the task as not found. The zero
 	// value keeps historical rows retained and retrievable.
 	ResultDiscarded bool `json:"result_discarded,omitempty"`
-	// StoredMedia is this site's own copy of the task's video, written after
+	// StoredMedia is this site's own copy of the task's media, written after
 	// the task succeeds. Nil until a copy has been attempted.
 	StoredMedia *TaskStoredMedia `json:"stored_media,omitempty"`
 }
@@ -152,8 +152,12 @@ type TaskStoredMedia struct {
 	Size        int64    `json:"size,omitempty"`
 	Targets     []string `json:"targets,omitempty"`
 	StoredAt    int64    `json:"stored_at,omitempty"`
-	Attempts    int      `json:"attempts,omitempty"`
-	LastTryAt   int64    `json:"last_try_at,omitempty"`
+	// ThumbnailKey is the object of a stored image's thumbnail, kept in the same
+	// targets. SoleImage marks the copy of a task's only artifact, an image.
+	ThumbnailKey string `json:"thumbnail_key,omitempty"`
+	SoleImage    bool   `json:"sole_image,omitempty"`
+	Attempts     int    `json:"attempts,omitempty"`
+	LastTryAt    int64  `json:"last_try_at,omitempty"`
 	// DownloadMs is how long the last attempt took to fetch the video from
 	// upstream; UploadMs is how long each target took to accept it.
 	DownloadMs int64            `json:"download_ms,omitempty"`

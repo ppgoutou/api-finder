@@ -83,6 +83,8 @@ export interface GeneratedImageItem {
   url?: string
   b64_json?: string
   media_expires_at?: number
+  /** Small version of a stored image. */
+  thumbnail_url?: string
   /** Task that drew the image, for a model served by a task plugin. */
   task_id?: string
 }
@@ -94,6 +96,7 @@ export interface ImageGenerationResponse {
 /** A generated image as the studio keeps it. */
 export interface GeneratedImage {
   url: string
+  thumbnailUrl?: string
   expiresAt?: number
   taskId?: string
 }
@@ -103,6 +106,8 @@ export interface StudioImage {
   id: string
   /** Upstream URL, which expires after a while, or an inline data URL. */
   url: string
+  /** Small version for lists, when the server stored one. */
+  thumbnailUrl?: string
   prompt: string
   model: string
   size: string

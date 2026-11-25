@@ -8731,6 +8731,7 @@
     "Final price after applying": "Prix final après application",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Les prix fournisseur incluent déjà le ratio du groupe de la clé. Les prix finaux concernent le groupe par défaut ; les ajustements enregistrés restent inchangés.",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "La liste de prix de {{name}} ne contient plus ce modèle : aucun prix amont à appliquer. Le prix actuel reste inchangé.",
-    "The supplier's price list has no price for this model.": "La liste de prix du fournisseur n'a pas de prix pour ce modèle."
+    "The supplier's price list has no price for this model.": "La liste de prix du fournisseur n'a pas de prix pour ce modèle.",
+    "View full image": "Voir l'image en grand"
   }
 }

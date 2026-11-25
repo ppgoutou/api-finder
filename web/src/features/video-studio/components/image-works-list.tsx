@@ -44,6 +44,7 @@ import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
 import {
   imageRetention,
+  imageTaskOf,
   isFinishedTask,
   listedImageTasks,
 } from '../lib/work-retention'
@@ -53,8 +54,9 @@ import { ImageWorkCard, WorkImage } from './image-work-card'
 
 const IMAGE_TASKS_PAGE_SIZE = 24
 const POLL_INTERVAL_MS = 5000
+const SKELETON_COUNT = 8
 const GRID_CLASS_NAME =
-  'grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+  'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 min-[112.5rem]:grid-cols-8'
 
 type Listed =
   | { createdAt: number; image: StudioImage }
@@ -125,7 +127,7 @@ export function ImageWorksList(props: {
   if (listed.length === 0 && works.isLoading) {
     return (
       <div className={GRID_CLASS_NAME}>
-        {Array.from({ length: 3 }, (_, index) => (
+        {Array.from({ length: SKELETON_COUNT }, (_, index) => (
           <Skeleton key={index} className='aspect-square rounded-xl' />
         ))}
       </div>
@@ -162,15 +164,18 @@ export function ImageWorksList(props: {
               )
             }
             const image = work.image
-            const retention = imageRetention(image, now)
+            const task = imageTaskOf(image, loaded)
+            const retention = imageRetention(image, now, loaded)
+            const title = localizeMentions(image.prompt, language)
+            const details = [
+              displayName(image.model),
+              image.size.replace('x', '×'),
+            ]
             return (
               <ImageWorkCard
                 key={image.id}
-                title={localizeMentions(image.prompt, language)}
-                details={[
-                  displayName(image.model),
-                  image.size.replace('x', '×'),
-                ]}
+                title={title}
+                details={details}
                 createdAt={image.createdAt}
                 retention={retention}
                 now={now}
@@ -192,8 +197,11 @@ export function ImageWorksList(props: {
                 onDelete={() => setDeleting(work)}
               >
                 <WorkImage
-                  url={image.url}
+                  url={task?.image_url ?? image.url}
+                  thumbnailUrl={task?.thumbnail_url ?? image.thumbnailUrl}
                   alt={image.prompt}
+                  title={title}
+                  details={details}
                   filename={`image-${image.id}`}
                   expired={retention?.state === 'expired'}
                 />

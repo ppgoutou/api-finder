@@ -173,7 +173,110 @@ describe('ImageWorksList browser images', () => {
   })
 })
 
+describe('ImageWorksList layout and full view', () => {
+  it('lays images out six to eight in a row on wide screens', () => {
+    useStudioImageWorks.setState({ works: [work] })
+    renderList()
+
+    expect(screen.getByRole('article').parentElement).toHaveClass(
+      'grid-cols-2',
+      'xl:grid-cols-6',
+      '2xl:grid-cols-7',
+      'min-[112.5rem]:grid-cols-8'
+    )
+  })
+
+  it('lists the small version and opens the full image in a dialog on click', async () => {
+    useStudioImageWorks.setState({
+      works: [{ ...work, thumbnailUrl: 'https://cdn.example/fox_thumb.jpg' }],
+    })
+    const user = userEvent.setup()
+    renderList()
+    expect(screen.getByRole('img', { name: 'a red fox' })).toHaveAttribute(
+      'src',
+      'https://cdn.example/fox_thumb.jpg'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View full image' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByRole('img', { name: 'a red fox' })
+    ).toHaveAttribute('src', 'https://cdn.example/fox.png')
+    expect(
+      within(dialog).getByRole('button', { name: 'Download image' })
+    ).toBeInTheDocument()
+  })
+
+  it('lists the full image when its small version does not load', () => {
+    useStudioImageWorks.setState({
+      works: [{ ...work, thumbnailUrl: 'https://cdn.example/fox_thumb.jpg' }],
+    })
+    renderList()
+
+    fireEvent.error(screen.getByRole('img', { name: 'a red fox' }))
+
+    expect(screen.getByRole('img', { name: 'a red fox' })).toHaveAttribute(
+      'src',
+      'https://cdn.example/fox.png'
+    )
+  })
+
+  it('asks a host that refuses CORS for the full image plainly', async () => {
+    useStudioImageWorks.setState({ works: [work] })
+    const user = userEvent.setup()
+    renderList()
+    await user.click(screen.getByRole('button', { name: 'View full image' }))
+    const dialog = await screen.findByRole('dialog')
+    const full = () => within(dialog).getByRole('img', { name: 'a red fox' })
+    expect(full()).toHaveAttribute('crossorigin', 'anonymous')
+
+    fireEvent.error(full())
+
+    expect(full()).not.toHaveAttribute('crossorigin')
+    fireEvent.error(full())
+    expect(
+      within(dialog).getByText('The image could not be loaded')
+    ).toBeInTheDocument()
+  })
+})
+
 describe('ImageWorksList image tasks', () => {
+  it('shows a stored image from its CDN links without asking for its artifacts', async () => {
+    serveTasks(
+      imageTask({
+        image_url: 'https://cdn.example/a.png',
+        thumbnail_url: 'https://cdn.example/a_thumb.jpg',
+        media_expires_at: NOW + 7 * 24 * 3600,
+      })
+    )
+    renderList()
+
+    expect(
+      await screen.findByRole('img', { name: 'Image task' })
+    ).toHaveAttribute('src', 'https://cdn.example/a_thumb.jpg')
+    expect(getTaskArtifacts).not.toHaveBeenCalled()
+  })
+
+  it('shows a browser image from the copy its task got later, with that expiry', async () => {
+    useStudioImageWorks.setState({ works: [{ ...work, taskId: 'task_1' }] })
+    serveTasks(
+      imageTask({
+        image_url: 'https://cdn.example/a.png',
+        thumbnail_url: 'https://cdn.example/a_thumb.jpg',
+        media_expires_at: NOW + 7 * 24 * 3600,
+      })
+    )
+    renderList()
+
+    expect(await screen.findByText(/^Kept until/)).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'a red fox' })).toHaveAttribute(
+      'src',
+      'https://cdn.example/a_thumb.jpg'
+    )
+    expect(screen.queryByText(/^Expires in/)).not.toBeInTheDocument()
+  })
+
   it('shows the image of a task finished in another browser with its download and expiry', async () => {
     serveTasks(imageTask({ media_expires_at: NOW + 5 * 3600 + 600 }))
     renderList()

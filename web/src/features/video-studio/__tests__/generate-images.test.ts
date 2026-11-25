@@ -37,12 +37,13 @@ afterEach(() => {
 })
 
 describe('generateImages', () => {
-  it('keeps the expiry and task of images the server stored and none for the others', async () => {
+  it('keeps the small version, expiry and task of images the server stored and none for the others', async () => {
     vi.mocked(api.post).mockResolvedValue({
       data: {
         data: [
           {
             url: 'https://media.example/images/a.png',
+            thumbnail_url: 'https://media.example/images/a_thumb.jpg',
             media_expires_at: 1_900_000_000,
             task_id: 'task_1',
           },
@@ -54,6 +55,7 @@ describe('generateImages', () => {
     await expect(generateImages(body)).resolves.toEqual([
       {
         url: 'https://media.example/images/a.png',
+        thumbnailUrl: 'https://media.example/images/a_thumb.jpg',
         expiresAt: 1_900_000_000,
         taskId: 'task_1',
       },

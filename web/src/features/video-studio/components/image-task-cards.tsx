@@ -45,13 +45,22 @@ export function ImageTaskCards(props: {
   const displayName = useModelDisplayName()
   const task = props.task
   const succeeded = task.status === TASK_STATUS.SUCCESS
-  const artifacts = useWorkArtifacts(task.task_id, succeeded)
-  const images = (artifacts.data?.artifacts ?? []).filter(
-    (artifact) => artifact.type === 'image'
-  )
+  // The list already links the image this site stored; other tasks are asked
+  // for theirs.
+  const artifacts = useWorkArtifacts(task.task_id, succeeded && !task.image_url)
+  let images = (artifacts.data?.artifacts ?? [])
+    .filter((artifact) => artifact.type === 'image')
+    .map((artifact) => ({
+      url: artifact.content_url,
+      filename: `${task.task_id}-${artifact.key}`,
+    }))
+  if (task.image_url) {
+    images = [{ url: task.image_url, filename: task.task_id }]
+  }
   const model = task.properties?.origin_model_name
   const retention = taskRetention(task, props.now)
   const title = t('Image task')
+  const details = model ? [displayName(model)] : []
   const onEdit =
     props.onEdit && model ? () => props.onEdit?.({ model }, '') : undefined
 
@@ -102,7 +111,7 @@ export function ImageTaskCards(props: {
       <ImageWorkCard
         key={index}
         title={title}
-        details={model ? [displayName(model)] : []}
+        details={details}
         createdAt={task.submit_time}
         retention={retention}
         now={props.now}
@@ -111,9 +120,12 @@ export function ImageTaskCards(props: {
       >
         {image ? (
           <WorkImage
-            url={image.content_url}
+            url={image.url}
+            thumbnailUrl={task.thumbnail_url}
             alt={title}
-            filename={`${task.task_id}-${image.key}`}
+            title={title}
+            details={details}
+            filename={image.filename}
             expired={retention?.state === 'expired'}
           />
         ) : (

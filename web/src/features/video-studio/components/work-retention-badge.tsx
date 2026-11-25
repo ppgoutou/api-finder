@@ -32,6 +32,7 @@ import { remainingParts, type WorkRetention } from '../lib/work-retention'
 export function WorkRetentionBadge(props: {
   retention: WorkRetention | null
   now: number
+  className?: string
 }) {
   const { t } = useTranslation()
   const retention = props.retention
@@ -80,8 +81,9 @@ export function WorkRetentionBadge(props: {
     <Badge
       variant='secondary'
       className={cn(
-        'pointer-events-none absolute top-2 left-2 z-10 shadow-sm',
-        className
+        'pointer-events-none absolute top-2 left-2 z-10 max-w-[calc(100%-1rem)] shadow-sm',
+        className,
+        props.className
       )}
       data-retention={retention.state}
     >

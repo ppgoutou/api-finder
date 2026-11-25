@@ -80,6 +80,15 @@ export function listedImageTasks(
   )
 }
 
+/** The listed task that drew an image kept in this browser. */
+export function imageTaskOf(
+  image: StudioImage,
+  tasks: readonly TaskLog[]
+): TaskLog | undefined {
+  if (!image.taskId) return undefined
+  return tasks.find((task) => task.task_id === image.taskId)
+}
+
 /**
  * Retention of a task's video or image as the server reports it; null while
  * the task is unfinished or its copy into media storage is still in progress.
@@ -96,13 +105,18 @@ export function taskRetention(
 /**
  * Retention of an image generated in this browser: until the expiry of the
  * server's copy, else as long as the upstream link. An inline image lives in
- * the browser as long as the work does.
+ * the browser as long as the work does. A copy made after the reply counts
+ * through the image's task, when listed.
  */
 export function imageRetention(
   image: StudioImage,
-  now: number
+  now: number,
+  tasks: readonly TaskLog[] = []
 ): WorkRetention | null {
-  if (image.expiresAt) return retentionUntil(image.expiresAt, now)
+  const task = imageTaskOf(image, tasks)
+  const taskExpiresAt = task?.image_url ? (task.media_expires_at ?? 0) : 0
+  const expiresAt = Math.max(image.expiresAt ?? 0, taskExpiresAt)
+  if (expiresAt) return retentionUntil(expiresAt, now)
   if (image.url.startsWith('data:')) return null
   return retentionUntil(image.createdAt + IMAGE_LINK_LIFETIME_SECONDS, now)
 }

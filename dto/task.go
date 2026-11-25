@@ -60,16 +60,20 @@ type TaskDto struct {
 	ConsoleImage bool `json:"console_image,omitempty"`
 	// MediaExpiresAt is when the owner is told the video or image stops being
 	// available (Unix seconds); 0 while that is not known yet.
-	MediaExpiresAt int64           `json:"media_expires_at,omitempty"`
-	SubmitTime     int64           `json:"submit_time"`
-	StartTime      int64           `json:"start_time"`
-	FinishTime     int64           `json:"finish_time"`
-	Progress       string          `json:"progress"`
-	Properties     any             `json:"properties"`
-	Username       string          `json:"username,omitempty"`
-	Data           json.RawMessage `json:"data"`
-	AdminInfo      *TaskAdminInfo  `json:"admin_info,omitempty"`
-	RootInfo       *TaskRootInfo   `json:"root_info,omitempty"`
+	MediaExpiresAt int64 `json:"media_expires_at,omitempty"`
+	// ImageURL and ThumbnailURL are the CDN addresses of a web console image
+	// this site stored. Only its owner's task list carries them.
+	ImageURL     string          `json:"image_url,omitempty"`
+	ThumbnailURL string          `json:"thumbnail_url,omitempty"`
+	SubmitTime   int64           `json:"submit_time"`
+	StartTime    int64           `json:"start_time"`
+	FinishTime   int64           `json:"finish_time"`
+	Progress     string          `json:"progress"`
+	Properties   any             `json:"properties"`
+	Username     string          `json:"username,omitempty"`
+	Data         json.RawMessage `json:"data"`
+	AdminInfo    *TaskAdminInfo  `json:"admin_info,omitempty"`
+	RootInfo     *TaskRootInfo   `json:"root_info,omitempty"`
 }
 
 type TaskPluginInfo struct {

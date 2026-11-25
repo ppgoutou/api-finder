@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -153,25 +154,25 @@ func (mediaArtifactStore) Serve(c *gin.Context, task *model.Task, ref *StoredArt
 	if ref == nil || ref.ObjectKey == "" || len(ref.Targets) == 0 {
 		return ErrTaskArtifactStoreDisabled
 	}
-	settings := system_setting.GetMediaStorageSettings()
-	preferred := system_setting.MediaStorageTargetOverseas
-	if settings.IsMainlandCountry(c.GetHeader("CF-IPCountry")) {
-		preferred = system_setting.MediaStorageTargetMainland
-	}
-	chosen := ref.Targets[0]
-	for _, target := range ref.Targets {
-		if target == preferred {
-			chosen = target
-			break
-		}
-	}
-	base := strings.TrimRight(strings.TrimSpace(settings.Target(chosen).PublicURL), "/")
-	if base == "" {
+	location := MediaObjectPublicURL(storedMediaTarget(ref.Targets, c.GetHeader("CF-IPCountry")), ref.ObjectKey)
+	if location == "" {
 		return ErrTaskArtifactStoreDisabled
 	}
 	c.Header("Cache-Control", "private, no-store")
-	c.Redirect(http.StatusFound, base+"/"+ref.ObjectKey)
+	c.Redirect(http.StatusFound, location)
 	return nil
+}
+
+// storedMediaTarget picks which of a copy's targets serves a viewer in country.
+func storedMediaTarget(targets []string, country string) string {
+	preferred := system_setting.MediaStorageTargetOverseas
+	if system_setting.GetMediaStorageSettings().IsMainlandCountry(country) {
+		preferred = system_setting.MediaStorageTargetMainland
+	}
+	if slices.Contains(targets, preferred) {
+		return preferred
+	}
+	return targets[0]
 }
 
 // mediaObjectURL addresses an object path-style (endpoint/bucket/key) or, for
@@ -293,6 +294,8 @@ type StoredMediaObject struct {
 	Target    string
 	MimeType  string
 	Size      int64
+	// ThumbnailKey is the object of the image's thumbnail, once stored.
+	ThumbnailKey string
 }
 
 // StoreGeneratedImage copies an image generated from the web console into
@@ -340,7 +343,7 @@ func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, na
 		common.SysLog(common.LogText("media upload of %s to %s: %d bytes in %s",
 			dir, targets[i], size, time.Since(uploadStart).Round(time.Millisecond)))
 		return StoredMediaObject{
-			URL:       strings.TrimRight(strings.TrimSpace(target.PublicURL), "/") + "/" + objectKey,
+			URL:       MediaObjectPublicURL(targets[i], objectKey),
 			ObjectKey: objectKey,
 			Target:    targets[i],
 			MimeType:  mimeType,

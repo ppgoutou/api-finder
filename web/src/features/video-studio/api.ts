@@ -84,6 +84,7 @@ export async function generateImages(
     return [
       {
         url,
+        ...(item.thumbnail_url ? { thumbnailUrl: item.thumbnail_url } : {}),
         ...(item.media_expires_at ? { expiresAt: item.media_expires_at } : {}),
         ...(item.task_id ? { taskId: item.task_id } : {}),
       },

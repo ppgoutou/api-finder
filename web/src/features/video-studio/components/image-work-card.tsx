@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { formatTimestamp } from '@/lib/format'
 
 import type { WorkRetention } from '../lib/work-retention'
+import { ImageViewer } from './image-viewer'
 import { WorkDownloadButton } from './work-download-button'
 import { WorkRetentionBadge } from './work-retention-badge'
 
@@ -37,17 +38,28 @@ export function ImageNotice(props: { children: ReactNode }) {
   )
 }
 
-/** One generated image with its download, or why it cannot be shown. */
+/**
+ * One generated image with its download, or why it cannot be shown. Clicking it
+ * opens the full image.
+ */
 export function WorkImage(props: {
   url: string
+  /** Small version to list; the full image stands in when it is missing. */
+  thumbnailUrl?: string
   alt: string
+  title: string
+  details: string[]
   filename: string
   expired: boolean
 }) {
   const { t } = useTranslation()
-  const [failedUrl, setFailedUrl] = useState('')
+  const [failedUrls, setFailedUrls] = useState<string[]>([])
+  const [viewing, setViewing] = useState(false)
+  const source = [props.thumbnailUrl, props.url].find(
+    (url) => url && !failedUrls.includes(url)
+  )
 
-  if (failedUrl === props.url) {
+  if (!source) {
     return (
       <ImageNotice>
         {props.expired
@@ -58,17 +70,36 @@ export function WorkImage(props: {
   }
   return (
     <>
-      <img
-        src={props.url}
-        alt={props.alt}
-        loading='lazy'
-        className='size-full object-contain'
-        onError={() => setFailedUrl(props.url)}
-      />
+      <Button
+        variant='plain'
+        size='inline'
+        className='block size-full cursor-zoom-in overflow-hidden'
+        aria-label={t('View full image')}
+        onClick={() => setViewing(true)}
+      >
+        <img
+          src={source}
+          alt={props.alt}
+          loading='lazy'
+          decoding='async'
+          className='size-full object-cover transition-transform duration-200 hover:scale-105 motion-reduce:transition-none'
+          onError={() => setFailedUrls((urls) => [...urls, source])}
+        />
+      </Button>
       <WorkDownloadButton
         url={props.url}
         filename={props.filename}
         label={t('Download image')}
+      />
+      <ImageViewer
+        open={viewing}
+        onOpenChange={setViewing}
+        url={props.url}
+        thumbnailUrl={source}
+        alt={props.alt}
+        title={props.title}
+        details={props.details}
+        filename={props.filename}
       />
     </>
   )
@@ -77,7 +108,7 @@ export function WorkImage(props: {
 /** An image work: its media over its prompt, details and actions. */
 export function ImageWorkCard(props: {
   title: string
-  /** Model and size, before the creation time. */
+  /** Model and size. */
   details: string[]
   /** Unix seconds. */
   createdAt: number
@@ -88,20 +119,31 @@ export function ImageWorkCard(props: {
   children: ReactNode
 }) {
   const { t } = useTranslation()
+  const details = props.details.filter(Boolean).join(' · ')
 
   return (
     <article className='bg-card border-border/60 overflow-hidden rounded-xl border'>
-      <div className='bg-muted/40 relative aspect-square'>
+      <div className='bg-muted/40 relative aspect-square overflow-hidden'>
         {props.children}
-        <WorkRetentionBadge retention={props.retention} now={props.now} />
+        <WorkRetentionBadge
+          retention={props.retention}
+          now={props.now}
+          className='top-auto bottom-2'
+        />
       </div>
-      <div className='flex flex-col gap-1 p-3'>
-        <p className='line-clamp-2 min-h-10 text-sm'>{props.title}</p>
-        <div className='flex items-center gap-2'>
-          <p className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
-            {[...props.details, formatTimestamp(props.createdAt)]
-              .filter(Boolean)
-              .join(' · ')}
+      <div className='flex flex-col p-2'>
+        <p className='truncate text-xs font-medium' title={props.title}>
+          {props.title}
+        </p>
+        <p
+          className='text-muted-foreground text-caption truncate'
+          title={details}
+        >
+          {details}
+        </p>
+        <div className='flex items-center gap-1'>
+          <p className='text-muted-foreground text-micro min-w-0 flex-1 truncate tabular-nums'>
+            {formatTimestamp(props.createdAt)}
           </p>
           {props.onEdit && (
             <Button

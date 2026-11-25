@@ -8731,6 +8731,7 @@
     "Final price after applying": "应用后最终价",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "供货价已包含令牌分组倍率。最终价按默认分组计算，已保存的价格调整保持不变。",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "{{name}} 的价格表里已没有这个模型，因此没有可应用的上游价格。当前价格保持不变。",
-    "The supplier's price list has no price for this model.": "供应商价格表里没有这个模型的价格。"
+    "The supplier's price list has no price for this model.": "供应商价格表里没有这个模型的价格。",
+    "View full image": "查看大图"
   }
 }

@@ -8731,6 +8731,7 @@
     "Final price after applying": "Итоговая цена после применения",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Цены поставки уже учитывают коэффициент группы ключа. Итоговые цены указаны для группы по умолчанию; сохранённые корректировки не меняются.",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "В прайс-листе {{name}} больше нет этой модели, поэтому применять нечего. Текущая цена не меняется.",
-    "The supplier's price list has no price for this model.": "В прайс-листе поставщика нет цены для этой модели."
+    "The supplier's price list has no price for this model.": "В прайс-листе поставщика нет цены для этой модели.",
+    "View full image": "Открыть изображение целиком"
   }
 }
