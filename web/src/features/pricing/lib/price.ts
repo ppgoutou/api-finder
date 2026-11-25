@@ -20,7 +20,12 @@ import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 
 import { QUOTA_TYPE_VALUES, TOKEN_UNIT_DIVISORS } from '../constants'
 import type { PricingModel, TokenUnit, PriceType } from '../types'
-import { getConfiguredGroupRatio, getDisplayGroupRatio } from './model-helpers'
+import {
+  getConfiguredGroupRatio,
+  getDisplayGroupRatio,
+  isImagePricingModel,
+} from './model-helpers'
+import { IMAGE_PRICE_FRACTION_DIGITS } from './video-pricing'
 
 // ----------------------------------------------------------------------------
 // Price Calculation Utilities
@@ -235,10 +240,15 @@ export function formatFixedPrice(
   )
 
   return formatBillingCurrencyFromUSD(priceInUSD, {
-    digitsLarge: 4,
-    digitsSmall: 4,
+    digitsLarge: requestPriceFractionDigits(model),
+    digitsSmall: requestPriceFractionDigits(model),
     abbreviate: false,
   })
+}
+
+/** Decimals of a price per request: image models keep three, others four. */
+export function requestPriceFractionDigits(model: PricingModel): number {
+  return isImagePricingModel(model) ? IMAGE_PRICE_FRACTION_DIGITS : 4
 }
 
 /**
@@ -269,8 +279,8 @@ export function formatRequestPrice(
 
   return formatBillingCurrencyFromUSD(priceInUSD, {
     showSymbol: showCurrencySymbol,
-    digitsLarge: 4,
-    digitsSmall: 4,
+    digitsLarge: requestPriceFractionDigits(model),
+    digitsSmall: requestPriceFractionDigits(model),
     abbreviate: false,
   })
 }

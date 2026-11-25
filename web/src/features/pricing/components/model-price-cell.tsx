@@ -33,6 +33,7 @@ import {
 import { isTokenBasedModel } from '../lib/model-helpers'
 import { formatPrice, formatRequestPrice } from '../lib/price'
 import { taskUsageUnitLabel } from '../lib/task-price-display'
+import { imagePriceFractionDigits } from '../lib/video-pricing'
 import type { PricingModel, TokenUnit } from '../types'
 
 export type ModelPriceCellOptions = {
@@ -69,6 +70,7 @@ export function ModelPriceCell(props: {
           props.model,
           options.selectedGroup
         ),
+        fractionDigits: imagePriceFractionDigits(props.model),
       }),
     // Currency is read indirectly by the price formatter.
     // eslint-disable-next-line react-hooks/exhaustive-deps

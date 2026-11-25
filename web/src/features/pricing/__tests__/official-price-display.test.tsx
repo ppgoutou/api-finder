@@ -18,10 +18,22 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, within } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import type { ReactNode } from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ModelDetailsContent } from '../components/model-details'
+import {
+  ModelDetailsContent,
+  type ModelDetailsContentProps,
+} from '../components/model-details'
+import type { VipPriceContext } from '../lib/vip-price'
 import type { PricingModel } from '../types'
+
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  Link: (props: { to: string; children: ReactNode }) => (
+    <a href={props.to}>{props.children}</a>
+  ),
+}))
 
 vi.mock('@visactor/react-vchart', () => ({ VChart: () => null }))
 
@@ -34,7 +46,10 @@ const tokenModel: PricingModel = {
   enable_groups: ['default'],
 }
 
-function renderDetails(model: PricingModel) {
+function renderDetails(
+  model: PricingModel,
+  overrides: Partial<ModelDetailsContentProps> = {}
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -49,6 +64,7 @@ function renderDetails(model: PricingModel) {
         priceRate={1}
         usdExchangeRate={1}
         tokenUnit='M'
+        {...overrides}
       />
     </QueryClientProvider>
   )
@@ -108,4 +124,115 @@ it('shows no throughput, latency or success rate above the pricing', () => {
   expect(screen.queryByText('TPS')).not.toBeInTheDocument()
   expect(screen.queryByText('Average latency')).not.toBeInTheDocument()
   expect(screen.queryByText('Success rate')).not.toBeInTheDocument()
+})
+
+describe('image model details', () => {
+  const imageModel: PricingModel = {
+    id: 2,
+    model_name: 'image-2.6',
+    quota_type: 0,
+    model_ratio: 1,
+    completion_ratio: 1,
+    billing_mode: 'tiered_expr',
+    billing_expr:
+      'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.04) : tier("4K", u("image_count") * 0.09)',
+    billing_usage_schema: {
+      image_count: { type: 'number', unit: 'count' },
+      resolution: { enum: ['1K', '4K'] },
+    },
+    supported_endpoint_types: ['image-generation'],
+    enable_groups: ['default', 'vip'],
+  }
+  const fixedPriceModel: PricingModel = {
+    id: 3,
+    model_name: 'gpt-image',
+    quota_type: 1,
+    model_ratio: 0,
+    completion_ratio: 0,
+    model_price: 0.04,
+    supported_endpoint_types: ['image-generation'],
+    enable_groups: ['default', 'vip'],
+  }
+  const visitorVip: VipPriceContext = {
+    pairs: [
+      { baseGroup: 'default', vipGroup: 'vip', baseRatio: 2, vipRatio: 1.8 },
+    ],
+    viewerVipGroup: 'vip',
+    isVip: false,
+  }
+  const bodyRows = () =>
+    within(screen.getByRole('region', { name: 'Price per image' }))
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) =>
+        within(row)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent)
+      )
+
+  it('lists the standard and VIP price of every resolution', () => {
+    renderDetails(imageModel, { vip: visitorVip })
+
+    expect(bodyRows()).toEqual([
+      ['1K', '$0.08', '$0.072', 'Save 10%'],
+      ['4K', '$0.18', '$0.162', 'Save 10%'],
+    ])
+    expect(
+      screen.getByRole('link', { name: 'Join VIP to get this price' })
+    ).toHaveAttribute('href', '/vip')
+    expect(screen.queryByText('Pricing by Group')).not.toBeInTheDocument()
+  })
+
+  it('shows one standard and VIP price for a fixed-price image model', () => {
+    renderDetails(fixedPriceModel, { vip: visitorVip })
+
+    expect(bodyRows()).toEqual([['$0.08', '$0.072', 'Save 10%']])
+    expect(
+      screen.getByRole('columnheader', { name: 'Standard price / request' })
+    ).toBeVisible()
+  })
+
+  it('shows only the standard price when the model has no VIP price', () => {
+    renderDetails(imageModel)
+
+    expect(bodyRows()).toEqual([
+      ['1K', '$0.08'],
+      ['4K', '$0.18'],
+    ])
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('never lists a VIP group as a standard group for a VIP viewer', () => {
+    renderDetails(imageModel, {
+      vip: { ...visitorVip, isVip: true },
+      groupRatio: { vip: 1.8 },
+      usableGroup: { vip: { desc: '', ratio: 1.8 } },
+    })
+
+    expect(bodyRows()).toEqual([
+      ['1K', '$0.08', '$0.072', 'Save 10%'],
+      ['4K', '$0.18', '$0.162', 'Save 10%'],
+    ])
+    expect(screen.getByText('Your price')).toBeInTheDocument()
+  })
+
+  it('gives every other group its own price and no VIP price', () => {
+    renderDetails(
+      { ...imageModel, enable_groups: ['default', 'vip', 'partner'] },
+      {
+        vip: visitorVip,
+        groupRatio: { default: 2, partner: 3 },
+        usableGroup: {
+          default: { desc: '', ratio: 2 },
+          partner: { desc: '', ratio: 3 },
+        },
+      }
+    )
+
+    const region = screen.getByRole('region', { name: 'Price per image' })
+    expect(within(region).getByText('partner')).toBeVisible()
+    const partner = within(region).getAllByRole('table')[1]
+    expect(within(partner).getByText('$0.12')).toBeVisible()
+    expect(within(partner).queryByText('VIP price / image')).toBeNull()
+  })
 })

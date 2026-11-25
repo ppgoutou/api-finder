@@ -64,8 +64,8 @@ export function videoTokensPerSecond(
 /** Video prices are shown rounded to two decimal places. */
 export const VIDEO_PRICE_FRACTION_DIGITS = 2
 
-/** Per-image prices keep the decimals per-request prices are shown with. */
-export const IMAGE_PRICE_FRACTION_DIGITS = 4
+/** Image prices are shown rounded to three decimal places. */
+export const IMAGE_PRICE_FRACTION_DIGITS = 3
 
 /** Output duration range, in seconds, the model's task plugin declares. */
 export function getModelDurationRange(
@@ -545,6 +545,15 @@ function countPricesByOption(
     return price === undefined ? [] : [{ option, price }]
   })
   return rows.length > 0 && rows.length === prices.size ? rows : null
+}
+
+/** Decimals of the prices of a model billed per image; unset for any other. */
+export function imagePriceFractionDigits(
+  model: Pick<PricingModel, 'billing_usage_schema'>
+): number | undefined {
+  return model.billing_usage_schema?.[IMAGE_COUNT_FIELD]
+    ? IMAGE_PRICE_FRACTION_DIGITS
+    : undefined
 }
 
 export type ImagePricing = {
