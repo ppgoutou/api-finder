@@ -67,6 +67,20 @@ func TestSystemTaskHistoryDatabaseMatrix(t *testing.T) {
 				{TaskID: "log-only-history", Type: SystemTaskTypeLogCleanup, Status: SystemTaskStatusSucceeded},
 			}
 			require.NoError(t, db.Create(&tasks).Error)
+
+			// The balance report estimates from results of past checks.
+			checks := []SystemTask{
+				{TaskID: "check-old", Type: SystemTaskTypeBalanceAlert, Status: SystemTaskStatusSucceeded, Result: "old", CreatedAt: 100},
+				{TaskID: "check-first", Type: SystemTaskTypeBalanceAlert, Status: SystemTaskStatusSucceeded, Result: "first", CreatedAt: 200},
+				{TaskID: "check-failed", Type: SystemTaskTypeBalanceAlert, Status: SystemTaskStatusFailed, Result: "failed", CreatedAt: 250},
+				{TaskID: "check-second", Type: SystemTaskTypeBalanceAlert, Status: SystemTaskStatusSucceeded, Result: "second", CreatedAt: 300},
+			}
+			require.NoError(t, db.Create(&checks).Error)
+			results, err := GetSystemTaskResultsSince(SystemTaskTypeBalanceAlert, 200)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"first", "second"}, results)
+			require.NoError(t, db.Where("type = ?", SystemTaskTypeBalanceAlert).Delete(&SystemTask{}).Error)
+
 			filter := SystemTaskFilter{Scope: "history", Type: SystemTaskTypeModelUpdate, Status: SystemTaskStatusFailed}
 			page, total, err := ListSystemTasks(filter, 1, 1)
 			require.NoError(t, err)

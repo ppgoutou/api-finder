@@ -69,6 +69,7 @@ const defaultOperationsSettings: OperationsSettings = {
   'balance_alert_setting.repeat_minutes': 0,
   'balance_alert_setting.report_enabled': false,
   'balance_alert_setting.report_minutes': 0,
+  'balance_alert_setting.payment_notice_enabled': true,
   'balance_alert_setting.monitors': '[]',
   'task_error_alert_setting.enabled': false,
   'task_error_alert_setting.merge_minutes': 10,

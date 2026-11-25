@@ -150,12 +150,21 @@ func LogQuota(quota int) string {
 }
 
 func FormatQuota(quota int) string {
+	return formatQuota(quota, 6)
+}
+
+// FormatQuotaCents is FormatQuota with two decimals, for amounts of money.
+func FormatQuotaCents(quota int) string {
+	return formatQuota(quota, 2)
+}
+
+func formatQuota(quota int, decimals int) string {
 	q := float64(quota)
 	switch operation_setting.GetQuotaDisplayType() {
 	case operation_setting.QuotaDisplayTypeCNY:
 		usd := q / common.QuotaPerUnit
 		cny := usd * operation_setting.USDExchangeRate
-		return fmt.Sprintf("¥%.6f", cny)
+		return fmt.Sprintf("¥%.*f", decimals, cny)
 	case operation_setting.QuotaDisplayTypeCustom:
 		usd := q / common.QuotaPerUnit
 		rate := operation_setting.GetGeneralSetting().CustomCurrencyExchangeRate
@@ -167,11 +176,11 @@ func FormatQuota(quota int) string {
 			rate = 1
 		}
 		v := usd * rate
-		return fmt.Sprintf("%s%.6f", symbol, v)
+		return fmt.Sprintf("%s%.*f", symbol, decimals, v)
 	case operation_setting.QuotaDisplayTypeTokens:
 		return fmt.Sprintf("%d", quota)
 	default:
-		return fmt.Sprintf("＄%.6f", q/common.QuotaPerUnit)
+		return fmt.Sprintf("＄%.*f", decimals, q/common.QuotaPerUnit)
 	}
 }
 

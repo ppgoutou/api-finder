@@ -138,7 +138,15 @@ balance_alert.low: "【{{.System}}】上游餘額不足\n管道：{{.Name}}（#{
 balance_alert.recovered: "【{{.System}}】上游餘額已恢復\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "【{{.System}}】上游餘額連續 {{.Count}} 次查詢失敗\n管道：{{.Name}}（#{{.Id}}）\n錯誤：{{.Error}}"
 balance_alert.test: "【{{.System}}】測試訊息：上游餘額提醒已接通。"
-balance_alert.report: "【{{.System}}】上游餘額播報\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n提醒門檻：{{.Threshold}} {{.Unit}}"
+balance_alert.report: "【{{.System}}】上游餘額播報\n管道：{{.Name}}（#{{.Id}}）\n目前餘額：{{.Balance}} {{.Unit}}\n預計使用時長：{{.Runway}}"
+balance_alert.runway_hours: "約 {{.Hours}} 小時"
+balance_alert.runway_idle: "近 24 小時無消耗"
+balance_alert.runway_unknown: "資料累積中"
+
+# 收款通知（飛書機器人）
+payment_notice.received: "【{{.System}}】收款通知\n使用者名稱：{{.Name}}\n儲值金額：{{.Amount}}\n儲值次數：第 {{.Count}} 次\n累計儲值：{{.Total}}\n已註冊：{{.Days}}"
+payment_notice.days: "{{.Days}} 天"
+payment_notice.unknown: "未知"
 
 # 任務報錯提醒（飛書機器人）
 task_error_alert.single: "【{{.System}}】{{.Level}}：{{.Category}}\n來源：{{.Source}}\n管道：{{.Channel}}\n模型：{{.Model}}\n使用者：{{.User}}\nID：{{.Ref}}\n類型：{{.Code}}\n錯誤：{{.Error}}"

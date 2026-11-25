@@ -194,6 +194,7 @@ func Redeem(key string, userId int) (quota int, err error) {
 	RecordLog(userId, LogTypeTopup, common.NewMessage("Topped up {{quota}} with a redemption code, code ID {{id}}", map[string]any{"quota": logger.FormatQuota(redemption.Quota), "id": redemption.Id}))
 	recordAffRebateLog(rebate)
 	announceMembershipChange(membership)
+	notifyPaymentReceived(userId, redemption.Quota)
 	return redemption.Quota, nil
 }
 

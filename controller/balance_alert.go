@@ -39,6 +39,80 @@ type balanceCheckResult struct {
 	Unit        string   `json:"unit"`
 	Raw         string   `json:"raw,omitempty"`
 	Error       string   `json:"error,omitempty"`
+	// upstream is the balance in the upstream's own unit, before Divisor.
+	upstream float64
+}
+
+// balanceReading is one balance kept in the check's task result, in the
+// upstream's own unit so a changed divisor does not look like spending.
+type balanceReading struct {
+	ChannelId int     `json:"channel_id"`
+	Upstream  float64 `json:"upstream"`
+	Time      int64   `json:"time"`
+}
+
+const (
+	// balanceRunwayWindow is how much spending history the remaining hours
+	// are estimated from.
+	balanceRunwayWindow = 24 * time.Hour
+	// balanceRunwayMinSeconds of history are needed before estimating.
+	balanceRunwayMinSeconds = 3600
+)
+
+// balanceRunway is how long a balance lasts at its recent spending rate.
+type balanceRunway struct {
+	// Known is false until there is enough history to estimate from.
+	Known bool
+	// Idle means nothing was spent, so the balance has no end in sight.
+	Idle  bool
+	Hours float64
+}
+
+// estimateBalanceRunway divides the last reading by the average spending
+// between one channel's readings, oldest first. An interval in which the
+// balance rose holds a top-up that hides what was spent, so it is left out.
+func estimateBalanceRunway(readings []balanceReading) balanceRunway {
+	var spent float64
+	var seconds int64
+	for i := 1; i < len(readings); i++ {
+		drop := readings[i-1].Upstream - readings[i].Upstream
+		if drop < 0 {
+			continue
+		}
+		spent += drop
+		seconds += readings[i].Time - readings[i-1].Time
+	}
+	if seconds < balanceRunwayMinSeconds {
+		return balanceRunway{}
+	}
+	if spent <= 0 {
+		return balanceRunway{Known: true, Idle: true}
+	}
+	balance := max(readings[len(readings)-1].Upstream, 0)
+	return balanceRunway{Known: true, Hours: balance / spent * float64(seconds) / 3600}
+}
+
+// loadBalanceReadings returns the readings of past checks since a time,
+// oldest first, by channel. Task results survive restarts and are shared by
+// every node.
+func loadBalanceReadings(since time.Time) (map[int][]balanceReading, error) {
+	results, err := model.GetSystemTaskResultsSince(model.SystemTaskTypeBalanceAlert, since.Unix())
+	if err != nil {
+		return nil, err
+	}
+	readings := map[int][]balanceReading{}
+	for _, result := range results {
+		var summary balanceAlertSummary
+		if err := common.UnmarshalJsonStr(result, &summary); err != nil {
+			continue
+		}
+		for _, reading := range summary.Readings {
+			if reading.Time >= since.Unix() {
+				readings[reading.ChannelId] = append(readings[reading.ChannelId], reading)
+			}
+		}
+	}
+	return readings, nil
 }
 
 // balanceAlertState remembers, per channel, what has already been sent so a
@@ -180,6 +254,7 @@ func fetchUpstreamBalance(ctx context.Context, monitor system_setting.BalanceAle
 	if (value.Type != gjson.Number && value.Type != gjson.String) || err != nil || math.IsNaN(balance) || math.IsInf(balance, 0) {
 		return result, 0, fmt.Errorf("field %q is not a number", field)
 	}
+	result.upstream = balance
 	balance = monitor.Convert(balance)
 	shown := math.Round(balance*100) / 100
 	result.Balance = &shown
@@ -190,7 +265,7 @@ func formatBalanceAmount(value float64) string {
 	return fmt.Sprintf("%.2f", value)
 }
 
-func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, checkErr error) string {
+func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, runway balanceRunway, checkErr error) string {
 	args := map[string]any{
 		"System":    common.SystemName,
 		"Name":      result.ChannelName,
@@ -208,6 +283,14 @@ func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, che
 	case balanceAlertRecovered:
 		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertRecovered, args)
 	case balanceAlertReport:
+		switch {
+		case !runway.Known:
+			args["Runway"] = i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertRunwayUnknown, nil)
+		case runway.Idle:
+			args["Runway"] = i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertRunwayIdle, nil)
+		default:
+			args["Runway"] = i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertRunwayHours, map[string]any{"Hours": fmt.Sprintf("%.1f", runway.Hours)})
+		}
 		return i18n.Translate(balanceAlertLanguage, i18n.MsgBalanceAlertReport, args)
 	default:
 		if checkErr != nil {
@@ -219,20 +302,30 @@ func balanceAlertMessage(event balanceAlertEvent, result balanceCheckResult, che
 
 // runBalanceAlertCheck checks every monitor and sends the Feishu messages
 // their results call for.
-func runBalanceAlertCheck(ctx context.Context) []balanceCheckResult {
+func runBalanceAlertCheck(ctx context.Context) balanceAlertSummary {
 	settings := system_setting.GetBalanceAlertSettings()
 	repeat := settings.RepeatInterval()
 
-	results := make([]balanceCheckResult, 0, len(settings.Monitors))
+	summary := balanceAlertSummary{Readings: []balanceReading{}}
+	history, err := loadBalanceReadings(time.Now().Add(-balanceRunwayWindow))
+	if err != nil {
+		common.SysLog(common.LogText("failed to load upstream balance history: %s", err.Error()))
+	}
 	for _, monitor := range settings.Monitors {
 		if ctx.Err() != nil {
 			break
 		}
 		result, balance, checkErr := fetchUpstreamBalance(ctx, monitor)
+		now := time.Now()
+		summary.Checked++
+		var runway balanceRunway
 		if checkErr != nil {
-			result.Error = checkErr.Error()
+			summary.Failed++
+		} else {
+			reading := balanceReading{ChannelId: monitor.ChannelId, Upstream: result.upstream, Time: now.Unix()}
+			summary.Readings = append(summary.Readings, reading)
+			runway = estimateBalanceRunway(append(history[monitor.ChannelId], reading))
 		}
-		results = append(results, result)
 
 		balanceAlertStatesMu.Lock()
 		state, ok := balanceAlertStates[monitor.ChannelId]
@@ -245,17 +338,17 @@ func runBalanceAlertCheck(ctx context.Context) []balanceCheckResult {
 			Repeat:      repeat,
 			Report:      settings.ReportEnabled,
 			ReportEvery: time.Duration(max(settings.ReportMinutes, 0)) * time.Minute,
-		}, time.Now())
+		}, now)
 		balanceAlertStatesMu.Unlock()
 		if event == balanceAlertNone {
 			continue
 		}
-		text := balanceAlertMessage(event, result, checkErr)
+		text := balanceAlertMessage(event, result, runway, checkErr)
 		if err := service.SendFeishuText(settings.FeishuWebhookURL, settings.FeishuSignSecret, text); err != nil {
 			common.SysLog(common.LogText("failed to send balance alert for channel %d: %s", monitor.ChannelId, err.Error()))
 		}
 	}
-	return results
+	return summary
 }
 
 // balanceAlertHandler runs the upstream balance check on a schedule while
@@ -280,18 +373,13 @@ func (balanceAlertHandler) Interval() time.Duration {
 func (balanceAlertHandler) NewPayload() any { return nil }
 
 type balanceAlertSummary struct {
-	Checked int `json:"checked"`
-	Failed  int `json:"failed"`
+	Checked  int              `json:"checked"`
+	Failed   int              `json:"failed"`
+	Readings []balanceReading `json:"readings"`
 }
 
 func (balanceAlertHandler) Run(ctx context.Context, task *model.SystemTask, runnerID string) {
-	summary := balanceAlertSummary{}
-	for _, result := range runBalanceAlertCheck(ctx) {
-		summary.Checked++
-		if result.Error != "" {
-			summary.Failed++
-		}
-	}
+	summary := runBalanceAlertCheck(ctx)
 	finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusSucceeded, summary, nil)
 }
 

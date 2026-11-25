@@ -47,10 +47,13 @@ type BalanceAlertSettings struct {
 	RepeatMinutes int  `json:"repeat_minutes"`
 	ReportEnabled bool `json:"report_enabled"`
 	// ReportMinutes spaces routine reports; 0 sends one on every check.
-	ReportMinutes    int                   `json:"report_minutes"`
-	FeishuWebhookURL string                `json:"feishu_webhook_url"`
-	FeishuSignSecret string                `json:"feishu_sign_secret"`
-	Monitors         []BalanceAlertMonitor `json:"monitors"`
+	ReportMinutes    int    `json:"report_minutes"`
+	FeishuWebhookURL string `json:"feishu_webhook_url"`
+	FeishuSignSecret string `json:"feishu_sign_secret"`
+	// PaymentNoticeEnabled sends a message for every payment received. It
+	// does not need Enabled.
+	PaymentNoticeEnabled bool                  `json:"payment_notice_enabled"`
+	Monitors             []BalanceAlertMonitor `json:"monitors"`
 }
 
 const (
@@ -62,6 +65,8 @@ var balanceAlertSettings = BalanceAlertSettings{
 	IntervalMinutes: DefaultBalanceAlertIntervalMinutes,
 	RepeatHours:     DefaultBalanceAlertRepeatHours,
 	Monitors:        []BalanceAlertMonitor{},
+
+	PaymentNoticeEnabled: true,
 }
 
 func init() {

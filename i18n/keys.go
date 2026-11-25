@@ -84,6 +84,17 @@ const (
 	MsgBalanceAlertCheckFailed = "balance_alert.check_failed"
 	MsgBalanceAlertTest        = "balance_alert.test"
 	MsgBalanceAlertReport      = "balance_alert.report"
+
+	MsgBalanceAlertRunwayHours   = "balance_alert.runway_hours"
+	MsgBalanceAlertRunwayIdle    = "balance_alert.runway_idle"
+	MsgBalanceAlertRunwayUnknown = "balance_alert.runway_unknown"
+)
+
+// Payment notices sent to the balance alert's Feishu bot, always in zh-CN
+const (
+	MsgPaymentNotice        = "payment_notice.received"
+	MsgPaymentNoticeDays    = "payment_notice.days"
+	MsgPaymentNoticeUnknown = "payment_notice.unknown"
 )
 
 // Task error alerts sent to the balance alert's Feishu bot, always in zh-CN.

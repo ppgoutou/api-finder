@@ -61,9 +61,20 @@ var (
 // quota credited. Repeated payment callbacks and reversals do not call it.
 var TopUpCompletedHook func(userId int, tradeNo string)
 
-func notifyTopUpCompleted(userId int, tradeNo string) {
+// PaymentReceivedHook, when set, runs after money from a user was credited as
+// quota: a paid order, each USDT transfer batch, or a redemption code.
+var PaymentReceivedHook func(userId int, quota int)
+
+func notifyTopUpCompleted(userId int, tradeNo string, quota int) {
 	if TopUpCompletedHook != nil {
 		TopUpCompletedHook(userId, tradeNo)
+	}
+	notifyPaymentReceived(userId, quota)
+}
+
+func notifyPaymentReceived(userId int, quota int) {
+	if PaymentReceivedHook != nil && quota > 0 {
+		PaymentReceivedHook(userId, quota)
 	}
 }
 
@@ -258,7 +269,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 	RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentProviderEpay)
 	recordAffRebateLog(rebate)
 	announceMembershipChange(membership)
-	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, quotaToAdd)
 	return false, nil
 }
 
@@ -326,7 +337,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 	RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quota), "amount": topUp.Amount}), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
 	recordAffRebateLog(rebate)
 	announceMembershipChange(membership)
-	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, quota)
 
 	return nil
 }
@@ -745,7 +756,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	RecordTopupLog(userId, common.NewMessage("Administrator completed the order, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%f", payMoney)}), callerIp, paymentMethod, "admin")
 	recordAffRebateLog(rebate)
 	announceMembershipChange(membership)
-	notifyTopUpCompleted(userId, tradeNo)
+	notifyTopUpCompleted(userId, tradeNo, quotaToAdd)
 	return nil
 }
 func RechargeCreem(referenceId string, customerEmail string, customerName string, callerIp string) (err error) {
@@ -828,7 +839,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	RecordTopupLog(topUp.UserId, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Creem", "quota": quota, "amount": fmt.Sprintf("%.2f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentMethodCreem)
 	recordAffRebateLog(rebate)
 	announceMembershipChange(membership)
-	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+	notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, quota)
 
 	return nil
 }
@@ -901,7 +912,7 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 		RecordTopupLog(topUp.UserId, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Waffo", "quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%.2f", topUp.Money)}), callerIp, topUp.PaymentMethod, PaymentMethodWaffo)
 		recordAffRebateLog(rebate)
 		announceMembershipChange(membership)
-		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, quotaToAdd)
 	}
 
 	return nil
@@ -975,7 +986,7 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 		RecordLog(topUp.UserId, LogTypeTopup, common.NewMessage("{{provider}} top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"provider": "Waffo Pancake", "quota": logger.FormatQuota(quotaToAdd), "amount": fmt.Sprintf("%.2f", topUp.Money)}))
 		recordAffRebateLog(rebate)
 		announceMembershipChange(membership)
-		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, quotaToAdd)
 	}
 
 	return nil

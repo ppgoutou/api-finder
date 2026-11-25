@@ -83,6 +83,8 @@ const OPERATIONS_SECTIONS = [
           report_enabled:
             settings['balance_alert_setting.report_enabled'] ?? false,
           report_minutes: settings['balance_alert_setting.report_minutes'] ?? 0,
+          payment_notice_enabled:
+            settings['balance_alert_setting.payment_notice_enabled'] ?? true,
           monitors: parseBalanceAlertMonitors(
             settings['balance_alert_setting.monitors']
           ),

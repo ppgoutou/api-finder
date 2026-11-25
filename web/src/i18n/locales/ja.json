@@ -1,6 +1,8 @@
 {
   "translation": {
     "Hourly task report": "毎時タスク統計",
+    "Send payment notices": "入金通知を送信",
+    "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "引き換えコードを含む入金ごとに、ユーザー名、チャージ額、チャージ回数、累計チャージ額、登録からの日数を送信します。残高アラートを有効にしなくても動作します。",
     "Send an hourly task report": "毎時タスク統計を送信",
     "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "毎正時に、直前1時間のタスク数・成功率・失敗件数と主な失敗原因を送信します。上流残高通知の Feishu ボットを使い、上のスイッチがオフでも動作します。",
     "Report every (minutes)": "レポート間隔（分）",

@@ -39,6 +39,7 @@ const SAVED: BalanceAlertFormValues = {
   repeat_minutes: 360,
   report_enabled: false,
   report_minutes: 0,
+  payment_notice_enabled: true,
   monitors: [],
 }
 
@@ -219,5 +220,19 @@ test('turning on reports every 180 minutes with a 30 minute repeat saves all thr
   expect(api.put).toHaveBeenCalledWith('/api/option/', {
     key: 'balance_alert_setting.report_enabled',
     value: true,
+  })
+})
+
+test('turning off payment notices saves only that option', async () => {
+  const user = userEvent.setup()
+  renderSettings()
+
+  await user.click(screen.getByRole('switch', { name: 'Send payment notices' }))
+  await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(1))
+  expect(api.put).toHaveBeenCalledWith('/api/option/', {
+    key: 'balance_alert_setting.payment_notice_enabled',
+    value: false,
   })
 })
