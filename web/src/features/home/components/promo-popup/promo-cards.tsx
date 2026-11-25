@@ -452,7 +452,7 @@ function VipPromoCard(props: PromoCardProps) {
         >
           {card.title || headline}
         </h3>
-        {rule && <p className='mt-2 text-sm text-white/85'>{rule}</p>}
+        {rule && <p className='mt-2 text-sm text-white/95'>{rule}</p>}
       </div>
       <div className={BODY_CLASS}>
         <div className='min-h-0 flex-1 overflow-y-auto'>

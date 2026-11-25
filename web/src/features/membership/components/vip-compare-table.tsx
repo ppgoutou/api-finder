@@ -54,7 +54,7 @@ export function VipCompareTable(props: VipCompareTableProps) {
     {
       id: 'label',
       header: t('Benefit'),
-      className: 'w-[24%] text-xs text-white/40 sm:w-[26%]',
+      className: 'w-[24%] text-xs text-white/60 sm:w-[26%]',
       cellClassName: 'py-2.5 align-top whitespace-normal',
       cell: (row) => (
         <span className='flex items-center gap-2 text-white/55'>
@@ -70,7 +70,7 @@ export function VipCompareTable(props: VipCompareTableProps) {
     {
       id: 'standard',
       header: t('Standard'),
-      className: 'w-[33%] text-xs text-white/40 sm:w-[34%]',
+      className: 'w-[33%] text-xs text-white/60 sm:w-[34%]',
       cellClassName: 'py-2.5 align-top whitespace-normal',
       cell: (row) => (
         <span className='flex items-start gap-1.5 text-white/55'>

@@ -279,7 +279,7 @@ function VipPageContent(props: { info: MembershipInfo }) {
                 >
                   <span
                     className={cn(
-                      'text-4xl leading-none text-white/20',
+                      'text-4xl leading-none text-white/40',
                       VIP_DISPLAY_FONT,
                       index === steps.length - 1 && VIP_NIGHT_TEXT
                     )}
