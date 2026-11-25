@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
+import { createServerError } from '@/lib/server-error-message'
 
 import type {
   GeneratedImage,
@@ -92,6 +93,15 @@ export async function generateImages(
   })
   if (images.length === 0) throw new Error('Image generation failed')
   return images
+}
+
+/** Deletes the prompt and settings the server kept with a task. */
+export async function deleteTaskPrompt(taskId: string) {
+  const res = await api.delete<{ success: boolean; message?: string }>(
+    `/api/task/${encodeURIComponent(taskId)}/prompt`,
+    { skipErrorHandler: true }
+  )
+  if (!res.data.success) throw createServerError(res.data)
 }
 
 /**

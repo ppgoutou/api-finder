@@ -350,6 +350,9 @@ export interface TaskLog {
     input?: string
     upstream_model_name?: string
     origin_model_name?: string
+    // JSON of what the owner submitted on the creation page, in the owner's
+    // own list and only when the site keeps it.
+    console_request?: string
   }
   legacy_video_available?: boolean
   // A synchronous result returned inline and never persisted; artifact

@@ -19,6 +19,7 @@ import (
 	"github.com/QuantumNous/new-api/relay"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
@@ -492,6 +493,90 @@ func TestExecuteTaskSubmissionDisconnectAfterDurableInsertDoesNotRefund(t *testi
 	require.NoError(t, database.Model(&model.Task{}).Where("task_id = ?", "task_public").Count(&count).Error)
 	assert.Equal(t, int64(1), count)
 	assert.False(t, c.Writer.Written())
+}
+
+// The prompt of a creation page task is kept only while the setting is on, only
+// in the form the page sends, for its owner alone, until the owner deletes it.
+func TestConsoleTaskRequestIsKeptForItsOwner(t *testing.T) {
+	const prompt = "@图片1 在海边 🌊 \"quoted\""
+	studioBody, err := common.Marshal(map[string]any{
+		"model": "plugin-model", "prompt": prompt, "seconds": 5, "resolution": "720p", "ratio": "9:16",
+		"images": []string{"https://site.example/cat.png"}, "group": "dropped",
+	})
+	require.NoError(t, err)
+	cases := []struct {
+		name       string
+		enabled    bool
+		playground bool
+		body       string
+		wantPrompt string
+	}{
+		{"kept for a creation page request", true, true, string(studioBody), prompt},
+		{"not kept while the setting is off", false, true, string(studioBody), ""},
+		{"not kept for an API request", true, false, string(studioBody), ""},
+		{"not kept with an inline file", true, true, `{"model":"m","prompt":"p","images":["data:image/png;base64,AAAA"]}`, ""},
+		{"not kept in another form", true, true, `{"model":"m","prompt":"p","seconds":"5"}`, ""},
+		{"not kept past the size limit", true, true, `{"model":"m","prompt":"` + strings.Repeat("a", 70<<10) + `"}`, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			events := []string{}
+			database := setupTaskSubmissionDatabase(t, true, &events)
+			previousLogConsumeEnabled := common.LogConsumeEnabled
+			common.LogConsumeEnabled = false
+			legal := system_setting.GetLegalSettings()
+			previousStore := legal.StorePrompts
+			legal.StorePrompts = tc.enabled
+			t.Cleanup(func() {
+				common.LogConsumeEnabled = previousLogConsumeEnabled
+				legal.StorePrompts = previousStore
+			})
+			c := taskSubmissionTestContext()
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", strings.NewReader(tc.body))
+			c.Request.Header.Set("Content-Type", "application/json")
+			info := taskSubmissionRelayInfo(&taskSubmissionTestBilling{events: &events})
+			info.IsPlayground = tc.playground
+			_, taskErr := executeTaskSubmissionWith(c, info, func(*gin.Context, *relaycommon.RelayInfo) (*relay.TaskSubmitResult, *dto.TaskError) {
+				return &relay.TaskSubmitResult{UpstreamTaskID: "up", Platform: "plugin"}, nil
+			})
+			require.Nil(t, taskErr)
+
+			var stored model.Task
+			require.NoError(t, database.Where("task_id = ?", "task_public").First(&stored).Error)
+			assert.Equal(t, tc.wantPrompt, stored.Properties.Input)
+			if tc.wantPrompt == "" {
+				assert.Empty(t, stored.Properties.ConsoleRequest)
+				return
+			}
+			assert.JSONEq(t, `{"model":"plugin-model","prompt":"@图片1 在海边 🌊 \"quoted\"","seconds":5,"resolution":"720p","ratio":"9:16","images":["https://site.example/cat.png"]}`, stored.Properties.ConsoleRequest)
+
+			ownerView := tasksToDto([]*model.Task{&stored}, false, common.RoleCommonUser)[0]
+			assert.Equal(t, stored.Properties.ConsoleRequest, ownerView.Properties.(model.Properties).ConsoleRequest)
+			adminView, err := common.Marshal(tasksToDto([]*model.Task{&stored}, false, common.RoleRootUser)[0])
+			require.NoError(t, err)
+			assert.NotContains(t, string(adminView), "海边")
+			assert.Contains(t, string(adminView), "plugin-model")
+
+			// Another user cannot delete it.
+			exist, err := model.ClearTaskPrompt(stored.UserId+1, stored.TaskID)
+			require.NoError(t, err)
+			assert.False(t, exist)
+			// A poll that read the task before the deletion does not restore it.
+			stale := stored
+			exist, err = model.ClearTaskPrompt(stored.UserId, stored.TaskID)
+			require.NoError(t, err)
+			assert.True(t, exist)
+			fromStatus := stale.Status
+			stale.Status = model.TaskStatusInProgress
+			won, err := stale.UpdateWithStatus(fromStatus)
+			require.NoError(t, err)
+			assert.True(t, won)
+			var cleared model.Task
+			require.NoError(t, database.Where("task_id = ?", "task_public").First(&cleared).Error)
+			assert.Equal(t, model.TaskStatus(model.TaskStatusInProgress), cleared.Status)
+			assert.Equal(t, model.Properties{OriginModelName: stored.Properties.OriginModelName, UpstreamModelName: stored.Properties.UpstreamModelName}, cleared.Properties)
+		})
+	}
 }
 
 // setupTaskSubmissionDatabase opens the dialect selected by

@@ -8772,6 +8772,11 @@
     "Your video is ready": "Video của bạn đã sẵn sàng",
     "{{count}} generating": "Đang tạo {{count}}",
     "{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.": "{{name}} nặng {{size}} MB. Giới hạn: ảnh 10 MB, video 50 MB, âm thanh 15 MB.",
-    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}} giây · tối đa {{resolution}}"
+    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}} giây · tối đa {{resolution}}",
+    "Could not delete the work": "Không thể xóa tác phẩm",
+    "Keep creation prompts": "Lưu prompt sáng tạo",
+    "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.": "Lưu prompt và cài đặt của tác phẩm để xem trên mọi thiết bị. Chỉ bật sau khi chính sách quyền riêng tư nêu rõ và hết thời hạn thông báo.",
+    "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "Video bị xóa khỏi tác phẩm của bạn trong trình duyệt này, và prompt cũng bị xóa khỏi máy chủ nếu đang được lưu. Bản ghi sử dụng vẫn được giữ.",
+    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "Ảnh bị xóa khỏi tác phẩm của bạn trong trình duyệt này, và prompt cũng bị xóa khỏi máy chủ nếu đang được lưu. Bản ghi sử dụng vẫn được giữ."
   }
 }

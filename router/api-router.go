@@ -408,6 +408,7 @@ func SetApiRouter(router *gin.Engine) {
 			taskRoute.GET("/self", middleware.UserAuth(), controller.GetUserTask)
 			taskRoute.GET("", middleware.AdminAuth(), controller.GetAllTask)
 			taskRoute.GET("/:task_id/artifacts", middleware.UserAuth(), controller.GetDashboardTaskArtifacts)
+			taskRoute.DELETE("/:task_id/prompt", middleware.UserAuth(), controller.DeleteUserTaskPrompt)
 		}
 
 		vendorRoute := apiRouter.Group("/vendors")

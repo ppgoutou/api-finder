@@ -155,6 +155,7 @@ export type SiteSettings = {
   'general_setting.docs_link': string
   'legal.user_agreement': string
   'legal.privacy_policy': string
+  'legal.store_prompts': boolean
   'legal.refund_policy': string
   HeaderNavModules: string
   SidebarModulesAdmin: string

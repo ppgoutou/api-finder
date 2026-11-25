@@ -25,6 +25,9 @@ import type { TaskLog } from '@/features/usage-logs/types'
 import { translateServerText } from '@/lib/server-error-message'
 
 import { useWorkArtifacts } from '../hooks/use-work-artifacts'
+import { consoleRequestOf } from '../lib/console-request'
+import { restoredAssets } from '../lib/draft'
+import { localizeMentions } from '../lib/mention-names'
 import { taskStage } from '../lib/work-progress'
 import { taskRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
@@ -42,7 +45,7 @@ export function ImageTaskCards(props: {
   onEdit?: (draft: Partial<StudioDraft>, size: string) => void
   onDelete: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const displayName = useModelDisplayName()
   const task = props.task
   const succeeded = task.status === TASK_STATUS.SUCCESS
@@ -60,10 +63,26 @@ export function ImageTaskCards(props: {
   }
   const model = task.properties?.origin_model_name
   const retention = taskRetention(task, props.now)
-  const title = t('Image task')
-  const details = model ? [displayName(model)] : []
+  const kept = consoleRequestOf(task)
+  const title = kept
+    ? localizeMentions(kept.prompt, i18n.resolvedLanguage || i18n.language)
+    : t('Image task')
+  const shape = [kept?.size, kept?.aspect_ratio].filter(Boolean).join(' ')
+  const details = [model ? displayName(model) : '', shape.replace('x', '×')]
   const onEdit =
-    props.onEdit && model ? () => props.onEdit?.({ model }, '') : undefined
+    props.onEdit && model
+      ? () =>
+          props.onEdit?.(
+            kept
+              ? {
+                  model: kept.model,
+                  prompt: kept.prompt,
+                  references: restoredAssets('image', kept.image ?? []),
+                }
+              : { model },
+            shape
+          )
+      : undefined
 
   let state = (
     <WorkProgress

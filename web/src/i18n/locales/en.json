@@ -8772,6 +8772,11 @@
     "Your video is ready": "Your video is ready",
     "{{count}} generating": "{{count}} generating",
     "{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.": "{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.",
-    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}}s · up to {{resolution}}"
+    "{{shortest}}–{{longest}}s · up to {{resolution}}": "{{shortest}}–{{longest}}s · up to {{resolution}}",
+    "Could not delete the work": "Could not delete the work",
+    "Keep creation prompts": "Keep creation prompts",
+    "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.": "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.",
+    "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.",
+    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept."
   }
 }

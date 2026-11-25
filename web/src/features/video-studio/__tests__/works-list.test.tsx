@@ -25,11 +25,14 @@ import { getTaskArtifacts, getUserTaskLogs } from '@/features/usage-logs/api'
 import type { TaskLog } from '@/features/usage-logs/types'
 import { useStudioPending } from '@/stores/studio-pending-store'
 
-import { createVideoTask } from '../api'
+import { createVideoTask, deleteTaskPrompt } from '../api'
 import { WorksList } from '../components/works-list'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 
-vi.mock('../api', () => ({ createVideoTask: vi.fn() }))
+vi.mock('../api', () => ({
+  createVideoTask: vi.fn(),
+  deleteTaskPrompt: vi.fn(),
+}))
 vi.mock('@/features/pricing/hooks', () => ({
   useModelDisplayName: () => (name: string) => name,
 }))
@@ -379,5 +382,81 @@ describe('WorksList', () => {
     expect(screen.getAllByRole('article')).toHaveLength(1)
     await user.type(screen.getByRole('searchbox'), ' nothing')
     expect(screen.getByText('No works match')).toBeInTheDocument()
+  })
+
+  function keptTask(taskId: string): TaskLog {
+    return {
+      ...failedTask(taskId, 'seedance-2.5'),
+      properties: {
+        origin_model_name: 'seedance-2.5',
+        console_request: JSON.stringify(REQUEST),
+      },
+    }
+  }
+
+  async function confirmDelete(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', {
+        name: 'Delete',
+      })
+    )
+  }
+
+  it('names and reloads a work from what the server kept when this browser knows nothing', async () => {
+    listTasks([keptTask('task_1')])
+    const onEdit = vi.fn()
+    const user = userEvent.setup()
+    renderList(onEdit)
+
+    expect(await screen.findByText('a cat in @Image1')).toBeInTheDocument()
+    expect(screen.getByText(/^seedance-2\.5 · 1080p · 8s/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Edit again' }))
+    expect(onEdit.mock.calls[0][0]).toMatchObject({
+      prompt: REQUEST.prompt,
+      seconds: 8,
+      resolution: '1080p',
+    })
+  })
+
+  it('ignores a kept request it cannot read', async () => {
+    listTasks([
+      {
+        ...keptTask('task_1'),
+        properties: { origin_model_name: 'seedance-2.0', console_request: '{' },
+      },
+    ])
+    renderList(vi.fn())
+
+    expect(
+      await within(await screen.findByRole('article')).findByTitle(
+        'seedance-2.0'
+      )
+    ).toBeInTheDocument()
+  })
+
+  it('deletes the prompt kept on the server along with the work', async () => {
+    listTasks([keptTask('task_1')])
+    const user = userEvent.setup()
+    renderList(vi.fn())
+
+    await confirmDelete(user)
+
+    expect(await screen.findByText('No videos yet')).toBeInTheDocument()
+    expect(deleteTaskPrompt).toHaveBeenCalledWith('task_1')
+  })
+
+  it('keeps the work listed when the server could not delete its prompt', async () => {
+    vi.mocked(deleteTaskPrompt).mockRejectedValueOnce(new Error('offline'))
+    listTasks([keptTask('task_1')])
+    const user = userEvent.setup()
+    renderList(vi.fn())
+
+    await confirmDelete(user)
+
+    await waitFor(() => expect(deleteTaskPrompt).toHaveBeenCalledOnce())
+    expect(
+      await screen.findByRole('button', { name: 'Edit again' })
+    ).toBeInTheDocument()
   })
 })

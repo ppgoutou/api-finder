@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import type { TaskLog } from '@/features/usage-logs/types'
 
+import { consoleRequestOf, videoRequestOf } from '../lib/console-request'
 import { localizeMentions } from '../lib/mention-names'
 import { recallTaskPrompt } from '../lib/prompt-history'
 import type { VideoTaskRequest } from '../types'
@@ -36,22 +37,40 @@ export interface WorkText {
   request?: VideoTaskRequest
 }
 
-/** Reads how a work is named from what this browser remembers of it. */
+/**
+ * Reads how a work is named from what this browser remembers of it, else from
+ * what the server kept with the task.
+ */
 export function useWorkText(): (task: TaskLog) => WorkText {
   const { t, i18n } = useTranslation()
   const displayName = useModelDisplayName()
 
   return (task) => {
-    const remembered = recallTaskPrompt(task.task_id)
+    const kept = consoleRequestOf(task)
+    const keptVideo = videoRequestOf(kept)
+    const remembered = recallTaskPrompt(task.task_id) ?? {
+      prompt: kept?.prompt ?? '',
+      spec: keptVideo
+        ? [
+            keptVideo.model,
+            keptVideo.ratio,
+            keptVideo.resolution,
+            t('{{seconds}}s', { seconds: keptVideo.seconds }),
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        : '',
+      request: keptVideo ?? undefined,
+    }
     const model = task.properties?.origin_model_name
     const modelName = model ? displayName(model) : ''
     // The remembered spec starts with the model ID it was submitted with.
-    const specModel = remembered?.request?.model ?? model
-    let spec = remembered?.spec || modelName
-    if (specModel && remembered?.spec.startsWith(specModel)) {
+    const specModel = remembered.request?.model ?? model
+    let spec = remembered.spec || modelName
+    if (specModel && remembered.spec.startsWith(specModel)) {
       spec = displayName(specModel) + remembered.spec.slice(specModel.length)
     }
-    const prompt = remembered?.prompt
+    const prompt = remembered.prompt
       ? localizeMentions(
           remembered.prompt,
           i18n.resolvedLanguage || i18n.language
@@ -62,7 +81,7 @@ export function useWorkText(): (task: TaskLog) => WorkText {
       prompt,
       spec: spec || task.task_id,
       model,
-      request: remembered?.request,
+      request: remembered.request,
     }
   }
 }

@@ -32,6 +32,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { LANGUAGE_BLOCKS_HINT } from '@/lib/language-blocks'
 
 import { FormDirtyIndicator } from '../components/form-dirty-indicator'
@@ -40,6 +41,8 @@ import {
   SettingsForm,
   SettingsFormGrid,
   SettingsFormGridItem,
+  SettingsSwitchContent,
+  SettingsSwitchItem,
 } from '../components/settings-form-layout'
 import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
@@ -61,6 +64,7 @@ const _systemInfoSchema = z.object({
   legal: z.object({
     user_agreement: z.string().optional(),
     privacy_policy: z.string().optional(),
+    store_prompts: z.boolean(),
     refund_policy: z.string().optional(),
   }),
 })
@@ -94,6 +98,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
     legal: {
       user_agreement: normalizeValue(defaultValues.legal?.user_agreement),
       privacy_policy: normalizeValue(defaultValues.legal?.privacy_policy),
+      store_prompts: Boolean(defaultValues.legal?.store_prompts),
       refund_policy: normalizeValue(defaultValues.legal?.refund_policy),
     },
   }
@@ -119,6 +124,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
     legal: z.object({
       user_agreement: z.string().optional(),
       privacy_policy: z.string().optional(),
+      store_prompts: z.boolean(),
       refund_policy: z.string().optional(),
     }),
   })
@@ -383,6 +389,29 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='legal.store_prompts'
+                render={({ field }) => (
+                  <SettingsSwitchItem>
+                    <SettingsSwitchContent>
+                      <FormLabel>{t('Keep creation prompts')}</FormLabel>
+                      <FormDescription>
+                        {t(
+                          'Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.'
+                        )}
+                      </FormDescription>
+                    </SettingsSwitchContent>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </SettingsSwitchItem>
                 )}
               />
 
