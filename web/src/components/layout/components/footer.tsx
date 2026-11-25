@@ -134,7 +134,7 @@ function LegalLinks(props: { leadingSeparator?: boolean }) {
 function ProjectAttribution(props: { currentYear: number; inline?: boolean }) {
   const { t } = useTranslation()
   const content = (
-    <span className='text-muted-foreground/45'>
+    <span className='text-muted-foreground'>
       &copy; {props.currentYear}{' '}
       <a
         href='https://github.com/QuantumNous/new-api'
@@ -151,7 +151,7 @@ function ProjectAttribution(props: { currentYear: number; inline?: boolean }) {
     return content
   }
   return (
-    <div className='text-muted-foreground/45 text-center text-xs sm:text-right'>
+    <div className='text-muted-foreground text-center text-xs sm:text-right'>
       {content}
     </div>
   )
@@ -248,7 +248,7 @@ export function Footer(props: FooterProps) {
               className='custom-footer text-muted-foreground min-w-0 text-center text-sm sm:text-left'
               dangerouslySetInnerHTML={{ __html: footerHtml }}
             />
-            <div className='border-border/60 text-muted-foreground/45 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t pt-4 text-xs sm:w-auto sm:justify-end sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5'>
+            <div className='border-border/60 text-muted-foreground flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t pt-4 text-xs sm:w-auto sm:justify-end sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5'>
               <LegalLinks />
               <ProjectAttribution currentYear={currentYear} inline />
             </div>
@@ -276,7 +276,7 @@ export function Footer(props: FooterProps) {
                 {displayName}
               </span>
             </Link>
-            <p className='text-muted-foreground/60 mt-3 max-w-[200px] text-xs leading-relaxed'>
+            <p className='text-muted-foreground mt-3 max-w-[200px] text-xs leading-relaxed'>
               {t('Powerful API Management Platform')}
             </p>
           </div>
@@ -286,7 +286,7 @@ export function Footer(props: FooterProps) {
             <div className='grid grid-cols-3 gap-8 md:gap-16'>
               {displayColumns.map((column) => (
                 <div key={column.title}>
-                  <p className='text-muted-foreground/50 text-eyebrow mb-3 uppercase'>
+                  <p className='text-muted-foreground text-eyebrow mb-3 uppercase'>
                     {t(column.title)}
                   </p>
                   <ul className='space-y-2.5'>
@@ -305,7 +305,7 @@ export function Footer(props: FooterProps) {
         {/* Copyright + optional legal links inline on the left, project
             attribution on the right; wraps on narrow screens. */}
         <div className='border-border/30 mt-12 flex flex-col items-center justify-between gap-x-3 gap-y-2 border-t pt-6 sm:flex-row'>
-          <div className='text-muted-foreground/40 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:justify-start'>
+          <div className='text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:justify-start'>
             <span>
               &copy; {currentYear} {displayName}.{' '}
               {props.copyright ?? t('footer.defaultCopyright')}

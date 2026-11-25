@@ -112,7 +112,7 @@ export function VipTierCards(props: VipTierCardsProps) {
                 aria-hidden
               />
               <div className='min-w-0'>
-                <p className='text-xs text-white/40'>{benefit.label}</p>
+                <p className='text-xs text-white/60'>{benefit.label}</p>
                 <p className='text-sm text-white/75'>{benefit.standard}</p>
               </div>
             </li>
@@ -170,7 +170,7 @@ export function VipTierCards(props: VipTierCardsProps) {
                 aria-hidden
               />
               <div className='min-w-0'>
-                <p className='text-xs text-white/45'>{benefit.label}</p>
+                <p className='text-xs text-white/60'>{benefit.label}</p>
                 <p className='text-sm font-medium text-white'>{benefit.vip}</p>
               </div>
             </li>

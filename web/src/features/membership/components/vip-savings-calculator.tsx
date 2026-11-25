@@ -95,7 +95,7 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
       />
       <dl className='mt-5 grid grid-cols-2 gap-3'>
         <div className='rounded-2xl border border-white/10 bg-black/30 p-4'>
-          <dt className='text-xs text-white/45'>{t('Saved per month')}</dt>
+          <dt className='text-xs text-white/60'>{t('Saved per month')}</dt>
           <dd
             className={cn(
               'mt-2 text-2xl leading-none tabular-nums',
@@ -108,7 +108,7 @@ export function VipSavingsCalculator(props: VipSavingsCalculatorProps) {
           </dd>
         </div>
         <div className='rounded-2xl border border-white/10 bg-black/30 p-4'>
-          <dt className='text-xs text-white/45'>{t('Saved per year')}</dt>
+          <dt className='text-xs text-white/60'>{t('Saved per year')}</dt>
           <dd
             className={cn(
               'mt-2 text-2xl leading-none text-white tabular-nums',

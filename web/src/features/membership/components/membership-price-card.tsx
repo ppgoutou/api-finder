@@ -227,7 +227,7 @@ export function MembershipPriceCard(props: MembershipPriceCardProps) {
               <BenefitFigureText figure={benefit.figure} />
             </span>
             <p className='text-body-lg font-semibold'>{benefit.title}</p>
-            <p className='text-body-sm text-white/72'>{benefit.text}</p>
+            <p className='text-body-sm text-white/80'>{benefit.text}</p>
           </li>
         ))}
       </ul>
