@@ -194,7 +194,7 @@ var (
 	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long", "characters, at most"}
 	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as", "识别为视频编辑"}
 	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核", "素材不符合社区规范"}
-	outputModerationPatterns = []string{"生成的视频可能涉及版权", "output video may", "output audio may"}
+	outputModerationPatterns = []string{"生成的视频可能涉及版权", "生成的视频：审核", "output video may", "output audio may"}
 	// A reference the supplier could not fetch or open, in its own words.
 	materialUnreachablePatterns = []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败",
 		"source video could not be resolved", "video file cannot be read"}
