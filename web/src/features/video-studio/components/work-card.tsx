@@ -156,16 +156,19 @@ export function WorkCard(props: {
     )
   }
   if (expired) {
+    let expiredDetail: string | undefined
+    if (!props.compact) {
+      // Without the request there are no settings to use again.
+      expiredDetail = text.request
+        ? t('The video has been deleted. Its settings can be used again.')
+        : t('The video has been deleted.')
+    }
     media = (
       <WorkMessage
         className='text-muted-foreground'
         icon={<History className='size-5' aria-hidden />}
         title={t('Expired')}
-        detail={
-          props.compact
-            ? undefined
-            : t('The video has been deleted. Its settings can be used again.')
-        }
+        detail={expiredDetail}
       />
     )
   }

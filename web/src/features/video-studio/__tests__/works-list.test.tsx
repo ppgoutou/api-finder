@@ -300,6 +300,18 @@ describe('WorksList', () => {
     ).toBeInTheDocument()
   })
 
+  it('promises no settings of an expired video whose request is unknown', async () => {
+    listTasks([finishedTask('task_old', -60)])
+    renderList(vi.fn())
+
+    expect(
+      await screen.findByText('The video has been deleted.')
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Generate again' })
+    ).not.toBeInTheDocument()
+  })
+
   it('plays a finished video with its prompt, and steps to the next one', async () => {
     rememberTaskPrompt('task_1', REQUEST, 'seedance-2.5 · 1080p · 8s')
     rememberTaskPrompt(

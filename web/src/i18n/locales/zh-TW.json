@@ -8777,6 +8777,7 @@
     "Keep creation prompts": "儲存創作提示詞",
     "Keeps the prompt and settings of works made on the creation page, so users see them on every device. Turn it on only after the privacy policy says so and any notice period in it has passed.": "儲存創作頁作品的提示詞和參數，使用者換裝置也能看到。請先在隱私政策中寫明，並等政策裡的公告期滿後再開啟。",
     "The video is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "影片會從本瀏覽器的作品中移除；如果伺服器儲存了提示詞，也會一併刪除。消費記錄會保留。",
-    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "圖片會從本瀏覽器的作品中移除；如果伺服器儲存了提示詞，也會一併刪除。消費記錄會保留。"
+    "The image is removed from your works in this browser, and its prompt from our servers if it is kept there. Its usage record is kept.": "圖片會從本瀏覽器的作品中移除；如果伺服器儲存了提示詞，也會一併刪除。消費記錄會保留。",
+    "The video has been deleted.": "影片已刪除。"
   }
 }
