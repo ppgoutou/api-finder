@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -76,23 +77,48 @@ func ValidateSSRFProtectedFetchURL(urlStr string) error {
 // time.Duration without overflowing (~292 years).
 const maxTimeoutSeconds = int(math.MaxInt64 / int64(time.Second))
 
+// A lossy path to an upstream drops the handshake packets of one connection for
+// a long time while a new connection gets through at once, so several short
+// dials recover sooner than one long dial.
+const (
+	relayDialTimeout  = 5 * time.Second
+	relayDialAttempts = 4
+)
+
+// timeoutRedialer dials again when a dial times out. No request byte has been
+// sent at that point, so a new dial cannot repeat a request.
+type timeoutRedialer struct {
+	dial     func(ctx context.Context, network, address string) (net.Conn, error)
+	attempts int
+}
+
+func (d timeoutRedialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	for attempt := 1; ; attempt++ {
+		conn, err := d.dial(ctx, network, address)
+		if err == nil {
+			return conn, nil
+		}
+		netErr, ok := errors.AsType[net.Error](err)
+		if attempt >= d.attempts || ctx.Err() != nil || !ok || !netErr.Timeout() {
+			return nil, err
+		}
+	}
+}
+
 func newRelayHTTPTransport() *http.Transport {
 	var transport *http.Transport
 	if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok && defaultTransport != nil {
 		transport = defaultTransport.Clone()
 	} else {
-		dialer := &net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}
 		transport = &http.Transport{
 			Proxy:                 http.ProxyFromEnvironment,
-			DialContext:           dialer.DialContext,
 			ForceAttemptHTTP2:     true,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: time.Second,
 		}
 	}
+	dialer := &net.Dialer{Timeout: relayDialTimeout, KeepAlive: 30 * time.Second}
+	transport.DialContext = timeoutRedialer{dial: dialer.DialContext, attempts: relayDialAttempts}.DialContext
 	transport.MaxIdleConns = common.RelayMaxIdleConns
 	transport.MaxIdleConnsPerHost = common.RelayMaxIdleConnsPerHost
 	transport.IdleConnTimeout = time.Duration(common.RelayIdleConnTimeout) * time.Second

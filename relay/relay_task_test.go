@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	relaytypes "github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/config"
@@ -439,6 +440,52 @@ func TestSharedTaskBillingExpressionSelectionAndFrozenSettlement(t *testing.T) {
 			assert.Equal(t, float64(2), info.TieredBillingSnapshot.UsageFacts[field])
 			assert.Equal(t, 2*info.TieredBillingSnapshot.EstimatedQuotaAfterGroup, result.ActualQuotaAfterGroup)
 			assert.Equal(t, tc.wantExpr, info.TieredBillingSnapshot.ExprString)
+		})
+	}
+}
+
+// A submission that never got a connection is safe to send again. Once a
+// connection was made, the upstream may have accepted the order.
+func TestRelayTaskSubmitTransportFailureStatus(t *testing.T) {
+	service.InitHttpClient()
+	for _, tc := range []struct {
+		name       string
+		connects   bool
+		wantStatus int
+	}{
+		{"never connected", false, http.StatusBadGateway},
+		{"connected without an answer", true, http.StatusGatewayTimeout},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			saveBillingConfig(t)
+			require.NoError(t, config.GlobalConfig.LoadFromDB(map[string]string{
+				"billing_setting.billing_mode": `{"declared-model":"tiered_expr"}`,
+				"billing_setting.billing_expr": `{"declared-model":"tier(\"flat\", 3)"}`,
+			}))
+			server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				panic(http.ErrAbortHandler)
+			}))
+			defer server.Close()
+			if !tc.connects {
+				server.Close()
+			}
+
+			c, info := newTaskSubmitContext(t, "declared-model", "")
+			common.SetContextKey(c, constant.ContextKeyChannelBaseUrl, server.URL)
+			c.Set("group", "default")
+			info.UserGroup, info.UsingGroup = "default", "default"
+			info.OriginModelName = "declared-model"
+			info.Billing = &imageReservation{limit: 1 << 30}
+			pinMappingOrderPlugin(t, c, mappingOrderSubmitPlugin)
+
+			result, taskErr := RelayTaskSubmit(c, info)
+			require.NotNil(t, taskErr)
+			assert.Nil(t, result)
+			assert.Equal(t, "do_request_failed", taskErr.Code)
+			assert.Equal(t, tc.wantStatus, taskErr.StatusCode)
+			var apiErr *relaytypes.NewAPIError
+			require.ErrorAs(t, taskErr.Error, &apiErr)
+			assert.Equal(t, tc.wantStatus, apiErr.StatusCode, "the error log reports the same status")
 		})
 	}
 }
