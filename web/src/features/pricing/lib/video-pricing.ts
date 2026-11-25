@@ -102,6 +102,9 @@ export type VideoPricing = {
 export const INPUT_VIDEO_SECONDS_FIELD = 'input_video_seconds'
 export const INPUT_IMAGES_FIELD = 'input_images'
 
+/** Usage fact counting the images of an image model served by a task plugin. */
+export const IMAGE_COUNT_FIELD = 'image_count'
+
 /** Seconds reserved for reference videos while their real length is unknown. */
 export const RESERVED_REFERENCE_VIDEO_SECONDS = 15
 
@@ -303,8 +306,9 @@ function tokenOfficialVideoPricing(
       switchValue === undefined || isPlainOrderSwitchValue(switchValue)
         ? plainPrices
         : referencePrices
-    if (!prices.has(option))
+    if (!prices.has(option)) {
       prices.set(option, tier.unitPrices[tokensField] ?? 0)
+    }
   }
   if (options.some((option) => !plainPrices.has(option))) return null
 
@@ -471,7 +475,9 @@ export function getPerVideoPricing(model: PricingModel): VideoPricing | null {
     !schema ||
     enumFields.length !== 1 ||
     numberFields.length !== 1 ||
-    numberFields[0][1].unit !== 'count'
+    numberFields[0][1].unit !== 'count' ||
+    // Image models count images by resolution the same way.
+    numberFields[0][0] === IMAGE_COUNT_FIELD
   ) {
     return null
   }

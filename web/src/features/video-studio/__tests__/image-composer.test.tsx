@@ -45,6 +45,15 @@ vi.mock('../hooks/use-studio-models', () => ({
   useStudioImageModels: () => [
     { name: 'seedream-5-0-flash', group: 'Seedream' },
     { name: 'seedream-5.0-pro', group: 'Seedream' },
+    {
+      name: 'plugin-image',
+      group: 'Plugin',
+      plugin: {
+        resolutions: ['1K', '2K'],
+        ratios: ['1:1', '16:9'],
+        maxReferences: 0,
+      },
+    },
   ],
 }))
 
@@ -117,6 +126,42 @@ describe('ImageComposer', () => {
     expect(
       useStudioImageWorks.getState().works.map((work) => work.expiresAt)
     ).toEqual([1_900_000_000, undefined])
+  })
+
+  it('offers the sizes and ratios of a task plugin model and keeps the images that succeed', async () => {
+    generateMock
+      .mockResolvedValueOnce([{ url: 'https://cdn.example/a.png' }])
+      .mockRejectedValueOnce(new Error('busy'))
+    const user = userEvent.setup()
+    render(<ImageComposer initialModel='plugin-image' />)
+
+    expect(
+      screen.queryByRole('button', { name: /^Size:/ })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('References')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Resolution:/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: '2K' }))
+    await user.click(screen.getByRole('button', { name: /^Aspect ratio:/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: '16:9' }))
+    await user.click(screen.getByRole('button', { name: /^Images:/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: '2 images' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Image prompt' }),
+      'a red fox'
+    )
+    await user.click(screen.getByRole('button', { name: 'Generate image' }))
+
+    await waitFor(() =>
+      expect(useStudioImageWorks.getState().works).toHaveLength(1)
+    )
+    expect(useStudioImageWorks.getState().works[0].size).toBe('2K 16:9')
+    expect(generateMock).toHaveBeenCalledTimes(2)
+    expect(generateMock.mock.calls[0][0]).toMatchObject({
+      model: 'plugin-image',
+      size: '2K',
+      aspect_ratio: '16:9',
+      n: 1,
+    })
   })
 
   it('does not submit without a prompt', async () => {

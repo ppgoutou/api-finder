@@ -34,7 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import { getTaskArtifacts, getUserTaskLogs } from '@/features/usage-logs/api'
-import { TASK_STATUS } from '@/features/usage-logs/constants'
+import { TASK_ACTIONS, TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
 import { formatTimestamp } from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
@@ -53,6 +53,10 @@ import { WorkRetentionBadge } from './work-retention-badge'
 
 const WORKS_PAGE_SIZE = 12
 const POLL_INTERVAL_MS = 5000
+const IMAGE_TASK_ACTIONS: ReadonlySet<string> = new Set([
+  TASK_ACTIONS.TEXT_TO_IMAGE,
+  TASK_ACTIONS.IMAGE_TO_IMAGE,
+])
 
 function isFinished(task: TaskLog) {
   return (
@@ -264,7 +268,11 @@ export function WorksList(props: {
   const loaded = works.data?.items ?? []
   const hasMore =
     Boolean(props.loadMore) && loaded.length < (works.data?.total ?? 0)
-  const tasks = loaded.filter((task) => !hidden.includes(task.task_id))
+  // Image tasks are listed with the generated images, not as videos.
+  const tasks = loaded.filter(
+    (task) =>
+      !hidden.includes(task.task_id) && !IMAGE_TASK_ACTIONS.has(task.action)
+  )
   if (tasks.length === 0 && !hasMore) {
     return (
       <Empty className='border'>

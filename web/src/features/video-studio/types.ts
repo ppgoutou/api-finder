@@ -69,7 +69,9 @@ export type StudioKind = 'video' | 'image'
 export interface ImageGenerationRequest {
   model: string
   prompt: string
-  size: string
+  /** Width x height, or a size tier such as 2K. Unset for single-size models. */
+  size?: string
+  aspect_ratio?: string
   n: number
   response_format: 'url'
   /** Public URLs of reference images, for image-to-image models. */

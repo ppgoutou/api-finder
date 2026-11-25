@@ -348,6 +348,15 @@ describe('studioModelsFromPricing', () => {
         billing_mode: 'tiered_expr',
         billing_expr: 'tier("per_image", fixed(0.1296)) * image_count',
       }),
+      pricingModel('plugin-image', {
+        billing_mode: 'tiered_expr',
+        billing_expr:
+          'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.1) : tier("2K", u("image_count") * 0.2)',
+        billing_usage_schema: {
+          resolution: { enum: ['1K', '2K'] },
+          image_count: { type: 'number', unit: 'count' },
+        },
+      }),
       pricingModel('sora-2', {
         billing_mode: 'tiered_expr',
         billing_expr: 'tier("720x1280", u("seconds") * 0.1)',

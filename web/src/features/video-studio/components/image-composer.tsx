@@ -16,7 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ArrowUp, Copy, Image as ImageIcon, Maximize } from 'lucide-react'
+import {
+  ArrowUp,
+  Copy,
+  Image as ImageIcon,
+  Maximize,
+  RectangleHorizontal,
+} from 'lucide-react'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -45,7 +51,13 @@ import {
   labelReferences,
   replacementModel,
 } from '../lib/draft'
-import { buildImageRequest, validateImageDraft } from '../lib/image-draft'
+import {
+  buildImageRequests,
+  fitPluginImageShape,
+  imageShapeLabel,
+  validateImageDraft,
+  type ImageDraft,
+} from '../lib/image-draft'
 import { localizeMentions } from '../lib/mention-names'
 import {
   composerHintIds,
@@ -84,13 +96,25 @@ export function ImageComposer(props: ImageComposerProps) {
     STUDIO_IMAGE_SIZES.find((option) => option.value === props.initialSize)
       ?.value ?? DEFAULT_IMAGE_SIZE
   )
+  // Shape of a plugin model's image, remembered as "2K 16:9", "2K" or "16:9".
+  const initialShape = props.initialSize?.split(' ') ?? []
+  const [pluginSize, setPluginSize] = useState(
+    initialShape.find((part) => !part.includes(':')) ?? ''
+  )
+  const [pluginRatio, setPluginRatio] = useState(
+    initialShape.find((part) => part.includes(':')) ?? ''
+  )
   const [submitting, setSubmitting] = useState(false)
   const model = findStudioModel(models, studio.draft.model)
   const unavailable = model?.unavailable === true
-  const draft = {
+  const plugin = model?.plugin
+  const shape = plugin
+    ? fitPluginImageShape(plugin, pluginSize, pluginRatio)
+    : { size }
+  const draft: ImageDraft = {
     model: model?.name ?? '',
     prompt: studio.draft.prompt,
-    size,
+    ...shape,
     count: Math.min(studio.draft.count, STUDIO_MAX_IMAGE_COUNT),
     references: studio.draft.references,
   }
@@ -98,7 +122,7 @@ export function ImageComposer(props: ImageComposerProps) {
   const balance = useStudioBalance(price?.costUSD ?? null)
   const insufficient = balance.shortfallUSD !== null
   let problem = model
-    ? validateImageDraft(draft)
+    ? validateImageDraft(draft, plugin)
     : 'No image model is available'
   const guide = promptGuide(model?.name)
   const hintId = useId()
@@ -125,9 +149,17 @@ export function ImageComposer(props: ImageComposerProps) {
     }
     if (insufficient) return
     setSubmitting(true)
-    const body = buildImageRequest(draft)
+    const requests = buildImageRequests(draft, plugin)
+    const [body] = requests
     try {
-      const images = await generateImages(body)
+      const results = await Promise.allSettled(
+        requests.map((request) => generateImages(request))
+      )
+      const images = results.flatMap((result) =>
+        result.status === 'fulfilled' ? result.value : []
+      )
+      const failed = results.find((result) => result.status === 'rejected')
+      if (failed && images.length === 0) throw failed.reason
       const createdAt = Math.floor(Date.now() / 1000)
       addWorks(
         images.map((image, index) => ({
@@ -136,12 +168,13 @@ export function ImageComposer(props: ImageComposerProps) {
           ...(image.expiresAt ? { expiresAt: image.expiresAt } : {}),
           prompt: body.prompt,
           model: body.model,
-          size: body.size,
+          size: imageShapeLabel(body),
           ...(body.image ? { references: body.image } : {}),
           createdAt,
         }))
       )
       toast.success(t('Images generated; they appear below.'))
+      if (failed) throw failed.reason
     } catch (error) {
       toast.error(getServerErrorMessage(error, t('Image generation failed')))
     } finally {
@@ -173,16 +206,42 @@ export function ImageComposer(props: ImageComposerProps) {
               onChange={(name) => studio.update({ model: name })}
             />
           )}
-          <ChoiceMenu
-            label={t('Size')}
-            value={size}
-            options={STUDIO_IMAGE_SIZES.map((option) => ({
-              value: option.value,
-              label: `${option.ratio} · ${option.value.replace('x', '×')}`,
-              icon: <Maximize className='size-3.5' aria-hidden />,
-            }))}
-            onChange={setSize}
-          />
+          {!plugin && (
+            <ChoiceMenu
+              label={t('Size')}
+              value={size}
+              options={STUDIO_IMAGE_SIZES.map((option) => ({
+                value: option.value,
+                label: `${option.ratio} · ${option.value.replace('x', '×')}`,
+                icon: <Maximize className='size-3.5' aria-hidden />,
+              }))}
+              onChange={setSize}
+            />
+          )}
+          {plugin && plugin.resolutions.length > 0 && (
+            <ChoiceMenu
+              label={t('Resolution')}
+              value={shape.size}
+              options={plugin.resolutions.map((value) => ({
+                value,
+                label: value,
+                icon: <Maximize className='size-3.5' aria-hidden />,
+              }))}
+              onChange={setPluginSize}
+            />
+          )}
+          {plugin && plugin.ratios.length > 0 && (
+            <ChoiceMenu
+              label={t('Aspect ratio')}
+              value={draft.ratio ?? ''}
+              options={plugin.ratios.map((value) => ({
+                value,
+                label: value,
+                icon: <RectangleHorizontal className='size-3.5' aria-hidden />,
+              }))}
+              onChange={setPluginRatio}
+            />
+          )}
           <ChoiceMenu
             label={t('Images')}
             value={String(draft.count)}
@@ -227,12 +286,14 @@ export function ImageComposer(props: ImageComposerProps) {
         )
       }
     >
-      <ReferencePanel
-        references={draft.references}
-        accept={ASSET_ACCEPT.image}
-        onAddFiles={addReferences}
-        onRemove={studio.removeReference}
-      />
+      {(plugin?.maxReferences !== 0 || draft.references.length > 0) && (
+        <ReferencePanel
+          references={draft.references}
+          accept={ASSET_ACCEPT.image}
+          onAddFiles={addReferences}
+          onRemove={studio.removeReference}
+        />
+      )}
       <PromptInput
         value={draft.prompt}
         onChange={(prompt) => studio.update({ prompt })}

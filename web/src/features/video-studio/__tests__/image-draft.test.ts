@@ -22,6 +22,7 @@ import type { PricingModel } from '@/features/pricing/types'
 
 import {
   buildImageRequest,
+  buildImageRequests,
   estimateImageCostUSD,
   studioImageModelsFromPricing,
   validateImageDraft,
@@ -44,6 +45,18 @@ function imageModel(name: string, expr?: string): PricingModel {
 const SIZE_TIERED =
   '(c * 256 / image_count <= 2360000 ? tier("small", fixed(0.0648)) : tier("large", fixed(0.1296))) * image_count'
 
+const PLUGIN_MODEL: PricingModel = {
+  ...imageModel(
+    'plugin-image',
+    'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.1) : tier("2K", u("image_count") * 0.25)'
+  ),
+  billing_usage_schema: {
+    image_count: { type: 'number', unit: 'count' },
+    resolution: { enum: ['1K', '2K'] },
+  },
+  model_limits: { ratios: ['1:1', '16:9'], maxReferenceImages: 16 },
+}
+
 function draft(patch: Partial<ImageDraft> = {}): ImageDraft {
   return {
     model: 'seedream-5.0',
@@ -64,6 +77,14 @@ describe('studioImageModelsFromPricing', () => {
       ])
     ).toEqual([{ name: 'seedream-5.0', label: 'seedream-5.0' }])
   })
+
+  it('reads sizes, ratios and reference limits of a task plugin model', () => {
+    expect(studioImageModelsFromPricing([PLUGIN_MODEL])[0].plugin).toEqual({
+      resolutions: ['1K', '2K'],
+      ratios: ['1:1', '16:9'],
+      maxReferences: 16,
+    })
+  })
 })
 
 describe('estimateImageCostUSD', () => {
@@ -83,6 +104,18 @@ describe('estimateImageCostUSD', () => {
     (size, count, expected) => {
       const model = imageModel('pro', SIZE_TIERED)
       expect(estimateImageCostUSD(model, size, count)).toBeCloseTo(expected)
+    }
+  )
+
+  it.each([
+    ['1K', 1, 0.1],
+    ['2K', 3, 0.75],
+  ])(
+    'charges a task plugin model its %s price for each image',
+    (size, count, expected) => {
+      expect(estimateImageCostUSD(PLUGIN_MODEL, size, count)).toBeCloseTo(
+        expected
+      )
     }
   )
 
@@ -118,6 +151,44 @@ describe('image drafts', () => {
       response_format: 'url',
       image: ['https://site.example/video-assets/cat.png'],
     })
+  })
+
+  it('sends one request per image to a task plugin model', () => {
+    const [{ plugin }] = studioImageModelsFromPricing([PLUGIN_MODEL])
+    const requests = buildImageRequests(
+      draft({ model: 'plugin-image', size: '2K', ratio: '16:9', count: 2 }),
+      plugin
+    )
+    const request = {
+      model: 'plugin-image',
+      prompt: 'a cat',
+      size: '2K',
+      aspect_ratio: '16:9',
+      n: 1,
+      response_format: 'url',
+    }
+    expect(requests).toEqual([request, request])
+  })
+
+  it('rejects references for a task plugin model that takes none', () => {
+    const references = [
+      {
+        id: 'a',
+        kind: 'image' as const,
+        fileName: 'cat.png',
+        previewUrl: 'blob:a',
+        status: 'ready' as const,
+        progress: 100,
+        url: 'https://site.example/cat.png',
+      },
+    ]
+    expect(
+      validateImageDraft(draft({ references }), {
+        resolutions: [],
+        ratios: [],
+        maxReferences: 0,
+      })
+    ).toBe('Too many reference files')
   })
 
   it('leaves out the image field without references', () => {

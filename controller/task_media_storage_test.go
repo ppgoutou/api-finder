@@ -324,6 +324,18 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 	assert.Len(t, mainland.objects, 2)
 	assert.Empty(t, overseas.objects)
 
+	// API clients of a task plugin get the stored copy next to any base64 data,
+	// and keep the supplier's link when it cannot be copied.
+	data := []any{
+		map[string]any{"url": upstream.URL + "/b.png", "b64_json": "QUFB"},
+		map[string]any{"url": "https://127.0.0.1:1/gone.png"},
+	}
+	storeTaskPluginImages(t.Context(), data)
+	stored := data[0].(map[string]any)
+	assert.True(t, strings.HasPrefix(stored["url"].(string), "https://cn-media.example.com/images/"), stored["url"])
+	assert.Equal(t, "QUFB", stored["b64_json"])
+	assert.Equal(t, "https://127.0.0.1:1/gone.png", data[1].(map[string]any)["url"])
+
 	// Failed generations reach the client untouched.
 	recorder = serve(http.StatusBadRequest, gin.H{"error": gin.H{"message": "bad prompt"}})
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
