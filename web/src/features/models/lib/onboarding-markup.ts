@@ -19,8 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 import type { ModelPricingEntry } from '@/features/model-pricing/api'
 import type { ParsedTaskTier } from '@/features/pricing/lib/billing-expr'
 import { getTaskPricingDisplayTiers } from '@/features/pricing/lib/task-matrix-display'
+import { taskTierConditions } from '@/features/pricing/lib/task-price-display'
 import {
   getOfficialVideoPricing,
+  IMAGE_COUNT_FIELD,
   VIDEO_TOKENS_PER_SECOND,
   videoTokensPerSecond,
   type VideoPricing,
@@ -35,18 +37,20 @@ import type {
 import type { OnboardingMarkup, TierMarkup } from '../types'
 
 /**
- * One price tier of a video model, in USD per second of video, or the fixed
- * price of a model, in USD per request (per image).
+ * One price tier of a model, in USD per second of video or per generated
+ * image, or the fixed price of a model, in USD per request (per image).
  */
 export type MarkupRow = {
   /** The tier name in the expression, which keys its markup. */
   tier: string
   /** Absent for a fixed price. */
   source?: ParsedTaskTier
+  /** What the prices of the row are per. */
+  unit: 'second' | 'image'
   field: string
   /** Set for a token-priced tier; its per-second prices assume this rate. */
   tokensPerSecond?: number
-  /** Supplier price per second, before the group ratio. */
+  /** Supplier price per unit, before the group ratio. */
   supply: number
   /**
    * A reference-video token tier: its tokens cover the reference video as
@@ -56,9 +60,10 @@ export type MarkupRow = {
 }
 
 /**
- * Per-second rows of a video expression that a markup can raise: each tier
- * prices exactly one usage field, in seconds or in tokens at a known
- * resolution. Other expressions return no rows.
+ * The rows of an expression that a markup can raise: each tier prices exactly
+ * one usage field, in seconds, in tokens at a known resolution, or in
+ * generated images. Other expressions, and expressions that mix seconds with
+ * images, return no rows.
  */
 export function markupRows(
   expression: string | undefined,
@@ -81,6 +86,18 @@ export function markupRows(
       rows.push({
         tier: tier.label,
         source: tier,
+        unit: 'second',
+        field,
+        supply: price,
+        reference: false,
+      })
+      continue
+    }
+    if (unit === 'count' && field === IMAGE_COUNT_FIELD) {
+      rows.push({
+        tier: tier.label,
+        source: tier,
+        unit: 'image',
         field,
         supply: price,
         reference: false,
@@ -100,13 +117,32 @@ export function markupRows(
     rows.push({
       tier: tier.label,
       source: tier,
+      unit: 'second',
       field,
       tokensPerSecond,
       supply: (price * tokensPerSecond) / 1_000_000,
       reference: referenceTier(tier),
     })
   }
-  return rows
+  return rows.every((row) => row.unit === rows[0].unit) ? rows : []
+}
+
+/**
+ * What a row applies to: its tier's conditions, else its tier name. The only
+ * row of a price per image applies to every image.
+ */
+export function markupRowCondition(
+  row: MarkupRow,
+  onlyRow: boolean,
+  schema: BillingUsageSchema | undefined,
+  language: string,
+  t: (key: string) => string
+): string {
+  const conditions = row.source
+    ? taskTierConditions(row.source, schema, language, t)
+    : ''
+  if (conditions) return conditions
+  return row.unit === 'image' && onlyRow ? t('Per image') : row.tier
 }
 
 /** The row key of a fixed price. */
@@ -127,7 +163,15 @@ export function fixedPriceRows(
     supply = typeof price === 'number' ? price : undefined
   }
   if (!supply || !Number.isFinite(supply) || supply <= 0) return []
-  return [{ tier: FIXED_PRICE_ROW, field: '', supply, reference: false }]
+  return [
+    {
+      tier: FIXED_PRICE_ROW,
+      unit: 'image',
+      field: '',
+      supply,
+      reference: false,
+    },
+  ]
 }
 
 /**
@@ -161,7 +205,7 @@ export type BatchOperation =
   | 'subtract_percent'
 
 /**
- * The per-second adjustment a batch operation sets on a tier, rounded to 4
+ * The per-unit adjustment a batch operation sets on a tier, rounded to 4
  * decimals. A percentage is of the tier's group-ratio price; the value and the
  * price are in the same currency.
  */
@@ -253,7 +297,7 @@ export function officialSecondPrice(
 
 /**
  * One tier before and after taking the supplier's latest price, in USD per
- * second or per request. A side is absent when that price lacks the tier.
+ * second, image or request. A side is absent when that price lacks the tier.
  */
 export type PriceComparisonRow = {
   row: MarkupRow
@@ -266,8 +310,8 @@ export type PriceComparisonRow = {
 /**
  * The supply price and the default-group final price of every tier, now and
  * with the supplier's latest price. The saved adjustments stay as they are.
- * Prices without per-second or fixed rows, or without a tier in common, return
- * none.
+ * Prices without per-second, per-image or fixed rows, or without a tier in
+ * common, return none.
  */
 export function comparePriceRows(
   entry: ModelPricingEntry,
@@ -302,9 +346,9 @@ export function comparePriceRows(
   }
   const final = (row: MarkupRow): number =>
     row.supply * priceFactor +
-    ((row.tier === FIXED_PRICE_ROW
-      ? markup?.per_request
-      : markup?.tiers?.[row.tier]?.per_second) ?? 0)
+    ((row.source
+      ? markup?.tiers?.[row.tier]?.per_second
+      : markup?.per_request) ?? 0)
   const rows: PriceComparisonRow[] = latestRows.map((row) => {
     const current = currentRows.get(row.tier)
     currentRows.delete(row.tier)

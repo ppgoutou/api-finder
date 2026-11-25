@@ -8337,6 +8337,7 @@
     "Total of channels with a cost": "Tổng các kênh có chi phí",
     "Set a supplier token in model onboarding to read its charges": "Đặt token nhà cung cấp trong mục thêm mô hình để đọc khoản trừ",
     "Price adjustment per image": "Điều chỉnh giá mỗi ảnh",
+    "Price adjustment per image for {{tier}}": "Điều chỉnh giá mỗi ảnh cho {{tier}}",
     "Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.": "Khách hàng trả giá cuối cho mỗi ảnh. Điều chỉnh âm sẽ giảm giá; tỷ lệ nhóm mới vẫn giữ nguyên mức điều chỉnh.",
     "Only expression or fixed prices can take a markup. Confirm the upstream price first.": "Chỉ giá theo biểu thức hoặc giá cố định mới có thể cộng thêm. Hãy xác nhận giá thượng nguồn trước.",
     "Your login has expired. Please sign in again.": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại",

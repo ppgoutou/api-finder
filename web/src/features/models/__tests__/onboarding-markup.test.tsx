@@ -61,6 +61,15 @@ const secondExpr =
   'u("resolution") == "480p" && u("video_input") == "video" ? tier("480p·video", u("seconds") * 0.13) : ' +
   'tier("480p", u("seconds") * 0.1)'
 
+const imageSchema: BillingUsageSchema = {
+  image_count: { type: 'number', unit: 'count' },
+  resolution: { enum: ['1K', '2K'] },
+}
+
+const imageExpr =
+  'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.2 * 0.5) : ' +
+  'tier("2K", u("image_count") * 0.6 * 0.5)'
+
 const officialTable: PricingCategory[] = [
   {
     id: 'seedance',
@@ -164,6 +173,37 @@ describe('markupRows', () => {
     const rows = markupRows(tokenExpr, schema, undefined)
 
     expect(rows.map((row) => row.reference)).toEqual([false, true, false, true])
+  })
+
+  it('prices each resolution tier of an image model per image', () => {
+    const rows = markupRows(imageExpr, imageSchema, undefined)
+
+    expect(rows.map((row) => [row.tier, row.unit, row.field])).toEqual([
+      ['1K', 'image', 'image_count'],
+      ['2K', 'image', 'image_count'],
+    ])
+    expect(rows[0].supply).toBeCloseTo(0.1)
+    expect(rows[1].supply).toBeCloseTo(0.3)
+  })
+
+  it('returns no rows for an expression that mixes seconds with images', () => {
+    expect(
+      markupRows(
+        'u("resolution") == "1K" ? tier("1K", u("image_count") * 0.1) : tier("2K", u("seconds") * 0.1)',
+        { ...imageSchema, seconds: { type: 'number', unit: 'second' } },
+        undefined
+      )
+    ).toEqual([])
+  })
+
+  it('returns no rows for a count that is not images', () => {
+    expect(
+      markupRows(
+        'tier("base", u("calls") * 0.1)',
+        { calls: { type: 'number', unit: 'count' } },
+        undefined
+      )
+    ).toEqual([])
   })
 
   it('returns no rows for an expression a markup cannot raise', () => {
@@ -610,6 +650,45 @@ describe('OnboardingMarkupTable', () => {
 
     expect(markupInput('480p·none').value).toBe('')
     expect(markupInput('720p·none').value).toBe('0.2')
+  })
+
+  it('shows an image expression per image and saves its adjustment per tier', async () => {
+    const put = vi.spyOn(api, 'put').mockResolvedValue({
+      data: { success: true, data: { channels: [], changes: [] } },
+    })
+    renderTable(
+      { base_expr: imageExpr, tiers: {} },
+      { usage_schema: imageSchema }
+    )
+    const input = screen.getByRole<HTMLInputElement>('textbox', {
+      name: 'Price adjustment per image for 2K',
+    })
+    const row = input.closest('tr') as HTMLElement
+
+    await userEvent.type(input, '0.05')
+
+    expect(within(row).getByText('$0.3000/image')).toBeTruthy()
+    expect(within(row).getByText('$0.3600/image')).toBeTruthy()
+    expect(within(row).getByText('$0.4100/image')).toBeTruthy()
+    expect(within(row).getByText('$0.1100/image')).toBeTruthy()
+    await userEvent.click(saveButton())
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
+    expect(put).toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/markup',
+      {
+        model_name: 'video',
+        tiers: { '2K': { field: 'image_count', per_second: 0.05 } },
+      }
+    )
+  })
+
+  it('names the only tier of an image expression Per image', () => {
+    renderTable(
+      { base_expr: 'tier("image", u("image_count") * 0.1)', tiers: {} },
+      { usage_schema: { image_count: { type: 'number', unit: 'count' } } }
+    )
+
+    expect(screen.getByRole('cell', { name: 'Per image' })).toBeTruthy()
   })
 
   it('shows a fixed-price model per image and saves its adjustment per request', async () => {
