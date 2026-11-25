@@ -30,7 +30,6 @@ import { modelPricingDisplay } from '@/features/model-pricing/pricing'
 import { DynamicPricingBreakdown } from '@/features/pricing/components/dynamic-pricing-breakdown'
 import { ModelPriceCell } from '@/features/pricing/components/model-price-cell'
 import { isDynamicPricingModel } from '@/features/pricing/lib/dynamic-price'
-import { taskTierConditions } from '@/features/pricing/lib/task-price-display'
 import type { BillingUsageSchema, PricingModel } from '@/features/pricing/types'
 import { getCurrencyDisplay } from '@/lib/currency'
 import { formatPercent } from '@/lib/format'
@@ -40,7 +39,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { undeclaredUsageKeys } from '../../lib/onboarding'
 import {
   comparePriceRows,
-  FIXED_PRICE_ROW,
+  markupRowCondition,
   type PriceComparisonRow,
 } from '../../lib/onboarding-markup'
 import type {
@@ -200,7 +199,7 @@ function PriceComparison(props: {
   const language = i18n.resolvedLanguage || i18n.language
   const price = (usd: number | undefined, row: PriceComparisonRow) => {
     if (usd === undefined) return '—'
-    const unit = row.row.tier === FIXED_PRICE_ROW ? t('image') : t('s')
+    const unit = row.row.unit === 'image' ? t('image') : t('s')
     return `${symbol}${(usd * rate).toFixed(4)}/${unit}`
   }
   const columns: StaticDataTableColumn<PriceComparisonRow>[] = [
@@ -208,10 +207,7 @@ function PriceComparison(props: {
       id: 'condition',
       header: t('Conditions'),
       cell: ({ row }) =>
-        row.source
-          ? taskTierConditions(row.source, props.schema, language, t) ||
-            row.tier
-          : t('Per image'),
+        markupRowCondition(row, rows.length === 1, props.schema, language, t),
     },
     {
       id: 'current-supply',

@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { ModelPricingEntry } from '@/features/model-pricing/api'
-import { taskTierConditions } from '@/features/pricing/lib/task-price-display'
 import type { PricingCategory } from '@/features/pricing/types'
 import { getCurrencyDisplay } from '@/lib/currency'
 import { formatPercent } from '@/lib/format'
@@ -53,6 +52,7 @@ import {
   batchAdjustment,
   FIXED_PRICE_ROW,
   fixedPriceRows,
+  markupRowCondition,
   markupRows,
   officialSecondPrice,
   onboardingOfficialPricing,
@@ -65,13 +65,13 @@ import { modelsQueryKeys } from '../../lib/query-keys'
 import type { OnboardingMarkup } from '../../types'
 import { OnboardingMarkupBatch } from './onboarding-markup-batch'
 
-// The server bounds one adjustment, in USD per second or per request, either
-// way.
+// The server bounds one adjustment, in USD per second, image or request,
+// either way.
 const MAX_ADJUSTMENT = 1000
 
 /**
- * Supplier, group-ratio, adjustment and final price per second of each tier,
- * or per image of a fixed-price model.
+ * Supplier, group-ratio, adjustment and final price of each tier, per second
+ * of video or per image, or per image of a fixed-price model.
  * The adjustment is a fixed amount customers pay on top of the group-ratio
  * price, or below it when negative; the server folds it into the charged
  * expression. A final price under the supply price is flagged but allowed.
@@ -115,7 +115,8 @@ export function OnboardingMarkupTable(props: {
     props.entry.configured,
     props.markup?.base_price,
   ])
-  const perImage = rows.length === 1 && rows[0].tier === FIXED_PRICE_ROW
+  const perImage = rows[0]?.unit === 'image'
+  const fixedPrice = rows.length > 0 && !rows[0].source
   const official = useMemo(
     () =>
       onboardingOfficialPricing(
@@ -186,7 +187,7 @@ export function OnboardingMarkupTable(props: {
     mutationFn: async () =>
       requireServerSuccess(
         await setPriceMarkup(
-          perImage
+          fixedPrice
             ? {
                 model_name: props.entry.model_name,
                 per_request: amounts[FIXED_PRICE_ROW] ?? 0,
@@ -237,6 +238,12 @@ export function OnboardingMarkupTable(props: {
       else next.delete(tier)
       return next
     })
+  const adjustmentLabel = (row: MarkupRow) => {
+    if (fixedPrice) return t('Price adjustment per image')
+    return perImage
+      ? t('Price adjustment per image for {{tier}}', { tier: row.tier })
+      : t('Price adjustment per second for {{tier}}', { tier: row.tier })
+  }
   const allSelected = rows.every((row) => selected.has(row.tier))
   const columns: StaticDataTableColumn<MarkupRow>[] = [
     {
@@ -267,14 +274,13 @@ export function OnboardingMarkupTable(props: {
       cell: (row) => (
         <div className='space-y-0.5'>
           <div>
-            {row.source
-              ? taskTierConditions(
-                  row.source,
-                  props.entry.usage_schema,
-                  language,
-                  t
-                ) || row.tier
-              : t('Per image')}
+            {markupRowCondition(
+              row,
+              rows.length === 1,
+              props.entry.usage_schema,
+              language,
+              t
+            )}
           </div>
           {row.reference && (
             <div className='text-muted-foreground text-xs'>
@@ -306,13 +312,7 @@ export function OnboardingMarkupTable(props: {
           </InputGroupAddon>
           <InputGroupInput
             inputMode='decimal'
-            aria-label={
-              perImage
-                ? t('Price adjustment per image')
-                : t('Price adjustment per second for {{tier}}', {
-                    tier: row.tier,
-                  })
-            }
+            aria-label={adjustmentLabel(row)}
             aria-invalid={badInput.has(row.tier) || notPositive.has(row.tier)}
             className={
               (amounts[row.tier] ?? 0) < 0 ? 'text-success' : undefined

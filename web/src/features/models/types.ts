@@ -378,8 +378,9 @@ export type UpstreamModelPrice = {
 /** A fixed amount, in USD per second of video, added after the group ratio. */
 export type TierMarkup = {
   field: string
+  /** USD per unit of the field: per second, or per image of an image tier. */
   per_second: number
-  /** Converts a token-priced tier; absent for a per-second tier. */
+  /** Converts a token-priced tier; absent for other tiers. */
   tokens_per_second?: number
 }
 

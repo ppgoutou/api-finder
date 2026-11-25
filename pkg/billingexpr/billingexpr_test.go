@@ -1377,6 +1377,12 @@ func TestAddTierUnitPricesRaisesScaledTermsByTheExactDelta(t *testing.T) {
 			map[string]any{"tokens": 100000.0}, 0.95,
 		},
 		{
+			"image price with a discount and an exchange rate folded in",
+			`u("resolution") == "1K" ? tier("1K", u("image_count") * 0.2 * 0.5 / 7) : tier("2K", u("image_count") * 0.3 * 0.5 / 7)`,
+			"2K", billingexpr.UnitPriceAdd{Field: "image_count", Delta: decimal.RequireFromString("0.02")},
+			map[string]any{"image_count": 1.0, "resolution": "2K"}, 0.02,
+		},
+		{
 			"discount on a scaled seconds price",
 			`tier("720p", u("seconds") * 0.6 / 7)`,
 			"720p", billingexpr.UnitPriceAdd{Field: "seconds", Delta: decimal.RequireFromString("-0.05")},
