@@ -131,6 +131,23 @@ describe('imageRetention', () => {
     ).toEqual({ state: 'scheduled', expiresAt: NOW + 13 * DAY })
   })
 
+  it('keeps the longer expiry of the image and the copy its task got later', () => {
+    const work = {
+      ...image('https://cdn.example/a.png', NOW - 2 * HOUR),
+      taskId: 'task_1',
+    }
+    const copied = task({
+      image_url: 'https://media.example/images/a.png',
+      media_expires_at: NOW + 7 * DAY,
+    })
+
+    expect(imageRetention(work, NOW, [copied])?.expiresAt).toBe(NOW + 7 * DAY)
+    expect(
+      imageRetention({ ...work, expiresAt: NOW + 13 * DAY }, NOW, [copied])
+        ?.expiresAt
+    ).toBe(NOW + 13 * DAY)
+  })
+
   it('gives a linked image one day from its creation', () => {
     expect(
       imageRetention(image('https://cdn.example/a.png', NOW - 2 * HOUR), NOW)

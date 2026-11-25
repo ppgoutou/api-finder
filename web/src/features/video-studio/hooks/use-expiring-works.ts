@@ -50,7 +50,8 @@ export function useUnixNow() {
 
 /**
  * How many of the user's works expire soon and should be downloaded: recent
- * tasks the server reports as expiring, and images linked from this browser. Works the user deleted are left out.
+ * tasks the server reports as expiring, and images linked from this browser.
+ * Works the user deleted are left out.
  */
 export function useExpiringWorks() {
   const now = useUnixNow()
@@ -77,8 +78,9 @@ export function useExpiringWorks() {
       taskRetention(task, now)?.state === 'expiring'
   ).length
   const imageCount =
-    images.filter((image) => imageRetention(image, now)?.state === 'expiring')
-      .length +
+    images.filter(
+      (image) => imageRetention(image, now, recent)?.state === 'expiring'
+    ).length +
     listedImageTasks(recent, images, hidden).filter(
       (task) => taskRetention(task, now)?.state === 'expiring'
     ).length

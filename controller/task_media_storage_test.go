@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/base64"
+	"image"
+	"image/png"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +15,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
@@ -280,6 +284,114 @@ func TestTaskMediaCopyStoresConsoleImagesOnly(t *testing.T) {
 	assert.False(t, copyTaskMedia(service.GetTaskArtifactStore(), task))
 }
 
+func encodeTestPNG(t *testing.T, width, height int) []byte {
+	t.Helper()
+	var encoded bytes.Buffer
+	require.NoError(t, png.Encode(&encoded, image.NewRGBA(image.Rect(0, 0, width, height))))
+	return encoded.Bytes()
+}
+
+func requireThumbnail(t *testing.T, content string, width, height int) {
+	t.Helper()
+	config, format, err := image.DecodeConfig(strings.NewReader(content))
+	require.NoError(t, err)
+	assert.Equal(t, "jpeg", format)
+	assert.Equal(t, []int{width, height}, []int{config.Width, config.Height})
+}
+
+// getOwnTask returns the task as its owner's task list carries it.
+func getOwnTask(t *testing.T, task *model.Task, country string) dto.TaskDto {
+	t.Helper()
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Set("id", task.UserId)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/task/self?p=1&page_size=10&task_id="+task.TaskID, nil)
+	c.Request.Header.Set("CF-IPCountry", country)
+	GetUserTask(c)
+	var response struct {
+		Data struct {
+			Items []dto.TaskDto `json:"items"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.Len(t, response.Data.Items, 1)
+	return response.Data.Items[0]
+}
+
+func TestTaskMediaCopyGivesConsoleImagesAThumbnailAndDirectLinks(t *testing.T) {
+	content := encodeTestPNG(t, 2048, 1024)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(content)
+	}))
+	defer upstream.Close()
+	allowPrivateTaskMediaTest(t)
+	overseas, overseasServer := newFakeMediaBucket(t)
+	mainland, mainlandServer := newFakeMediaBucket(t)
+	configureMediaStorageTest(t, overseasServer.URL, mainlandServer.URL)
+	store := service.GetTaskArtifactStore()
+	task := setupConsoleImageTaskTest(t, upstream.URL+"/a.png")
+
+	require.True(t, copyTaskMedia(store, task))
+	saved, err := model.GetTaskByID(task.ID)
+	require.NoError(t, err)
+	stored := saved.PrivateData.StoredMedia
+	require.NotNil(t, stored)
+	assert.Equal(t, strings.TrimSuffix(stored.ObjectKey, ".png")+"_thumb.jpg", stored.ThumbnailKey)
+	requireThumbnail(t, overseas.objects["/global-media/"+stored.ThumbnailKey], 512, 256)
+	requireThumbnail(t, mainland.objects["/cn-media/"+stored.ThumbnailKey], 512, 256)
+	assert.False(t, consoleImageIncomplete(saved))
+
+	item := getOwnTask(t, saved, "CN")
+	assert.Equal(t, "https://cn-media.example.com/"+stored.ObjectKey, item.ImageURL)
+	assert.Equal(t, "https://cn-media.example.com/"+stored.ThumbnailKey, item.ThumbnailURL)
+	assert.Equal(t, "https://media.example.com/"+stored.ThumbnailKey, getOwnTask(t, saved, "US").ThumbnailURL)
+
+	// An image stored before thumbnails existed gets one from its stored copy.
+	system_setting.GetMediaStorageSettings().OverseasPublicURL = upstream.URL
+	stored.ThumbnailKey, stored.SoleImage = "", false
+	require.NoError(t, saved.UpdateStoredMedia())
+	assert.Empty(t, getOwnTask(t, saved, "US").ImageURL)
+	require.True(t, consoleImageIncomplete(saved))
+	require.True(t, completeConsoleImage(store, saved))
+	saved, err = model.GetTaskByID(task.ID)
+	require.NoError(t, err)
+	assert.False(t, consoleImageIncomplete(saved))
+	assert.NotEmpty(t, getOwnTask(t, saved, "US").ThumbnailURL)
+
+	// Past the storage retention period the links are no longer given out.
+	system_setting.GetMediaStorageSettings().RetentionDays = 1
+	saved.PrivateData.StoredMedia.StoredAt = time.Now().Add(-48 * time.Hour).Unix()
+	require.NoError(t, saved.UpdateStoredMedia())
+	assert.Empty(t, getOwnTask(t, saved, "US").ImageURL)
+}
+
+func TestTaskMediaCopyRetriesConsoleImageGivenUpAsVideo(t *testing.T) {
+	content := encodeTestPNG(t, 64, 64)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(content)
+	}))
+	defer upstream.Close()
+	allowPrivateTaskMediaTest(t)
+	_, bucketServer := newFakeMediaBucket(t)
+	configureMediaStorageTest(t, bucketServer.URL, bucketServer.URL)
+	store := service.GetTaskArtifactStore()
+	task := setupConsoleImageTaskTest(t, upstream.URL+"/a.png")
+
+	// A copy given up on for the image itself is final.
+	task.PrivateData.StoredMedia = &model.TaskStoredMedia{ArtifactKey: "image-1", Attempts: 5, GaveUp: true}
+	require.True(t, consoleImageIncomplete(task))
+	assert.False(t, completeConsoleImage(store, task))
+
+	task.PrivateData.StoredMedia.ArtifactKey = "video"
+	require.True(t, completeConsoleImage(store, task))
+	saved, err := model.GetTaskByID(task.ID)
+	require.NoError(t, err)
+	require.NotNil(t, saved.PrivateData.StoredMedia)
+	assert.Equal(t, "image-1", saved.PrivateData.StoredMedia.ArtifactKey)
+	assert.InDelta(t, time.Now().Unix()+7*86400, taskMediaRetention(saved, true), 5)
+}
+
 func TestTaskMediaCopyRetriesWithGrowingBackoff(t *testing.T) {
 	now := time.Now().Unix()
 	assert.True(t, taskMediaCopyDue(nil, now))
@@ -331,7 +443,7 @@ func TestTaskMediaRetentionTellsOwnerHowLongTheMediaLasts(t *testing.T) {
 func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	allowPrivateTaskMediaTest(t)
-	pngBytes := append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)
+	pngBytes := encodeTestPNG(t, 600, 1200)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 		_, _ = w.Write(pngBytes)
@@ -366,6 +478,7 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 		Created int64 `json:"created"`
 		Data    []struct {
 			URL            string `json:"url"`
+			ThumbnailURL   string `json:"thumbnail_url"`
 			B64JSON        string `json:"b64_json"`
 			MediaExpiresAt int64  `json:"media_expires_at"`
 			TaskID         string `json:"task_id"`
@@ -378,9 +491,11 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 		assert.True(t, strings.HasPrefix(item.URL, "https://cn-media.example.com/images/"), item.URL)
 		assert.True(t, strings.HasSuffix(item.URL, ".png"), item.URL)
 		assert.Empty(t, item.B64JSON)
+		thumbnailKey := strings.TrimPrefix(item.ThumbnailURL, "https://cn-media.example.com/")
+		requireThumbnail(t, mainland.objects["/cn-media/"+thumbnailKey], 256, 512)
 		assert.InDelta(t, time.Now().Unix()+7*86400, item.MediaExpiresAt, 5)
 	}
-	assert.Len(t, mainland.objects, 2)
+	assert.Len(t, mainland.objects, 4)
 	assert.Empty(t, overseas.objects)
 
 	// The copy of a task plugin's image also serves the owner's works list.
@@ -395,6 +510,7 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 	assert.Equal(t, "image-1", saved.PrivateData.StoredMedia.ArtifactKey)
 	assert.Equal(t, response.Data[0].URL, "https://cn-media.example.com/"+saved.PrivateData.StoredMedia.ObjectKey)
 	assert.False(t, taskMediaCopyDue(saved.PrivateData.StoredMedia, time.Now().Unix()))
+	assert.Equal(t, response.Data[0].ThumbnailURL, getOwnTask(t, saved, "US").ThumbnailURL)
 	served := requestStoredArtifact(t, saved, "US", "image-1")
 	assert.Equal(t, http.StatusFound, served.Code)
 	assert.Equal(t, response.Data[0].URL, served.Header().Get("Location"))

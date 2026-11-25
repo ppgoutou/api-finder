@@ -8731,6 +8731,7 @@
     "Final price after applying": "適用後の最終価格",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "仕入価格にはキーのグループ倍率が含まれています。最終価格はデフォルトグループの価格で、保存済みの価格調整は変わりません。",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "{{name}} の価格表にこのモデルはなくなったため、適用できる上流価格がありません。現在の価格はそのままです。",
-    "The supplier's price list has no price for this model.": "仕入先の価格表にこのモデルの価格はありません。"
+    "The supplier's price list has no price for this model.": "仕入先の価格表にこのモデルの価格はありません。",
+    "View full image": "画像を拡大表示"
   }
 }

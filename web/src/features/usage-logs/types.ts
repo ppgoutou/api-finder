@@ -360,6 +360,9 @@ export interface TaskLog {
   // Successful tasks: the Unix time the video or image stops being available,
   // once known.
   media_expires_at?: number
+  // The owner's task list only: CDN addresses of an image this site stored.
+  image_url?: string
+  thumbnail_url?: string
   fail_reason?: string
   // Admin views only: what the task's owner sees instead of `fail_reason`.
   user_fail_reason?: string

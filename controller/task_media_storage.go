@@ -61,7 +61,7 @@ func StartTaskMediaCopy() {
 	if !common.IsMasterNode {
 		return
 	}
-	// Tasks that have no media to copy, so later rounds skip them without
+	// Tasks that have no media left to copy, so later rounds skip them without
 	// loading them again. Entries leave once they fall out of the window.
 	noMedia := make(map[int64]int64)
 	for {
@@ -78,7 +78,8 @@ func StartTaskMediaCopy() {
 			}
 		}
 		for _, candidate := range model.GetSucceededTasksFinishedSince(since, taskMediaCopyBatch) {
-			if _, skip := noMedia[candidate.ID]; skip || !taskMediaCopyDue(candidate.PrivateData.StoredMedia, now) {
+			copyDue := taskMediaCopyDue(candidate.PrivateData.StoredMedia, now)
+			if _, skip := noMedia[candidate.ID]; skip || !copyDue && !consoleImageIncomplete(candidate) {
 				continue
 			}
 			// The reply to a web console request stores its own image first.
@@ -89,7 +90,13 @@ func StartTaskMediaCopy() {
 			if err != nil {
 				continue
 			}
-			if !copyTaskMedia(store, task) {
+			var progressed bool
+			if copyDue {
+				progressed = copyTaskMedia(store, task)
+			} else {
+				progressed = completeConsoleImage(store, task)
+			}
+			if !progressed {
 				noMedia[task.ID] = task.FinishTime
 			}
 		}
@@ -107,6 +114,56 @@ func taskMediaCopyDue(stored *model.TaskStoredMedia, now int64) bool {
 	}
 	backoff := int64(stored.Attempts*stored.Attempts) * int64(taskMediaCopyInterval/time.Second)
 	return stored.LastTryAt+backoff <= now
+}
+
+// consoleImageIncomplete reports whether a web console image was given up on or
+// lacks its thumbnail.
+func consoleImageIncomplete(task *model.Task) bool {
+	stored := task.PrivateData.StoredMedia
+	return stored != nil && task.IsConsoleImage() && (stored.GaveUp || stored.StoredAt > 0 && stored.ThumbnailKey == "")
+}
+
+// completeConsoleImage adds the thumbnail a stored image lacks, and copies an
+// image whose copy was given up on under another artifact: its plugin listed it
+// as a video then. It returns false when there is nothing left to try.
+func completeConsoleImage(store service.TaskArtifactStore, task *model.Task) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), playgroundImageStoreTimeout)
+	defer cancel()
+	artifact, descriptor := taskMediaContentRequest(ctx, task)
+	stored := task.PrivateData.StoredMedia
+	if descriptor == nil || stored == nil {
+		return false
+	}
+	if stored.GaveUp {
+		if artifact.Type != "image" || artifact.Key == stored.ArtifactKey {
+			return false
+		}
+		task.PrivateData.StoredMedia = nil
+		return copyTaskMedia(store, task)
+	}
+
+	if len(stored.Targets) == 0 || service.GeneratedImageExtension(stored.MimeType) == "" {
+		return false
+	}
+	content, err := downloadPlaygroundImage(ctx, service.MediaObjectPublicURL(stored.Targets[0], stored.ObjectKey))
+	if err == nil {
+		stored.ThumbnailKey, err = service.StoreImageThumbnail(ctx, content, stored.ObjectKey, stored.Targets)
+	}
+	if err != nil {
+		common.SysError(common.LogText("thumbnail of %s failed: %s", stored.ObjectKey, err.Error()))
+		return false
+	}
+	stored.SoleImage = taskHasSoleImage(task)
+	if err := task.UpdateStoredMedia(); err != nil {
+		common.SysError(common.LogText("media copy for task %s could not be saved: %s", task.TaskID, err.Error()))
+	}
+	return true
+}
+
+// taskHasSoleImage reports whether an image is the only artifact of the task.
+func taskHasSoleImage(task *model.Task) bool {
+	artifacts, err := projectTaskArtifacts(task)
+	return err == nil && len(artifacts) == 1 && artifacts[0].Type == "image"
 }
 
 // copyTaskMedia copies one task's video or image and records the outcome on the
@@ -244,6 +301,18 @@ func downloadAndPersistTaskMedia(ctx context.Context, store service.TaskArtifact
 	stored.UploadMs = ref.UploadMs
 	stored.StoredAt = time.Now().Unix()
 	stored.GaveUp = false
+	if artifact.Type != "image" {
+		return false, nil
+	}
+
+	stored.SoleImage = taskHasSoleImage(task)
+	content := make([]byte, writer.written)
+	if _, err = file.ReadAt(content, 0); err == nil {
+		stored.ThumbnailKey, err = service.StoreImageThumbnail(ctx, content, ref.ObjectKey, ref.Targets)
+	}
+	if err != nil {
+		common.SysError(common.LogText("thumbnail of %s failed: %s", ref.ObjectKey, err.Error()))
+	}
 	return false, nil
 }
 

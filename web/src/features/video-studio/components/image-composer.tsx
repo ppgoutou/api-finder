@@ -171,6 +171,7 @@ export function ImageComposer(props: ImageComposerProps) {
         images.map((image, index) => ({
           id: `${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
           url: image.url,
+          ...(image.thumbnailUrl ? { thumbnailUrl: image.thumbnailUrl } : {}),
           ...(image.expiresAt ? { expiresAt: image.expiresAt } : {}),
           ...(image.taskId ? { taskId: image.taskId } : {}),
           prompt: body.prompt,

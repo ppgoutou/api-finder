@@ -435,7 +435,13 @@ func GetUserTask(c *gin.Context) {
 	queryParams := model.SyncTaskQueryParams{Platform: constant.TaskPlatform(c.Query("platform")), TaskID: c.Query("task_id"), Status: c.Query("status"), Action: c.Query("action"), Kind: c.Query("kind"), StartTimestamp: startTimestamp, EndTimestamp: endTimestamp}
 	items := model.TaskGetAllUserTask(userID, pageInfo.GetStartIdx(), pageInfo.GetPageSize(), queryParams)
 	pageInfo.SetTotal(int(model.TaskCountAllUserTask(userID, queryParams)))
-	pageInfo.SetItems(tasksToDto(items, false, common.RoleCommonUser))
+	result := tasksToDto(items, false, common.RoleCommonUser)
+	for i, task := range items {
+		if task.Status == model.TaskStatusSuccess && task.IsConsoleImage() {
+			result[i].ImageURL, result[i].ThumbnailURL = service.StoredTaskImageURLs(task, c.GetHeader("CF-IPCountry"))
+		}
+	}
+	pageInfo.SetItems(result)
 	common.ApiSuccess(c, pageInfo)
 }
 

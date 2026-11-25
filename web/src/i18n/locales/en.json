@@ -8731,6 +8731,7 @@
     "Final price after applying": "Final price after applying",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.",
-    "The supplier's price list has no price for this model.": "The supplier's price list has no price for this model."
+    "The supplier's price list has no price for this model.": "The supplier's price list has no price for this model.",
+    "View full image": "View full image"
   }
 }

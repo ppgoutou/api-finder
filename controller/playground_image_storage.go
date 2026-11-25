@@ -52,7 +52,8 @@ func (w *playgroundImageWriter) WriteString(s string) (int, error) {
 // StorePlaygroundImages copies the images a web console request generated
 // into media storage, as finished videos are, so they stay available after
 // the supplier's links expire. Each stored image's URL is replaced by its copy
-// and marked with media_expires_at, the same expiry users see for videos. An image that cannot be copied keeps its original entry.
+// and marked with media_expires_at, the expiry users see for images, and with
+// the thumbnail_url of a small version. An image that cannot be copied keeps its original entry.
 // The copy of a task plugin's image is recorded on its task as well, so the
 // owner's works list serves it from any browser. Billing has already settled on
 // the upstream response by then; only the body the client receives changes.
@@ -102,7 +103,7 @@ func storePlaygroundImageResponse(ctx context.Context, body []byte, task *model.
 			continue
 		}
 		wg.Go(func() {
-			stored, err := storePlaygroundImage(ctx, item)
+			stored, content, err := storePlaygroundImage(ctx, item)
 			if err != nil {
 				common.SysError(common.LogText("playground image copy failed: %s", err.Error()))
 				return
@@ -110,8 +111,14 @@ func storePlaygroundImageResponse(ctx context.Context, body []byte, task *model.
 			if stored.URL == "" {
 				return
 			}
-			copies[i] = stored
 			item["url"] = stored.URL
+			stored.ThumbnailKey, err = service.StoreImageThumbnail(ctx, content, stored.ObjectKey, []string{stored.Target})
+			if err != nil {
+				common.SysError(common.LogText("thumbnail of %s failed: %s", stored.ObjectKey, err.Error()))
+			} else {
+				item["thumbnail_url"] = service.MediaObjectPublicURL(stored.Target, stored.ThumbnailKey)
+			}
+			copies[i] = stored
 			delete(item, "b64_json")
 			item["media_expires_at"] = service.MediaRetentionExpiry(time.Now().Unix(), stored.MimeType)
 		})
@@ -147,7 +154,7 @@ func storeTaskPluginImages(ctx context.Context, data []any) {
 		}
 		link, _ := item["url"].(string)
 		wg.Go(func() {
-			stored, err := storePlaygroundImage(ctx, map[string]any{"url": link})
+			stored, _, err := storePlaygroundImage(ctx, map[string]any{"url": link})
 			if err != nil {
 				common.SysError(common.LogText("playground image copy failed: %s", common.MaskSensitiveInfo(err.Error())))
 				return
@@ -168,12 +175,14 @@ func recordTaskImageCopy(task *model.Task, stored service.StoredMediaObject) {
 		return
 	}
 	task.PrivateData.StoredMedia = &model.TaskStoredMedia{
-		ArtifactKey: artifacts[0].Key,
-		ObjectKey:   stored.ObjectKey,
-		MimeType:    stored.MimeType,
-		Size:        stored.Size,
-		Targets:     []string{stored.Target},
-		StoredAt:    time.Now().Unix(),
+		ArtifactKey:  artifacts[0].Key,
+		ObjectKey:    stored.ObjectKey,
+		MimeType:     stored.MimeType,
+		Size:         stored.Size,
+		Targets:      []string{stored.Target},
+		StoredAt:     time.Now().Unix(),
+		ThumbnailKey: stored.ThumbnailKey,
+		SoleImage:    true,
 	}
 	if err := task.UpdateStoredMedia(); err != nil {
 		common.SysError(common.LogText("media copy for task %s could not be saved: %s", task.TaskID, err.Error()))
@@ -181,28 +190,29 @@ func recordTaskImageCopy(task *model.Task, stored service.StoredMediaObject) {
 }
 
 // storePlaygroundImage copies one image entry, given as a link or inline
-// base64.
-func storePlaygroundImage(ctx context.Context, item map[string]any) (service.StoredMediaObject, error) {
+// base64, and returns the copy with the image's content.
+func storePlaygroundImage(ctx context.Context, item map[string]any) (service.StoredMediaObject, []byte, error) {
 	var content []byte
 	if encoded, _ := item["b64_json"].(string); encoded != "" {
 		decoded, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
-			return service.StoredMediaObject{}, err
+			return service.StoredMediaObject{}, nil, err
 		}
 		content = decoded
 	} else if link, _ := item["url"].(string); strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
 		downloaded, err := downloadPlaygroundImage(ctx, link)
 		if err != nil {
-			return service.StoredMediaObject{}, err
+			return service.StoredMediaObject{}, nil, err
 		}
 		content = downloaded
 	} else {
-		return service.StoredMediaObject{}, nil
+		return service.StoredMediaObject{}, nil, nil
 	}
 	if len(content) > playgroundImageMaxBytes {
-		return service.StoredMediaObject{}, errors.New("image is larger than the copy limit")
+		return service.StoredMediaObject{}, nil, errors.New("image is larger than the copy limit")
 	}
-	return service.StoreGeneratedImage(ctx, content, http.DetectContentType(content))
+	stored, err := service.StoreGeneratedImage(ctx, content, http.DetectContentType(content))
+	return stored, content, err
 }
 
 // downloadPlaygroundImage fetches a supplier's image link. The link comes from

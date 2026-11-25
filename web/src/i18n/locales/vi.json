@@ -8731,6 +8731,7 @@
     "Final price after applying": "Giá cuối sau khi áp dụng",
     "Supply prices already include the key group ratio. Final prices are for the default group; saved price adjustments stay unchanged.": "Giá cung cấp đã gồm tỷ lệ nhóm của khóa. Giá cuối tính cho nhóm mặc định; các điều chỉnh giá đã lưu giữ nguyên.",
     "The price list of {{name}} no longer has this model, so there is no upstream price to apply. The current price stays as it is.": "Bảng giá của {{name}} không còn mô hình này nên không có giá thượng nguồn để áp dụng. Giá hiện tại giữ nguyên.",
-    "The supplier's price list has no price for this model.": "Bảng giá của nhà cung cấp không có giá cho mô hình này."
+    "The supplier's price list has no price for this model.": "Bảng giá của nhà cung cấp không có giá cho mô hình này.",
+    "View full image": "Xem ảnh đầy đủ"
   }
 }
