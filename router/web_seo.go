@@ -48,17 +48,19 @@ type seoShareCard struct {
 
 // seoShareCards are the pictures a shared link can show. Adding ?v=2 to a page
 // address picks the second card, and so on; any other address shows the first.
+// Cards 5-7 and 10 carry dated prices and cards 8 and 9 measured figures (from
+// /api/perf-metrics): redraw them under new file names when those change.
 var seoShareCards = []seoShareCard{
 	{"/share-card-v1.jpg", "Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset"},
 	{"/share-card-v2.jpg", "Blockbuster scenes from one prompt: a lone figure on broken concrete faces a giant stone hand"},
 	{"/share-card-v3.jpg", "One prompt box, every style: four clips, live action, period drama, fantasy and animation"},
-	{"/share-card-v4.jpg", "Your story, fully animated: a man is thrown into the air above a speedboat on a wave"},
-	{"/share-card-v5.jpg", "Describe the scene. Get the shot: a hand turning into liquid copper on a cracked street"},
-	{"/share-card-v6.jpg", "Up to 30 seconds in one clip: a girl with blue hair looks up in a dark room"},
-	{"/share-card-v7.jpg", "Fight scenes, written not filmed: a general in red armor in a wrecked hall"},
-	{"/share-card-v8.jpg", "Type the effect, see it happen: a street gang before and after becoming brides"},
-	{"/share-card-v9.jpg", "Realistic vlogs, no camera: a woman holding a cup on a rooftop"},
-	{"/share-card-v10.jpg", "Pay per second. No subscription: three AI video clips on a blue background"},
+	{"/share-card-v4.jpg", "Type the effect, see it happen: a street gang before and after becoming brides"},
+	{"/share-card-v5.jpg", "Seedance 2.5 at 720p, 68% off: from $0.07 per second, list price $0.23, November 2026"},
+	{"/share-card-v6.jpg", "Seedance 2.0 at 720p, 61% off: from $0.06 per second, list price $0.15, November 2026"},
+	{"/share-card-v7.jpg", "AI video per second at 720p, November 2026: Seedance 2.5 $0.07, Seedance 2.0 $0.06, Wan 3.0 $0.03"},
+	{"/share-card-v8.jpg", "Seedance 2.5 success rate 93.5%, measured November 18 to 25, 2026. Failed videos are refunded."},
+	{"/share-card-v9.jpg", "Average Seedance 2.5 wait 7 minutes 23 seconds, measured November 18 to 25, 2026"},
+	{"/share-card-v10.jpg", "A 10-second Seedance 2.5 clip at 720p for $0.74, list price $2.31, November 2026"},
 }
 
 var seoPages = map[string]seoPage{
