@@ -16,22 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Main } from '@/components/layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PX_SHOW_LINKS_ENABLED, pxShowUrl } from '@/lib/partner-links'
+import { useAuthStore } from '@/stores/auth-store'
+import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
 import { Composer } from './components/composer'
 import { GalleryList } from './components/gallery-list'
 import { ImageComposer } from './components/image-composer'
 import { ImageWorksList } from './components/image-works-list'
+import { NotifyOffer } from './components/notify-offer'
 import { WorksList } from './components/works-list'
-import { STUDIO_WORKS_QUERY_KEY } from './constants'
+import { wouldLoseDraft } from './lib/draft-storage'
 import type { StudioDraft, StudioKind } from './types'
 
 type WorksTab = 'mine' | 'gallery'
@@ -48,28 +51,48 @@ interface EditedWork {
 /** Creation page: a prompt canvas for videos or images over the latest works. */
 export function VideoStudio() {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const search = useSearch({ from: '/_authenticated/video-studio/' })
   const navigate = useNavigate({ from: '/video-studio/' })
   const kind: StudioKind = search.kind ?? 'video'
-  const [edited, setEdited] = useState<EditedWork | null>(null)
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const handoff = useStudioHandoff((state) => state.handoff)
+  const setHandoff = useStudioHandoff((state) => state.set)
+  // A work another page sent here for editing; that page already asked.
+  const [edited, setEdited] = useState<EditedWork | null>(() =>
+    handoff ? { ...handoff, key: 1 } : null
+  )
+  const [replacing, setReplacing] = useState<Omit<EditedWork, 'key'> | null>(
+    null
+  )
   const [worksTab, setWorksTab] = useState<WorksTab>('mine')
   const composerRef = useRef<HTMLElement>(null)
-  const editWork = (draft: Partial<StudioDraft>, size?: string) => {
-    setEdited((current) => ({
-      kind,
-      draft,
-      size,
-      key: (current?.key ?? 0) + 1,
-    }))
+  const worksRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (handoff) setHandoff(null)
+  }, [handoff, setHandoff])
+
+  const loadWork = (work: Omit<EditedWork, 'key'>) => {
+    setEdited((current) => ({ ...work, key: (current?.key ?? 0) + 1 }))
     composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const editWork = (draft: Partial<StudioDraft>, size?: string) => {
+    const work = { kind, draft, size }
+    if (wouldLoseDraft(kind, userId, draft.prompt)) setReplacing(work)
+    else loadWork(work)
+  }
+  const showSubmitted = () => {
+    setWorksTab('mine')
+    // After the new cards are drawn.
+    requestAnimationFrame(() =>
+      worksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    )
   }
   const editedDraft = edited?.kind === kind ? edited : null
 
   return (
     <Main>
       <div className='min-h-0 flex-1 overflow-y-auto'>
-        <div className='mx-auto flex w-full max-w-[1800px] flex-col gap-10 px-3 py-8 sm:px-4 md:py-12'>
+        <div className='mx-auto flex w-full max-w-[1800px] flex-col gap-10 px-3 pt-6 pb-32 sm:px-4 md:py-10'>
           <section
             ref={composerRef}
             className='flex scroll-mt-4 flex-col items-center gap-5'
@@ -112,22 +135,20 @@ export function VideoStudio() {
                   initialModel={search.model}
                   initialDraft={editedDraft?.draft}
                   initialSize={editedDraft?.size}
+                  onSubmitted={showSubmitted}
                 />
               ) : (
                 <Composer
                   key={editedDraft?.key}
                   initialModel={search.model}
                   initialDraft={editedDraft?.draft}
-                  onSubmitted={() =>
-                    queryClient.invalidateQueries({
-                      queryKey: STUDIO_WORKS_QUERY_KEY,
-                    })
-                  }
+                  onSubmitted={showSubmitted}
                 />
               )}
             </div>
           </section>
-          <section className='flex flex-col gap-4'>
+          <section ref={worksRef} className='flex scroll-mt-4 flex-col gap-4'>
+            <NotifyOffer />
             {kind === 'image' ? (
               <>
                 <h2 className='text-section-title'>{t('My images')}</h2>
@@ -154,6 +175,22 @@ export function VideoStudio() {
           </section>
         </div>
       </div>
+      <ConfirmDialog
+        open={replacing !== null}
+        onOpenChange={(open) => {
+          if (!open) setReplacing(null)
+        }}
+        title={t('Replace what you are writing?')}
+        desc={t(
+          'The current prompt has not been submitted and will be replaced.'
+        )}
+        cancelBtnText={t('Keep writing')}
+        confirmText={t('Replace')}
+        handleConfirm={() => {
+          if (replacing) loadWork(replacing)
+          setReplacing(null)
+        }}
+      />
     </Main>
   )
 }

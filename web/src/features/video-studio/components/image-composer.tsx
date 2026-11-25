@@ -18,21 +18,20 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowUp,
   Copy,
   Image as ImageIcon,
   Maximize,
   RectangleHorizontal,
 } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
 import { getServerErrorMessage } from '@/lib/server-error-message'
+import { useAuthStore } from '@/stores/auth-store'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { generateImages } from '../api'
@@ -53,6 +52,7 @@ import {
   labelReferences,
   replacementModel,
 } from '../lib/draft'
+import { markDraftSubmitted } from '../lib/draft-storage'
 import {
   buildImageRequests,
   fitPluginImageShape,
@@ -70,12 +70,15 @@ import {
 import type { StudioDraft } from '../types'
 import { ChoiceMenu } from './choice-menu'
 import { ComposerCard } from './composer-card'
+import { FileProblems } from './file-notes'
 import { PromptInput } from './prompt-input'
 import { ReferencePanel } from './reference-panel'
 import { StudioCost } from './studio-cost'
 import { UnavailableModelNotice } from './unavailable-model-notice'
 
 interface ImageComposerProps {
+  /** Called as soon as a submission starts, when its cards already show. */
+  onSubmitted?: () => void
   /** Model picked on entry, such as from a pricing card's try button. */
   initialModel?: string
   /** A past image loaded back for editing; takes over the initial model. */
@@ -83,33 +86,38 @@ interface ImageComposerProps {
   initialSize?: string
 }
 
+const SUBMIT_LOCK_MS = 1500
+
 /** Prompt box for image generation: reference images, model, size, count. */
 export function ImageComposer(props: ImageComposerProps) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
-  const studio = useStudioDraft(
-    props.initialDraft ??
-      (props.initialModel ? { model: props.initialModel } : undefined)
-  )
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const studio = useStudioDraft('image', {
+    draft: props.initialDraft,
+    model: props.initialModel,
+    size: props.initialSize,
+  })
   const models = useStudioImageModels()
   const queryClient = useQueryClient()
   const addWorks = useStudioImageWorks((state) => state.add)
   const startGenerating = useStudioImageWorks((state) => state.startGenerating)
   const stopGenerating = useStudioImageWorks((state) => state.stopGenerating)
   const upload = useAssetUploader()
-  const [size, setSize] = useState(
-    STUDIO_IMAGE_SIZES.find((option) => option.value === props.initialSize)
-      ?.value ?? DEFAULT_IMAGE_SIZE
-  )
-  // Shape of a plugin model's image, remembered as "2K 16:9", "2K" or "16:9".
-  const initialShape = props.initialSize?.split(' ') ?? []
-  const [pluginSize, setPluginSize] = useState(
-    initialShape.find((part) => !part.includes(':')) ?? ''
-  )
-  const [pluginRatio, setPluginRatio] = useState(
-    initialShape.find((part) => part.includes(':')) ?? ''
-  )
-  const [submitting, setSubmitting] = useState(false)
+  // Kept as "2048x2048", or for a plugin model as "2K 16:9", "2K" or "16:9".
+  const shapeParts = studio.size?.split(' ') ?? []
+  const size =
+    STUDIO_IMAGE_SIZES.find((option) => option.value === studio.size)?.value ??
+    DEFAULT_IMAGE_SIZE
+  const pluginSize = shapeParts.find((part) => !part.includes(':')) ?? ''
+  const pluginRatio = shapeParts.find((part) => part.includes(':')) ?? ''
+  const setPluginShape = (nextSize: string, nextRatio: string) =>
+    studio.setSize([nextSize, nextRatio].filter(Boolean).join(' '))
+  // A second click right after the first one is taken for the same click; the
+  // next request may start while this one is still running.
+  const [justSubmitted, setJustSubmitted] = useState(false)
+  const unlockTimer = useRef<number>(undefined)
+  useEffect(() => () => window.clearTimeout(unlockTimer.current), [])
   const model = findStudioModel(models, studio.draft.model)
   const unavailable = model?.unavailable === true
   const plugin = model?.plugin
@@ -152,11 +160,25 @@ export function ImageComposer(props: ImageComposerProps) {
       toast.error(t(problem, problemParams))
       return
     }
-    if (insufficient) return
-    setSubmitting(true)
-    startGenerating()
+    if (insufficient || justSubmitted) return
+    setJustSubmitted(true)
+    unlockTimer.current = window.setTimeout(
+      () => setJustSubmitted(false),
+      SUBMIT_LOCK_MS
+    )
     const requests = buildImageRequests(draft, plugin)
     const [body] = requests
+    const pendingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    startGenerating({
+      id: pendingId,
+      prompt: body.prompt,
+      model: body.model,
+      size: imageShapeLabel(body),
+      count: draft.count,
+      startedAt: Math.floor(Date.now() / 1000),
+    })
+    markDraftSubmitted('image', userId, draft.prompt)
+    props.onSubmitted?.()
     try {
       const results = await Promise.allSettled(
         requests.map((request) => generateImages(request))
@@ -186,8 +208,7 @@ export function ImageComposer(props: ImageComposerProps) {
     } catch (error) {
       toast.error(getServerErrorMessage(error, t('Image generation failed')))
     } finally {
-      setSubmitting(false)
-      stopGenerating()
+      stopGenerating(pendingId)
       void queryClient.invalidateQueries({ queryKey: STUDIO_WORKS_QUERY_KEY })
       balance.refresh()
     }
@@ -198,6 +219,11 @@ export function ImageComposer(props: ImageComposerProps) {
       prompt={draft.prompt}
       guide={guide}
       hintId={hintId}
+      hasContent={draft.prompt !== '' || draft.references.length > 0}
+      saved={studio.stored}
+      onClear={studio.clear}
+      onFiles={addReferences}
+      files={<FileProblems assets={draft.references} />}
       toolbar={
         <>
           {model && (
@@ -225,7 +251,7 @@ export function ImageComposer(props: ImageComposerProps) {
                 label: `${option.ratio} · ${option.value.replace('x', '×')}`,
                 icon: <Maximize className='size-3.5' aria-hidden />,
               }))}
-              onChange={setSize}
+              onChange={studio.setSize}
             />
           )}
           {plugin && plugin.resolutions.length > 0 && (
@@ -237,7 +263,7 @@ export function ImageComposer(props: ImageComposerProps) {
                 label: value,
                 icon: <Maximize className='size-3.5' aria-hidden />,
               }))}
-              onChange={setPluginSize}
+              onChange={(value) => setPluginShape(value, pluginRatio)}
             />
           )}
           {plugin && plugin.ratios.length > 0 && (
@@ -249,7 +275,7 @@ export function ImageComposer(props: ImageComposerProps) {
                 label: value,
                 icon: <RectangleHorizontal className='size-3.5' aria-hidden />,
               }))}
-              onChange={setPluginRatio}
+              onChange={(value) => setPluginShape(pluginSize, value)}
             />
           )}
           <ChoiceMenu
@@ -265,24 +291,29 @@ export function ImageComposer(props: ImageComposerProps) {
             )}
             onChange={(count) => studio.update({ count: Number(count) })}
           />
-          <div className='ml-auto flex items-center gap-3'>
-            <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
-            <Button
-              type='button'
-              size='icon'
-              className='size-9 rounded-full'
-              onClick={submit}
-              disabled={submitting || insufficient || unavailable}
-              aria-label={t('Generate image')}
-              title={problem ? t(problem, problemParams) : t('Generate image')}
-            >
-              {submitting ? (
-                <Spinner className='size-4' />
-              ) : (
-                <ArrowUp className='size-4' aria-hidden />
-              )}
-            </Button>
-          </div>
+        </>
+      }
+      action={
+        <>
+          <StudioCost
+            price={price}
+            detail={[draft.size.replace('x', '×'), draft.ratio]
+              .filter(Boolean)
+              .join(' · ')
+              .concat(` × ${draft.count}`)}
+            shortfallUSD={balance.shortfallUSD}
+          />
+          <Button
+            type='button'
+            size='xl'
+            className='max-md:flex-1'
+            onClick={submit}
+            disabled={justSubmitted || insufficient || unavailable}
+            title={problem ? t(problem, problemParams) : t('Generate image')}
+          >
+            <ImageIcon aria-hidden />
+            {t('Generate image')}
+          </Button>
         </>
       }
       notice={
@@ -310,6 +341,7 @@ export function ImageComposer(props: ImageComposerProps) {
         mentions={labelReferences(draft.references).map(({ asset, token }) => ({
           token,
           fileName: asset.fileName,
+          preview: { kind: 'image' as const, url: asset.previewUrl },
         }))}
         placeholder={t('Describe the image you want to create')}
         placeholderExample={t(

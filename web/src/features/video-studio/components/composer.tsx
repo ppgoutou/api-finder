@@ -16,31 +16,50 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ArrowUp, Film, Images, Layers } from 'lucide-react'
-import { useId, useState, type ReactNode } from 'react'
+import {
+  Clapperboard,
+  Clock,
+  Copy,
+  Film,
+  Image as ImageIcon,
+  Images,
+  Layers,
+  Maximize,
+  RectangleHorizontal,
+  Type,
+} from 'lucide-react'
+import { useId, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
-import { getServerErrorMessage } from '@/lib/server-error-message'
+import { useAuthStore } from '@/stores/auth-store'
 
-import { createVideoTask } from '../api'
+import { STUDIO_MAX_COUNT, type StudioModel } from '../constants'
 import { assetKindOf, useAssetUploader } from '../hooks/use-asset-uploader'
 import { useStudioBalance } from '../hooks/use-studio-balance'
 import { useStudioDraft } from '../hooks/use-studio-draft'
 import { useStudioModels } from '../hooks/use-studio-models'
-import { useStudioPrice } from '../hooks/use-studio-price'
+import { useStudioPricer } from '../hooks/use-studio-price'
+import { useVideoSubmit } from '../hooks/use-video-submit'
 import {
   buildVideoRequest,
+  draftAssets,
+  excessReferences,
   findStudioModel,
   fitDraftToModel,
   labelReferences,
+  referenceLimitsOf,
   replacementModel,
+  studioDurations,
   validateDraft,
 } from '../lib/draft'
+import { markDraftSubmitted } from '../lib/draft-storage'
 import { localizeMentions } from '../lib/mention-names'
 import {
   composerHintIds,
@@ -48,10 +67,10 @@ import {
   promptGuide,
   promptLength,
 } from '../lib/prompt-guide'
-import { rememberTaskPrompt } from '../lib/prompt-history'
-import type { StudioDraft, StudioMode } from '../types'
+import type { StudioDraft, StudioMode, StudioRatio } from '../types'
 import { ChoiceMenu } from './choice-menu'
 import { ComposerCard } from './composer-card'
+import { FileProblems, ReferenceUsage } from './file-notes'
 import { ParamsPopover } from './params-popover'
 import { PromptInput } from './prompt-input'
 import { FramePanel, ReferencePanel } from './reference-panel'
@@ -59,7 +78,7 @@ import { StudioCost } from './studio-cost'
 import { UnavailableModelNotice } from './unavailable-model-notice'
 
 interface ComposerProps {
-  /** Called after tasks are created, so the works list can refresh. */
+  /** Called as soon as a submission starts, when its cards already show. */
   onSubmitted: () => void
   /** Model picked on entry, such as from a pricing card's try button. */
   initialModel?: string
@@ -72,18 +91,21 @@ export function Composer(props: ComposerProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage || i18n.language
   const locale = toIntlLocale(language)
-  const studio = useStudioDraft(
-    props.initialDraft ??
-      (props.initialModel ? { model: props.initialModel } : undefined)
-  )
+  const isMobile = useIsMobile()
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const studio = useStudioDraft('video', {
+    draft: props.initialDraft,
+    model: props.initialModel,
+  })
   const models = useStudioModels()
   const draft = fitDraftToModel(studio.draft, models)
   const model = findStudioModel(models, draft.model)
   const upload = useAssetUploader()
-  const price = useStudioPrice(draft)
+  const priceOf = useStudioPricer()
+  const price = priceOf(draft)
   const balance = useStudioBalance(price?.costUSD ?? null)
   const insufficient = balance.shortfallUSD !== null
-  const [submitting, setSubmitting] = useState(false)
+  const { submit: submitVideos, submitting } = useVideoSubmit()
   const unavailable = model?.unavailable === true
   let problem = model
     ? validateDraft(draft, model)
@@ -97,16 +119,33 @@ export function Composer(props: ComposerProps) {
     problem = 'This model is temporarily unavailable. Pick another model.'
   }
   const problemParams = { max: formatNumber(guide.maxLength, locale) }
+  const limits = referenceLimitsOf(model)
+  const assets = draftAssets(draft)
 
-  const addReferences = (files: File[]) => {
-    const rejected = files.filter((file) => !assetKindOf(file))
-    if (rejected.length) {
+  const setFrame = (slot: 'first' | 'last', file: File) =>
+    upload(file, 'image', (asset) => studio.putFrame(slot, asset))
+
+  const addFiles = (files: File[]) => {
+    if (files.some((file) => !assetKindOf(file))) {
       toast.error(
         t(
           'Unsupported file type. Upload a JPG, PNG or WebP image, an MP4 or MOV video, or an MP3, WAV or M4A audio file.'
         )
       )
     }
+    const images = files.filter((file) => assetKindOf(file) === 'image')
+    const framesMode = draft.mode === 'image' || draft.mode === 'frames'
+    if (framesMode && images.length === files.length) {
+      const free: ('first' | 'last')[] = []
+      if (!draft.firstFrame || draft.mode === 'image') free.push('first')
+      if (!draft.lastFrame && draft.mode === 'frames') free.push('last')
+      for (const [index, slot] of free.entries()) {
+        if (images[index]) setFrame(slot, images[index])
+      }
+      return
+    }
+    // Other files only make sense as references.
+    if (draft.mode !== 'reference') studio.update({ mode: 'reference' })
     for (const file of files) {
       const kind = assetKindOf(file)
       if (kind) upload(file, kind, studio.putReference)
@@ -114,100 +153,220 @@ export function Composer(props: ComposerProps) {
   }
 
   const submit = async () => {
+    if (submitting) return
     if (problem) {
       toast.error(t(problem, problemParams))
       return
     }
     if (insufficient) return
-    setSubmitting(true)
-    const body = buildVideoRequest(draft)
-    const spec = `${body.model} · ${body.resolution} · ${t('{{seconds}}s', { seconds: body.seconds })}`
-    let created = 0
-    try {
-      for (let index = 0; index < draft.count; index += 1) {
-        const taskId = await createVideoTask(body)
-        rememberTaskPrompt(taskId, body, spec)
-        created += 1
-      }
-      toast.success(
-        t('Submitted. Videos usually take a few minutes; they appear below.')
-      )
-    } catch (error) {
-      toast.error(getServerErrorMessage(error, t('Task submission failed')))
-    } finally {
-      setSubmitting(false)
-      balance.refresh()
-      if (created > 0) props.onSubmitted()
-    }
+    const request = buildVideoRequest(draft)
+    const created = await submitVideos(request, draft.count, props.onSubmitted)
+    if (created > 0) markDraftSubmitted('video', userId, draft.prompt)
   }
 
-  const modeOptions: { value: StudioMode; label: string; icon: ReactNode }[] = [
+  const modes: {
+    value: StudioMode
+    label: string
+    hint: string
+    icon: ReactNode
+  }[] = [
     {
-      value: 'reference',
-      label: t('Reference generation'),
-      icon: <Images className='size-3.5' aria-hidden />,
+      value: 'text',
+      label: t('Text to video'),
+      hint: t('Only words, no files needed'),
+      icon: <Type className='size-3.5 max-sm:hidden' aria-hidden />,
+    },
+    {
+      value: 'image',
+      label: t('Image to video'),
+      hint: t('One image as the opening frame'),
+      icon: <ImageIcon className='size-3.5 max-sm:hidden' aria-hidden />,
     },
     {
       value: 'frames',
       label: t('First and last frame'),
-      icon: <Layers className='size-3.5' aria-hidden />,
+      hint: t('Two images, the video moves between them'),
+      icon: <Layers className='size-3.5 max-sm:hidden' aria-hidden />,
+    },
+    {
+      value: 'reference',
+      label: t('Reference generation'),
+      hint: t('Images, videos or audio, mentioned with @'),
+      icon: <Images className='size-3.5 max-sm:hidden' aria-hidden />,
     },
   ]
+
+  const describeModel = (option: StudioModel) => {
+    const [shortest, longest] = option.duration
+    return t('{{shortest}}–{{longest}}s · up to {{resolution}}', {
+      shortest,
+      longest,
+      resolution: (option.resolutions.at(-1) ?? '').toUpperCase(),
+    })
+  }
+  const ratioLabel = (ratio: StudioRatio) =>
+    ratio === 'auto' ? t('Auto') : ratio
+  const costDetail = `${draft.resolution.toUpperCase()} · ${t('{{seconds}}s', { seconds: draft.seconds })} × ${draft.count}`
 
   return (
     <ComposerCard
       prompt={draft.prompt}
       guide={guide}
       hintId={hintId}
+      hasContent={draft.prompt !== '' || assets.length > 0}
+      saved={studio.stored}
+      onClear={studio.clear}
+      onFiles={addFiles}
+      header={
+        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
+          <ToggleGroup
+            aria-label={t('Mode')}
+            value={[draft.mode]}
+            onValueChange={(values: string[]) => {
+              if (values[0]) studio.update({ mode: values[0] as StudioMode })
+            }}
+            spacing={1}
+            className='flex-wrap'
+          >
+            {modes.map((mode) => (
+              <ToggleGroupItem
+                key={mode.value}
+                value={mode.value}
+                className='data-[pressed]:bg-brand-soft data-[pressed]:text-primary dark:data-[pressed]:bg-primary/20 text-body-sm gap-1.5 px-2.5'
+              >
+                {mode.icon}
+                {mode.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <span className='text-muted-foreground ml-auto px-1 text-xs max-lg:hidden'>
+            {modes.find((mode) => mode.value === draft.mode)?.hint}
+          </span>
+        </div>
+      }
+      files={
+        <>
+          {draft.mode === 'reference' && (
+            <ReferenceUsage
+              references={draft.references}
+              limits={limits}
+              onRemoveExtra={() => {
+                for (const asset of excessReferences(
+                  draft.references,
+                  limits
+                )) {
+                  studio.removeReference(asset)
+                }
+              }}
+            />
+          )}
+          <FileProblems assets={assets} />
+        </>
+      }
       toolbar={
         <>
-          <ChoiceMenu
-            label={t('Mode')}
-            value={draft.mode}
-            options={modeOptions}
-            onChange={(mode) => studio.update({ mode })}
-          />
           {model && (
+            <ChoiceMenu
+              label={t('Model')}
+              value={draft.model}
+              options={models.map((option) => ({
+                value: option.name,
+                label: option.label ?? option.name,
+                group: option.group,
+                icon: <Film className='size-3.5' aria-hidden />,
+                description: describeModel(option),
+                detail: priceOf(
+                  fitDraftToModel({ ...draft, model: option.name }, [option])
+                )?.label,
+                unavailableLabel: option.unavailable
+                  ? t('Temporarily unavailable')
+                  : undefined,
+              }))}
+              onChange={(name) => studio.update({ model: name })}
+            />
+          )}
+          {model && isMobile && (
+            <ParamsPopover
+              draft={draft}
+              model={model}
+              onChange={studio.update}
+            />
+          )}
+          {model && !isMobile && (
             <>
               <ChoiceMenu
-                label={t('Model')}
-                value={draft.model}
-                options={models.map((option) => ({
-                  value: option.name,
-                  label: option.label ?? option.name,
-                  group: option.group,
-                  icon: <Film className='size-3.5' aria-hidden />,
-                  unavailableLabel: option.unavailable
-                    ? t('Temporarily unavailable')
-                    : undefined,
+                label={t('Aspect ratio')}
+                value={draft.ratio}
+                options={model.ratios.map((ratio) => ({
+                  value: ratio,
+                  label: ratioLabel(ratio),
+                  icon: (
+                    <RectangleHorizontal className='size-3.5' aria-hidden />
+                  ),
                 }))}
-                onChange={(name) => studio.update({ model: name })}
+                onChange={(ratio) => studio.update({ ratio })}
               />
-              <ParamsPopover
-                draft={draft}
-                model={model}
-                onChange={studio.update}
+              <ChoiceMenu
+                label={t('Resolution')}
+                value={draft.resolution}
+                options={model.resolutions.map((resolution) => ({
+                  value: resolution,
+                  label: resolution.toUpperCase(),
+                  icon: <Maximize className='size-3.5' aria-hidden />,
+                }))}
+                onChange={(resolution) => studio.update({ resolution })}
+              />
+              <ChoiceMenu
+                label={t('Video duration')}
+                value={String(draft.seconds)}
+                options={studioDurations(model).map((seconds) => ({
+                  value: String(seconds),
+                  label: t('{{seconds}}s', { seconds }),
+                  icon: <Clock className='size-3.5' aria-hidden />,
+                }))}
+                onChange={(seconds) =>
+                  studio.update({ seconds: Number(seconds) })
+                }
+              />
+              <ChoiceMenu
+                label={t('Number of videos')}
+                value={String(draft.count)}
+                options={Array.from(
+                  { length: STUDIO_MAX_COUNT },
+                  (_, index) => ({
+                    value: String(index + 1),
+                    label: t('{{count}} video(s)', { count: index + 1 }),
+                    icon: <Copy className='size-3.5' aria-hidden />,
+                  })
+                )}
+                onChange={(count) => studio.update({ count: Number(count) })}
               />
             </>
           )}
-          <div className='ml-auto flex items-center gap-3'>
-            <StudioCost price={price} shortfallUSD={balance.shortfallUSD} />
-            <Button
-              type='button'
-              size='icon'
-              className='size-9 rounded-full'
-              onClick={submit}
-              disabled={submitting || insufficient || unavailable}
-              aria-label={t('Generate video')}
-              title={problem ? t(problem, problemParams) : t('Generate video')}
-            >
-              {submitting ? (
-                <Spinner className='size-4' />
-              ) : (
-                <ArrowUp className='size-4' aria-hidden />
-              )}
-            </Button>
-          </div>
+        </>
+      }
+      action={
+        <>
+          <StudioCost
+            price={price}
+            detail={costDetail}
+            shortfallUSD={balance.shortfallUSD}
+          />
+          <Button
+            type='button'
+            size='xl'
+            className='max-md:flex-1'
+            onClick={submit}
+            disabled={submitting || insufficient || unavailable}
+            title={problem ? t(problem, problemParams) : t('Generate video')}
+          >
+            {submitting ? (
+              <Spinner className='size-4' />
+            ) : (
+              <Clapperboard aria-hidden />
+            )}
+            {t('Generate video')}
+          </Button>
         </>
       }
       notice={
@@ -221,19 +380,19 @@ export function Composer(props: ComposerProps) {
         )
       }
     >
-      {draft.mode === 'reference' ? (
+      {draft.mode === 'reference' && (
         <ReferencePanel
           references={draft.references}
-          onAddFiles={addReferences}
+          onAddFiles={addFiles}
           onRemove={studio.removeReference}
         />
-      ) : (
+      )}
+      {(draft.mode === 'image' || draft.mode === 'frames') && (
         <FramePanel
+          withLastFrame={draft.mode === 'frames'}
           firstFrame={draft.firstFrame}
           lastFrame={draft.lastFrame}
-          onSetFrame={(slot, file) =>
-            upload(file, 'image', (asset) => studio.putFrame(slot, asset))
-          }
+          onSetFrame={setFrame}
           onRemoveFrame={studio.removeFrame}
         />
       )}
@@ -245,15 +404,19 @@ export function Composer(props: ComposerProps) {
             ? labelReferences(draft.references).map(({ asset, token }) => ({
                 token,
                 fileName: asset.fileName,
+                preview:
+                  asset.kind === 'audio'
+                    ? undefined
+                    : { kind: asset.kind, url: asset.previewUrl },
               }))
             : []
         }
         placeholder={
-          draft.mode === 'reference'
-            ? t('Describe the video you want to create')
-            : t(
+          draft.mode === 'frames'
+            ? t(
                 'Describe how the video moves from the first frame to the last frame.'
               )
+            : t('Describe the video you want to create')
         }
         placeholderExample={
           draft.mode === 'reference'

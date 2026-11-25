@@ -62,37 +62,44 @@ export function useAssetUploader() {
         ...base,
         status: 'error',
         error: t(
-          'The file is too large. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.'
+          '{{name}} is {{size}} MB. Images can be up to 10 MB, videos up to 50 MB and audio up to 15 MB.',
+          { name: file.name, size: Math.ceil(file.size / (1024 * 1024)) }
         ),
       }
       onChange(failed)
       return failed
     }
-    onChange(base)
-    uploadVideoAsset(file, (progress) => onChange({ ...base, progress }))
-      .then((response) => {
-        if (response.success && response.data?.url) {
+    const start = () => {
+      onChange(base)
+      uploadVideoAsset(file, (progress) => onChange({ ...base, progress }))
+        .then((response) => {
+          if (response.success && response.data?.url) {
+            onChange({
+              ...base,
+              status: 'ready',
+              progress: 100,
+              url: response.data.url,
+              uploadedAt: Math.floor(Date.now() / 1000),
+            })
+            return
+          }
           onChange({
             ...base,
-            status: 'ready',
-            progress: 100,
-            url: response.data.url,
+            status: 'error',
+            error: getServerMessage(response) || t('Upload failed'),
+            retry: start,
           })
-          return
-        }
-        onChange({
-          ...base,
-          status: 'error',
-          error: getServerMessage(response) || t('Upload failed'),
         })
-      })
-      .catch((error: unknown) => {
-        onChange({
-          ...base,
-          status: 'error',
-          error: getServerErrorMessage(error, t('Upload failed')),
+        .catch((error: unknown) => {
+          onChange({
+            ...base,
+            status: 'error',
+            error: getServerErrorMessage(error, t('Upload failed')),
+            retry: start,
+          })
         })
-      })
+    }
+    start()
     return base
   }
 }

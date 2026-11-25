@@ -96,7 +96,7 @@ const generateMock = vi.mocked(generateImages)
 beforeEach(() => {
   studioBalance.shortfallUSD = null
   window.localStorage.clear()
-  useStudioImageWorks.setState({ works: [], generating: 0 })
+  useStudioImageWorks.setState({ works: [], pending: [] })
   vi.mocked(getUserTaskLogs).mockResolvedValue({
     data: { items: [], total: 0 },
   } as never)
@@ -188,7 +188,7 @@ describe('ImageComposer', () => {
       action: 'text_to_image',
       console_image: true,
       status: 'IN_PROGRESS',
-      submit_time: 1_790_000_000,
+      submit_time: Math.floor(Date.now() / 1000),
       properties: { origin_model_name: 'plugin-image' },
     }
     vi.mocked(getUserTaskLogs).mockResolvedValue({
@@ -215,7 +215,7 @@ describe('ImageComposer', () => {
     await user.click(screen.getByRole('button', { name: 'Generate image' }))
 
     expect(await screen.findByText('Generating')).toBeInTheDocument()
-    expect(useStudioImageWorks.getState().generating).toBe(1)
+    expect(useStudioImageWorks.getState().pending).toHaveLength(1)
     reply([{ url: 'https://cdn.example/a.png', taskId: 'task_1' }])
 
     expect(
@@ -224,8 +224,37 @@ describe('ImageComposer', () => {
     expect(screen.queryByText('Generating')).not.toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(1)
     await waitFor(() =>
-      expect(useStudioImageWorks.getState().generating).toBe(0)
+      expect(useStudioImageWorks.getState().pending).toHaveLength(0)
     )
+  })
+
+  it('shows a waiting card per image at once and takes the next request meanwhile', async () => {
+    generateMock.mockImplementation(() => new Promise(() => {}))
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(
+      <>
+        <ImageComposer initialModel='seedream-5.0-pro' />
+        <ImageWorksList />
+      </>
+    )
+    await user.click(screen.getByRole('button', { name: /^Images:/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: '2 images' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Image prompt' }),
+      'a red fox'
+    )
+    const button = screen.getByRole('button', { name: 'Generate image' })
+    await user.click(button)
+
+    expect(await screen.findAllByText('Generating')).toHaveLength(2)
+    // A second click right away is the same click.
+    expect(button).toBeDisabled()
+    await vi.advanceTimersByTimeAsync(2000)
+    await waitFor(() => expect(button).toBeEnabled())
+    await user.click(button)
+    expect(await screen.findAllByText('Generating')).toHaveLength(4)
+    vi.useRealTimers()
   })
 
   it('does not submit without a prompt', async () => {

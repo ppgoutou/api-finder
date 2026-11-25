@@ -111,7 +111,7 @@ async function confirmDelete() {
 
 beforeEach(() => {
   window.localStorage.clear()
-  useStudioImageWorks.setState({ works: [], generating: 0 })
+  useStudioImageWorks.setState({ works: [], pending: [] })
   serveTasks()
   serveImages('image-1')
 })
@@ -311,7 +311,7 @@ describe('ImageWorksList image tasks', () => {
     renderList()
 
     expect(await screen.findByText('Generating')).toBeInTheDocument()
-    expect(screen.getByText('40%')).toBeInTheDocument()
+    expect(screen.queryByText('40%')).not.toBeInTheDocument()
     expect(getTaskArtifacts).not.toHaveBeenCalled()
   })
 

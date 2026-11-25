@@ -21,6 +21,7 @@ import { SkipToMain } from '@/components/skip-to-main'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { LayoutProvider } from '@/context/layout-provider'
 import { SearchProvider } from '@/context/search-provider'
+import { StudioTaskWatcher } from '@/features/video-studio/components/studio-task-watcher'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +45,7 @@ export function AuthenticatedLayout(props: AuthenticatedLayoutProps) {
           className='flex-col has-data-[variant=inset]:bg-transparent'
         >
           <SkipToMain />
+          <StudioTaskWatcher />
           <AppHeader />
           <div className='flex min-h-0 w-full flex-1'>
             <AppSidebar />

@@ -20,12 +20,13 @@ import { ImagePlus, Plus } from 'lucide-react'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '@/components/ui/button'
+
 import { ASSET_ACCEPT } from '../constants'
 import { labelReferences } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
 import type { StudioAsset } from '../types'
 import { AssetThumb } from './asset-thumb'
-import { Button } from '@/components/ui/button'
 
 interface AddTileProps {
   label: string
@@ -39,10 +40,12 @@ function AddTile(props: AddTileProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <>
-      <Button variant='plain' size='inline'
+      <Button
+        variant='plain'
+        size='inline'
         type='button'
         onClick={() => inputRef.current?.click()}
-        className='border-border text-muted-foreground hover:border-primary hover:text-primary flex size-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed text-caption transition-colors'
+        className='border-border text-muted-foreground hover:border-primary hover:text-primary text-caption flex size-20 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed transition-colors'
       >
         {props.multiple ? (
           <Plus className='size-4' aria-hidden />
@@ -102,13 +105,15 @@ export function ReferencePanel(props: ReferencePanelProps) {
 }
 
 interface FramePanelProps {
+  /** With the last frame, the video moves from the first one to it. */
+  withLastFrame: boolean
   firstFrame?: StudioAsset
   lastFrame?: StudioAsset
   onSetFrame: (slot: 'first' | 'last', file: File) => void
   onRemoveFrame: (slot: 'first' | 'last') => void
 }
 
-/** Frames mode: a first frame and an optional last frame. */
+/** Image and frames modes: the first frame, and the last one when used. */
 export function FramePanel(props: FramePanelProps) {
   const { t } = useTranslation()
   const slots = [
@@ -121,23 +126,25 @@ export function FramePanel(props: FramePanelProps) {
   ]
   return (
     <div className='flex gap-2'>
-      {slots.map((entry) =>
-        entry.asset ? (
-          <AssetThumb
-            key={entry.slot}
-            asset={entry.asset}
-            label={entry.label}
-            onRemove={() => props.onRemoveFrame(entry.slot)}
-          />
-        ) : (
-          <AddTile
-            key={entry.slot}
-            label={entry.label}
-            accept={ASSET_ACCEPT.image}
-            onFiles={(files) => props.onSetFrame(entry.slot, files[0])}
-          />
-        )
-      )}
+      {slots
+        .filter((entry) => props.withLastFrame || entry.slot === 'first')
+        .map((entry) =>
+          entry.asset ? (
+            <AssetThumb
+              key={entry.slot}
+              asset={entry.asset}
+              label={entry.label}
+              onRemove={() => props.onRemoveFrame(entry.slot)}
+            />
+          ) : (
+            <AddTile
+              key={entry.slot}
+              label={entry.label}
+              accept={ASSET_ACCEPT.image}
+              onFiles={(files) => props.onSetFrame(entry.slot, files[0])}
+            />
+          )
+        )}
     </div>
   )
 }

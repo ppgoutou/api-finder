@@ -19,15 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 import { AlertCircle, Music, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import type { StudioAsset } from '../types'
-import { Button } from '@/components/ui/button'
 
 interface AssetThumbProps {
   asset: StudioAsset
@@ -63,16 +58,16 @@ export function AssetThumb(props: AssetThumbProps) {
     )
   }
 
-  const tile = (
+  return (
     <div
       className={cn(
-        'group/thumb relative size-16 shrink-0 overflow-hidden rounded-lg border',
+        'group/thumb relative size-20 shrink-0 overflow-hidden rounded-lg border',
         failed && 'border-destructive'
       )}
       title={asset.fileName}
     >
       {preview}
-      <span className='absolute inset-x-0 bottom-0 truncate bg-black/70 px-1 py-0.5 text-center text-micro font-medium text-white'>
+      <span className='text-micro absolute inset-x-0 bottom-0 truncate bg-black/70 px-1 py-0.5 text-center font-medium text-white'>
         {failed ? t('Upload failed') : props.label}
       </span>
       {asset.status === 'uploading' && (
@@ -82,10 +77,24 @@ export function AssetThumb(props: AssetThumbProps) {
       )}
       {failed && (
         <span className='bg-destructive/20 text-destructive absolute inset-0 flex items-center justify-center'>
-          <AlertCircle className='size-5' aria-hidden />
+          {asset.retry ? (
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              className='text-destructive mb-4'
+              onClick={asset.retry}
+            >
+              {t('Retry')}
+            </Button>
+          ) : (
+            <AlertCircle className='size-5' aria-hidden />
+          )}
         </span>
       )}
-      <Button variant='plain' size='inline'
+      <Button
+        variant='plain'
+        size='inline'
         type='button'
         onClick={props.onRemove}
         aria-label={t('Remove {{name}}', { name: asset.fileName })}
@@ -94,13 +103,5 @@ export function AssetThumb(props: AssetThumbProps) {
         <X className='size-3' aria-hidden />
       </Button>
     </div>
-  )
-
-  if (!failed || !asset.error) return tile
-  return (
-    <Tooltip>
-      <TooltipTrigger render={tile} />
-      <TooltipContent>{asset.error}</TooltipContent>
-    </Tooltip>
   )
 }

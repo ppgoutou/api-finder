@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { AlertCircle, Film, PencilLine, Trash2 } from 'lucide-react'
+import { Film } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -36,178 +36,51 @@ import { useModelDisplayName } from '@/features/pricing/hooks'
 import { getUserTaskLogs } from '@/features/usage-logs/api'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
-import { formatTimestamp } from '@/lib/format'
-import { translateServerText } from '@/lib/server-error-message'
-import { cn } from '@/lib/utils'
+import { useStudioPending } from '@/stores/studio-pending-store'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { useUnixNow } from '../hooks/use-expiring-works'
-import { useWorkArtifacts } from '../hooks/use-work-artifacts'
+import { useVideoSubmit } from '../hooks/use-video-submit'
+import { useWorkText, type WorkText } from '../hooks/use-work-text'
 import { draftFromVideoRequest } from '../lib/draft'
 import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
-import { recallTaskPrompt } from '../lib/prompt-history'
-import { isFinishedTask, taskRetention } from '../lib/work-retention'
-import type { StudioDraft } from '../types'
-import { WorkDownloadButton } from './work-download-button'
-import { WorkRetentionBadge } from './work-retention-badge'
+import { typicalSeconds } from '../lib/work-progress'
+import {
+  isFinishedTask,
+  matchesWork,
+  taskRetention,
+  type WorkFilter,
+} from '../lib/work-retention'
+import type { StudioDraft, VideoTaskRequest } from '../types'
+import { RegenerateDialog } from './regenerate-dialog'
+import { WorkCard, WorkFrame } from './work-card'
+import { WorkProgress } from './work-progress'
+import { WorkViewer } from './work-viewer'
+import { WorksFilterBar } from './works-filter-bar'
 
 const WORKS_PAGE_SIZE = 12
 const POLL_INTERVAL_MS = 5000
-function WorkVideo(props: { task: TaskLog }) {
-  const { t } = useTranslation()
-  const artifacts = useWorkArtifacts(props.task.task_id)
-  const url =
-    artifacts.data?.artifacts.find((artifact) => artifact.type === 'video')
-      ?.content_url ?? artifacts.data?.legacyContentUrl
 
-  if (artifacts.isLoading) return <Skeleton className='size-full' />
-  if (!url) {
-    return (
-      <div className='text-muted-foreground flex size-full flex-col items-center justify-center gap-1 text-xs'>
-        <AlertCircle className='size-5' aria-hidden />
-        {t('The video could not be loaded')}
-      </div>
-    )
+/**
+ * What a work brings back to the composer. Tasks submitted before the full
+ * request was kept, or in another browser, bring what is known of them.
+ */
+function editDraftOf(text: WorkText): Partial<StudioDraft> {
+  if (text.request) return draftFromVideoRequest(text.request)
+  return {
+    ...(text.prompt ? { prompt: text.prompt } : {}),
+    ...(text.model ? { model: text.model } : {}),
   }
-  return (
-    <>
-      <video
-        src={url}
-        controls
-        playsInline
-        preload='metadata'
-        className='size-full bg-black object-contain'
-      />
-      <WorkDownloadButton
-        url={url}
-        filename={`${props.task.task_id}.mp4`}
-        label={t('Download video')}
-      />
-    </>
-  )
-}
-
-function WorkCard(props: {
-  task: TaskLog
-  now: number
-  compact?: boolean
-  onEdit?: (draft: Partial<StudioDraft>) => void
-  onDelete: () => void
-}) {
-  const { t, i18n } = useTranslation()
-  const task = props.task
-  const remembered = recallTaskPrompt(task.task_id)
-  const modelName = task.properties?.origin_model_name
-  const displayName = useModelDisplayName()
-  // The remembered spec starts with the model ID it was submitted with.
-  const specModel = remembered?.request?.model ?? modelName
-  let specText = remembered?.spec || (modelName && displayName(modelName))
-  if (specModel && remembered?.spec.startsWith(specModel)) {
-    specText = displayName(specModel) + remembered.spec.slice(specModel.length)
-  }
-  // Tasks submitted before the full request was kept bring back what is
-  // known: the prompt and the model.
-  let editDraft: Partial<StudioDraft> = {}
-  if (remembered?.request) {
-    editDraft = draftFromVideoRequest(remembered.request)
-  } else {
-    if (remembered?.prompt) editDraft.prompt = remembered.prompt
-    if (modelName) editDraft.model = modelName
-  }
-  const onEdit = props.onEdit
-
-  let media = (
-    <div className='text-muted-foreground flex size-full flex-col items-center justify-center gap-2 text-xs'>
-      <Spinner className='size-5' />
-      {t('Generating')}
-      {task.progress && <span className='font-semibold'>{task.progress}</span>}
-    </div>
-  )
-  if (task.status === TASK_STATUS.SUCCESS) media = <WorkVideo task={task} />
-  if (task.status === TASK_STATUS.FAILURE) {
-    media = (
-      <div className='text-destructive flex size-full flex-col items-center justify-center gap-1 px-4 text-center text-xs'>
-        <AlertCircle className='size-5' aria-hidden />
-        <span className='font-semibold'>{t('Generation failed')}</span>
-        {task.fail_reason && !props.compact && (
-          <span className='text-muted-foreground line-clamp-3'>
-            {translateServerText(t, task.fail_reason)}
-          </span>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <article className='bg-card border-border/60 overflow-hidden rounded-xl border'>
-      <div className='bg-muted/40 relative aspect-video'>
-        {media}
-        {!props.compact && (
-          <WorkRetentionBadge
-            retention={taskRetention(task, props.now)}
-            now={props.now}
-          />
-        )}
-      </div>
-      <div className={cn('flex flex-col gap-1', props.compact ? 'p-2' : 'p-3')}>
-        <p
-          className={cn(
-            props.compact ? 'truncate text-xs' : 'line-clamp-2 min-h-10 text-sm'
-          )}
-        >
-          {remembered?.prompt
-            ? localizeMentions(
-                remembered.prompt,
-                i18n.resolvedLanguage || i18n.language
-              )
-            : t('Video task')}
-        </p>
-        <div className='flex items-center gap-2'>
-          <p
-            className={cn(
-              'text-muted-foreground min-w-0 flex-1 truncate',
-              props.compact ? 'text-caption' : 'text-xs'
-            )}
-          >
-            {specText || task.task_id}
-            {' · '}
-            {formatTimestamp(task.submit_time)}
-          </p>
-          {onEdit && Object.keys(editDraft).length > 0 && (
-            <Button
-              variant='ghost'
-              size='icon-xs'
-              className='shrink-0'
-              onClick={() => onEdit(editDraft)}
-              aria-label={t('Edit again')}
-              title={t('Edit again')}
-            >
-              <PencilLine aria-hidden />
-            </Button>
-          )}
-          <Button
-            variant='ghost'
-            size='icon-xs'
-            className='hover:text-destructive shrink-0'
-            onClick={props.onDelete}
-            aria-label={t('Delete')}
-            title={t('Delete')}
-          >
-            <Trash2 aria-hidden />
-          </Button>
-        </div>
-      </div>
-    </article>
-  )
 }
 
 /**
- * The signed-in user's latest video tasks, refreshed while any is running.
- * With `onEdit`, each work offers to load its request back into the composer.
- * Deleting a work, after a confirmation, hides it in this browser. Full-size
- * cards show how long each video stays available. With \`loadMore\`, older
- * works load a page at a time.
+ * The signed-in user's latest video tasks, refreshed while any is running,
+ * after the submissions that have no task yet. With `onEdit`, each work offers
+ * to load its request back into the composer, and to submit it again when
+ * this browser knows it. Deleting a work, after a confirmation, hides it in
+ * this browser. With `loadMore`, older works load a page at a time, and the
+ * loaded ones can be filtered and searched.
  */
 export function WorksList(props: {
   limit?: number
@@ -216,7 +89,7 @@ export function WorksList(props: {
   compact?: boolean
   onEdit?: (draft: Partial<StudioDraft>) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const firstPageSize = props.limit ?? WORKS_PAGE_SIZE
   const [pageSize, setPageSize] = useState(firstPageSize)
   const now = useUnixNow()
@@ -224,8 +97,18 @@ export function WorksList(props: {
     ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'
     : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
   const skeletonCount = Math.min(firstPageSize, props.compact ? 6 : 3)
+  const displayName = useModelDisplayName()
+  const textOf = useWorkText()
+  const pendingVideos = useStudioPending((state) => state.videos)
+  const { submit } = useVideoSubmit()
   const [hidden, setHidden] = useState(readHiddenTasks)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [viewing, setViewing] = useState<string | null>(null)
+  const [regenerating, setRegenerating] = useState<VideoTaskRequest | null>(
+    null
+  )
+  const [filter, setFilter] = useState<WorkFilter>('all')
+  const [search, setSearch] = useState('')
   const works = useQuery({
     queryKey: [...STUDIO_WORKS_QUERY_KEY, 'video', pageSize],
     queryFn: async () => {
@@ -258,8 +141,44 @@ export function WorksList(props: {
   const loaded = works.data?.items ?? []
   const hasMore =
     Boolean(props.loadMore) && loaded.length < (works.data?.total ?? 0)
-  const tasks = loaded.filter((task) => !hidden.includes(task.task_id))
-  if (tasks.length === 0 && !hasMore) {
+  const listedIds = new Set(loaded.map((task) => task.task_id))
+  const pending = pendingVideos.filter(
+    (video) => !video.taskId || !listedIds.has(video.taskId)
+  )
+  const entries = loaded
+    .filter((task) => !hidden.includes(task.task_id))
+    .map((task) => ({ task, text: textOf(task) }))
+  const query = search.trim().toLowerCase()
+  const shown = entries.filter(
+    ({ task, text }) =>
+      matchesWork(task, filter, now) &&
+      (!query || `${text.title} ${text.spec}`.toLowerCase().includes(query))
+  )
+  const shownPending =
+    (filter === 'all' || filter === 'running') && !query ? pending : []
+  const playable = shown.filter(
+    ({ task }) =>
+      task.status === TASK_STATUS.SUCCESS &&
+      taskRetention(task, now)?.state !== 'expired'
+  )
+  const viewedIndex = playable.findIndex(({ task }) => task.task_id === viewing)
+  const viewed = playable.at(viewedIndex)
+
+  const editAction = (text: WorkText) => {
+    const draft = editDraftOf(text)
+    if (!props.onEdit || Object.keys(draft).length === 0) return undefined
+    return () => {
+      setViewing(null)
+      props.onEdit?.(draft)
+    }
+  }
+  const regenerateAction = (text: WorkText) => {
+    const request = text.request
+    if (!props.onEdit || !request) return undefined
+    return () => setRegenerating(request)
+  }
+
+  if (entries.length === 0 && pending.length === 0 && !hasMore) {
     return (
       <Empty className='border'>
         <EmptyHeader>
@@ -278,14 +197,66 @@ export function WorksList(props: {
   }
   return (
     <>
+      {props.loadMore && (
+        <WorksFilterBar
+          filter={filter}
+          onFilterChange={setFilter}
+          search={search}
+          onSearchChange={setSearch}
+        />
+      )}
+      {shown.length === 0 && shownPending.length === 0 && (
+        <Empty className='border'>
+          <EmptyHeader>
+            <EmptyMedia variant='icon'>
+              <Film aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>{t('No works match')}</EmptyTitle>
+            <EmptyDescription>
+              {hasMore
+                ? t('Only the works loaded so far are searched.')
+                : t('Try another filter or search.')}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
       <div className={gridClassName}>
-        {tasks.map((task) => (
+        {shownPending.map((video) => (
+          <WorkFrame
+            key={video.id}
+            compact={props.compact}
+            title={localizeMentions(
+              video.request.prompt,
+              i18n.resolvedLanguage || i18n.language
+            )}
+            meta={
+              displayName(video.request.model) +
+              video.spec.slice(video.request.model.length)
+            }
+            media={
+              <WorkProgress
+                stage={video.taskId ? 'queued' : 'submitting'}
+                startedAt={video.startedAt}
+                typical={typicalSeconds(loaded, video.request.model)}
+                backdrop={
+                  video.request.first_image_url ?? video.request.images?.[0]
+                }
+                compact={props.compact}
+              />
+            }
+          />
+        ))}
+        {shown.map(({ task, text }) => (
           <WorkCard
             key={task.task_id}
             task={task}
+            text={text}
             now={now}
+            typical={typicalSeconds(loaded, text.model)}
             compact={props.compact}
-            onEdit={props.onEdit}
+            onOpen={() => setViewing(task.task_id)}
+            onEdit={editAction(text)}
+            onRegenerate={regenerateAction(text)}
             onDelete={() => setDeleting(task.task_id)}
           />
         ))}
@@ -301,6 +272,37 @@ export function WorksList(props: {
           {t('Load more')}
         </Button>
       )}
+      {viewed && viewedIndex >= 0 && (
+        <WorkViewer
+          task={viewed.task}
+          text={viewed.text}
+          onClose={() => setViewing(null)}
+          onPrevious={
+            viewedIndex > 0
+              ? () => setViewing(playable[viewedIndex - 1].task.task_id)
+              : undefined
+          }
+          onNext={
+            viewedIndex < playable.length - 1
+              ? () => setViewing(playable[viewedIndex + 1].task.task_id)
+              : undefined
+          }
+          onEdit={editAction(viewed.text)}
+          onRegenerate={regenerateAction(viewed.text)}
+          onDelete={() => setDeleting(viewed.task.task_id)}
+        />
+      )}
+      {regenerating && (
+        <RegenerateDialog
+          request={regenerating}
+          onClose={() => setRegenerating(null)}
+          onConfirm={() => {
+            setRegenerating(null)
+            setViewing(null)
+            void submit(regenerating, 1)
+          }}
+        />
+      )}
       <ConfirmDialog
         destructive
         open={deleting !== null}
@@ -314,6 +316,7 @@ export function WorksList(props: {
         confirmText={t('Delete')}
         handleConfirm={() => {
           if (deleting) setHidden(hideTask(deleting))
+          if (deleting === viewing) setViewing(null)
           setDeleting(null)
         }}
       />

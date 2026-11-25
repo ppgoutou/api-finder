@@ -43,7 +43,10 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
-import { useExpiringWorks } from '@/features/video-studio/hooks/use-expiring-works'
+import {
+  useExpiringWorks,
+  useRecentTasks,
+} from '@/features/video-studio/hooks/use-expiring-works'
 import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -58,6 +61,7 @@ export function useSidebarData(): SidebarData {
   const userRole = useAuthStore((state) => state.auth.user?.role)
   const isAdmin = Boolean(userRole && userRole >= ROLE.ADMIN)
   const expiringWorks = useExpiringWorks()
+  const { runningCount } = useRecentTasks()
 
   return {
     navGroups: [
@@ -69,6 +73,10 @@ export function useSidebarData(): SidebarData {
             title: t('Video Creation'),
             url: '/video-studio',
             icon: Clapperboard,
+            badge:
+              runningCount > 0
+                ? t('{{count}} generating', { count: runningCount })
+                : undefined,
           },
           {
             title: t('My works'),

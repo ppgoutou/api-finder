@@ -23,6 +23,9 @@ import { AuthenticatedLayout } from '../authenticated-layout'
 
 vi.mock('../app-header', () => ({ AppHeader: () => null }))
 vi.mock('../app-sidebar', () => ({ AppSidebar: () => null }))
+vi.mock('@/features/video-studio/components/studio-task-watcher', () => ({
+  StudioTaskWatcher: () => null,
+}))
 vi.mock('@/components/command-menu', () => ({ CommandMenu: () => null }))
 
 describe('AuthenticatedLayout', () => {

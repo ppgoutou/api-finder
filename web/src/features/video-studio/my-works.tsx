@@ -16,20 +16,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Clapperboard, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Main } from '@/components/layout'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAuthStore } from '@/stores/auth-store'
+import {
+  useStudioHandoff,
+  type StudioHandoff,
+} from '@/stores/studio-handoff-store'
 
 import { ImageWorksList } from './components/image-works-list'
 import { WorksList } from './components/works-list'
 import { IMAGE_RETENTION_DAYS, VIDEO_RETENTION_DAYS } from './constants'
 import { useExpiringWorks } from './hooks/use-expiring-works'
+import { wouldLoseDraft } from './lib/draft-storage'
 
 type WorksKind = 'video' | 'image'
 
@@ -44,15 +51,26 @@ export function MyWorks() {
     expiring.videos === 0 && expiring.images > 0 ? 'image' : 'video'
   )
 
+  const navigate = useNavigate()
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const setHandoff = useStudioHandoff((state) => state.set)
+  const [replacing, setReplacing] = useState<StudioHandoff | null>(null)
+  const openInStudio = (work: StudioHandoff) => {
+    setHandoff(work)
+    void navigate({ to: '/video-studio', search: { kind: work.kind } })
+  }
+  const editWork = (work: StudioHandoff) => {
+    if (wouldLoseDraft(work.kind, userId, work.draft.prompt)) setReplacing(work)
+    else openInStudio(work)
+  }
+
   return (
     <Main>
       <div className='min-h-0 flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-[1800px] flex-col gap-6 px-3 py-8 sm:px-4'>
           <header className='flex flex-wrap items-end justify-between gap-3'>
             <div className='flex flex-col gap-1'>
-              <h1 className='text-page-title'>
-                {t('My works')}
-              </h1>
+              <h1 className='text-page-title'>{t('My works')}</h1>
               <p className='text-muted-foreground text-sm'>
                 {t(
                   'Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.',
@@ -94,7 +112,7 @@ export function MyWorks() {
               <TabsTrigger value='video'>
                 {t('Video')}
                 {expiring.videos > 0 && (
-                  <span className='bg-warning text-warning-foreground rounded-full px-1.5 text-micro leading-4'>
+                  <span className='bg-warning text-warning-foreground text-micro rounded-full px-1.5 leading-4'>
                     {expiring.videos}
                   </span>
                 )}
@@ -102,21 +120,44 @@ export function MyWorks() {
               <TabsTrigger value='image'>
                 {t('Image')}
                 {expiring.images > 0 && (
-                  <span className='bg-warning text-warning-foreground rounded-full px-1.5 text-micro leading-4'>
+                  <span className='bg-warning text-warning-foreground text-micro rounded-full px-1.5 leading-4'>
                     {expiring.images}
                   </span>
                 )}
               </TabsTrigger>
             </TabsList>
             <TabsContent value='video' className='flex flex-col gap-4'>
-              <WorksList loadMore />
+              <WorksList
+                loadMore
+                onEdit={(draft) => editWork({ kind: 'video', draft })}
+              />
             </TabsContent>
             <TabsContent value='image' className='flex flex-col gap-4'>
-              <ImageWorksList />
+              <ImageWorksList
+                onEdit={(draft, size) =>
+                  editWork({ kind: 'image', draft, size })
+                }
+              />
             </TabsContent>
           </Tabs>
         </div>
       </div>
+      <ConfirmDialog
+        open={replacing !== null}
+        onOpenChange={(open) => {
+          if (!open) setReplacing(null)
+        }}
+        title={t('Replace what you are writing?')}
+        desc={t(
+          'The prompt on the creation page has not been submitted and will be replaced.'
+        )}
+        cancelBtnText={t('Keep writing')}
+        confirmText={t('Replace')}
+        handleConfirm={() => {
+          if (replacing) openInStudio(replacing)
+          setReplacing(null)
+        }}
+      />
     </Main>
   )
 }

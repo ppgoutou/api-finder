@@ -41,6 +41,8 @@ export interface MentionOption {
   /** Token the model reads, such as "图片1". */
   token: string
   fileName: string
+  /** Thumbnail of an image or video reference. */
+  preview?: { kind: 'image' | 'video'; url: string }
 }
 
 interface PromptInputProps {
@@ -241,6 +243,23 @@ export function PromptInput(props: PromptInputProps) {
                   index === highlighted && 'bg-accent text-accent-foreground'
                 )}
               >
+                {option.preview?.kind === 'image' && (
+                  <img
+                    src={option.preview.url}
+                    alt=''
+                    className='size-8 shrink-0 rounded-md object-cover'
+                  />
+                )}
+                {option.preview?.kind === 'video' && (
+                  <video
+                    src={option.preview.url}
+                    muted
+                    playsInline
+                    preload='metadata'
+                    aria-hidden
+                    className='size-8 shrink-0 rounded-md object-cover'
+                  />
+                )}
                 <span className='font-semibold'>@{mentionName(option)}</span>
                 <span className='text-muted-foreground truncate text-xs'>
                   {option.fileName}

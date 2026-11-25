@@ -98,6 +98,9 @@ export const ASSET_ACCEPT: Readonly<Record<AssetKind, string>> = {
 export const VIDEO_RETENTION_DAYS = 15
 export const IMAGE_RETENTION_DAYS = 7
 
+/** localStorage key set once the user answered the notification offer. */
+export const NOTIFY_OFFER_KEY = 'video-studio:notify-offer'
+
 /** Days an uploaded reference file stays available. */
 export const ASSET_RETENTION_DAYS = 7
 

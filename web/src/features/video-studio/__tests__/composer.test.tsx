@@ -16,10 +16,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  fireEvent,
+  render as renderTree,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { useStudioPending } from '@/stores/studio-pending-store'
 
 import { createVideoTask, uploadVideoAsset } from '../api'
 import { Composer } from '../components/composer'
@@ -50,7 +59,7 @@ vi.mock('../hooks/use-studio-models', () => ({
 }))
 
 vi.mock('../hooks/use-studio-price', () => ({
-  useStudioPrice: () => ({ label: '¥0.75', costUSD: 0.11 }),
+  useStudioPricer: () => () => ({ label: '¥0.75', costUSD: 0.11 }),
 }))
 
 vi.mock('../hooks/use-studio-balance', () => ({
@@ -59,6 +68,12 @@ vi.mock('../hooks/use-studio-balance', () => ({
     refresh: vi.fn(),
   }),
 }))
+
+function render(ui: ReactNode) {
+  return renderTree(
+    <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>
+  )
+}
 
 const uploadMock = vi.mocked(uploadVideoAsset)
 const createMock = vi.mocked(createVideoTask)
@@ -102,6 +117,7 @@ beforeEach(() => {
     },
   })
   createMock.mockResolvedValue('task_1')
+  useStudioPending.setState({ videos: [] })
   window.localStorage.clear()
 })
 
@@ -164,7 +180,7 @@ describe('Composer', () => {
     )
   })
 
-  it('submits the prompt with the uploaded reference URL and refreshes the works', async () => {
+  it('submits the prompt with the uploaded reference URL and tells its page', async () => {
     const user = userEvent.setup()
     const onSubmitted = vi.fn()
     render(<Composer onSubmitted={onSubmitted} />)
@@ -200,11 +216,10 @@ describe('Composer', () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
 
-    await user.click(screen.getByRole('button', { name: /^Auto/ }))
+    await user.click(screen.getByRole('button', { name: 'Aspect ratio: Auto' }))
 
-    const ratios = within(screen.getByRole('group', { name: 'Aspect ratio' }))
     expect(
-      ratios.getAllByRole('button').map((item) => item.textContent)
+      screen.getAllByRole('menuitemradio').map((item) => item.textContent)
     ).toEqual(['Auto', '16:9', '1:1', '9:16'])
   })
 
@@ -242,9 +257,13 @@ describe('Composer', () => {
     )
     expect(
       screen.getAllByRole('menuitemradio').map((item) => item.textContent)
-    ).toEqual(['seedance-2.0', 'seedance-2.5', 'seedance2.0-720p-P'])
+    ).toEqual([
+      'seedance-2.04–15s · up to 4K¥0.75',
+      'seedance-2.54–30s · up to 1080P¥0.75',
+      'seedance2.0-720p-P5–15s · up to 720P¥0.75',
+    ])
     await user.click(
-      screen.getByRole('menuitemradio', { name: 'seedance2.0-720p-P' })
+      screen.getByRole('menuitemradio', { name: /^seedance2.0-720p-P/ })
     )
     await user.type(
       screen.getByRole('textbox', { name: 'Video prompt' }),
@@ -345,9 +364,10 @@ describe('Composer', () => {
 
     expect(screen.getByText('Seedance 2.5')).toBeInTheDocument()
     expect(screen.getByText('Seedance 2.0')).toBeInTheDocument()
-    expect(
-      screen.getAllByRole('menuitemradio').map((item) => item.textContent)
-    ).toEqual(['seedance-2.5', 'seedance-2.0', 'seedance2.0-720p-P'])
+    const items = screen.getAllByRole('menuitemradio')
+    expect(items[0]).toHaveTextContent(/^seedance-2\.5/)
+    expect(items[1]).toHaveTextContent(/^seedance-2\.0/)
+    expect(items[2]).toHaveTextContent(/^seedance2\.0-720p-P/)
   })
 
   it('keeps each model name of the model menu on a single line', async () => {
@@ -367,7 +387,7 @@ describe('Composer', () => {
     )
 
     const item = screen.getByRole('menuitemradio', {
-      name: 'seedance-2.5-g4-m1-官转',
+      name: /^seedance-2.5-g4-m1-官转/,
     })
     expect(item).toHaveClass('whitespace-nowrap')
   })
@@ -507,6 +527,281 @@ describe('Composer prompt card layout', () => {
 
     expect(screen.getByTestId('composer-card')).toHaveTextContent(
       /Reference files are kept for \d+ days/
+    )
+  })
+})
+
+function dropFiles(files: File[]) {
+  fireEvent.drop(screen.getByTestId('composer-card'), {
+    dataTransfer: { types: ['Files'], files },
+  })
+}
+
+const png = (name: string) => new File(['png!'], name, { type: 'image/png' })
+
+describe('Composer draft', () => {
+  it('brings the unsent prompt, files and settings back after leaving the page', async () => {
+    const user = userEvent.setup()
+    const view = render(<Composer onSubmitted={vi.fn()} />)
+    await uploadImage(user)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+    await user.click(screen.getByRole('button', { name: /^Resolution:/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: '1080P' }))
+    view.unmount()
+
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    expect(screen.getByRole('textbox', { name: 'Video prompt' })).toHaveValue(
+      'a cat runs'
+    )
+    expect(screen.getByText('@Image1')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Resolution: 1080P' })
+    ).toBeInTheDocument()
+  })
+
+  it('only changes the model of the draft when opened with one', async () => {
+    const user = userEvent.setup()
+    const view = render(<Composer onSubmitted={vi.fn()} />)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+    view.unmount()
+
+    render(<Composer onSubmitted={vi.fn()} initialModel='seedance-2.5' />)
+
+    expect(screen.getByRole('textbox', { name: 'Video prompt' })).toHaveValue(
+      'a cat runs'
+    )
+    expect(
+      screen.getByRole('button', { name: 'Model: seedance-2.5' })
+    ).toBeInTheDocument()
+  })
+
+  it('empties the prompt and the files when Clear is clicked', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await uploadImage(user)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+    expect(screen.getByRole('textbox', { name: 'Video prompt' })).toHaveValue(
+      ''
+    )
+    expect(screen.queryByText('@Image1')).not.toBeInTheDocument()
+  })
+})
+
+describe('Composer modes', () => {
+  it('sends no files in text mode and keeps them for reference mode', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await uploadImage(user)
+    await user.click(screen.getByRole('button', { name: 'Text to video' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    expect(createMock.mock.calls[0][0]).not.toHaveProperty('images')
+    await user.click(
+      screen.getByRole('button', { name: 'Reference generation' })
+    )
+    expect(screen.getByText('@Image1')).toBeInTheDocument()
+  })
+
+  it('uses an image dropped in image mode as the first frame', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Image to video' }))
+
+    dropFiles([png('cat.png')])
+    await screen.findByRole('button', { name: 'Remove cat.png' })
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_image_url: 'https://site.example/video-assets/cat.png',
+      })
+    )
+    expect(createMock.mock.calls[0][0]).not.toHaveProperty('last_image_url')
+  })
+
+  it('fills the first and then the last frame with two dropped images', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await user.click(
+      screen.getByRole('button', { name: 'First and last frame' })
+    )
+
+    dropFiles([png('day.png'), png('night.png')])
+
+    expect(
+      await screen.findByRole('button', { name: 'Remove day.png' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove night.png' })
+    ).toBeInTheDocument()
+  })
+
+  it('does not submit a first and last frame without the last one', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await user.click(
+      screen.getByRole('button', { name: 'First and last frame' })
+    )
+    dropFiles([png('day.png')])
+    await screen.findByRole('button', { name: 'Remove day.png' })
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'the sun sets'
+    )
+
+    const button = screen.getByRole('button', { name: 'Generate video' })
+    expect(button).toHaveAttribute('title', 'Add a last frame image')
+    await user.click(button)
+    expect(createMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('Composer files', () => {
+  it('turns a file dropped in text mode into a reference', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Text to video' }))
+
+    dropFiles([png('cat.png')])
+
+    expect(await screen.findByText('@Image1')).toBeInTheDocument()
+  })
+
+  it('uploads a pasted image, and leaves pasted text to the prompt', async () => {
+    render(<Composer onSubmitted={vi.fn()} />)
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+
+    fireEvent.paste(prompt, {
+      clipboardData: { files: [png('office.png')], getData: () => 'some text' },
+    })
+    expect(uploadMock).not.toHaveBeenCalled()
+    fireEvent.paste(prompt, {
+      clipboardData: { files: [png('cat.png')], getData: () => '' },
+    })
+
+    expect(await screen.findByText('@Image1')).toBeInTheDocument()
+    expect(uploadMock).toHaveBeenCalledOnce()
+  })
+
+  it('spells out why an upload failed and uploads the file again on Retry', async () => {
+    uploadMock.mockResolvedValueOnce({ success: false, message: 'Disk full' })
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    await user.upload(screen.getByLabelText('References'), png('cat.png'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Disk full')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByText('@Image1')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(uploadMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('names a file that is too large and offers no retry', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const big = png('big.png')
+    Object.defineProperty(big, 'size', { value: 12 * 1024 * 1024 })
+
+    await user.upload(screen.getByLabelText('References'), big)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /^big\.png is 12 MB/
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Retry' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the use of each file limit and removes the extra files', async () => {
+    studioModels.current = [
+      {
+        ...studioModels.current[0],
+        referenceLimits: { image: 1, video: 0, audio: 0 },
+      },
+    ]
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    dropFiles([png('cat.png'), png('dog.png')])
+    expect(await screen.findByText('Image 2/1')).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: 'Remove the extra files' })
+    )
+
+    expect(screen.getByText('Image 1/1')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove cat.png' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Remove dog.png' })
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Composer submission', () => {
+  it('shows a card for every video before the first task is created', async () => {
+    let create = (_: string) => {}
+    createMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          create = resolve
+        })
+    )
+    const onSubmitted = vi.fn()
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={onSubmitted} />)
+    await user.click(screen.getByRole('button', { name: /^Number of videos/ }))
+    await user.click(screen.getByRole('menuitemradio', { name: /^2/ }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    expect(useStudioPending.getState().videos).toHaveLength(2)
+    expect(onSubmitted).toHaveBeenCalledOnce()
+    create('task_1')
+    await waitFor(() => expect(createMock).toHaveBeenCalledTimes(2))
+  })
+
+  it('removes the cards of the videos that could not be created', async () => {
+    createMock.mockRejectedValueOnce(new Error('busy'))
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Generate video' }))
+
+    await waitFor(() =>
+      expect(useStudioPending.getState().videos).toHaveLength(0)
     )
   })
 })

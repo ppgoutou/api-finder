@@ -84,3 +84,8 @@ export function recallTaskPrompt(taskId: string): RememberedTask | null {
     ...(request ? { request } : {}),
   }
 }
+
+/** Ids of the tasks this browser submitted. */
+export function rememberedTaskIds(): Set<string> {
+  return new Set(Object.keys(readAll()))
+}
