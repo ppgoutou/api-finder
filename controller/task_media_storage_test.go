@@ -287,7 +287,7 @@ func TestTaskMediaCopyRetriesWithGrowingBackoff(t *testing.T) {
 	assert.True(t, taskMediaCopyDue(&model.TaskStoredMedia{Attempts: 2, LastTryAt: now - 240}, now))
 }
 
-func TestTaskMediaRetentionTellsOwnerHowLongTheVideoLasts(t *testing.T) {
+func TestTaskMediaRetentionTellsOwnerHowLongTheMediaLasts(t *testing.T) {
 	settings := system_setting.GetMediaStorageSettings()
 	previousRetention := settings.RetentionDays
 	t.Cleanup(func() { settings.RetentionDays = previousRetention })
@@ -310,6 +310,8 @@ func TestTaskMediaRetentionTellsOwnerHowLongTheVideoLasts(t *testing.T) {
 		wantExpiresAt int64
 	}{
 		{"stored copy shown for 15 days", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 0, finishedAt + 15*day},
+		{"stored image shown for 7 days", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt, MimeType: "image/png"}, finishedAt), true, 0, finishedAt + 7*day},
+		{"shorter storage retention wins for images", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt, MimeType: "image/png"}, finishedAt), true, 3, finishedAt + 3*day},
 		{"shorter storage retention wins", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 7, finishedAt + 7*day},
 		{"longer storage retention keeps 15 days", succeeded(&model.TaskStoredMedia{StoredAt: finishedAt}, finishedAt), true, 30, finishedAt + 15*day},
 		{"copy pending reports nothing", succeeded(nil, finishedAt), true, 0, 0},
@@ -376,7 +378,7 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 		assert.True(t, strings.HasPrefix(item.URL, "https://cn-media.example.com/images/"), item.URL)
 		assert.True(t, strings.HasSuffix(item.URL, ".png"), item.URL)
 		assert.Empty(t, item.B64JSON)
-		assert.InDelta(t, time.Now().Unix()+15*86400, item.MediaExpiresAt, 5)
+		assert.InDelta(t, time.Now().Unix()+7*86400, item.MediaExpiresAt, 5)
 	}
 	assert.Len(t, mainland.objects, 2)
 	assert.Empty(t, overseas.objects)

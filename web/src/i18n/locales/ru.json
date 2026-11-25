@@ -56,7 +56,7 @@
     "Enter a channel ID": "Введите ID канала",
     "Enter the balance path": "Введите путь баланса",
     "Enter the balance field": "Введите поле баланса",
-    "Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.": "Созданные видео и изображения хранятся {{days}} дн. Скачайте нужные работы до истечения срока.",
+    "Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.": "Созданные видео хранятся {{videoDays}} дн., изображения — {{imageDays}} дн. Скачайте нужные работы до истечения срока.",
     "360": "360",
     "1000": "1000",
     "10000": "10000",

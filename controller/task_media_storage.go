@@ -47,7 +47,7 @@ func taskMediaRetention(task *model.Task, storeEnabled bool) int64 {
 	}
 	stored := task.PrivateData.StoredMedia
 	if stored != nil && stored.StoredAt > 0 {
-		return service.MediaRetentionExpiry(stored.StoredAt)
+		return service.MediaRetentionExpiry(stored.StoredAt, stored.MimeType)
 	}
 	copyWindowPassed := time.Now().Unix() > task.FinishTime+int64(taskMediaCopyWindow/time.Second)
 	if !storeEnabled || copyWindowPassed || (stored != nil && stored.GaveUp) {

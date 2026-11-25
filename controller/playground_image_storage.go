@@ -113,7 +113,7 @@ func storePlaygroundImageResponse(ctx context.Context, body []byte, task *model.
 			copies[i] = stored
 			item["url"] = stored.URL
 			delete(item, "b64_json")
-			item["media_expires_at"] = service.MediaRetentionExpiry(time.Now().Unix())
+			item["media_expires_at"] = service.MediaRetentionExpiry(time.Now().Unix(), stored.MimeType)
 		})
 	}
 	wg.Wait()

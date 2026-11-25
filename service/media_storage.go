@@ -231,8 +231,7 @@ func putMediaObject(ctx context.Context, target system_setting.MediaStorageTarge
 // apart from the generated videos under ObjectPrefix.
 const videoAssetObjectDir = "video-assets"
 
-// generatedImageObjectDir holds images generated from the web console, kept
-// as long as generated videos (see MediaRetentionExpiry).
+// generatedImageObjectDir holds images generated from the web console.
 const generatedImageObjectDir = "images"
 
 var generatedImageExtensions = map[string]string{
@@ -257,15 +256,20 @@ func TaskArtifactExtension(artifactType, mimeType string) string {
 	return MediaStorageExtension(mimeType)
 }
 
-// MediaDisplayRetentionDays is how long users are told a stored video or
-// image stays available.
-const MediaDisplayRetentionDays = 15
+// How long users are told a stored video or image stays available.
+const (
+	VideoDisplayRetentionDays = 15
+	ImageDisplayRetentionDays = 7
+)
 
-// MediaRetentionExpiry is when users are told a copy stored at storedAt
-// expires: MediaDisplayRetentionDays later, or sooner when the storage
-// retention period is shorter.
-func MediaRetentionExpiry(storedAt int64) int64 {
-	days := MediaDisplayRetentionDays
+// MediaRetentionExpiry is when users are told a copy of mimeType stored at
+// storedAt expires: after the display retention of its kind, or sooner when
+// the storage retention period is shorter.
+func MediaRetentionExpiry(storedAt int64, mimeType string) int64 {
+	days := VideoDisplayRetentionDays
+	if GeneratedImageExtension(mimeType) != "" {
+		days = ImageDisplayRetentionDays
+	}
 	if retentionDays := system_setting.GetMediaStorageSettings().RetentionDays; retentionDays > 0 {
 		days = min(days, retentionDays)
 	}

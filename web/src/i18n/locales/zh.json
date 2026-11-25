@@ -56,7 +56,7 @@
     "Enter a channel ID": "请填写渠道 ID",
     "Enter the balance path": "请填写余额路径",
     "Enter the balance field": "请填写余额字段",
-    "Videos and images you create are kept for {{days}} days. Download the ones you want to keep before they expire.": "生成的视频和图片保存 {{days}} 天，想保留的作品请在到期前下载。",
+    "Videos you create are kept for {{videoDays}} days and images for {{imageDays}} days. Download the ones you want to keep before they expire.": "生成的视频保存 {{videoDays}} 天，图片保存 {{imageDays}} 天，想保留的作品请在到期前下载。",
     "360": "360",
     "1000": "1000",
     "10000": "10000",
