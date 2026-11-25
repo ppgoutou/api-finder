@@ -109,19 +109,39 @@ func TestRenderIndexPageServesSameMetadataAndHomeCopyToEveryone(t *testing.T) {
 	assert.Equal(t, seoTestIndex, getBody(t, engine, "/dashboard"))
 }
 
-func TestShareImageIsServedAtTheSizeThePageDeclares(t *testing.T) {
+func TestShareCardFollowsVersionQuery(t *testing.T) {
 	engine := setupSEOTest(t, "", "")
-	file, err := os.Open(filepath.Join("..", "web", "public", filepath.FromSlash(seoShareImagePath)))
-	require.NoError(t, err)
-	defer file.Close()
-	config, format, err := image.DecodeConfig(file)
-	require.NoError(t, err)
-	assert.Equal(t, "jpeg", format)
+	imageTag := func(n int) string {
+		return fmt.Sprintf(`<meta property="og:image" content="https://video.example.com/share-card-v%d.jpg" />`, n)
+	}
 
-	pricing := getBody(t, engine, "/pricing")
-	assert.Contains(t, pricing, `<meta property="og:image:type" content="image/jpeg" />`)
-	assert.Contains(t, pricing, fmt.Sprintf(`<meta property="og:image:width" content="%d" />`, config.Width))
-	assert.Contains(t, pricing, fmt.Sprintf(`<meta property="og:image:height" content="%d" />`, config.Height))
+	for n := 1; n <= 10; n++ {
+		page := getBody(t, engine, fmt.Sprintf("/pricing?v=%d", n))
+		assert.Contains(t, page, imageTag(n))
+		assert.Contains(t, page, fmt.Sprintf(`<meta property="og:url" content="https://video.example.com/pricing?v=%d" />`, n))
+		// Search engines keep one copy of the page.
+		assert.Contains(t, page, `<link rel="canonical" href="https://video.example.com/pricing" />`)
+	}
+	for _, query := range []string{"", "?v=0", "?v=-1", "?v=11", "?v=abc", "?v=99999999999999999999"} {
+		page := getBody(t, engine, "/pricing"+query)
+		assert.Contains(t, page, imageTag(1), query)
+		assert.Contains(t, page, `<meta property="og:url" content="https://video.example.com/pricing" />`, query)
+	}
+}
+
+func TestShareCardsMatchTheSizeThePageDeclares(t *testing.T) {
+	page := getBody(t, setupSEOTest(t, "", ""), "/pricing")
+	assert.Contains(t, page, `<meta property="og:image:type" content="image/jpeg" />`)
+	for _, card := range seoShareCards {
+		file, err := os.Open(filepath.Join("..", "web", "public", filepath.FromSlash(card.Path)))
+		require.NoError(t, err)
+		config, format, err := image.DecodeConfig(file)
+		require.NoError(t, file.Close())
+		require.NoError(t, err)
+		assert.Equal(t, "jpeg", format, card.Path)
+		assert.Contains(t, page, fmt.Sprintf(`<meta property="og:image:width" content="%d" />`, config.Width), card.Path)
+		assert.Contains(t, page, fmt.Sprintf(`<meta property="og:image:height" content="%d" />`, config.Height), card.Path)
+	}
 }
 
 func TestRenderIndexPageSkipsHomeCopyWhenCustomHomeIsConfigured(t *testing.T) {
