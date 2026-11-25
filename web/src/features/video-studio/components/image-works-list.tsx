@@ -16,7 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Download, Image as ImageIcon, PencilLine, Trash2 } from 'lucide-react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { Image as ImageIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -29,22 +30,42 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { useModelDisplayName } from '@/features/pricing/hooks'
-import { formatTimestamp } from '@/lib/format'
+import { getUserTaskLogs } from '@/features/usage-logs/api'
+import type { TaskLog } from '@/features/usage-logs/types'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
+import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { useUnixNow } from '../hooks/use-expiring-works'
 import { restoredAssets } from '../lib/draft'
+import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
-import { imageRetention } from '../lib/work-retention'
-import type { StudioDraft } from '../types'
-import { WorkRetentionBadge } from './work-retention-badge'
+import {
+  imageRetention,
+  isFinishedTask,
+  listedImageTasks,
+} from '../lib/work-retention'
+import type { StudioDraft, StudioImage } from '../types'
+import { ImageTaskCards } from './image-task-cards'
+import { ImageWorkCard, WorkImage } from './image-work-card'
+
+const IMAGE_TASKS_PAGE_SIZE = 24
+const POLL_INTERVAL_MS = 5000
+const GRID_CLASS_NAME =
+  'grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+
+type Listed =
+  | { createdAt: number; image: StudioImage }
+  | { createdAt: number; task: TaskLog }
 
 /**
- * Images generated in this browser, newest first. With `onEdit`, each image
- * offers to load its prompt, model, size and references into the composer.
- * Deleting an image, after a confirmation, removes it from this browser.
- * Each linked image shows how long its link keeps working.
+ * Images the user created on this site, newest first: those generated in this
+ * browser, and the user's image tasks it has no images of, refreshed while any
+ * is running. With `onEdit`, each image offers to load its prompt, model, size
+ * and references into the composer. Deleting an image, after a confirmation,
+ * removes it from this browser. Each image shows how long it stays available.
  */
 export function ImageWorksList(props: {
   onEdit?: (draft: Partial<StudioDraft>, size: string) => void
@@ -52,113 +73,146 @@ export function ImageWorksList(props: {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage || i18n.language
   const displayName = useModelDisplayName()
-  const works = useStudioImageWorks((state) => state.works)
-  const removeWork = useStudioImageWorks((state) => state.remove)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const images = useStudioImageWorks((state) => state.works)
+  const generating = useStudioImageWorks((state) => state.generating)
+  const removeImage = useStudioImageWorks((state) => state.remove)
+  const [hidden, setHidden] = useState(readHiddenTasks)
+  const [deleting, setDeleting] = useState<Listed | null>(null)
+  const [pageSize, setPageSize] = useState(IMAGE_TASKS_PAGE_SIZE)
   const now = useUnixNow()
+  const works = useQuery({
+    queryKey: [...STUDIO_WORKS_QUERY_KEY, 'image', pageSize],
+    queryFn: async () => {
+      const response = await getUserTaskLogs({
+        p: 1,
+        page_size: pageSize,
+        kind: 'image',
+      })
+      return {
+        items: (response.data?.items ?? []) as TaskLog[],
+        total: response.data?.total ?? 0,
+      }
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: (query) =>
+      generating > 0 ||
+      query.state.data?.items.some((task) => !isFinishedTask(task))
+        ? POLL_INTERVAL_MS
+        : false,
+  })
+  const loaded = works.data?.items ?? []
+  const hasMore = loaded.length < (works.data?.total ?? 0)
+  const listed: Listed[] = [
+    ...images.map((image) => ({ createdAt: image.createdAt, image })),
+    ...listedImageTasks(loaded, images, hidden).map((task) => ({
+      createdAt: task.submit_time,
+      task,
+    })),
+  ].sort((a, b) => b.createdAt - a.createdAt)
 
-  if (works.length === 0) {
+  const confirmDelete = () => {
+    if (deleting && 'image' in deleting) {
+      removeImage(deleting.image.id)
+      // Its task would otherwise be listed in its place.
+      if (deleting.image.taskId) setHidden(hideTask(deleting.image.taskId))
+    }
+    if (deleting && 'task' in deleting) {
+      setHidden(hideTask(deleting.task.task_id))
+    }
+    setDeleting(null)
+  }
+
+  if (listed.length === 0 && works.isLoading) {
     return (
-      <Empty className='border'>
-        <EmptyHeader>
-          <EmptyMedia variant='icon'>
-            <ImageIcon aria-hidden />
-          </EmptyMedia>
-          <EmptyTitle>{t('No images yet')}</EmptyTitle>
-          <EmptyDescription>
-            {t(
-              'Images you create appear here. Download the ones you want to keep; image links expire after a while.'
-            )}
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <div className={GRID_CLASS_NAME}>
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} className='aspect-square rounded-xl' />
+        ))}
+      </div>
     )
   }
   return (
     <>
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {works.map((work) => (
-          <article
-            key={work.id}
-            className='bg-card border-border/60 overflow-hidden rounded-xl border'
-          >
-            <div className='bg-muted/40 relative aspect-square'>
-              <img
-                src={work.url}
-                alt={work.prompt}
-                loading='lazy'
-                className='size-full object-contain'
-              />
-              <WorkRetentionBadge
-                retention={imageRetention(work, now)}
+      {listed.length === 0 ? (
+        <Empty className='border'>
+          <EmptyHeader>
+            <EmptyMedia variant='icon'>
+              <ImageIcon aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>{t('No images yet')}</EmptyTitle>
+            <EmptyDescription>
+              {t(
+                'Images you create appear here. Download the ones you want to keep; image links expire after a while.'
+              )}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className={GRID_CLASS_NAME}>
+          {listed.map((work) => {
+            if ('task' in work) {
+              return (
+                <ImageTaskCards
+                  key={work.task.task_id}
+                  task={work.task}
+                  now={now}
+                  onEdit={props.onEdit}
+                  onDelete={() => setDeleting(work)}
+                />
+              )
+            }
+            const image = work.image
+            const retention = imageRetention(image, now)
+            return (
+              <ImageWorkCard
+                key={image.id}
+                title={localizeMentions(image.prompt, language)}
+                details={[
+                  displayName(image.model),
+                  image.size.replace('x', '×'),
+                ]}
+                createdAt={image.createdAt}
+                retention={retention}
                 now={now}
-              />
-              <Button
-                variant='secondary'
-                size='icon'
-                className='absolute top-2 right-2 size-8 rounded-full opacity-90'
-                render={
-                  <a
-                    href={work.url}
-                    target='_blank'
-                    rel='noreferrer'
-                    download={`${work.id}.png`}
-                  />
+                onEdit={
+                  props.onEdit &&
+                  (() =>
+                    props.onEdit?.(
+                      {
+                        model: image.model,
+                        prompt: image.prompt,
+                        references: restoredAssets(
+                          'image',
+                          image.references ?? []
+                        ),
+                      },
+                      image.size
+                    ))
                 }
-                aria-label={t('Download image')}
+                onDelete={() => setDeleting(work)}
               >
-                <Download className='size-4' aria-hidden />
-              </Button>
-            </div>
-            <div className='flex flex-col gap-1 p-3'>
-              <p className='line-clamp-2 min-h-10 text-sm'>
-                {localizeMentions(work.prompt, language)}
-              </p>
-              <div className='flex items-center gap-2'>
-                <p className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
-                  {displayName(work.model)} ·{' '}
-                  {work.size && `${work.size.replace('x', '×')} · `}
-                  {formatTimestamp(work.createdAt)}
-                </p>
-                {props.onEdit && (
-                  <Button
-                    variant='ghost'
-                    size='icon-xs'
-                    className='shrink-0'
-                    aria-label={t('Edit again')}
-                    title={t('Edit again')}
-                    onClick={() =>
-                      props.onEdit?.(
-                        {
-                          model: work.model,
-                          prompt: work.prompt,
-                          references: restoredAssets(
-                            'image',
-                            work.references ?? []
-                          ),
-                        },
-                        work.size
-                      )
-                    }
-                  >
-                    <PencilLine aria-hidden />
-                  </Button>
-                )}
-                <Button
-                  variant='ghost'
-                  size='icon-xs'
-                  className='hover:text-destructive shrink-0'
-                  onClick={() => setDeleting(work.id)}
-                  aria-label={t('Delete')}
-                  title={t('Delete')}
-                >
-                  <Trash2 aria-hidden />
-                </Button>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+                <WorkImage
+                  url={image.url}
+                  alt={image.prompt}
+                  filename={`image-${image.id}`}
+                  expired={retention?.state === 'expired'}
+                />
+              </ImageWorkCard>
+            )
+          })}
+        </div>
+      )}
+      {hasMore && (
+        <Button
+          variant='outline'
+          className='self-center'
+          disabled={works.isFetching}
+          onClick={() => setPageSize((size) => size + IMAGE_TASKS_PAGE_SIZE)}
+        >
+          {works.isFetching && <Spinner />}
+          {t('Load more')}
+        </Button>
+      )}
       <ConfirmDialog
         destructive
         open={deleting !== null}
@@ -166,14 +220,17 @@ export function ImageWorksList(props: {
           if (!open) setDeleting(null)
         }}
         title={t('Delete this image?')}
-        desc={t(
-          'The image is removed from this browser. Download it first if you want to keep it.'
-        )}
+        desc={
+          deleting && 'task' in deleting
+            ? t(
+                'The image is removed from your works in this browser. Its usage record is kept.'
+              )
+            : t(
+                'The image is removed from this browser. Download it first if you want to keep it.'
+              )
+        }
         confirmText={t('Delete')}
-        handleConfirm={() => {
-          if (deleting) removeWork(deleting)
-          setDeleting(null)
-        }}
+        handleConfirm={confirmDelete}
       />
     </>
   )

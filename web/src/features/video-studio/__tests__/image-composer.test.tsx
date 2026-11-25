@@ -16,17 +16,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render as renderTree, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getUserTaskLogs } from '@/features/usage-logs/api'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { generateImages } from '../api'
 import { ImageComposer } from '../components/image-composer'
 import { ImageWorksList } from '../components/image-works-list'
-import { STUDIO_IMAGE_WORKS_KEY } from '../constants'
 
 const studioBalance = vi.hoisted(() => ({
   shortfallUSD: null as number | null,
@@ -76,12 +77,29 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }))
 
+vi.mock('@/features/usage-logs/api', () => ({
+  getUserTaskLogs: vi.fn(),
+  getTaskArtifacts: vi.fn(),
+}))
+
+function render(ui: ReactNode) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return renderTree(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  )
+}
+
 const generateMock = vi.mocked(generateImages)
 
 beforeEach(() => {
   studioBalance.shortfallUSD = null
   window.localStorage.clear()
-  useStudioImageWorks.setState({ works: [] })
+  useStudioImageWorks.setState({ works: [], generating: 0 })
+  vi.mocked(getUserTaskLogs).mockResolvedValue({
+    data: { items: [], total: 0 },
+  } as never)
   generateMock.mockResolvedValue([
     { url: 'https://cdn.example/a.png', expiresAt: 1_900_000_000 },
     { url: 'https://cdn.example/b.png' },
@@ -164,6 +182,52 @@ describe('ImageComposer', () => {
     })
   })
 
+  it('lists the running task while the reply is pending, then the image in its place', async () => {
+    const task = {
+      task_id: 'task_1',
+      action: 'text_to_image',
+      console_image: true,
+      status: 'IN_PROGRESS',
+      submit_time: 1_790_000_000,
+      properties: { origin_model_name: 'plugin-image' },
+    }
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: { items: [task], total: 1 },
+    } as never)
+    let reply = (_: { url: string; taskId: string }[]) => {}
+    generateMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          reply = resolve
+        })
+    )
+    const user = userEvent.setup()
+    render(
+      <>
+        <ImageComposer initialModel='plugin-image' />
+        <ImageWorksList />
+      </>
+    )
+    await user.type(
+      screen.getByRole('textbox', { name: 'Image prompt' }),
+      'a red fox'
+    )
+    await user.click(screen.getByRole('button', { name: 'Generate image' }))
+
+    expect(await screen.findByText('Generating')).toBeInTheDocument()
+    expect(useStudioImageWorks.getState().generating).toBe(1)
+    reply([{ url: 'https://cdn.example/a.png', taskId: 'task_1' }])
+
+    expect(
+      await screen.findByRole('img', { name: 'a red fox' })
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Generating')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('article')).toHaveLength(1)
+    await waitFor(() =>
+      expect(useStudioImageWorks.getState().generating).toBe(0)
+    )
+  })
+
   it('does not submit without a prompt', async () => {
     const user = userEvent.setup()
     render(<ImageComposer />)
@@ -194,49 +258,5 @@ describe('ImageComposer', () => {
       screen.getByRole('button', { name: 'Generate image' })
     ).toBeDisabled()
     expect(generateMock).not.toHaveBeenCalled()
-  })
-})
-
-describe('ImageWorksList', () => {
-  const work = {
-    id: 'img_1',
-    url: 'https://cdn.example/fox.png',
-    prompt: 'a red fox',
-    model: 'seedream-5.0-pro',
-    size: '2048x2048',
-    createdAt: 1_790_000_000,
-  }
-
-  it('removes an image from the list and storage after the delete is confirmed', async () => {
-    useStudioImageWorks.setState({ works: [work] })
-    const user = userEvent.setup()
-    render(<ImageWorksList />)
-
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
-    await user.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', {
-        name: 'Delete',
-      })
-    )
-
-    await waitFor(() =>
-      expect(
-        screen.queryByRole('img', { name: 'a red fox' })
-      ).not.toBeInTheDocument()
-    )
-    expect(useStudioImageWorks.getState().works).toEqual([])
-    expect(window.localStorage.getItem(STUDIO_IMAGE_WORKS_KEY)).toBe('[]')
-  })
-
-  it('keeps the image when the delete is cancelled', async () => {
-    useStudioImageWorks.setState({ works: [work] })
-    const user = userEvent.setup()
-    render(<ImageWorksList />)
-
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    expect(screen.getByRole('img', { name: 'a red fox' })).toBeInTheDocument()
-    expect(useStudioImageWorks.getState().works).toHaveLength(1)
   })
 })

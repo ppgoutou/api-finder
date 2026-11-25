@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -16,9 +17,10 @@ import (
 )
 
 // The media copy job runs on the master node. Every minute it looks at tasks
-// that succeeded in the last two days and copies each one's video into the
+// that succeeded in the last two days and copies each one's video, or the image
+// of a web console request whose reply did not record its own copy, into the
 // configured media storage, before upstream links expire. Reads of a copied
-// video then redirect to the storage CDN instead of streaming through here.
+// artifact then redirect to the storage CDN instead of streaming through here.
 const (
 	taskMediaCopyInterval    = time.Minute
 	taskMediaCopyWindow      = 48 * time.Hour
@@ -26,12 +28,15 @@ const (
 	taskMediaCopyMaxAttempts = 5
 	taskMediaCopyTimeout     = 20 * time.Minute
 	taskMediaCopyMaxBytes    = 2 << 30
+	// consoleImageCopyDelay leaves the reply to a web console request time to
+	// store the image before the job copies it.
+	consoleImageCopyDelay = playgroundImageStoreTimeout + time.Minute
 	// upstreamVideoLinkLifetime is how long suppliers keep a finished video
 	// at its upstream link; Ark (Seedance) links last 24 hours.
 	upstreamVideoLinkLifetime = 24 * time.Hour
 )
 
-// taskMediaRetention is when the task's owner is told its video stops being
+// taskMediaRetention is when the task's owner is told its media stops being
 // available: MediaRetentionExpiry after it was copied into media storage, or
 // when the upstream link expires if no copy will be made (storage off,
 // copying gave up, or the copy window passed). It is 0 for unfinished tasks
@@ -56,9 +61,9 @@ func StartTaskMediaCopy() {
 	if !common.IsMasterNode {
 		return
 	}
-	// Tasks that have no video to copy, so later rounds skip them without
+	// Tasks that have no media to copy, so later rounds skip them without
 	// loading them again. Entries leave once they fall out of the window.
-	noVideo := make(map[int64]int64)
+	noMedia := make(map[int64]int64)
 	for {
 		time.Sleep(taskMediaCopyInterval)
 		store := service.GetTaskArtifactStore()
@@ -67,13 +72,17 @@ func StartTaskMediaCopy() {
 		}
 		now := time.Now().Unix()
 		since := now - int64(taskMediaCopyWindow/time.Second)
-		for id, finishedAt := range noVideo {
+		for id, finishedAt := range noMedia {
 			if finishedAt < since {
-				delete(noVideo, id)
+				delete(noMedia, id)
 			}
 		}
 		for _, candidate := range model.GetSucceededTasksFinishedSince(since, taskMediaCopyBatch) {
-			if _, skip := noVideo[candidate.ID]; skip || !taskMediaCopyDue(candidate.PrivateData.StoredMedia, now) {
+			if _, skip := noMedia[candidate.ID]; skip || !taskMediaCopyDue(candidate.PrivateData.StoredMedia, now) {
+				continue
+			}
+			// The reply to a web console request stores its own image first.
+			if candidate.IsConsoleImage() && now < candidate.FinishTime+int64(consoleImageCopyDelay/time.Second) {
 				continue
 			}
 			task, err := model.GetTaskByID(candidate.ID)
@@ -81,13 +90,13 @@ func StartTaskMediaCopy() {
 				continue
 			}
 			if !copyTaskMedia(store, task) {
-				noVideo[task.ID] = task.FinishTime
+				noMedia[task.ID] = task.FinishTime
 			}
 		}
 	}
 }
 
-// taskMediaCopyDue reports whether a task's video still needs copying, waiting
+// taskMediaCopyDue reports whether a task's media still needs copying, waiting
 // longer after each failed attempt.
 func taskMediaCopyDue(stored *model.TaskStoredMedia, now int64) bool {
 	if stored == nil {
@@ -100,8 +109,8 @@ func taskMediaCopyDue(stored *model.TaskStoredMedia, now int64) bool {
 	return stored.LastTryAt+backoff <= now
 }
 
-// copyTaskMedia copies one task's video and records the outcome on the task.
-// It returns false when the task has no video to copy.
+// copyTaskMedia copies one task's video or image and records the outcome on the
+// task. It returns false when the task has nothing to copy.
 func copyTaskMedia(store service.TaskArtifactStore, task *model.Task) bool {
 	if task.Status != model.TaskStatusSuccess || !task.ResultRetrievable() {
 		return false
@@ -109,7 +118,7 @@ func copyTaskMedia(store service.TaskArtifactStore, task *model.Task) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), taskMediaCopyTimeout)
 	defer cancel()
 
-	artifactKey, descriptor := taskVideoContentRequest(ctx, task)
+	artifact, descriptor := taskMediaContentRequest(ctx, task)
 	if descriptor == nil {
 		return false
 	}
@@ -117,11 +126,11 @@ func copyTaskMedia(store service.TaskArtifactStore, task *model.Task) bool {
 	if stored == nil {
 		stored = &model.TaskStoredMedia{}
 	}
-	stored.ArtifactKey = artifactKey
+	stored.ArtifactKey = artifact.Key
 	stored.Attempts++
 	stored.LastTryAt = time.Now().Unix()
 
-	gone, copyErr := downloadAndPersistTaskVideo(ctx, store, task, artifactKey, descriptor, stored)
+	gone, copyErr := downloadAndPersistTaskMedia(ctx, store, task, artifact, descriptor, stored)
 	if copyErr != nil {
 		stored.GaveUp = gone || stored.Attempts >= taskMediaCopyMaxAttempts
 		common.SysError(common.LogText("media copy for task %s failed (attempt %d): %s", task.TaskID, stored.Attempts, copyErr.Error()))
@@ -133,48 +142,49 @@ func copyTaskMedia(store service.TaskArtifactStore, task *model.Task) bool {
 	return true
 }
 
-// taskVideoContentRequest finds the task's video and the upstream request
-// that fetches it, or returns a nil request when the task has no video.
-func taskVideoContentRequest(ctx context.Context, task *model.Task) (string, *relaychannel.TaskContentRequest) {
+// taskMediaContentRequest finds the task's video, or the first image of a web
+// console request, and the upstream request that fetches it. It returns a nil
+// request when the task has neither. Images of API clients are not copied here.
+func taskMediaContentRequest(ctx context.Context, task *model.Task) (types.TaskArtifact, *relaychannel.TaskContentRequest) {
 	if !taskHasPluginExecution(task) {
 		if !legacyVideoAvailable(task) {
-			return "", nil
+			return types.TaskArtifact{}, nil
 		}
-		return "video", &relaychannel.TaskContentRequest{
+		return types.TaskArtifact{Key: "video", Type: "video"}, &relaychannel.TaskContentRequest{
 			URL: task.GetResultURL(), Method: http.MethodGet, Credentialless: true,
 		}
 	}
 	artifacts, err := projectTaskArtifacts(task)
 	if err != nil {
-		return "", nil
+		return types.TaskArtifact{}, nil
 	}
 	for _, artifact := range artifacts {
-		if artifact.Type != "video" {
+		if artifact.Type != "video" && (artifact.Type != "image" || !task.IsConsoleImage()) {
 			continue
 		}
 		adaptor, err := initTaskArtifactAdaptor(task)
 		if err != nil {
-			return "", nil
+			return types.TaskArtifact{}, nil
 		}
 		provider, ok := adaptor.(relaychannel.TaskContentRequestProvider)
 		if !ok {
-			return "", nil
+			return types.TaskArtifact{}, nil
 		}
 		descriptor, err := provider.BuildContentRequest(ctx, task, artifact.Key, relaychannel.TaskArtifactClientRequest{
 			Method: http.MethodGet, Headers: map[string]string{},
 		})
 		if err != nil || descriptor == nil {
-			return "", nil
+			return types.TaskArtifact{}, nil
 		}
-		return artifact.Key, descriptor
+		return types.TaskArtifact{Key: artifact.Key, Type: artifact.Type}, descriptor
 	}
-	return "", nil
+	return types.TaskArtifact{}, nil
 }
 
-// downloadAndPersistTaskVideo fetches the video through the same proxy path
+// downloadAndPersistTaskMedia fetches the artifact through the same proxy path
 // viewers use, into a temporary file, and uploads it. gone reports a failure
 // that retrying cannot fix.
-func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifactStore, task *model.Task, artifactKey string, descriptor *relaychannel.TaskContentRequest, stored *model.TaskStoredMedia) (gone bool, err error) {
+func downloadAndPersistTaskMedia(ctx context.Context, store service.TaskArtifactStore, task *model.Task, artifact types.TaskArtifact, descriptor *relaychannel.TaskContentRequest, stored *model.TaskStoredMedia) (gone bool, err error) {
 	file, err := os.CreateTemp("", "task-media-*")
 	if err != nil {
 		return false, err
@@ -184,7 +194,11 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 		os.Remove(file.Name())
 	}()
 
-	writer := &taskMediaFileWriter{file: file, header: http.Header{}, limit: taskMediaCopyMaxBytes}
+	limit := int64(taskMediaCopyMaxBytes)
+	if artifact.Type == "image" {
+		limit = playgroundImageMaxBytes
+	}
+	writer := &taskMediaFileWriter{file: file, header: http.Header{}, limit: limit}
 	c, _ := gin.CreateTestContext(writer)
 	c.Request, err = http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost/internal/task-media-copy", nil)
 	if err != nil {
@@ -199,27 +213,27 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 		return false, proxyErr
 	}
 	if writer.overflow {
-		return true, errors.New("video is larger than the copy limit")
+		return true, fmt.Errorf("%s is larger than the copy limit", artifact.Type)
 	}
 	if writer.writeErr != nil {
 		return false, writer.writeErr
 	}
 	if writer.status != http.StatusOK || writer.written == 0 {
-		return false, errors.New("upstream returned no video content")
+		return false, fmt.Errorf("upstream returned no %s content", artifact.Type)
 	}
 
 	mimeType := writer.header.Get("Content-Type")
-	if service.MediaStorageExtension(mimeType) == "" {
+	if service.TaskArtifactExtension(artifact.Type, mimeType) == "" {
 		mimeType = http.DetectContentType(writer.head)
 	}
-	if service.MediaStorageExtension(mimeType) == "" {
-		return true, errors.New("upstream content is not a video")
+	if service.TaskArtifactExtension(artifact.Type, mimeType) == "" {
+		return true, fmt.Errorf("upstream content is not a supported %s", artifact.Type)
 	}
 	downloadTime := time.Since(downloadStart)
 	stored.DownloadMs = downloadTime.Milliseconds()
 	common.SysLog(common.LogText("media copy for task %s downloaded %d bytes from upstream in %s",
 		task.TaskID, writer.written, downloadTime.Round(time.Millisecond)))
-	ref, err := store.Persist(ctx, task, types.TaskArtifact{Key: artifactKey, Type: "video", MimeType: mimeType}, file)
+	ref, err := store.Persist(ctx, task, types.TaskArtifact{Key: artifact.Key, Type: artifact.Type, MimeType: mimeType}, file)
 	if err != nil {
 		return false, err
 	}
@@ -233,9 +247,9 @@ func downloadAndPersistTaskVideo(ctx context.Context, store service.TaskArtifact
 	return false, nil
 }
 
-// serveStoredTaskVideo redirects to the task's stored copy of an artifact and
+// serveStoredTaskArtifact redirects to the task's stored copy of an artifact and
 // reports whether it did.
-func serveStoredTaskVideo(c *gin.Context, task *model.Task, artifactKey string) bool {
+func serveStoredTaskArtifact(c *gin.Context, task *model.Task, artifactKey string) bool {
 	store := service.GetTaskArtifactStore()
 	ref, err := store.Resolve(task, artifactKey)
 	if err != nil || ref == nil {

@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
@@ -51,8 +53,9 @@ func (w *playgroundImageWriter) WriteString(s string) (int, error) {
 // into media storage, as finished videos are, so they stay available after
 // the supplier's links expire. Each stored image's URL is replaced by its copy
 // and marked with media_expires_at, the same expiry users see for videos. An image that cannot be copied keeps its original entry.
-// Billing has already settled on the upstream response by then; only the
-// body the client receives changes.
+// The copy of a task plugin's image is recorded on its task as well, so the
+// owner's works list serves it from any browser. Billing has already settled on
+// the upstream response by then; only the body the client receives changes.
 func StorePlaygroundImages(c *gin.Context) {
 	if !service.GetTaskArtifactStore().Enabled() {
 		c.Next()
@@ -68,7 +71,8 @@ func StorePlaygroundImages(c *gin.Context) {
 
 	body := writer.body.Bytes()
 	if writer.status == http.StatusOK {
-		body = storePlaygroundImageResponse(c.Request.Context(), body)
+		task, _ := common.GetContextKeyType[*model.Task](c, constant.ContextKeyPlaygroundImageTask)
+		body = storePlaygroundImageResponse(c.Request.Context(), body, task)
 	}
 	original.Header().Del("Content-Length")
 	original.WriteHeader(writer.status)
@@ -77,8 +81,8 @@ func StorePlaygroundImages(c *gin.Context) {
 
 // storePlaygroundImageResponse returns the response body with each image it
 // could copy pointing at the copy; the body is returned as is when it is not
-// an image list.
-func storePlaygroundImageResponse(ctx context.Context, body []byte) []byte {
+// an image list. task is the task that drew the images, or nil.
+func storePlaygroundImageResponse(ctx context.Context, body []byte, task *model.Task) []byte {
 	var response map[string]any
 	if err := common.Unmarshal(body, &response); err != nil {
 		return body
@@ -90,27 +94,32 @@ func storePlaygroundImageResponse(ctx context.Context, body []byte) []byte {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), playgroundImageStoreTimeout)
 	defer cancel()
 
+	copies := make([]service.StoredMediaObject, len(items))
 	var wg sync.WaitGroup
-	for _, raw := range items {
+	for i, raw := range items {
 		item, ok := raw.(map[string]any)
 		if !ok {
 			continue
 		}
 		wg.Go(func() {
-			storedURL, err := storePlaygroundImage(ctx, item)
+			stored, err := storePlaygroundImage(ctx, item)
 			if err != nil {
 				common.SysError(common.LogText("playground image copy failed: %s", err.Error()))
 				return
 			}
-			if storedURL == "" {
+			if stored.URL == "" {
 				return
 			}
-			item["url"] = storedURL
+			copies[i] = stored
+			item["url"] = stored.URL
 			delete(item, "b64_json")
 			item["media_expires_at"] = service.MediaRetentionExpiry(time.Now().Unix())
 		})
 	}
 	wg.Wait()
+	if len(copies) == 1 && copies[0].URL != "" {
+		recordTaskImageCopy(task, copies[0])
+	}
 
 	rewritten, err := common.Marshal(response)
 	if err != nil {
@@ -138,40 +147,60 @@ func storeTaskPluginImages(ctx context.Context, data []any) {
 		}
 		link, _ := item["url"].(string)
 		wg.Go(func() {
-			storedURL, err := storePlaygroundImage(ctx, map[string]any{"url": link})
+			stored, err := storePlaygroundImage(ctx, map[string]any{"url": link})
 			if err != nil {
 				common.SysError(common.LogText("playground image copy failed: %s", common.MaskSensitiveInfo(err.Error())))
 				return
 			}
-			if storedURL != "" {
-				item["url"] = storedURL
+			if stored.URL != "" {
+				item["url"] = stored.URL
 			}
 		})
 	}
 	wg.Wait()
 }
 
+// recordTaskImageCopy makes the stored copy of a task's only image the one its
+// artifact link serves. A task with several images keeps the link of each.
+func recordTaskImageCopy(task *model.Task, stored service.StoredMediaObject) {
+	artifacts, err := projectTaskArtifacts(task)
+	if err != nil || len(artifacts) != 1 || artifacts[0].Type != "image" {
+		return
+	}
+	task.PrivateData.StoredMedia = &model.TaskStoredMedia{
+		ArtifactKey: artifacts[0].Key,
+		ObjectKey:   stored.ObjectKey,
+		MimeType:    stored.MimeType,
+		Size:        stored.Size,
+		Targets:     []string{stored.Target},
+		StoredAt:    time.Now().Unix(),
+	}
+	if err := task.UpdateStoredMedia(); err != nil {
+		common.SysError(common.LogText("media copy for task %s could not be saved: %s", task.TaskID, err.Error()))
+	}
+}
+
 // storePlaygroundImage copies one image entry, given as a link or inline
-// base64, and returns the copy's URL.
-func storePlaygroundImage(ctx context.Context, item map[string]any) (string, error) {
+// base64.
+func storePlaygroundImage(ctx context.Context, item map[string]any) (service.StoredMediaObject, error) {
 	var content []byte
 	if encoded, _ := item["b64_json"].(string); encoded != "" {
 		decoded, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
-			return "", err
+			return service.StoredMediaObject{}, err
 		}
 		content = decoded
 	} else if link, _ := item["url"].(string); strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
 		downloaded, err := downloadPlaygroundImage(ctx, link)
 		if err != nil {
-			return "", err
+			return service.StoredMediaObject{}, err
 		}
 		content = downloaded
 	} else {
-		return "", nil
+		return service.StoredMediaObject{}, nil
 	}
 	if len(content) > playgroundImageMaxBytes {
-		return "", errors.New("image is larger than the copy limit")
+		return service.StoredMediaObject{}, errors.New("image is larger than the copy limit")
 	}
 	return service.StoreGeneratedImage(ctx, content, http.DetectContentType(content))
 }

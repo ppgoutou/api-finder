@@ -33,8 +33,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDisplayName } from '@/features/pricing/hooks'
-import { getTaskArtifacts, getUserTaskLogs } from '@/features/usage-logs/api'
-import { TASK_ACTIONS, TASK_STATUS } from '@/features/usage-logs/constants'
+import { getUserTaskLogs } from '@/features/usage-logs/api'
+import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
 import { formatTimestamp } from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
@@ -42,36 +42,21 @@ import { cn } from '@/lib/utils'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { useUnixNow } from '../hooks/use-expiring-works'
+import { useWorkArtifacts } from '../hooks/use-work-artifacts'
 import { draftFromVideoRequest } from '../lib/draft'
 import { hideTask, readHiddenTasks } from '../lib/hidden-works'
 import { localizeMentions } from '../lib/mention-names'
 import { recallTaskPrompt } from '../lib/prompt-history'
-import { videoRetention } from '../lib/work-retention'
+import { isFinishedTask, taskRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
 import { WorkDownloadButton } from './work-download-button'
 import { WorkRetentionBadge } from './work-retention-badge'
 
 const WORKS_PAGE_SIZE = 12
 const POLL_INTERVAL_MS = 5000
-const IMAGE_TASK_ACTIONS: ReadonlySet<string> = new Set([
-  TASK_ACTIONS.TEXT_TO_IMAGE,
-  TASK_ACTIONS.IMAGE_TO_IMAGE,
-])
-
-function isFinished(task: TaskLog) {
-  return (
-    task.status === TASK_STATUS.SUCCESS || task.status === TASK_STATUS.FAILURE
-  )
-}
-
 function WorkVideo(props: { task: TaskLog }) {
   const { t } = useTranslation()
-  const artifacts = useQuery({
-    queryKey: ['video-studio', 'artifacts', props.task.task_id],
-    queryFn: () => getTaskArtifacts(props.task.task_id),
-    staleTime: 10 * 60 * 1000,
-    meta: { errorToast: false },
-  })
+  const artifacts = useWorkArtifacts(props.task.task_id)
   const url =
     artifacts.data?.artifacts.find((artifact) => artifact.type === 'video')
       ?.content_url ?? artifacts.data?.legacyContentUrl
@@ -94,7 +79,11 @@ function WorkVideo(props: { task: TaskLog }) {
         preload='metadata'
         className='size-full bg-black object-contain'
       />
-      <WorkDownloadButton url={url} filename={`${props.task.task_id}.mp4`} />
+      <WorkDownloadButton
+        url={url}
+        filename={`${props.task.task_id}.mp4`}
+        label={t('Download video')}
+      />
     </>
   )
 }
@@ -156,7 +145,7 @@ function WorkCard(props: {
         {media}
         {!props.compact && (
           <WorkRetentionBadge
-            retention={videoRetention(task, props.now)}
+            retention={taskRetention(task, props.now)}
             now={props.now}
           />
         )}
@@ -238,11 +227,12 @@ export function WorksList(props: {
   const [hidden, setHidden] = useState(readHiddenTasks)
   const [deleting, setDeleting] = useState<string | null>(null)
   const works = useQuery({
-    queryKey: [...STUDIO_WORKS_QUERY_KEY, pageSize],
+    queryKey: [...STUDIO_WORKS_QUERY_KEY, 'video', pageSize],
     queryFn: async () => {
       const response = await getUserTaskLogs({
         p: 1,
         page_size: pageSize,
+        kind: 'video',
       })
       return {
         items: (response.data?.items ?? []) as TaskLog[],
@@ -251,7 +241,7 @@ export function WorksList(props: {
     },
     placeholderData: keepPreviousData,
     refetchInterval: (query) =>
-      query.state.data?.items.some((task) => !isFinished(task))
+      query.state.data?.items.some((task) => !isFinishedTask(task))
         ? POLL_INTERVAL_MS
         : false,
   })
@@ -268,11 +258,7 @@ export function WorksList(props: {
   const loaded = works.data?.items ?? []
   const hasMore =
     Boolean(props.loadMore) && loaded.length < (works.data?.total ?? 0)
-  // Image tasks are listed with the generated images, not as videos.
-  const tasks = loaded.filter(
-    (task) =>
-      !hidden.includes(task.task_id) && !IMAGE_TASK_ACTIONS.has(task.action)
-  )
+  const tasks = loaded.filter((task) => !hidden.includes(task.task_id))
   if (tasks.length === 0 && !hasMore) {
     return (
       <Empty className='border'>

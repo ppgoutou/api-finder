@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowUp,
   Copy,
@@ -40,6 +41,7 @@ import {
   DEFAULT_IMAGE_SIZE,
   STUDIO_IMAGE_SIZES,
   STUDIO_MAX_IMAGE_COUNT,
+  STUDIO_WORKS_QUERY_KEY,
 } from '../constants'
 import { assetKindOf, useAssetUploader } from '../hooks/use-asset-uploader'
 import { useStudioBalance } from '../hooks/use-studio-balance'
@@ -90,7 +92,10 @@ export function ImageComposer(props: ImageComposerProps) {
       (props.initialModel ? { model: props.initialModel } : undefined)
   )
   const models = useStudioImageModels()
+  const queryClient = useQueryClient()
   const addWorks = useStudioImageWorks((state) => state.add)
+  const startGenerating = useStudioImageWorks((state) => state.startGenerating)
+  const stopGenerating = useStudioImageWorks((state) => state.stopGenerating)
   const upload = useAssetUploader()
   const [size, setSize] = useState(
     STUDIO_IMAGE_SIZES.find((option) => option.value === props.initialSize)
@@ -149,6 +154,7 @@ export function ImageComposer(props: ImageComposerProps) {
     }
     if (insufficient) return
     setSubmitting(true)
+    startGenerating()
     const requests = buildImageRequests(draft, plugin)
     const [body] = requests
     try {
@@ -166,6 +172,7 @@ export function ImageComposer(props: ImageComposerProps) {
           id: `${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
           url: image.url,
           ...(image.expiresAt ? { expiresAt: image.expiresAt } : {}),
+          ...(image.taskId ? { taskId: image.taskId } : {}),
           prompt: body.prompt,
           model: body.model,
           size: imageShapeLabel(body),
@@ -179,6 +186,8 @@ export function ImageComposer(props: ImageComposerProps) {
       toast.error(getServerErrorMessage(error, t('Image generation failed')))
     } finally {
       setSubmitting(false)
+      stopGenerating()
+      void queryClient.invalidateQueries({ queryKey: STUDIO_WORKS_QUERY_KEY })
       balance.refresh()
     }
   }

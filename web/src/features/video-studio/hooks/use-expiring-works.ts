@@ -25,9 +25,14 @@ import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { readHiddenTasks } from '../lib/hidden-works'
-import { imageRetention, videoRetention } from '../lib/work-retention'
+import {
+  imageRetention,
+  isImageTask,
+  listedImageTasks,
+  taskRetention,
+} from '../lib/work-retention'
 
-/** Recent video tasks checked for expiry; older ones have long expired. */
+/** Recent tasks checked for expiry; older ones have long expired. */
 const REMINDER_TASK_COUNT = 50
 
 /** The current time in Unix seconds, refreshed every minute. */
@@ -45,8 +50,7 @@ export function useUnixNow() {
 
 /**
  * How many of the user's works expire soon and should be downloaded: recent
- * video tasks the server reports as expiring, and images linked from this
- * browser. Works the user deleted are left out.
+ * tasks the server reports as expiring, and images linked from this browser. Works the user deleted are left out.
  */
 export function useExpiringWorks() {
   const now = useUnixNow()
@@ -65,13 +69,18 @@ export function useExpiringWorks() {
     meta: { errorToast: false },
   })
   const hidden = readHiddenTasks()
-  const videos = (tasks.data ?? []).filter(
+  const recent = tasks.data ?? []
+  const videos = recent.filter(
     (task) =>
       !hidden.includes(task.task_id) &&
-      videoRetention(task, now)?.state === 'expiring'
+      !isImageTask(task) &&
+      taskRetention(task, now)?.state === 'expiring'
   ).length
-  const imageCount = images.filter(
-    (image) => imageRetention(image, now)?.state === 'expiring'
-  ).length
+  const imageCount =
+    images.filter((image) => imageRetention(image, now)?.state === 'expiring')
+      .length +
+    listedImageTasks(recent, images, hidden).filter(
+      (task) => taskRetention(task, now)?.state === 'expiring'
+    ).length
   return { videos, images: imageCount, total: videos + imageCount }
 }

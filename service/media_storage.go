@@ -23,7 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// mediaArtifactStore keeps copies of generated videos in up to two
+// mediaArtifactStore keeps copies of generated videos and images in up to two
 // S3-compatible buckets (overseas and mainland) and redirects each viewer to
 // the copy served closest to them. Objects are public behind unguessable
 // names, so the CDN in front of each bucket can cache them.
@@ -91,7 +91,7 @@ func (mediaArtifactStore) Persist(ctx context.Context, task *model.Task, artifac
 	if !ok {
 		return nil, errors.New("media storage needs seekable content")
 	}
-	extension := MediaStorageExtension(artifact.MimeType)
+	extension := TaskArtifactExtension(artifact.Type, artifact.MimeType)
 	if extension == "" {
 		return nil, fmt.Errorf("media storage does not keep %q", artifact.MimeType)
 	}
@@ -112,7 +112,11 @@ func (mediaArtifactStore) Persist(ctx context.Context, task *model.Task, artifac
 	}
 	now := time.Now().UTC()
 	objectKey := now.Format("2006/01") + "/" + hex.EncodeToString(name) + extension
-	if prefix := strings.Trim(strings.TrimSpace(settings.ObjectPrefix), "/"); prefix != "" {
+	prefix := strings.Trim(strings.TrimSpace(settings.ObjectPrefix), "/")
+	if artifact.Type == "image" {
+		prefix = generatedImageObjectDir
+	}
+	if prefix != "" {
 		objectKey = prefix + "/" + objectKey
 	}
 
@@ -244,6 +248,15 @@ func GeneratedImageExtension(mimeType string) string {
 	return generatedImageExtensions[strings.TrimSpace(mimeType)]
 }
 
+// TaskArtifactExtension returns the object extension for a task's video or
+// image, or "" when the store does not keep that content type.
+func TaskArtifactExtension(artifactType, mimeType string) string {
+	if artifactType == "image" {
+		return GeneratedImageExtension(mimeType)
+	}
+	return MediaStorageExtension(mimeType)
+}
+
 // MediaDisplayRetentionDays is how long users are told a stored video or
 // image stays available.
 const MediaDisplayRetentionDays = 15
@@ -264,37 +277,47 @@ func MediaRetentionExpiry(storedAt int64) int64 {
 // CDN instead of this server. It returns "" with no error when media storage
 // is off.
 func StoreVideoAsset(ctx context.Context, content io.ReadSeeker, name, mimeType string, size int64) (string, error) {
-	return storeMediaObject(ctx, videoAssetObjectDir, content, name, mimeType, size)
+	stored, err := storeMediaObject(ctx, videoAssetObjectDir, content, name, mimeType, size)
+	return stored.URL, err
+}
+
+// StoredMediaObject is a file kept in one media storage target. Its URL is
+// empty when media storage is off.
+type StoredMediaObject struct {
+	URL       string
+	ObjectKey string
+	Target    string
+	MimeType  string
+	Size      int64
 }
 
 // StoreGeneratedImage copies an image generated from the web console into
-// object storage under a random name and returns its public URL, or "" with
-// no error when media storage is off.
-func StoreGeneratedImage(ctx context.Context, content []byte, mimeType string) (string, error) {
+// object storage under a random name; nothing is stored when media storage is
+// off.
+func StoreGeneratedImage(ctx context.Context, content []byte, mimeType string) (StoredMediaObject, error) {
 	extension := GeneratedImageExtension(mimeType)
 	if extension == "" {
-		return "", fmt.Errorf("unsupported image type %q", mimeType)
+		return StoredMediaObject{}, fmt.Errorf("unsupported image type %q", mimeType)
 	}
 	name := common.GetUUID() + extension
 	return storeMediaObject(ctx, generatedImageObjectDir, bytes.NewReader(content), name, mimeType, int64(len(content)))
 }
 
-// storeMediaObject uploads content to dir/YYYY/MM/name and returns its public
-// URL. The Bangkok COS bucket (mainland target) is tried first because it
+// storeMediaObject uploads content to dir/YYYY/MM/name. The Bangkok COS bucket (mainland target) is tried first because it
 // shares the server's region and uploads over the internal network; the
 // overseas bucket is the fallback.
-func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, name, mimeType string, size int64) (string, error) {
+func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, name, mimeType string, size int64) (StoredMediaObject, error) {
 	settings := system_setting.GetMediaStorageSettings()
 	targets := settings.UploadTargets()
 	if len(targets) == 0 {
-		return "", nil
+		return StoredMediaObject{}, nil
 	}
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
-		return "", err
+		return StoredMediaObject{}, err
 	}
 	hash := sha256.New()
 	if _, err := io.Copy(hash, content); err != nil {
-		return "", err
+		return StoredMediaObject{}, err
 	}
 	payloadHash := hex.EncodeToString(hash.Sum(nil))
 	objectKey := dir + "/" + time.Now().UTC().Format("2006/01") + "/" + name
@@ -303,7 +326,7 @@ func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, na
 	for i := len(targets) - 1; i >= 0; i-- {
 		target := settings.Target(targets[i])
 		if _, err := content.Seek(0, io.SeekStart); err != nil {
-			return "", err
+			return StoredMediaObject{}, err
 		}
 		uploadStart := time.Now()
 		if err := putMediaObject(ctx, target, objectKey, mimeType, size, payloadHash, content); err != nil {
@@ -312,7 +335,13 @@ func storeMediaObject(ctx context.Context, dir string, content io.ReadSeeker, na
 		}
 		common.SysLog(common.LogText("media upload of %s to %s: %d bytes in %s",
 			dir, targets[i], size, time.Since(uploadStart).Round(time.Millisecond)))
-		return strings.TrimRight(strings.TrimSpace(target.PublicURL), "/") + "/" + objectKey, nil
+		return StoredMediaObject{
+			URL:       strings.TrimRight(strings.TrimSpace(target.PublicURL), "/") + "/" + objectKey,
+			ObjectKey: objectKey,
+			Target:    targets[i],
+			MimeType:  mimeType,
+			Size:      size,
+		}, nil
 	}
-	return "", errors.Join(uploadErrs...)
+	return StoredMediaObject{}, errors.Join(uploadErrs...)
 }

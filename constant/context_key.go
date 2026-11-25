@@ -55,7 +55,10 @@ const (
 	// ContextKeyPlayground marks a request from the web console playground
 	// that was rewritten to a native endpoint path.
 	ContextKeyPlayground ContextKey = "playground"
-	ContextKeyUserName   ContextKey = "username"
+	// ContextKeyPlaygroundImageTask holds the finished *model.Task whose images
+	// a web console image request is answered with.
+	ContextKeyPlaygroundImageTask ContextKey = "playground_image_task"
+	ContextKeyUserName            ContextKey = "username"
 
 	ContextKeyLocalCountTokens ContextKey = "local_count_tokens"
 

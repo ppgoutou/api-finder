@@ -64,7 +64,7 @@ export async function uploadVideoAsset(
 /**
  * Generates images with the signed-in session, charged to the wallet.
  * Returns each image as a URL, turning inline base64 images into data URLs,
- * with its expiry when the server stored a copy.
+ * with its expiry when the server stored a copy and its task when it has one.
  */
 export async function generateImages(
   body: ImageGenerationRequest
@@ -77,12 +77,17 @@ export async function generateImages(
   const data = res.data.data ?? []
   const items = Array.isArray(data) ? data : [data]
   const images = items.flatMap((item): GeneratedImage[] => {
-    const expiresAt = item.media_expires_at
     let url = ''
     if (item.url) url = item.url
     else if (item.b64_json) url = `data:image/png;base64,${item.b64_json}`
     if (!url) return []
-    return [expiresAt ? { url, expiresAt } : { url }]
+    return [
+      {
+        url,
+        ...(item.media_expires_at ? { expiresAt: item.media_expires_at } : {}),
+        ...(item.task_id ? { taskId: item.task_id } : {}),
+      },
+    ]
   })
   if (images.length === 0) throw new Error('Image generation failed')
   return images

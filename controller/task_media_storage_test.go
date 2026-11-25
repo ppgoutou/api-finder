@@ -63,13 +63,33 @@ func configureMediaStorageTest(t *testing.T, overseasEndpoint, mainlandEndpoint 
 	}
 }
 
-func requestStoredArtifact(t *testing.T, task *model.Task, country string) *httptest.ResponseRecorder {
+// setupConsoleImageTaskTest stores a finished image task submitted from the web
+// console, whose plugin lists imageURL as its only artifact.
+func setupConsoleImageTaskTest(t *testing.T, imageURL string) *model.Task {
+	t.Helper()
+	task := setupGenericTaskTest(t)
+	previousMemoryCache := common.MemoryCacheEnabled
+	common.MemoryCacheEnabled = false
+	t.Cleanup(func() { common.MemoryCacheEnabled = previousMemoryCache })
+	task.Action = constant.TaskActionTextToImage
+	task.Platform = constant.TaskPlatform("alibaba")
+	task.PrivateData.Execution = &model.TaskExecutionSnapshot{TaskPlugin: &model.TaskPluginSnapshot{
+		Key: "alibaba", Name: "Alibaba", Version: "1.0.0", APIVersion: 1,
+	}}
+	task.SetData(map[string]any{"output": map[string]any{"choices": []any{map[string]any{
+		"message": map[string]any{"content": []any{map[string]any{"image": imageURL}}},
+	}}}})
+	require.NoError(t, model.DB.Save(task).Error)
+	return task
+}
+
+func requestStoredArtifact(t *testing.T, task *model.Task, country, artifactKey string) *httptest.ResponseRecorder {
 	t.Helper()
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
 	c.Set(middleware.TaskArtifactAccessContextKey, true)
-	c.Params = gin.Params{{Key: "key", Value: task.TaskID}, {Key: "artifact_key", Value: "video"}}
-	c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts/video/content", nil)
+	c.Params = gin.Params{{Key: "key", Value: task.TaskID}, {Key: "artifact_key", Value: artifactKey}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts/"+artifactKey+"/content", nil)
 	if country != "" {
 		c.Request.Header.Set("CF-IPCountry", country)
 	}
@@ -133,11 +153,11 @@ func TestTaskMediaCopyStoresVideoAndRedirectsByCountry(t *testing.T) {
 	assert.Equal(t, stored.UploadMs, adminView.AdminInfo.MediaCopy.UploadMs)
 	assert.Nil(t, tasksToDto([]*model.Task{saved}, false, common.RoleCommonUser)[0].AdminInfo)
 
-	recorder := requestStoredArtifact(t, saved, "CN")
+	recorder := requestStoredArtifact(t, saved, "CN", "video")
 	assert.Equal(t, http.StatusFound, recorder.Code)
 	assert.Equal(t, "https://cn-media.example.com/"+stored.ObjectKey, recorder.Header().Get("Location"))
 
-	recorder = requestStoredArtifact(t, saved, "US")
+	recorder = requestStoredArtifact(t, saved, "US", "video")
 	assert.Equal(t, http.StatusFound, recorder.Code)
 	assert.Equal(t, "https://media.example.com/"+stored.ObjectKey, recorder.Header().Get("Location"))
 
@@ -145,7 +165,7 @@ func TestTaskMediaCopyStoresVideoAndRedirectsByCountry(t *testing.T) {
 	system_setting.GetMediaStorageSettings().RetentionDays = 1
 	saved.PrivateData.StoredMedia.StoredAt = time.Now().Add(-48 * time.Hour).Unix()
 	require.NoError(t, saved.UpdateStoredMedia())
-	recorder = requestStoredArtifact(t, saved, "US")
+	recorder = requestStoredArtifact(t, saved, "US", "video")
 	assert.NotEqual(t, http.StatusFound, recorder.Code)
 }
 
@@ -174,7 +194,7 @@ func TestTaskMediaCopyServesOverseasWhenMainlandUploadFails(t *testing.T) {
 	require.NotNil(t, saved.PrivateData.StoredMedia)
 	assert.Equal(t, []string{"overseas"}, saved.PrivateData.StoredMedia.Targets)
 
-	recorder := requestStoredArtifact(t, saved, "CN")
+	recorder := requestStoredArtifact(t, saved, "CN", "video")
 	assert.Equal(t, http.StatusFound, recorder.Code)
 	assert.True(t, strings.HasPrefix(recorder.Header().Get("Location"), "https://media.example.com/videos/"))
 }
@@ -225,6 +245,39 @@ func TestTaskMediaCopySkipsTasksWithoutVideo(t *testing.T) {
 	saved, err := model.GetTaskByID(task.ID)
 	require.NoError(t, err)
 	assert.Nil(t, saved.PrivateData.StoredMedia)
+}
+
+func TestTaskMediaCopyStoresConsoleImagesOnly(t *testing.T) {
+	pngBytes := append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		_, _ = w.Write(pngBytes)
+	}))
+	defer upstream.Close()
+	allowPrivateTaskMediaTest(t)
+	overseas, overseasServer := newFakeMediaBucket(t)
+	_, mainlandServer := newFakeMediaBucket(t)
+	configureMediaStorageTest(t, overseasServer.URL, mainlandServer.URL)
+
+	task := setupConsoleImageTaskTest(t, upstream.URL+"/a.png")
+	assert.True(t, tasksToDto([]*model.Task{task}, false, common.RoleCommonUser)[0].ConsoleImage)
+	require.True(t, copyTaskMedia(service.GetTaskArtifactStore(), task))
+	saved, err := model.GetTaskByID(task.ID)
+	require.NoError(t, err)
+	stored := saved.PrivateData.StoredMedia
+	require.NotNil(t, stored)
+	assert.Equal(t, "image-1", stored.ArtifactKey)
+	assert.Equal(t, "image/png", stored.MimeType)
+	assert.Regexp(t, `^images/\d{4}/\d{2}/[0-9a-f]{32}\.png$`, stored.ObjectKey)
+	assert.Equal(t, string(pngBytes), overseas.objects["/global-media/"+stored.ObjectKey])
+	assert.Equal(t, http.StatusFound, requestStoredArtifact(t, saved, "US", "image-1").Code)
+
+	// An API client's image stays at its upstream link.
+	task.PrivateData.TokenId = 5
+	task.PrivateData.StoredMedia = nil
+	require.NoError(t, model.DB.Save(task).Error)
+	assert.False(t, tasksToDto([]*model.Task{task}, false, common.RoleCommonUser)[0].ConsoleImage)
+	assert.False(t, copyTaskMedia(service.GetTaskArtifactStore(), task))
 }
 
 func TestTaskMediaCopyRetriesWithGrowingBackoff(t *testing.T) {
@@ -286,9 +339,12 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 	mainland, mainlandServer := newFakeMediaBucket(t)
 	configureMediaStorageTest(t, overseasServer.URL, mainlandServer.URL)
 
+	// The task of an image drawn by a task plugin; nil for other models.
+	var drawnBy *model.Task
 	serve := func(status int, body any) *httptest.ResponseRecorder {
 		engine := gin.New()
 		engine.POST("/pg/images/generations", StorePlaygroundImages, func(c *gin.Context) {
+			common.SetContextKey(c, constant.ContextKeyPlaygroundImageTask, drawnBy)
 			c.JSON(status, body)
 		})
 		recorder := httptest.NewRecorder()
@@ -310,6 +366,7 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 			URL            string `json:"url"`
 			B64JSON        string `json:"b64_json"`
 			MediaExpiresAt int64  `json:"media_expires_at"`
+			TaskID         string `json:"task_id"`
 		} `json:"data"`
 	}
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
@@ -323,6 +380,23 @@ func TestStorePlaygroundImagesReplacesLinksWithStoredCopies(t *testing.T) {
 	}
 	assert.Len(t, mainland.objects, 2)
 	assert.Empty(t, overseas.objects)
+
+	// The copy of a task plugin's image also serves the owner's works list.
+	drawnBy = setupConsoleImageTaskTest(t, upstream.URL+"/a.png")
+	recorder = serve(http.StatusOK, gin.H{"data": []gin.H{{"url": upstream.URL + "/a.png", "task_id": drawnBy.TaskID}}})
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.Len(t, response.Data, 1)
+	assert.Equal(t, drawnBy.TaskID, response.Data[0].TaskID)
+	saved, err := model.GetTaskByID(drawnBy.ID)
+	require.NoError(t, err)
+	require.NotNil(t, saved.PrivateData.StoredMedia)
+	assert.Equal(t, "image-1", saved.PrivateData.StoredMedia.ArtifactKey)
+	assert.Equal(t, response.Data[0].URL, "https://cn-media.example.com/"+saved.PrivateData.StoredMedia.ObjectKey)
+	assert.False(t, taskMediaCopyDue(saved.PrivateData.StoredMedia, time.Now().Unix()))
+	served := requestStoredArtifact(t, saved, "US", "image-1")
+	assert.Equal(t, http.StatusFound, served.Code)
+	assert.Equal(t, response.Data[0].URL, served.Header().Get("Location"))
+	drawnBy = nil
 
 	// API clients of a task plugin get the stored copy next to any base64 data,
 	// and keep the supplier's link when it cannot be copied.

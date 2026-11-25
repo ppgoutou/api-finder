@@ -44,17 +44,25 @@ function readStoredWorks(): StudioImage[] {
 
 interface ImageWorksState {
   works: StudioImage[]
+  /** Image requests of this page that are still waiting for their reply. */
+  generating: number
+  startGenerating: () => void
+  stopGenerating: () => void
   add: (images: StudioImage[]) => void
   remove: (id: string) => void
 }
 
 /**
- * Images generated in this browser, newest first. Image requests leave no
- * task record, so the list lives in localStorage; upstream image URLs expire,
- * so old entries may stop loading.
+ * Images generated in this browser, newest first, kept in localStorage. Only
+ * models served by a task plugin leave a task record as well, so for the other
+ * models this is the only list; upstream image URLs expire, so old entries may
+ * stop loading.
  */
 export const useStudioImageWorks = create<ImageWorksState>((set) => ({
   works: readStoredWorks(),
+  generating: 0,
+  startGenerating: () => set((state) => ({ generating: state.generating + 1 })),
+  stopGenerating: () => set((state) => ({ generating: state.generating - 1 })),
   add: (images) =>
     set((state) => {
       const works = [...images, ...state.works].slice(

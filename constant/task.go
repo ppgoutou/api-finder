@@ -13,6 +13,8 @@ const (
 	TaskActionFirstTailToVideo = "first_tail_to_video"
 	TaskActionReferenceToVideo = "reference_to_video"
 	TaskActionRemix            = "remix"
+	TaskActionTextToImage      = "text_to_image"
+	TaskActionImageToImage     = "image_to_image"
 )
 
 var legacyTaskActionAliases = map[string]string{

@@ -23,7 +23,12 @@ import { Button } from '@/components/ui/button'
 import { useSegmentedDownload } from '@/hooks/use-segmented-download'
 
 /** Stays a real link, so new tabs and download managers still work. */
-export function WorkDownloadButton(props: { url: string; filename: string }) {
+export function WorkDownloadButton(props: {
+  url: string
+  filename: string
+  /** Accessible name while idle. */
+  label: string
+}) {
   const { t } = useTranslation()
   const download = useSegmentedDownload(props.url, props.filename)
   const busy = download.percent !== null
@@ -32,11 +37,11 @@ export function WorkDownloadButton(props: { url: string; filename: string }) {
     <Button
       variant='secondary'
       size='icon'
-      className='absolute top-2 right-2 size-8 rounded-full text-micro font-semibold tabular-nums opacity-90'
+      className='text-micro absolute top-2 right-2 size-8 rounded-full font-semibold tabular-nums opacity-90'
       nativeButton={false}
       render={<a href={props.url} download={props.filename} />}
       onClick={download.onClick}
-      aria-label={busy ? t('Downloading') : t('Download video')}
+      aria-label={busy ? t('Downloading') : props.label}
       aria-busy={busy}
     >
       {busy ? (

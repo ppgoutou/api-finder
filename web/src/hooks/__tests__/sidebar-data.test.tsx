@@ -84,12 +84,25 @@ describe('useSidebarData my works entry', () => {
     window.localStorage.clear()
   })
 
-  it('badges My works with the number of videos about to expire', async () => {
+  it('badges My works with the number of videos and images about to expire', async () => {
     const now = Math.floor(Date.now() / 1000)
     vi.mocked(getUserTaskLogs).mockResolvedValue({
       data: {
         items: [
           { task_id: 'a', status: 'SUCCESS', media_expires_at: now + 3600 },
+          {
+            task_id: 'image',
+            action: 'text_to_image',
+            console_image: true,
+            status: 'SUCCESS',
+            media_expires_at: now + 3600,
+          },
+          {
+            task_id: 'api-image',
+            action: 'text_to_image',
+            status: 'SUCCESS',
+            media_expires_at: now + 3600,
+          },
           {
             task_id: 'b',
             status: 'SUCCESS',
@@ -108,6 +121,6 @@ describe('useSidebarData my works entry', () => {
       }
 
     expect(myWorks().url).toBe('/my-works')
-    await waitFor(() => expect(myWorks().badge).toBe('1'))
+    await waitFor(() => expect(myWorks().badge).toBe('2'))
   })
 })

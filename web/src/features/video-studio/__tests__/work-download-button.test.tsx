@@ -42,7 +42,13 @@ function renderButton() {
       target: this.target,
     })
   })
-  render(<WorkDownloadButton url={URL_A} filename='task_1.mp4' />)
+  render(
+    <WorkDownloadButton
+      url={URL_A}
+      filename='task_1.mp4'
+      label='Download video'
+    />
+  )
   return saved
 }
 
