@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -38,9 +39,27 @@ type seoPage struct {
 
 const seoHomeDescription = "AI video creation platform powered by ByteDance Seedance. Turn a prompt, an image or a reference clip into cinematic video up to 4K and 30 seconds, billed by the second."
 
-// seoShareImagePath is the link preview image in web/public. Social sites keep
-// their copy by URL, so a new picture needs a new file name.
-const seoShareImagePath = "/share-card-v1.jpg"
+// seoShareCard is a 1200x630 link preview image in web/public. Social sites
+// keep their copy by URL, so a changed picture needs a new file name.
+type seoShareCard struct {
+	Path string
+	Alt  string
+}
+
+// seoShareCards are the pictures a shared link can show. Adding ?v=2 to a page
+// address picks the second card, and so on; any other address shows the first.
+var seoShareCards = []seoShareCard{
+	{"/share-card-v1.jpg", "Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset"},
+	{"/share-card-v2.jpg", "Blockbuster scenes from one prompt: a lone figure on broken concrete faces a giant stone hand"},
+	{"/share-card-v3.jpg", "One prompt box, every style: four clips, live action, period drama, fantasy and animation"},
+	{"/share-card-v4.jpg", "Your story, fully animated: a man is thrown into the air above a speedboat on a wave"},
+	{"/share-card-v5.jpg", "Describe the scene. Get the shot: a hand turning into liquid copper on a cracked street"},
+	{"/share-card-v6.jpg", "Up to 30 seconds in one clip: a girl with blue hair looks up in a dark room"},
+	{"/share-card-v7.jpg", "Fight scenes, written not filmed: a general in red armor in a wrecked hall"},
+	{"/share-card-v8.jpg", "Type the effect, see it happen: a street gang before and after becoming brides"},
+	{"/share-card-v9.jpg", "Realistic vlogs, no camera: a woman holding a cup on a rooftop"},
+	{"/share-card-v10.jpg", "Pay per second. No subscription: three AI video clips on a blue background"},
+}
 
 var seoPages = map[string]seoPage{
 	"/": {
@@ -94,7 +113,7 @@ var seoHeadTemplate = template.Must(template.New("seo-head").Parse(`<title>{{.Fu
     <meta name="description" content="{{.Description}}" />
     {{- if .URL}}
     <link rel="canonical" href="{{.URL}}" />
-    <meta property="og:url" content="{{.URL}}" />
+    <meta property="og:url" content="{{.ShareURL}}" />
     {{- end}}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="{{.SiteName}}" />
@@ -104,13 +123,13 @@ var seoHeadTemplate = template.Must(template.New("seo-head").Parse(`<title>{{.Fu
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset" />
+    <meta property="og:image:alt" content="{{.ShareAlt}}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@APIfinder_AI" />
     <meta name="twitter:title" content="{{.FullTitle}}" />
     <meta name="twitter:description" content="{{.Description}}" />
     <meta name="twitter:image" content="{{.ShareImage}}" />
-    <meta name="twitter:image:alt" content="Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset" />
+    <meta name="twitter:image:alt" content="{{.ShareAlt}}" />
     {{- if .JSONLD}}
     <script type="application/ld+json">{{.JSONLD}}</script>
     {{- end}}
@@ -258,7 +277,11 @@ type seoView struct {
 	FullTitle   string
 	Description string
 	URL         string
-	ShareImage  string
+	// ShareURL is the address of the selected share card. Sites that re-read
+	// og:url before drawing a preview would otherwise show the first card.
+	ShareURL   string
+	ShareImage string
+	ShareAlt   string
 	// JSONLD is schema.org data built by seoStructuredData.
 	JSONLD     template.JS
 	Contact    template.HTML
@@ -377,10 +400,18 @@ func renderIndexPage(c *gin.Context, indexPage []byte, path string) (int, []byte
 		FullTitle:   page.Title + " | " + snap.siteName,
 		Description: page.Description,
 		URL:         snap.baseURL + path,
-		ShareImage:  snap.baseURL + seoShareImagePath,
+		ShareURL:    snap.baseURL + path,
+		ShareImage:  snap.baseURL + seoShareCards[0].Path,
+		ShareAlt:    seoShareCards[0].Alt,
 		LegalLinks:  snap.legalLinks,
 		Models:      models,
 		Model:       current,
+	}
+	if v, err := strconv.Atoi(c.Query("v")); err == nil && v >= 1 && v <= len(seoShareCards) {
+		card := seoShareCards[v-1]
+		view.ShareURL = fmt.Sprintf("%s?v=%d", view.URL, v)
+		view.ShareImage = snap.baseURL + card.Path
+		view.ShareAlt = card.Alt
 	}
 	view.JSONLD = seoStructuredData(snap, view, path)
 	// Admin-authored footer HTML is already rendered unescaped by the app.
