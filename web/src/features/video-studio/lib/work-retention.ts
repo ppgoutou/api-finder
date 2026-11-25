@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { TASK_ACTIONS, TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
 
 import type { StudioImage } from '../types'
@@ -45,12 +46,46 @@ function retentionUntil(expiresAt: number, now: number): WorkRetention {
   return { state: 'scheduled', expiresAt }
 }
 
+export function isFinishedTask(task: TaskLog): boolean {
+  return (
+    task.status === TASK_STATUS.SUCCESS || task.status === TASK_STATUS.FAILURE
+  )
+}
+
+export function isImageTask(task: TaskLog): boolean {
+  return (
+    task.action === TASK_ACTIONS.TEXT_TO_IMAGE ||
+    task.action === TASK_ACTIONS.IMAGE_TO_IMAGE
+  )
+}
+
 /**
- * Retention of a video task as the server reports it; null while the task
- * is unfinished or its copy into media storage is still in progress.
+ * Image tasks to list next to the images kept in this browser: those created
+ * on this site, unless deleted, already among the browser's images, or
+ * finished with a result that was never kept.
+ */
+export function listedImageTasks(
+  tasks: readonly TaskLog[],
+  images: readonly StudioImage[],
+  hidden: readonly string[]
+): TaskLog[] {
+  const shown = new Set(images.map((image) => image.taskId))
+  return tasks.filter(
+    (task) =>
+      isImageTask(task) &&
+      task.console_image === true &&
+      !hidden.includes(task.task_id) &&
+      !shown.has(task.task_id) &&
+      !(task.status === TASK_STATUS.SUCCESS && task.result_discarded)
+  )
+}
+
+/**
+ * Retention of a task's video or image as the server reports it; null while
+ * the task is unfinished or its copy into media storage is still in progress.
  * `now` is in Unix seconds.
  */
-export function videoRetention(
+export function taskRetention(
   task: TaskLog,
   now: number
 ): WorkRetention | null {

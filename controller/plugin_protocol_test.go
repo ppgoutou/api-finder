@@ -1730,10 +1730,13 @@ func TestServeTaskPluginImageProtocolWaitsForAsynchronousTask(t *testing.T) {
 		{"success", model.TaskStatusSuccess, http.StatusOK, "", ""},
 		{"failure", model.TaskStatusFailure, http.StatusBadRequest, usererror.CodeModerationPrompt, "prompt did not pass review"},
 		{"timeout", "", http.StatusGatewayTimeout, "task_timeout", "still running"},
+		{"console success", model.TaskStatusSuccess, http.StatusOK, "", ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			pinned := imageProtocolTestEndpoint(t)
 			c, recorder := newImageProtocolTestContext("")
+			console := strings.HasPrefix(tc.name, "console")
+			common.SetContextKey(c, constant.ContextKeyPlayground, console)
 			deps := pluginProtocolTestDeps()
 			deps.imagePollInterval = time.Millisecond
 			deps.submissionTimeout = 50 * time.Millisecond
@@ -1760,7 +1763,11 @@ func TestServeTaskPluginImageProtocolWaitsForAsynchronousTask(t *testing.T) {
 			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
 			if tc.wantStatus == http.StatusOK {
 				assert.GreaterOrEqual(t, polls, 3)
-				assert.Equal(t, []any{map[string]any{"url": "https://cdn.example/polled.png"}}, response["data"])
+				want := map[string]any{"url": "https://cdn.example/polled.png"}
+				if console {
+					want["task_id"] = "task_image"
+				}
+				assert.Equal(t, []any{want}, response["data"])
 				return
 			}
 			errorBody := response["error"].(map[string]any)

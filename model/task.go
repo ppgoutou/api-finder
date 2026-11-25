@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -12,6 +13,7 @@ import (
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	commonRelay "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relaykit/dto"
+	"gorm.io/gorm"
 )
 
 type TaskStatus string
@@ -250,11 +252,14 @@ func (p TaskPrivateData) Value() (driver.Value, error) {
 
 // SyncTaskQueryParams 用于包含所有搜索条件的结构体，可以根据需求添加更多字段
 type SyncTaskQueryParams struct {
-	Platform       constant.TaskPlatform
-	ChannelID      string
-	TaskID         string
-	UserID         string
-	Action         string
+	Platform  constant.TaskPlatform
+	ChannelID string
+	TaskID    string
+	UserID    string
+	Action    string
+	// Kind keeps image tasks only (TaskKindImage) or every other task
+	// (TaskKindVideo). Only a user's own task list supports it.
+	Kind           string
 	Status         string
 	StartTimestamp int64
 	EndTimestamp   int64
@@ -303,6 +308,31 @@ func InitTask(platform constant.TaskPlatform, relayInfo *commonRelay.RelayInfo) 
 	return t
 }
 
+// Kinds a user's task list can be narrowed to.
+const (
+	TaskKindImage = "image"
+	TaskKindVideo = "video"
+)
+
+var imageTaskActions = []string{constant.TaskActionTextToImage, constant.TaskActionImageToImage}
+
+func whereTaskKind(query *gorm.DB, kind string) *gorm.DB {
+	switch kind {
+	case TaskKindImage:
+		return query.Where("action IN ?", imageTaskActions)
+	case TaskKindVideo:
+		return query.Where("action NOT IN ?", imageTaskActions)
+	default:
+		return query
+	}
+}
+
+// IsConsoleImage reports whether the task generates images for the web
+// console: console requests carry no API token.
+func (t *Task) IsConsoleImage() bool {
+	return t.PrivateData.TokenId == 0 && slices.Contains(imageTaskActions, t.Action)
+}
+
 func TaskGetAllUserTask(userId int, startIdx int, num int, queryParams SyncTaskQueryParams) []*Task {
 	var tasks []*Task
 	var err error
@@ -316,6 +346,7 @@ func TaskGetAllUserTask(userId int, startIdx int, num int, queryParams SyncTaskQ
 	if queryParams.Action != "" {
 		query = query.Where("action = ?", queryParams.Action)
 	}
+	query = whereTaskKind(query, queryParams.Kind)
 	if queryParams.Status != "" {
 		query = query.Where("status = ?", queryParams.Status)
 	}
@@ -724,6 +755,7 @@ func TaskCountAllUserTask(userId int, queryParams SyncTaskQueryParams) int64 {
 	if queryParams.Action != "" {
 		query = query.Where("action = ?", queryParams.Action)
 	}
+	query = whereTaskKind(query, queryParams.Kind)
 	if queryParams.Status != "" {
 		query = query.Where("status = ?", queryParams.Status)
 	}

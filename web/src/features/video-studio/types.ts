@@ -83,6 +83,8 @@ export interface GeneratedImageItem {
   url?: string
   b64_json?: string
   media_expires_at?: number
+  /** Task that drew the image, for a model served by a task plugin. */
+  task_id?: string
 }
 
 export interface ImageGenerationResponse {
@@ -93,6 +95,7 @@ export interface ImageGenerationResponse {
 export interface GeneratedImage {
   url: string
   expiresAt?: number
+  taskId?: string
 }
 
 /** A generated image kept in this browser's works list. */
@@ -103,6 +106,8 @@ export interface StudioImage {
   prompt: string
   model: string
   size: string
+  /** Task that drew the image, for a model served by a task plugin. */
+  taskId?: string
   /** Public URLs of the reference images the request carried. */
   references?: string[]
   /** Unix seconds. */

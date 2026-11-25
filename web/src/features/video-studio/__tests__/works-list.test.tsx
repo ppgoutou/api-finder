@@ -121,20 +121,16 @@ describe('WorksList', () => {
     expect(onEdit).toHaveBeenCalledWith({ model: 'seedance-2.0' })
   })
 
-  it('leaves out image tasks, which are listed with the generated images', async () => {
+  it('asks the server for video works only, so images never push them off the page', async () => {
     vi.mocked(getUserTaskLogs).mockResolvedValue({
-      data: {
-        items: [
-          {
-            ...failedTask('task_img', 'plugin-image'),
-            action: 'text_to_image',
-          },
-        ],
-      },
+      data: { items: [], total: 0 },
     } as never)
     renderList(vi.fn())
 
     expect(await screen.findByText('No videos yet')).toBeInTheDocument()
+    expect(getUserTaskLogs).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'video' })
+    )
   })
 
   it('hides a work in this browser after the delete is confirmed', async () => {
@@ -215,7 +211,11 @@ describe('WorksList', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Load more' }))
 
-    expect(getUserTaskLogs).toHaveBeenLastCalledWith({ p: 1, page_size: 24 })
+    expect(getUserTaskLogs).toHaveBeenLastCalledWith({
+      p: 1,
+      page_size: 24,
+      kind: 'video',
+    })
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
     expect(
       screen.queryByRole('button', { name: 'Load more' })

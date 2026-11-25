@@ -83,7 +83,7 @@ func VideoProxy(c *gin.Context) {
 		return
 	}
 	if stored := task.PrivateData.StoredMedia; stored != nil && task.ResultRetrievable() &&
-		serveStoredTaskVideo(c, task, stored.ArtifactKey) {
+		serveStoredTaskArtifact(c, task, stored.ArtifactKey) {
 		return
 	}
 

@@ -252,6 +252,52 @@ func TestTaskListsOmitPersistedSnapshot(t *testing.T) {
 	assert.JSONEq(t, string(task.Data), string(stored.Data), "single-task lookups keep the snapshot")
 }
 
+func TestUserTaskListFiltersByKind(t *testing.T) {
+	video := setupGenericTaskTest(t)
+	video.Action = constant.TaskActionTextToVideo
+	require.NoError(t, model.DB.Save(video).Error)
+	for _, task := range []*model.Task{
+		{TaskID: "task_text_image", UserId: 7, Action: constant.TaskActionTextToImage, Status: model.TaskStatusSuccess},
+		{TaskID: "task_image_image", UserId: 7, Action: constant.TaskActionImageToImage, Status: model.TaskStatusSuccess},
+		{TaskID: "task_music", UserId: 7, Action: "MUSIC", Status: model.TaskStatusSuccess},
+		{TaskID: "task_other_user", UserId: 8, Action: constant.TaskActionTextToImage, Status: model.TaskStatusSuccess},
+	} {
+		require.NoError(t, model.DB.Create(task).Error)
+	}
+	for _, tc := range []struct {
+		kind string
+		want []string
+	}{
+		{"image", []string{"task_image_image", "task_text_image"}},
+		{"video", []string{"task_music", "task_generic"}},
+		{"", []string{"task_music", "task_image_image", "task_text_image", "task_generic"}},
+	} {
+		t.Run("kind="+tc.kind, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Set("id", 7)
+			c.Request = httptest.NewRequest(http.MethodGet, "/api/task/self?p=1&page_size=10&kind="+tc.kind, nil)
+			GetUserTask(c)
+
+			var response struct {
+				Data struct {
+					Total int `json:"total"`
+					Items []struct {
+						TaskID string `json:"task_id"`
+					} `json:"items"`
+				} `json:"data"`
+			}
+			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+			assert.Equal(t, len(tc.want), response.Data.Total)
+			got := make([]string, 0, len(tc.want))
+			for _, item := range response.Data.Items {
+				got = append(got, item.TaskID)
+			}
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 func TestTaskArtifactAccessRequiresActiveOwner(t *testing.T) {
 	task := setupGenericTaskTest(t)
 	task.Action = constant.TaskActionTextToVideo

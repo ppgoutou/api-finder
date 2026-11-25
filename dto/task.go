@@ -55,7 +55,10 @@ type TaskDto struct {
 	// ResultDiscarded marks a synchronous result that was returned inline and
 	// never persisted; the UI must not offer artifact retrieval for it.
 	ResultDiscarded bool `json:"result_discarded,omitempty"`
-	// MediaExpiresAt is when the owner is told the video stops being
+	// ConsoleImage marks an image task submitted from the web console, listed
+	// with its owner's works.
+	ConsoleImage bool `json:"console_image,omitempty"`
+	// MediaExpiresAt is when the owner is told the video or image stops being
 	// available (Unix seconds); 0 while that is not known yet.
 	MediaExpiresAt int64           `json:"media_expires_at,omitempty"`
 	SubmitTime     int64           `json:"submit_time"`

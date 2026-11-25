@@ -355,7 +355,9 @@ export interface TaskLog {
   // A synchronous result returned inline and never persisted; artifact
   // retrieval is not offered for it.
   result_discarded?: boolean
-  // Successful video tasks: the Unix time its video stops being available,
+  // An image task submitted from this site's creation page.
+  console_image?: boolean
+  // Successful tasks: the Unix time the video or image stops being available,
   // once known.
   media_expires_at?: number
   fail_reason?: string
@@ -525,6 +527,8 @@ export interface GetTaskLogsParams {
   task_id?: string
   start_timestamp?: number
   end_timestamp?: number
+  // A user's own tasks only: image tasks, or every other task.
+  kind?: 'image' | 'video'
 }
 
 // ============================================================================

@@ -22,8 +22,9 @@ import type { TaskLog } from '@/features/usage-logs/types'
 
 import {
   imageRetention,
+  listedImageTasks,
   remainingParts,
-  videoRetention,
+  taskRetention,
 } from '../lib/work-retention'
 import type { StudioImage } from '../types'
 
@@ -58,27 +59,62 @@ function image(url: string, createdAt: number): StudioImage {
   }
 }
 
-describe('videoRetention', () => {
+describe('taskRetention', () => {
   it('reports nothing while the server has not decided how long the video lasts', () => {
-    expect(videoRetention(task({}), NOW)).toBeNull()
+    expect(taskRetention(task({}), NOW)).toBeNull()
   })
 
   it('flags a video expiring within three days as expiring', () => {
     expect(
-      videoRetention(task({ media_expires_at: NOW + 20 * HOUR }), NOW)
+      taskRetention(task({ media_expires_at: NOW + 20 * HOUR }), NOW)
     ).toEqual({ state: 'expiring', expiresAt: NOW + 20 * HOUR })
   })
 
   it('reports a video expiring later than three days as scheduled', () => {
     expect(
-      videoRetention(task({ media_expires_at: NOW + 10 * DAY }), NOW)?.state
+      taskRetention(task({ media_expires_at: NOW + 10 * DAY }), NOW)?.state
     ).toBe('scheduled')
   })
 
   it('reports a video past its expiry as expired', () => {
-    expect(
-      videoRetention(task({ media_expires_at: NOW - 1 }), NOW)?.state
-    ).toBe('expired')
+    expect(taskRetention(task({ media_expires_at: NOW - 1 }), NOW)?.state).toBe(
+      'expired'
+    )
+  })
+})
+
+describe('listedImageTasks', () => {
+  const imageTask = task({ action: 'text_to_image', console_image: true })
+
+  it('lists finished, running and failed image tasks created on this site', () => {
+    const tasks = [
+      imageTask,
+      { ...imageTask, task_id: 'task_2', status: 'IN_PROGRESS' },
+      { ...imageTask, task_id: 'task_3', status: 'FAILURE' },
+      { ...imageTask, task_id: 'task_4', action: 'image_to_image' },
+    ]
+
+    expect(listedImageTasks(tasks, [], [])).toEqual(tasks)
+  })
+
+  it.each([
+    ['a video task', { ...imageTask, action: 'text_to_video' }, [], []],
+    ['an API client image', { ...imageTask, console_image: false }, [], []],
+    ['a deleted image', imageTask, [], ['task_1']],
+    [
+      'an image this browser holds',
+      imageTask,
+      [{ ...image('https://cdn.example/a.png', NOW), taskId: 'task_1' }],
+      [],
+    ],
+    [
+      'an image that was never kept',
+      { ...imageTask, result_discarded: true },
+      [],
+      [],
+    ],
+  ])('leaves out %s', (_, candidate, images, hidden) => {
+    expect(listedImageTasks([candidate], images, hidden)).toEqual([])
   })
 })
 

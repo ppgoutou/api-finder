@@ -180,6 +180,6 @@ export const STUDIO_IMAGE_WORKS_KEY = 'video-studio:image-works'
 /** Most generated images remembered in this browser. */
 export const STUDIO_IMAGE_WORKS_LIMIT = 60
 
-/** Query key of the user's latest video tasks. */
+/** Query key of the user's latest tasks, video and image. */
 export const STUDIO_WORKS_QUERY_KEY = ['video-studio', 'works'] as const
 export const STUDIO_BALANCE_QUERY_KEY = ['video-studio', 'balance'] as const
