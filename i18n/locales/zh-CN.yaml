@@ -138,7 +138,15 @@ balance_alert.low: "【{{.System}}】上游余额不足\n渠道：{{.Name}}（#{
 balance_alert.recovered: "【{{.System}}】上游余额已恢复\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "【{{.System}}】上游余额连续 {{.Count}} 次查询失败\n渠道：{{.Name}}（#{{.Id}}）\n错误：{{.Error}}"
 balance_alert.test: "【{{.System}}】测试消息：上游余额提醒已接通。"
-balance_alert.report: "【{{.System}}】上游余额播报\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n提醒阈值：{{.Threshold}} {{.Unit}}"
+balance_alert.report: "【{{.System}}】上游余额播报\n渠道：{{.Name}}（#{{.Id}}）\n当前余额：{{.Balance}} {{.Unit}}\n预计使用时长：{{.Runway}}"
+balance_alert.runway_hours: "约 {{.Hours}} 小时"
+balance_alert.runway_idle: "近 24 小时无消耗"
+balance_alert.runway_unknown: "数据积累中"
+
+# 收款通知（飞书机器人）
+payment_notice.received: "【{{.System}}】收款通知\n用户名：{{.Name}}\n充值金额：{{.Amount}}\n充值次数：第 {{.Count}} 次\n累计充值：{{.Total}}\n已注册：{{.Days}}"
+payment_notice.days: "{{.Days}} 天"
+payment_notice.unknown: "未知"
 
 # 任务报错提醒（飞书机器人）
 task_error_alert.single: "【{{.System}}】{{.Level}}：{{.Category}}\n来源：{{.Source}}\n渠道：{{.Channel}}\n模型：{{.Model}}\n用户：{{.User}}\nID：{{.Ref}}\n类型：{{.Code}}\n错误：{{.Error}}"

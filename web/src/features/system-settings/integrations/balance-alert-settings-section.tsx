@@ -87,6 +87,7 @@ const createBalanceAlertSchema = (t: (key: string) => string) =>
     repeat_minutes: z.number().int().min(1),
     report_enabled: z.boolean(),
     report_minutes: z.number().int().min(0),
+    payment_notice_enabled: z.boolean(),
     monitors: z.array(
       z.object({
         channel_id: z.number().int().min(1, t('Enter a channel ID')),
@@ -114,6 +115,7 @@ const SCALAR_FIELDS = [
   'repeat_minutes',
   'report_enabled',
   'report_minutes',
+  'payment_notice_enabled',
 ] as const
 
 /**
@@ -244,6 +246,28 @@ export function BalanceAlertSettingsSection(
                   <FormDescription>
                     {t(
                       'Each check also sends every channel balance. A low balance sends only the low-balance reminder, at the repeat interval.'
+                    )}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='payment_notice_enabled'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>{t('Send payment notices')}</FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.'
                     )}
                   </FormDescription>
                 </SettingsSwitchContent>

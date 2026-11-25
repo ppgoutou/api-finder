@@ -310,6 +310,7 @@ func InitResources() error {
 
 	service.InitHttpClient()
 	model.TopUpCompletedHook = service.SendXTopUpConversion
+	model.PaymentReceivedHook = service.SendPaymentNotice
 
 	// Initialize SQL Database
 	err = model.InitDB()

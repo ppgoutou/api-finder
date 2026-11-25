@@ -161,11 +161,46 @@ func TestBalanceAlertMonitorConvert(t *testing.T) {
 	}
 }
 
-func TestBalanceAlertMessageIsChinese(t *testing.T) {
+func TestBalanceAlertMessages(t *testing.T) {
 	require.NoError(t, i18n.Init())
-	balance := 185.3
-	text := balanceAlertMessage(balanceAlertLow, balanceCheckResult{ChannelId: 11, ChannelName: "YH-妖火", Balance: &balance, Threshold: 200, Unit: "元"}, nil)
-	assert.Contains(t, text, "上游余额不足")
-	assert.Contains(t, text, "当前余额：185.30 元")
-	assert.Contains(t, text, "提醒阈值：200.00 元")
+	balance := 375.73
+	result := balanceCheckResult{ChannelId: 11, ChannelName: "YH", Balance: &balance, Threshold: 200, Unit: "元"}
+
+	low := balanceAlertMessage(balanceAlertLow, result, balanceRunway{}, nil)
+	assert.Contains(t, low, "上游余额不足")
+	assert.Contains(t, low, "当前余额：375.73 元")
+	assert.Contains(t, low, "提醒阈值：200.00 元")
+
+	for _, tt := range []struct {
+		runway balanceRunway
+		want   string
+	}{
+		{runway: balanceRunway{Known: true, Hours: 38.46}, want: "预计使用时长：约 38.5 小时"},
+		{runway: balanceRunway{Known: true, Idle: true}, want: "预计使用时长：近 24 小时无消耗"},
+		{runway: balanceRunway{}, want: "预计使用时长：数据积累中"},
+	} {
+		report := balanceAlertMessage(balanceAlertReport, result, tt.runway, nil)
+		assert.Contains(t, report, "当前余额：375.73 元")
+		assert.Contains(t, report, tt.want)
+		assert.NotContains(t, report, "提醒阈值")
+	}
+}
+
+func TestEstimateBalanceRunway(t *testing.T) {
+	const hour = int64(3600)
+	tests := []struct {
+		name     string
+		readings []balanceReading
+		want     balanceRunway
+	}{
+		{name: "no history yet", readings: []balanceReading{{Upstream: 100}}, want: balanceRunway{}},
+		{name: "less than an hour of history", readings: []balanceReading{{Upstream: 100}, {Upstream: 90, Time: hour - 1}}, want: balanceRunway{}},
+		{name: "steady spending", readings: []balanceReading{{Upstream: 140}, {Upstream: 120, Time: hour}, {Upstream: 100, Time: 2 * hour}}, want: balanceRunway{Known: true, Hours: 5}},
+		{name: "a top-up interval is left out", readings: []balanceReading{{Upstream: 40}, {Upstream: 20, Time: hour}, {Upstream: 520, Time: 2 * hour}, {Upstream: 500, Time: 3 * hour}}, want: balanceRunway{Known: true, Hours: 25}},
+		{name: "nothing spent", readings: []balanceReading{{Upstream: 100}, {Upstream: 100, Time: 2 * hour}}, want: balanceRunway{Known: true, Idle: true}},
+		{name: "overdrawn balance has no time left", readings: []balanceReading{{Upstream: 10}, {Upstream: -10, Time: hour}}, want: balanceRunway{Known: true}},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, estimateBalanceRunway(tt.readings), tt.name)
+	}
 }

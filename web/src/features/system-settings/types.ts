@@ -424,6 +424,7 @@ export type OperationsSettings = {
   'balance_alert_setting.repeat_minutes': number
   'balance_alert_setting.report_enabled': boolean
   'balance_alert_setting.report_minutes': number
+  'balance_alert_setting.payment_notice_enabled': boolean
   'balance_alert_setting.monitors': string
   'task_error_alert_setting.enabled': boolean
   'task_error_alert_setting.merge_minutes': number

@@ -79,6 +79,31 @@ func PaidTopUpQuota(userId int) (total int64, single int64, err error) {
 	return totals.Total, totals.Single, err
 }
 
+// PaidTopUpHistory returns how many times a user has paid and the quota those
+// payments credited: successful wallet orders and used redemption codes,
+// counting codes an administrator deleted afterwards.
+func PaidTopUpHistory(userId int) (count int64, quota int64, err error) {
+	var orders, codes struct {
+		Count int64
+		Quota int64
+	}
+	err = DB.Model(&TopUp{}).
+		Select("COUNT(*) AS count, COALESCE(SUM(credited_quota), 0) AS quota").
+		Where("user_id = ? AND status = ? AND credited_quota > 0", userId, common.TopUpStatusSuccess).
+		Scan(&orders).Error
+	if err != nil {
+		return 0, 0, err
+	}
+	err = DB.Model(&Redemption{}).Unscoped().
+		Select("COUNT(*) AS count, COALESCE(SUM(quota), 0) AS quota").
+		Where("used_user_id = ? AND status = ?", userId, common.RedemptionCodeStatusUsed).
+		Scan(&codes).Error
+	if err != nil {
+		return 0, 0, err
+	}
+	return orders.Count + codes.Count, orders.Quota + codes.Quota, nil
+}
+
 // MembershipThresholdQuota converts a USD threshold to quota; 0 means the
 // rule is off.
 func MembershipThresholdQuota(usd float64) int64 {

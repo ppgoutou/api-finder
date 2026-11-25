@@ -253,14 +253,18 @@ func SettleUSDTIntent(snapshot *USDTIntentSnapshot, callerIp string) error {
 		return err
 	}
 
+	creditedQuota := 0
 	for _, credit := range credits {
+		creditedQuota += credit.quota
 		syncCreditUserQuotaCache(topUp.UserId, credit.quota, common.LogText("usdt topup"))
 		RecordTopupLog(topUp.UserId, common.NewMessage("Online top-up succeeded, amount added: {{quota}}, payment amount: {{amount}}", map[string]any{"quota": logger.FormatQuota(credit.quota), "amount": credit.amount + " USDT"}), callerIp, topUp.PaymentMethod, PaymentProviderUSDT)
 		recordAffRebateLog(credit.rebate)
 	}
 	announceMembershipChange(membership)
 	if completedNow {
-		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo)
+		notifyTopUpCompleted(topUp.UserId, topUp.TradeNo, creditedQuota)
+	} else {
+		notifyPaymentReceived(topUp.UserId, creditedQuota)
 	}
 	return nil
 }

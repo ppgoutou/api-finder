@@ -274,6 +274,10 @@ func TestUSDTSettlementCreditsActualAmountOncePerTransfer(t *testing.T) {
 	createUSDTTestOrder(t, tradeNo, userId, "1")
 	payer := model.USDTPayerRef(userId)
 	ctx := context.Background()
+	var notified []int
+	previousHook := model.PaymentReceivedHook
+	model.PaymentReceivedHook = func(_ int, quota int) { notified = append(notified, quota) }
+	t.Cleanup(func() { model.PaymentReceivedHook = previousHook })
 
 	// Underpaid: 14 instead of 14.705883 credits what arrived.
 	first := usdtTestReceipt(1, "14.000000", "received")
@@ -293,6 +297,8 @@ func TestUSDTSettlementCreditsActualAmountOncePerTransfer(t *testing.T) {
 	require.NoError(t, handleUSDTEvent(ctx, usdtPaymentEvent(tradeNo, usdtEventAdditionalReceived)))
 	assert.Equal(t, int(16.5*common.QuotaPerUnit), usdtTestQuota(t, userId))
 	assert.InDelta(t, 16.5, usdtTestTopUp(t, tradeNo).Money, 1e-9)
+	// Each transfer is announced as a payment once.
+	assert.Equal(t, []int{int(14 * common.QuotaPerUnit), int(2.5 * common.QuotaPerUnit)}, notified)
 }
 
 func TestUSDTSettlementAppliesOrderDiscountNotCurrentRate(t *testing.T) {

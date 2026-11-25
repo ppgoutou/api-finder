@@ -1,6 +1,8 @@
 {
   "translation": {
     "Hourly task report": "每小時任務統計",
+    "Send payment notices": "傳送收款通知",
+    "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "每收到一筆付款（包括兌換碼）就傳送使用者名稱、儲值金額、第幾次儲值、累計儲值金額和已註冊天數。不需要啟用餘額提醒。",
     "Send an hourly task report": "每小時推送任務統計",
     "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "每到整點推送上一小時的任務數、成功率、失敗筆數和主要失敗原因。使用上游餘額提醒的飛書機器人，不需要開啟上面的開關。",
     "Report every (minutes)": "播報間隔（分鐘）",

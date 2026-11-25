@@ -137,7 +137,15 @@ balance_alert.low: "[{{.System}}] Upstream balance is low\nChannel: {{.Name}} (#
 balance_alert.recovered: "[{{.System}}] Upstream balance is back above the threshold\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}"
 balance_alert.check_failed: "[{{.System}}] Upstream balance check failed {{.Count}} times in a row\nChannel: {{.Name}} (#{{.Id}})\nError: {{.Error}}"
 balance_alert.test: "[{{.System}}] Test message: upstream balance alerts are connected."
-balance_alert.report: "[{{.System}}] Upstream balance report\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nAlert threshold: {{.Threshold}} {{.Unit}}"
+balance_alert.report: "[{{.System}}] Upstream balance report\nChannel: {{.Name}} (#{{.Id}})\nBalance: {{.Balance}} {{.Unit}}\nEstimated time left: {{.Runway}}"
+balance_alert.runway_hours: "about {{.Hours}} hours"
+balance_alert.runway_idle: "nothing spent in the last 24 hours"
+balance_alert.runway_unknown: "collecting data"
+
+# Payment notices (Feishu bot)
+payment_notice.received: "[{{.System}}] Payment received\nUsername: {{.Name}}\nAmount: {{.Amount}}\nTop-up number: {{.Count}}\nTotal topped up: {{.Total}}\nRegistered for: {{.Days}}"
+payment_notice.days: "{{.Days}} days"
+payment_notice.unknown: "unknown"
 
 # Task error alerts (Feishu bot)
 task_error_alert.single: "[{{.System}}] {{.Level}}: {{.Category}}\nSource: {{.Source}}\nChannel: {{.Channel}}\nModel: {{.Model}}\nUser: {{.User}}\nID: {{.Ref}}\nKind: {{.Code}}\nError: {{.Error}}"

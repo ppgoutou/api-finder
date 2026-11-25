@@ -271,6 +271,17 @@ func GetLatestSystemTasks(taskTypes []string) (map[string]*SystemTask, error) {
 	return tasksByType, nil
 }
 
+// GetSystemTaskResultsSince returns the result JSON of the type's succeeded
+// runs created at or after a time, oldest first.
+func GetSystemTaskResultsSince(taskType string, since int64) ([]string, error) {
+	var results []string
+	err := DB.Model(&SystemTask{}).
+		Where("type = ? AND status = ? AND created_at >= ?", taskType, SystemTaskStatusSucceeded, since).
+		Order("id asc").
+		Pluck("result", &results).Error
+	return results, err
+}
+
 func ClaimSystemTask(id int64, taskType string, runnerID string, lockUntil int64) (*SystemTask, bool, error) {
 	now := common.GetTimestamp()
 	var task SystemTask

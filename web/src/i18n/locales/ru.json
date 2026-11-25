@@ -1,6 +1,8 @@
 {
   "translation": {
     "Hourly task report": "Ежечасный отчёт по задачам",
+    "Send payment notices": "Отправлять уведомления о платежах",
+    "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "Для каждого платежа, включая коды пополнения, отправляет имя пользователя, сумму, номер пополнения, общую сумму пополнений и число дней с регистрации. Работает без оповещений о балансе.",
     "Send an hourly task report": "Отправлять ежечасный отчёт по задачам",
     "At the top of every hour, sends how many tasks the past hour had, the success rate, how many failed and the main reasons. Uses the Feishu bot of upstream balance alerts and works without the switch above.": "В начале каждого часа отправляет число задач за прошедший час, долю успешных, число неудачных и основные причины. Использует бот Feishu оповещений о балансе поставщика и работает без переключателя выше.",
     "Report every (minutes)": "Сводка каждые (минут)",
