@@ -28,6 +28,7 @@ import {
   VipBenefitGrid,
   VipCompareButton,
 } from '@/features/membership'
+import { trackSpotlight } from '@/lib/spotlight'
 
 /** The home page's VIP section: the headline benefits and how to get them. */
 export function VipMembership() {
@@ -60,7 +61,7 @@ export function VipMembership() {
               />
               {t('VIP membership')}
             </span>
-            <h2 className='text-heading-2 mt-4'>{title}</h2>
+            <h2 className='cinema-reveal text-heading-2 mt-4'>{title}</h2>
             <p className='text-muted-foreground mt-3'>
               {rule
                 ? t(
@@ -74,7 +75,13 @@ export function VipMembership() {
           </div>
           <VipCompareButton source='home-section' variant='outline' />
         </div>
-        <VipBenefitGrid info={info} limit={6} className='mt-8' />
+        <div onPointerMove={trackSpotlight} className='spotlight-group mt-8'>
+          <VipBenefitGrid
+            info={info}
+            limit={6}
+            itemClassName='spotlight-card'
+          />
+        </div>
         <VipActions
           info={info}
           source='home-section'

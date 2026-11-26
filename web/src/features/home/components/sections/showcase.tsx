@@ -68,7 +68,9 @@ export function Showcase(props: ShowcaseProps) {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-6'>
           <div className='max-w-xl'>
-            <h2 className='text-heading-2'>{t('Prompt → video')}</h2>
+            <h2 className='cinema-reveal text-heading-2'>
+              {t('Prompt → video')}
+            </h2>
             <p className='text-muted-foreground mt-3'>
               {t(
                 'Every clip here was made on this platform with Seedance. Copy a prompt to create the same effect.'
@@ -102,7 +104,7 @@ export function Showcase(props: ShowcaseProps) {
           {visibleCards.map((card) => (
             <li
               key={card.key}
-              className='bg-card border-border/60 flex flex-col overflow-hidden rounded-2xl border'
+              className='cinema-reveal bg-card border-border/60 flex flex-col overflow-hidden rounded-2xl border'
             >
               <div className='relative aspect-video'>
                 <PlayableClip

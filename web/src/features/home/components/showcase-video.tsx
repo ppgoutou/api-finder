@@ -41,6 +41,8 @@ interface ShowcaseVideoProps {
    */
   allowControls?: boolean
   className?: string
+  /** Moves the sound button from its top-right corner. */
+  soundToggleClassName?: string
 }
 
 /**
@@ -149,7 +151,10 @@ export function ShowcaseVideo(props: ShowcaseVideoProps) {
           size='sm'
           variant='secondary'
           onClick={toggleSound}
-          className='absolute top-3 right-3 gap-1.5 rounded-full bg-ink/70 hover:bg-ink/90 text-white/90'
+          className={cn(
+            'absolute top-3 right-3 gap-1.5 rounded-full bg-ink/70 hover:bg-ink/90 text-white/90',
+            props.soundToggleClassName
+          )}
         >
           {muted ? (
             <VolumeX data-icon='inline-start' aria-hidden />

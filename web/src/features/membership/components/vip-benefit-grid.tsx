@@ -33,6 +33,8 @@ interface VipBenefitGridProps {
   /** Glassy cards with violet icons, for the dark VIP page. */
   night?: boolean
   className?: string
+  /** Extra classes for each benefit card. */
+  itemClassName?: string
 }
 
 /** The VIP benefits as cards, each with an icon and an explanation. */
@@ -49,11 +51,12 @@ export function VipBenefitGrid(props: VipBenefitGridProps) {
       {benefits.map((benefit) => (
         <li
           key={benefit.id}
-          className={
+          className={cn(
             props.night
               ? cn('flex gap-4 rounded-3xl p-5 sm:p-6', VIP_NIGHT_PANEL)
-              : 'bg-card border-border/60 flex gap-3 rounded-2xl border p-4 shadow-sm sm:p-5'
-          }
+              : 'bg-card border-border/60 flex gap-3 rounded-2xl border p-4 shadow-sm sm:p-5',
+            props.itemClassName
+          )}
         >
           <span
             className={
