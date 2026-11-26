@@ -466,9 +466,10 @@ function videoPricingFromExpr(
 }
 
 /**
- * Per-option prices of a video model billed per video: one count field priced
- * by exactly one enum, such as resolution. Returns null for any other schema,
- * per-request charges or request rules.
+ * Per-resolution prices of a video model billed per video: one count field
+ * priced by the resolution enum alone. Returns null for any other schema,
+ * such as a song or clip counted by action, per-request charges or request
+ * rules.
  */
 export function getPerVideoPricing(model: PricingModel): VideoPricing | null {
   if (model.billing_mode !== 'tiered_expr' || !model.billing_expr) return null
@@ -481,7 +482,8 @@ export function getPerVideoPricing(model: PricingModel): VideoPricing | null {
     numberFields.length !== 1 ||
     numberFields[0][1].unit !== 'count' ||
     // Image models count images by resolution the same way.
-    numberFields[0][0] === IMAGE_COUNT_FIELD
+    numberFields[0][0] === IMAGE_COUNT_FIELD ||
+    enumFields[0][0] !== 'resolution'
   ) {
     return null
   }

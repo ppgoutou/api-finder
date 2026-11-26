@@ -8805,7 +8805,9 @@
     "Your videos": "Your videos",
     "your recent ones took about {{count}} min": "your recent ones took about {{count}} min",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "{{count}} works could not be downloaded together. Download them one by one from their cards.",
+    "{{unit}}/video": "{{unit}}/video",
     "{{unit}}/s": "{{unit}}/s",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/video × {{count}}",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/s × {{seconds}}s × {{count}}"
   }
 }

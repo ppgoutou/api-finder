@@ -23,7 +23,7 @@ import {
   isPerCountTaskModel,
 } from './dynamic-price'
 import { isTokenBasedModel } from './model-helpers'
-import { isVideoPricingSchema } from './video-pricing'
+import { getPerVideoPricing, isVideoPricingSchema } from './video-pricing'
 
 export type BillingModeLabelKey =
   | 'Per Request'
@@ -31,10 +31,13 @@ export type BillingModeLabelKey =
   | 'Token-based'
   | 'Task billing'
   | 'Video billing (per second)'
+  | 'Per video'
 
 export function getBillingModeLabelKey(
   model: PricingModel
 ): BillingModeLabelKey {
+  // A video model billed per video badges like the other video models.
+  if (getPerVideoPricing(model)) return 'Per video'
   if (isPerCountTaskModel(model)) return 'Per Request'
   // Task-usage models badge as one business category; the metering unit
   // ($/1M token, $/credit, $/second) is already carried by the price line.

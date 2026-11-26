@@ -8805,7 +8805,9 @@
     "Your videos": "Ваши видео",
     "your recent ones took about {{count}} min": "ваши недавние — около {{count}} мин",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "{{count}} работ не удалось скачать вместе. Скачайте их по одной с карточек.",
+    "{{unit}}/video": "{{unit}}/видео",
     "{{unit}}/s": "{{unit}}/с",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/видео × {{count}}",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/с × {{seconds}} с × {{count}}"
   }
 }

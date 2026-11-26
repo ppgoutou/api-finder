@@ -8805,7 +8805,9 @@
     "Your videos": "Video của bạn",
     "your recent ones took about {{count}} min": "gần đây mất khoảng {{count}} phút",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "{{count}} tác phẩm không tải cùng lúc được. Hãy tải từng cái trên thẻ.",
+    "{{unit}}/video": "{{unit}}/video",
     "{{unit}}/s": "{{unit}}/giây",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/video × {{count}}",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/giây × {{seconds}} giây × {{count}}"
   }
 }

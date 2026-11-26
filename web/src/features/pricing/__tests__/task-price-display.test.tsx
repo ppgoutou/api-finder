@@ -470,6 +470,30 @@ it('labels even a single task price on model cards', async () => {
   expect(screen.getByText('生成歌曲单价')).toBeVisible()
 })
 
+it('lays out a video billed per video like the other video cards', () => {
+  render(
+    <ModelCard
+      model={{
+        ...model,
+        model_name: 'magi-2',
+        billing_expr: 'tier("1080p", u("videos") * 0.5)',
+        billing_usage_schema: {
+          resolution: { enum: ['1080p'] },
+          videos: {
+            type: 'number',
+            unit: 'count',
+            description: { en: 'Video generation unit price' },
+          },
+        },
+      }}
+      onClick={() => {}}
+    />
+  )
+  expect(screen.getByText('Per video')).toBeVisible()
+  expect(screen.getByText('/video · 1080p')).toBeVisible()
+  expect(screen.getByLabelText('Per video')).toHaveTextContent('1080p$0.5')
+})
+
 it('preserves condition tables, boolean states and additional charges', () => {
   render(
     <DynamicPricingBreakdown

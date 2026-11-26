@@ -35,6 +35,7 @@ import {
 } from 'react'
 
 import sglangLogo from '@/assets/brand-icons/sglang.svg'
+import { IconSandAi } from '@/assets/custom/icon-sand-ai'
 import { IconSub2api } from '@/assets/custom/icon-sub2api'
 import { IconWan } from '@/assets/custom/icon-wan'
 
@@ -49,6 +50,7 @@ const CUSTOM_ICONS: Record<string, ComponentType<{ size?: number }>> = {
       className='object-contain'
     />
   ),
+  SandAI: IconSandAi,
   Sub2API: IconSub2api,
   Wan: IconWan,
 }

@@ -37,6 +37,7 @@ import { draftFromVideoRequest } from '../lib/draft'
 import type { VideoTaskRequest } from '../types'
 
 const studioModels = vi.hoisted(() => ({ current: [] as StudioModel[] }))
+const studioPrice = vi.hoisted(() => ({ perVideo: false }))
 const studioBalance = vi.hoisted(() => ({
   shortfallUSD: null as number | null,
 }))
@@ -63,6 +64,7 @@ vi.mock('../hooks/use-studio-price', () => ({
     label: '¥0.75',
     costUSD: 0.11,
     unitLabel: '¥0.15',
+    perVideo: studioPrice.perVideo,
   }),
 }))
 
@@ -84,6 +86,7 @@ const createMock = vi.mocked(createVideoTask)
 
 beforeEach(() => {
   studioBalance.shortfallUSD = null
+  studioPrice.perVideo = false
   studioModels.current = [
     {
       name: 'seedance-2.0',
@@ -847,6 +850,20 @@ describe('Composer recent drafts and model choice', () => {
     render(<Composer onSubmitted={vi.fn()} />)
 
     expect(screen.getByText('≈ ¥0.15/s × 5s × 1')).toBeInTheDocument()
+  })
+
+  it('prices a model billed per video by the video, whatever its length', async () => {
+    studioPrice.perVideo = true
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    expect(screen.getByText('≈ ¥0.15/video × 1')).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: 'Model: seedance-2.0' })
+    )
+    expect(
+      screen.getByRole('menuitemradio', { name: /^seedance-2.0/ })
+    ).toHaveTextContent('¥0.15/video')
   })
 
   it('offers a model that takes all the files when the picked one does not', async () => {

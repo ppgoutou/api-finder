@@ -8805,7 +8805,9 @@
     "Your videos": "我的视频",
     "your recent ones took about {{count}} min": "你最近的作品约 {{count}} 分钟",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "有 {{count}} 个作品无法批量下载，请在作品卡片上逐个下载。",
+    "{{unit}}/video": "{{unit}}/条",
     "{{unit}}/s": "{{unit}}/秒",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/条 × {{count}} 条",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/秒 × {{seconds}} 秒 × {{count}} 条"
   }
 }
