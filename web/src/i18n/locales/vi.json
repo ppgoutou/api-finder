@@ -2703,6 +2703,8 @@
     "Error Type (optional)": "Loại lỗi (tùy chọn)",
     "Estimated cost": "Chi phí ước tính",
     "Estimated fee": "Phí ước tính",
+    "Fee breakdown": "Chi tiết phí",
+    "{{amount}} short": "Thiếu {{amount}}",
     "Estimated quota cost": "Ước tính chi phí hạn mức",
     "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.": "Đánh giá các trường trong phản hồi thông tin người dùng của nhà cung cấp. Điều kiện và nhóm lồng nhau sử dụng logic and/or.",
     "Event": "Sự kiện",

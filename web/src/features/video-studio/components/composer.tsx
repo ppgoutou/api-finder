@@ -80,7 +80,7 @@ import { ParamsPopover } from './params-popover'
 import { PromptInput } from './prompt-input'
 import { RecentDrafts } from './recent-drafts'
 import { FramePanel, ReferencePanel } from './reference-panel'
-import { StudioCost } from './studio-cost'
+import { StudioCost, StudioShortfallBadge } from './studio-cost'
 import { UnavailableModelNotice } from './unavailable-model-notice'
 
 interface ComposerProps {
@@ -441,21 +441,26 @@ export function Composer(props: ComposerProps) {
               shortfallUSD={balance.shortfallUSD}
               onTopUp={() => setTopupOpen(true)}
             />
-            <Button
-              type='button'
-              size='xl'
-              className='max-md:flex-1'
-              onClick={submit}
-              disabled={submitting || unavailable}
-              title={problem ? t(problem, problemParams) : t('Generate video')}
-            >
-              {submitting ? (
-                <Spinner className='size-4' />
-              ) : (
-                <Clapperboard aria-hidden />
-              )}
-              {insufficient ? t('Top up and generate') : t('Generate video')}
-            </Button>
+            <div className='relative max-md:flex-1'>
+              <Button
+                type='button'
+                size='xl'
+                className='max-md:w-full'
+                onClick={submit}
+                disabled={submitting || unavailable}
+                title={
+                  problem ? t(problem, problemParams) : t('Generate video')
+                }
+              >
+                {submitting ? (
+                  <Spinner className='size-4' />
+                ) : (
+                  <Clapperboard aria-hidden />
+                )}
+                {insufficient ? t('Top up and generate') : t('Generate video')}
+              </Button>
+              <StudioShortfallBadge shortfallUSD={balance.shortfallUSD} />
+            </div>
           </>
         }
         notice={

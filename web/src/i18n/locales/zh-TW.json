@@ -2703,6 +2703,8 @@
     "Error Type (optional)": "錯誤類型（可選）",
     "Estimated cost": "預計成本",
     "Estimated fee": "預估費用",
+    "Fee breakdown": "費用明細",
+    "{{amount}} short": "差 {{amount}}",
     "Estimated quota cost": "估算配額費用",
     "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.": "根據提供商回傳的用戶資訊欄位執行政策判斷。條件和巢狀分組支援 and/or 邏輯。",
     "Event": "事件",

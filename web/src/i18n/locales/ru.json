@@ -2703,6 +2703,8 @@
     "Error Type (optional)": "Тип ошибки (необязательно)",
     "Estimated cost": "Примерная стоимость",
     "Estimated fee": "Предварительная стоимость",
+    "Fee breakdown": "Расчёт стоимости",
+    "{{amount}} short": "Не хватает {{amount}}",
     "Estimated quota cost": "Ориентир стоимости квоты",
     "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.": "Проверяет поля ответа с данными пользователя от провайдера. Условия и вложенные группы используют логику and/or.",
     "Event": "Событие",

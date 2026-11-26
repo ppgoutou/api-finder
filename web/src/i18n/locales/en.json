@@ -2703,6 +2703,8 @@
     "Error Type (optional)": "Error type (optional)",
     "Estimated cost": "Estimated cost",
     "Estimated fee": "Estimated fee",
+    "Fee breakdown": "Fee breakdown",
+    "{{amount}} short": "{{amount}} short",
     "Estimated quota cost": "Estimated quota cost",
     "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.": "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.",
     "Event": "Event",

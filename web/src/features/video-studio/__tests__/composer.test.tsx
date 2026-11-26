@@ -449,7 +449,7 @@ describe('Composer balance check', () => {
     expect(createMock).not.toHaveBeenCalled()
   })
 
-  it('opens the same top-up from the shortfall notice', async () => {
+  it('opens the same top-up from the fee breakdown', async () => {
     studioBalance.shortfallUSD = 0.5
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
@@ -457,11 +457,8 @@ describe('Composer balance check', () => {
       screen.getByRole('textbox', { name: 'Video prompt' }),
       'a cat runs'
     )
-    await user.click(
-      within(screen.getByRole('alert')).getByRole('button', {
-        name: 'Go to top up',
-      })
-    )
+    await user.click(screen.getByRole('button', { name: 'Fee breakdown' }))
+    await user.click(screen.getByRole('button', { name: 'Go to top up' }))
     expect(screen.getByRole('dialog', { name: 'Quick top-up' })).toBeVisible()
   })
 
@@ -867,9 +864,11 @@ describe('Composer recent drafts and model choice', () => {
     expect(prompt).toHaveValue('a cat runs')
   })
 
-  it('spells out the fee as the price of a second times the length and count', () => {
+  it('spells out the fee as the price of a second times the length and count', async () => {
+    const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
 
+    await user.click(screen.getByRole('button', { name: 'Fee breakdown' }))
     expect(screen.getByText('≈ ¥0.15/s × 5s × 1')).toBeInTheDocument()
   })
 
@@ -878,7 +877,9 @@ describe('Composer recent drafts and model choice', () => {
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
 
+    await user.click(screen.getByRole('button', { name: 'Fee breakdown' }))
     expect(screen.getByText('≈ ¥0.15/video × 1')).toBeInTheDocument()
+    await user.keyboard('{Escape}')
     await user.click(
       screen.getByRole('button', { name: 'Model: seedance-2.0' })
     )
