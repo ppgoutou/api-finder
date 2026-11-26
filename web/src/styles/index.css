@@ -825,7 +825,15 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* The red recording light beside the hero's eyebrow. */
+.cinema-rec {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: cinema-caret 1.2s steps(1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .cinema-rec,
   .cinema-glow::before,
   .cinema-glow::after,
   .cinema-grain,

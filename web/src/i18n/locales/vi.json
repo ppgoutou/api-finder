@@ -1,5 +1,6 @@
 {
   "translation": {
+    "AI video from a prompt, an image or a reference clip, billed by the second.": "Video AI từ prompt, hình ảnh hoặc clip tham chiếu, tính phí theo giây.",
     "Hourly task report": "Báo cáo tác vụ hằng giờ",
     "Send payment notices": "Gửi thông báo nhận thanh toán",
     "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "Gửi tên người dùng, số tiền, số lần nạp, tổng số tiền đã nạp và số ngày kể từ khi đăng ký cho mỗi khoản thanh toán, kể cả mã đổi thưởng. Hoạt động mà không cần bật cảnh báo số dư.",

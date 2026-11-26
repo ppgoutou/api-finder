@@ -1,5 +1,6 @@
 {
   "translation": {
+    "AI video from a prompt, an image or a reference clip, billed by the second.": "用一句提示词、一张图或一段参考视频生成 AI 视频，按秒计费。",
     "Hourly task report": "每小时任务统计",
     "Send payment notices": "发送收款通知",
     "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "每收到一笔付款（包括兑换码）就发送用户名、充值金额、第几次充值、累计充值金额和已注册天数。不需要启用余额提醒。",

@@ -78,39 +78,36 @@ export function VideoHero(props: VideoHeroProps) {
         className='from-ink/60 pointer-events-none absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r to-transparent md:block'
       />
 
-      <div className='relative z-[3] mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-6 pt-36 pb-20 md:gap-6 md:pb-24'>
-        <p className='landing-animate-fade-up border-brand-on-dark/30 bg-brand/15 text-brand-on-dark inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium opacity-0 backdrop-blur-sm'>
-          <span
-            className='bg-brand-on-dark size-1.5 rounded-full'
-            aria-hidden
-          />
+      <div className='relative z-[3] mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-6 pt-36 pb-16 md:pb-20'>
+        <p className='landing-animate-fade-up text-micro inline-flex items-center gap-2 font-mono tracking-[0.12em] text-white/55 uppercase opacity-0'>
+          <span className='cinema-rec size-1.5 rounded-full' aria-hidden />
           {t('Seedance 2.5 is live · up to 30 seconds per clip')}
         </p>
         <h1
-          className='landing-animate-fade-up font-display text-heading-1 max-w-3xl opacity-0'
+          className='landing-animate-fade-up font-display text-display max-w-6xl leading-[0.95] tracking-tight text-balance uppercase opacity-0'
           style={{ animationDelay: '60ms' }}
         >
-          {t('Turn one sentence into')}{' '}
-          <span className='cinema-shimmer'>{t('cinematic video')}</span>
+          <span className='block'>{t('Turn one sentence into')}</span>{' '}
+          <span className='cinema-shimmer block'>{t('cinematic video')}</span>
         </h1>
         <p
-          className='landing-animate-fade-up max-w-xl text-base leading-relaxed text-white/75 opacity-0 md:text-lg'
+          className='landing-animate-fade-up max-w-lg text-sm leading-relaxed text-white/55 opacity-0'
           style={{ animationDelay: '120ms' }}
         >
           {t(
-            'An AI video creation platform powered by ByteDance Seedance. Turn a prompt, an image or a reference clip into a finished video in the browser, billed by the second.'
+            'AI video from a prompt, an image or a reference clip, billed by the second.'
           )}
           {bestDiscount && (
             <>
               {' '}
-              <strong className='font-semibold text-white'>
+              <strong className='font-semibold text-white/85'>
                 {t('{{percentOff}}% off official prices', bestDiscount)}
               </strong>
             </>
           )}
         </p>
         <div
-          className='landing-animate-fade-up flex flex-wrap gap-3 opacity-0'
+          className='landing-animate-fade-up mt-2 flex flex-wrap items-center gap-3 opacity-0'
           style={{ animationDelay: '180ms' }}
         >
           <Button
@@ -126,24 +123,24 @@ export function VideoHero(props: VideoHeroProps) {
             />
           </Button>
           <Button
-            variant='outline'
-            className='h-12 rounded-xl border-white/25 bg-white/5 px-6 text-base text-white backdrop-blur-sm hover:bg-white/10 hover:text-white'
+            variant='ghost'
+            className='h-12 rounded-xl px-4 text-sm text-white/65 hover:bg-white/5 hover:text-white'
             render={<a href='#pricing' />}
           >
             {t('View Pricing')}
           </Button>
         </div>
-        <ul className='flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs tracking-wide text-white/60 uppercase'>
+        <ul className='text-micro flex flex-wrap gap-x-5 gap-y-1.5 font-mono tracking-wide text-white/35 uppercase'>
           {facts.map((fact) => (
             <li key={fact}>{fact}</li>
           ))}
         </ul>
         {hero.prompt && (
-          <div className='bg-ink/60 flex w-full max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/10 px-4 py-3 backdrop-blur-sm'>
-            <span className='bg-brand/25 text-brand-on-dark rounded-md px-2 py-0.5 text-xs font-semibold'>
+          <div className='mt-4 flex w-full max-w-xl flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-4 text-xs'>
+            <span className='text-micro font-mono tracking-wide text-white/40 uppercase'>
               {t('Prompt used')}
             </span>
-            <span className='min-w-0 flex-[1_1_18rem] truncate text-sm text-white/90'>
+            <span className='min-w-0 flex-[1_1_14rem] truncate text-white/50'>
               {hero.prompt}
             </span>
             <Link
@@ -152,7 +149,7 @@ export function VideoHero(props: VideoHeroProps) {
               onClick={() =>
                 setHandoff(handoffFromPrompt(hero.prompt, hero.spec))
               }
-              className='hover:text-brand-on-dark text-sm font-semibold text-white'
+              className='hover:text-brand-on-dark font-medium text-white/75'
             >
               {t('Try this prompt')} →
             </Link>
