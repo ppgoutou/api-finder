@@ -31,10 +31,11 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import type { TaskLog } from '@/features/usage-logs/types'
 import dayjs from '@/lib/dayjs'
-import { formatLogQuota, formatTimestamp } from '@/lib/format'
+import { formatTimestamp } from '@/lib/format'
 
 import { useWorkVideoUrl } from '../hooks/use-work-artifacts'
 import type { WorkText } from '../hooks/use-work-text'
+import { formatWorkCost } from '../lib/work-cost'
 import { WorkDownloadButton } from './work-download-button'
 
 /** A finished video with its prompt, parameters and what to do next. */
@@ -53,7 +54,7 @@ export function WorkViewer(props: {
   const video = useWorkVideoUrl(task.task_id)
   const details = [
     { label: t('Parameters'), value: text.spec },
-    { label: t('Cost'), value: task.quota ? formatLogQuota(task.quota) : '' },
+    { label: t('Cost'), value: task.quota ? formatWorkCost(task.quota) : '' },
     { label: t('Created'), value: formatTimestamp(task.submit_time) },
     {
       label: t('Kept until'),

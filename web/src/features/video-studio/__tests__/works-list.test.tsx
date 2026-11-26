@@ -498,7 +498,7 @@ describe('WorksList failures and fees', () => {
             ...failedTask('task_2', 'seedance-2.0'),
             status: 'SUCCESS',
             fail_reason: '',
-            quota: 500000,
+            quota: 276481,
           },
         ],
       },
@@ -507,6 +507,7 @@ describe('WorksList failures and fees', () => {
 
     const cards = await screen.findAllByRole('article')
     expect(cards[0]).not.toHaveTextContent('$1')
-    expect(cards[1]).toHaveTextContent(/\$1/)
+    // To the cent, not with the many digits of the usage logs.
+    expect(cards[1]).toHaveTextContent(/\$0\.55(?!\d)/)
   })
 })

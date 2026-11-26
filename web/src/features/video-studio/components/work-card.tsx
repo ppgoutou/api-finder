@@ -31,11 +31,12 @@ import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
-import { formatLogQuota, formatTimestamp } from '@/lib/format'
+import { formatTimestamp } from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
 import type { WorkText } from '../hooks/use-work-text'
+import { formatWorkCost } from '../lib/work-cost'
 import { taskStage } from '../lib/work-progress'
 import { taskRetention } from '../lib/work-retention'
 import { WorkCover } from './work-cover'
@@ -199,7 +200,7 @@ export function WorkCard(props: {
         text.spec,
         formatTimestamp(task.submit_time),
         // A failed work is refunded, so its charge would mislead.
-        succeeded && task.quota ? formatLogQuota(task.quota) : '',
+        succeeded && task.quota ? formatWorkCost(task.quota) : '',
       ]
         .filter(Boolean)
         .join(' · ')}
