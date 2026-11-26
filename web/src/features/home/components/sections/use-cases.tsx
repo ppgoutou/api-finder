@@ -29,6 +29,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { PX_SHOW_LINKS_ENABLED, pxShowUrl } from '@/lib/partner-links'
+import { trackSpotlight } from '@/lib/spotlight'
 
 interface UseCase {
   icon: LucideIcon
@@ -99,12 +100,18 @@ export function UseCases() {
       className='relative z-10 scroll-mt-20 px-6 py-14 md:py-20'
     >
       <div className='mx-auto max-w-6xl'>
-        <h2 className='text-heading-2'>
+        <h2 className='cinema-reveal text-heading-2'>
           {t('Video for every team that creates')}
         </h2>
-        <ul className='mt-10 grid gap-x-12 gap-y-8 sm:grid-cols-2'>
+        <ul
+          onPointerMove={trackSpotlight}
+          className='spotlight-group mt-10 grid gap-4 sm:grid-cols-2'
+        >
           {cases.map((item) => (
-            <li key={item.title} className='border-border border-t pt-5'>
+            <li
+              key={item.title}
+              className='spotlight-card cinema-reveal bg-card/60 border-border/60 rounded-2xl border p-5 md:p-6'
+            >
               <h3 className='flex items-center gap-2.5 text-lg font-semibold'>
                 <item.icon
                   className='text-brand dark:text-brand-on-dark size-5 shrink-0'

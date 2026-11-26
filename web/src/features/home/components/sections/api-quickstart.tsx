@@ -67,7 +67,7 @@ export function ApiQuickstart() {
     >
       <div className='mx-auto flex max-w-6xl flex-wrap items-start gap-12'>
         <div className='min-w-0 flex-[1_1_20rem]'>
-          <h2 className='text-heading-2'>
+          <h2 className='cinema-reveal text-heading-2'>
             {t('Prefer code? Generate video with the API')}
           </h2>
           <ol className='mt-7 flex flex-col gap-5'>

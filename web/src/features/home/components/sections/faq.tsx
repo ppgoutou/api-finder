@@ -146,7 +146,7 @@ export function Faq() {
   return (
     <section className='relative z-10 px-6 py-14 md:py-20'>
       <div className='mx-auto max-w-3xl'>
-        <h2 className='text-heading-2 mb-8 text-center'>{t('FAQ')}</h2>
+        <h2 className='cinema-reveal text-heading-2 mb-8 text-center'>{t('FAQ')}</h2>
         <Accordion
           defaultValue={['no-code']}
           className='bg-card border-border/60 rounded-2xl border px-5'

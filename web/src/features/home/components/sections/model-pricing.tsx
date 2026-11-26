@@ -111,7 +111,7 @@ export function ModelPricing() {
       <div className='mx-auto max-w-6xl'>
         <div className='flex flex-wrap items-end justify-between gap-4'>
           <div>
-            <h2 className='text-heading-2'>
+            <h2 className='cinema-reveal text-heading-2'>
               {headlineDiscount
                 ? t(
                     'Video billed per second, images per image, up to {{percentOff}}% off official prices',

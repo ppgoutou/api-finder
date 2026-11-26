@@ -674,7 +674,109 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* A light that runs around the edge of the one main button. */
+@property --cinema-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.cinema-glow {
+  position: relative;
+}
+.cinema-glow::before,
+.cinema-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--cinema-angle),
+    var(--brand),
+    #67e8f9,
+    #e879f9,
+    var(--brand)
+  );
+  animation: cinema-spin 4s linear infinite;
+}
+.cinema-glow::before {
+  padding: 2px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.cinema-glow::after {
+  z-index: -1;
+  filter: blur(14px);
+  opacity: 0.55;
+}
+@keyframes cinema-spin {
+  to {
+    --cinema-angle: 360deg;
+  }
+}
+
+/* Cards that light up where the pointer is; see lib/spotlight. */
+.spotlight-card {
+  position: relative;
+}
+@media (hover: hover) {
+  .spotlight-card::before,
+  .spotlight-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .spotlight-card::before {
+    background: radial-gradient(
+      260px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      color-mix(in oklab, var(--brand) 32%, transparent),
+      transparent 65%
+    );
+  }
+  .spotlight-card::after {
+    padding: 1px;
+    background: radial-gradient(
+      200px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      color-mix(in oklab, var(--brand-on-dark) 80%, transparent),
+      transparent 60%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  .spotlight-group:hover .spotlight-card::before,
+  .spotlight-group:hover .spotlight-card::after {
+    opacity: 1;
+  }
+}
+
+/* Headings and cards rise into place as they scroll in. Browsers without
+ * scroll timelines show them in place. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .cinema-reveal {
+      animation: cinema-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+@keyframes cinema-reveal {
+  from {
+    opacity: 0.15;
+    transform: translateY(32px) scale(0.97);
+    filter: blur(4px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .cinema-glow::before,
+  .cinema-glow::after,
   .cinema-grain,
   .cinema-shutter::before,
   .cinema-shutter::after,
