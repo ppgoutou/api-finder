@@ -278,6 +278,99 @@ func TestUpstreamPriceCheckConvertsSupplierCurrency(t *testing.T) {
 	assert.Nil(t, prices["cny-expr"].Pricing)
 }
 
+const fenglangTestPluginSource = `
+export const meta = {
+	apiVersion: 1,
+	key: "fenglang",
+	name: "Fenglang",
+	version: "1.0.0",
+	author: {name: "Test"},
+	models: ["seedance-2.0-YH", "seedance-2.0-fast-YH"],
+	fetchMode: "per_task",
+	usageSchema: {
+		seconds: {type: "number", unit: "second", description: "Video generation unit price"},
+		resolution: {enum: ["480p", "720p", "1080p"], description: "Output video resolution"},
+	},
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+`
+
+func TestUpstreamPriceCheckReadsFenglangWithTheChannelKey(t *testing.T) {
+	modelManagementDB(t, "sqlite", "")
+	service.InitHttpClient()
+	previous := operation_setting.USDExchangeRate
+	operation_setting.USDExchangeRate = 8
+	t.Cleanup(func() { operation_setting.USDExchangeRate = previous })
+	discount, conversion := "0.5", "1"
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "Bearer channel-key", r.Header.Get("Authorization"), "the channel key reads prices when no token is stored")
+		switch r.URL.Path {
+		case "/open/v1/me":
+			_, _ = w.Write([]byte(`{"success":true,"user":{"discount":` + discount + `}}`))
+		case "/open/v1/pricing":
+			_, _ = w.Write([]byte(`{"success":true,"pricing":{"usdToCny":1,"upstreamToCny":` + conversion + `,"markup":1,
+				"video":{"seedance-2.0":{"1080p":0.8,"480p":0.16,"720p":0.32},"seedance-2.0-fast":{"720p":0.24},"retired":{"480p":1}},
+				"image":{"base":{"img":{"2K":0.4,"1K":0.2}}}},
+				"models":{"video":["seedance-2.0","seedance-2.0-fast"],"image":["img"]}}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(upstream.Close)
+	require.NoError(t, model.DB.AutoMigrate(&model.TaskPlugin{}))
+	require.NoError(t, model.SaveTaskPlugin(&model.TaskPlugin{Key: "fenglang", APIVersion: 1, Version: "1.0.0", Source: fenglangTestPluginSource, SourceHash: "fenglang-1", Enabled: true}))
+	require.NoError(t, model.ActivateTaskPlugin("fenglang", "1.0.0"))
+	require.NoError(t, syncTaskPluginsOnce())
+	t.Cleanup(func() { jsplugin.DefaultRegistry.Unregister("fenglang") })
+	baseURL := upstream.URL + "/open/v1"
+	setting := `{"task_plugin_key":"fenglang"}`
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: constant.ChannelTypeTaskPlugin, Key: "channel-key", Status: common.ChannelStatusEnabled, Name: "fenglang",
+		Group: "default", Models: "seedance-2.0-YH,seedance-2.0-fast-YH", BaseURL: &baseURL, Setting: &setting,
+	}).Error)
+	require.True(t, hasUpstreamPricingToken(), "a fenglang channel needs no stored token for the scheduled check")
+
+	result, err := checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+
+	require.Equal(t, "baseline", result.Rows[0].Status, result.Rows[0].Error)
+	assert.True(t, result.Rows[0].HasToken)
+	assert.ElementsMatch(t, []string{"seedance-2.0-YH", "seedance-2.0-fast-YH"}, result.Applied)
+	snapshot := readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
+	assert.Equal(t, map[string]map[string]any{
+		"seedance-2.0-YH": {"billing_mode": "tiered_expr", upstreamKeyGroupRatioField: 0.5,
+			"billing_expr": `u("resolution") == "480p" ? tier("480p", u("seconds") * 0.16) : u("resolution") == "720p" ? tier("720p", u("seconds") * 0.32) : tier("1080p", u("seconds") * 0.8)`},
+		"seedance-2.0-fast-YH": {"billing_mode": "tiered_expr", upstreamKeyGroupRatioField: 0.5,
+			"billing_expr": `tier("720p", u("seconds") * 0.24)`},
+		"img": {"billing_mode": "tiered_expr",
+			"billing_expr": `u("resolution") == "1K" ? tier("1K", u("image_count") * 0.2) : tier("2K", u("image_count") * 0.4)`},
+	}, snapshot.Latest, "rows are keyed by the channel model that sells them and keep fenglang's yuan list prices; unlisted models are left out")
+	local, err := model.GetModelPricingSnapshot([]string{"seedance-2.0-fast-YH"})
+	require.NoError(t, err)
+	charged, err := billingexpr.ScalePrices(`tier("720p", u("seconds") * 0.24)`, decimal.RequireFromString("0.0625"))
+	require.NoError(t, err)
+	assert.Equal(t, model.PricingValues{
+		"billing_setting.billing_mode": "tiered_expr",
+		"billing_setting.billing_expr": charged,
+	}, local.Entries[0].Configured, "0.24 yuan at rate 8 with a 0.5 discount")
+
+	discount = "0.45"
+	_, err = checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+	snapshot = readOnboardingOption[map[string]upstreamPriceSnapshot](onboardingPriceSnapshotOption)["1"]
+	changes := snapshotChanges(upstreamPriceChannel{ID: 1}, snapshot)
+	require.Len(t, changes, 3, "a new discount reprices both served models and the account row")
+	assert.Equal(t, []upstreamPriceField{{Field: upstreamKeyGroupRatioField, Previous: 0.5, Current: 0.45}}, changes[0].Fields)
+
+	conversion = "7"
+	result, err = checkUpstreamPrices(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "error", result.Rows[0].Status, "an unknown conversion factor stops the check instead of mispricing")
+}
+
 func TestUpstreamPriceCheckRepricesModelsWhenTheKeyGroupRatioChanges(t *testing.T) {
 	modelManagementDB(t, "sqlite", "")
 	service.InitHttpClient()

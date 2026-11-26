@@ -178,6 +178,9 @@ type upstreamPriceChannel struct {
 	models       []string
 	// pendingModels are the supplier's models the channel does not serve yet.
 	pendingModels []string
+	// fenglang marks a channel on fenglang.cloud, whose prices come from its
+	// own API and are read with the channel key unless a token is stored.
+	fenglang bool
 }
 
 // upstreamModelPrice is the supplier's latest price for one served model,
@@ -624,7 +627,7 @@ func fetchUpstreamKeyGroup(ctx context.Context, baseURL, token, channelKey strin
 
 func upstreamPriceChannels() ([]*model.Channel, error) {
 	var channels []*model.Channel
-	err := model.DB.Select("id", "name", "type", "base_url", "status", "models", "settings").
+	err := model.DB.Select("id", "name", "type", "base_url", "status", "models", "setting", "settings").
 		Where("status = ?", common.ChannelStatusEnabled).
 		Order("id").
 		Find(&channels).Error
@@ -649,11 +652,17 @@ func upstreamPriceChannelRows(channels []*model.Channel) []upstreamPriceChannel 
 		if channel.OtherSettings != "" {
 			_ = common.UnmarshalJsonStr(channel.OtherSettings, &settings)
 		}
+		var binding dto.ChannelSettings
+		if channel.Setting != nil && *channel.Setting != "" {
+			_ = common.UnmarshalJsonStr(*channel.Setting, &binding)
+		}
+		fenglang := binding.TaskPluginKey == fenglangPluginKey
 		rows = append(rows, upstreamPriceChannel{
 			ID:            channel.Id,
 			Name:          channel.Name,
 			BaseURL:       channel.GetBaseURL(),
-			HasToken:      strings.TrimSpace(tokens[key]) != "",
+			HasToken:      strings.TrimSpace(tokens[key]) != "" || fenglang,
+			fenglang:      fenglang,
 			BaselineTime:  snapshot.BaselineTime,
 			LatestTime:    snapshot.LatestTime,
 			models:        channel.GetModels(),
@@ -826,7 +835,25 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 	var wg sync.WaitGroup
 	for i, row := range rows {
 		token := strings.TrimSpace(tokens[strconv.Itoa(row.ID)])
-		if token == "" {
+		if !row.HasToken {
+			continue
+		}
+		if row.fenglang {
+			wg.Go(func() {
+				key := token
+				if key == "" {
+					channel, err := model.GetChannelById(row.ID, true)
+					if err != nil {
+						results[i] = fetched{err: err}
+						return
+					}
+					if keys := channel.GetKeys(); len(keys) > 0 {
+						key = strings.TrimSpace(keys[0])
+					}
+				}
+				models, group, currency, keyGroup, err := fetchFenglangPricing(ctx, row.BaseURL, key, slices.Concat(row.models, row.pendingModels))
+				results[i] = fetched{models: models, group: group, currency: currency, keyGroup: keyGroup, err: err}
+			})
 			continue
 		}
 		wg.Go(func() {
@@ -930,14 +957,19 @@ func checkUpstreamPrices(ctx context.Context) (upstreamPriceCheckResult, error) 
 }
 
 // hasUpstreamPricingToken reports whether any channel has a supplier token,
-// which is what the scheduled price check needs to do anything.
+// or is a fenglang channel that reads prices with its own key, which is what
+// the scheduled price check needs to do anything.
 func hasUpstreamPricingToken() bool {
 	for _, token := range readOnboardingOption[map[string]string](onboardingPricingTokenOption) {
 		if strings.TrimSpace(token) != "" {
 			return true
 		}
 	}
-	return false
+	channels, err := upstreamPriceChannels()
+	if err != nil {
+		return false
+	}
+	return slices.ContainsFunc(upstreamPriceChannelRows(channels), func(row upstreamPriceChannel) bool { return row.fenglang })
 }
 
 // ApplyOnboardingUpstreamPrice sets one model's charged price to its latest
