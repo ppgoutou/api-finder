@@ -29,6 +29,7 @@ import { useStudioHandoff } from '@/stores/studio-handoff-store'
 import { useShowcaseCards } from '../../hooks/use-showcase-cards'
 import { ClipSpec } from '../clip-spec'
 import { PlayableClip } from '../playable-clip'
+import { TypedPrompt } from '../typed-prompt'
 
 const ALL_CATEGORIES = 'all'
 
@@ -127,9 +128,10 @@ export function Showcase(props: ShowcaseProps) {
                   )}
                 </div>
                 {card.prompt && (
-                  <p className='text-muted-foreground line-clamp-3 text-sm leading-relaxed'>
-                    {card.prompt}
-                  </p>
+                  <TypedPrompt
+                    text={card.prompt}
+                    className='text-muted-foreground line-clamp-3 text-sm leading-relaxed'
+                  />
                 )}
                 <div className='mt-auto flex flex-wrap items-center gap-2 pt-1'>
                   {card.prompt && (
