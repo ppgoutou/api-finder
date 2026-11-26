@@ -45,6 +45,7 @@ import { PROMO_POPUP_QUERY_KEY } from '@/features/home/hooks/use-promo-popup'
 import {
   EMPTY_PROMO_ANNOUNCEMENT,
   emptyPromoCard,
+  PROMO_ANNOUNCEMENT_MAX_MORE,
   parsePromoPopup,
   PROMO_POPUP_DEFAULT_DAILY_LIMIT,
   PROMO_POPUP_MAX_CARDS,
@@ -87,6 +88,10 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
     defaultValues: initial,
   })
   const cards = useFieldArray({ control: form.control, name: 'cards' })
+  const moreMessages = useFieldArray({
+    control: form.control,
+    name: 'announcement.more',
+  })
   const watched = useWatch({ control: form.control })
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [previewing, setPreviewing] = useState(false)
@@ -255,6 +260,66 @@ export function PromoPopupSection(props: PromoPopupSectionProps) {
               label={t('Link (optional)')}
               placeholder='/pricing'
             />
+            {moreMessages.fields.map((message, index) => (
+              <div
+                key={message.id}
+                className='flex flex-col gap-4 rounded-md border border-dashed p-3'
+              >
+                <div className='flex items-center justify-between gap-2'>
+                  <span className='text-sm font-medium'>
+                    {t('Message {{number}}', { number: index + 2 })}
+                  </span>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    aria-label={t('Remove message {{number}}', {
+                      number: index + 2,
+                    })}
+                    onClick={() => moreMessages.remove(index)}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <ShowcaseTextField
+                    control={form.control}
+                    name={`announcement.more.${index}.text`}
+                    label={t('Announcement text')}
+                  />
+                  <ShowcaseTextField
+                    control={form.control}
+                    name={`announcement.more.${index}.textZh`}
+                    label={t('Announcement text (Chinese)')}
+                  />
+                </div>
+                <ShowcaseTextField
+                  control={form.control}
+                  name={`announcement.more.${index}.href`}
+                  label={t('Link (optional)')}
+                  placeholder='/pricing'
+                />
+              </div>
+            ))}
+            <div className='flex flex-wrap items-center gap-3'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={
+                  moreMessages.fields.length >= PROMO_ANNOUNCEMENT_MAX_MORE
+                }
+                onClick={() =>
+                  moreMessages.append({ text: '', textZh: '', href: '' })
+                }
+              >
+                <Plus data-icon='inline-start' />
+                {t('Add message')}
+              </Button>
+              <span className='text-muted-foreground text-xs'>
+                {t('Messages take turns in the bar every 5 seconds.')}
+              </span>
+            </div>
           </fieldset>
 
           <fieldset className='flex min-w-0 flex-col gap-3 rounded-lg border p-4'>

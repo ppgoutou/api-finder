@@ -97,7 +97,7 @@ describe('PublicHeader announcement bar', () => {
   it('links the announcement text to its page when the bar has a link', () => {
     render(
       <PublicHeader
-        announcement={{ text: 'Seedance 2.5 is live', href: '/pricing' }}
+        announcements={[{ text: 'Seedance 2.5 is live', href: '/pricing' }]}
       />
     )
 
@@ -108,7 +108,9 @@ describe('PublicHeader announcement bar', () => {
 
   it('shows the announcement as plain text when the bar has no link', () => {
     render(
-      <PublicHeader announcement={{ text: 'Maintenance tonight', href: '' }} />
+      <PublicHeader
+        announcements={[{ text: 'Maintenance tonight', href: '' }]}
+      />
     )
 
     expect(screen.getByText('Maintenance tonight')).toBeInTheDocument()
@@ -120,7 +122,7 @@ describe('PublicHeader announcement bar', () => {
   it('hides the announcement once the page scrolls', () => {
     render(
       <PublicHeader
-        announcement={{ text: 'Seedance 2.5 is live', href: '/pricing' }}
+        announcements={[{ text: 'Seedance 2.5 is live', href: '/pricing' }]}
       />
     )
 
@@ -130,5 +132,28 @@ describe('PublicHeader announcement bar', () => {
     })
 
     expect(screen.queryByText('Seedance 2.5 is live')).not.toBeInTheDocument()
+  })
+
+  it('takes turns between messages every few seconds', () => {
+    vi.useFakeTimers()
+    try {
+      render(
+        <PublicHeader
+          announcements={[
+            { text: 'Seedance 2.5 is live', href: '/pricing' },
+            { text: 'MAGI-2 is live', href: '' },
+          ]}
+        />
+      )
+
+      expect(screen.getByText('Seedance 2.5 is live')).toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(5000))
+      expect(screen.getByText('MAGI-2 is live')).toBeInTheDocument()
+      expect(screen.queryByText('Seedance 2.5 is live')).not.toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(5000))
+      expect(screen.getByText('Seedance 2.5 is live')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
