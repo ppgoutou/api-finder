@@ -196,6 +196,19 @@ describe('markupRows', () => {
     ).toEqual([])
   })
 
+  it('prices the only tier of a per-video expression per video', () => {
+    const rows = markupRows(
+      'tier("1080p", u("videos") * 0.4)',
+      { videos: { type: 'number', unit: 'count' } },
+      undefined
+    )
+
+    expect(rows.map((row) => [row.tier, row.unit, row.field])).toEqual([
+      ['1080p', 'video', 'videos'],
+    ])
+    expect(rows[0].supply).toBeCloseTo(0.4)
+  })
+
   it('returns no rows for a count that is not images', () => {
     expect(
       markupRows(
@@ -298,6 +311,19 @@ describe('officialSecondPrice for per-second tiers', () => {
 
   it('leaves a per-second reference tier without an official price', () => {
     expect(officialSecondPrice(rows[0], official)).toBeUndefined()
+  })
+
+  it('leaves a per-video tier without an official per-second price', () => {
+    const [videoRow] = markupRows(
+      'u("resolution") == "480p" ? tier("480p", u("videos") * 2) : tier("720p", u("videos") * 3)',
+      {
+        videos: { type: 'number', unit: 'count' },
+        resolution: { enum: ['480p', '720p'] },
+      },
+      undefined
+    )
+
+    expect(officialSecondPrice(videoRow, official)).toBeUndefined()
   })
 })
 
@@ -689,6 +715,34 @@ describe('OnboardingMarkupTable', () => {
     )
 
     expect(screen.getByRole('cell', { name: 'Per image' })).toBeTruthy()
+  })
+
+  it('shows a per-video expression per video and saves its adjustment on the videos field', async () => {
+    const put = vi.spyOn(api, 'put').mockResolvedValue({
+      data: { success: true, data: { channels: [], changes: [] } },
+    })
+    renderTable(
+      { base_expr: 'tier("1080p", u("videos") * 2)', tiers: {} },
+      { usage_schema: { videos: { type: 'number', unit: 'count' } } }
+    )
+    const input = screen.getByRole<HTMLInputElement>('textbox', {
+      name: 'Price adjustment per video for 1080p',
+    })
+    const row = input.closest('tr') as HTMLElement
+
+    await userEvent.type(input, '0.6')
+
+    expect(within(row).getByRole('cell', { name: 'Per video' })).toBeTruthy()
+    expect(within(row).getByText('$3.0000/video')).toBeTruthy()
+    await userEvent.click(saveButton())
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
+    expect(put).toHaveBeenCalledWith(
+      '/api/models/onboarding/upstream_prices/markup',
+      {
+        model_name: 'video',
+        tiers: { '1080p': { field: 'videos', per_second: 0.6 } },
+      }
+    )
   })
 
   it('shows a fixed-price model per image and saves its adjustment per request', async () => {

@@ -199,7 +199,9 @@ function PriceComparison(props: {
   const language = i18n.resolvedLanguage || i18n.language
   const price = (usd: number | undefined, row: PriceComparisonRow) => {
     if (usd === undefined) return '—'
-    const unit = row.row.unit === 'image' ? t('image') : t('s')
+    let unit = t('s')
+    if (row.row.unit === 'image') unit = t('image')
+    else if (row.row.unit === 'video') unit = t('video')
     return `${symbol}${(usd * rate).toFixed(4)}/${unit}`
   }
   const columns: StaticDataTableColumn<PriceComparisonRow>[] = [

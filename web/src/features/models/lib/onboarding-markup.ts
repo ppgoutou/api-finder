@@ -36,9 +36,13 @@ import type {
 
 import type { OnboardingMarkup, TierMarkup } from '../types'
 
+/** The usage field of a task plugin that prices each generated video. */
+const VIDEO_COUNT_FIELD = 'videos'
+
 /**
- * One price tier of a model, in USD per second of video or per generated
- * image, or the fixed price of a model, in USD per request (per image).
+ * One price tier of a model, in USD per second of video, per generated image
+ * or per generated video, or the fixed price of a model, in USD per request
+ * (per image).
  */
 export type MarkupRow = {
   /** The tier name in the expression, which keys its markup. */
@@ -46,7 +50,7 @@ export type MarkupRow = {
   /** Absent for a fixed price. */
   source?: ParsedTaskTier
   /** What the prices of the row are per. */
-  unit: 'second' | 'image'
+  unit: 'second' | 'image' | 'video'
   field: string
   /** Set for a token-priced tier; its per-second prices assume this rate. */
   tokensPerSecond?: number
@@ -61,9 +65,9 @@ export type MarkupRow = {
 
 /**
  * The rows of an expression that a markup can raise: each tier prices exactly
- * one usage field, in seconds, in tokens at a known resolution, or in
- * generated images. Other expressions, and expressions that mix seconds with
- * images, return no rows.
+ * one usage field, in seconds, in tokens at a known resolution, in generated
+ * images, or in generated videos (a flat price per video). Other expressions,
+ * and expressions that mix these units, return no rows.
  */
 export function markupRows(
   expression: string | undefined,
@@ -87,6 +91,17 @@ export function markupRows(
         tier: tier.label,
         source: tier,
         unit: 'second',
+        field,
+        supply: price,
+        reference: false,
+      })
+      continue
+    }
+    if (unit === 'count' && field === VIDEO_COUNT_FIELD) {
+      rows.push({
+        tier: tier.label,
+        source: tier,
+        unit: 'video',
         field,
         supply: price,
         reference: false,
@@ -129,7 +144,7 @@ export function markupRows(
 
 /**
  * What a row applies to: its tier's conditions, else its tier name. The only
- * row of a price per image applies to every image.
+ * row of a price per image or per video applies to every image or video.
  */
 export function markupRowCondition(
   row: MarkupRow,
@@ -142,7 +157,9 @@ export function markupRowCondition(
     ? taskTierConditions(row.source, schema, language, t)
     : ''
   if (conditions) return conditions
-  return row.unit === 'image' && onlyRow ? t('Per image') : row.tier
+  if (onlyRow && row.unit === 'image') return t('Per image')
+  if (onlyRow && row.unit === 'video') return t('Per video')
+  return row.tier
 }
 
 /** The row key of a fixed price. */
@@ -276,6 +293,9 @@ export function officialSecondPrice(
   official: VideoPricing | null
 ): number | undefined {
   if (!official || !row.source) return undefined
+  // Official video prices are per second; a flat price per video does not
+  // compare with them.
+  if (row.unit === 'video') return undefined
   const option =
     row.source.conditions.find(
       (condition) => condition.field === official.optionField
