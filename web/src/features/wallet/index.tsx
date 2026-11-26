@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
@@ -28,7 +28,6 @@ import {
   MembershipCard,
   useMembership,
 } from '@/features/membership'
-import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -42,6 +41,7 @@ import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { RedemptionCard } from './components/redemption-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
+import { TopupReturnNotice } from './components/topup-return-notice'
 import { WalletStatsCard } from './components/wallet-stats-card'
 import { WalletTiltCard } from './components/wallet-tilt-card'
 import {
@@ -59,6 +59,8 @@ import {
   useWaffoPayment,
   useWaffoPancakePayment,
 } from './hooks'
+import { useTopupAmountNote } from './hooks/use-topup-amount-note'
+import { useTopupUnits } from './hooks/use-topup-units'
 import {
   getMinTopupAmount,
   dispatchSelectedPayment,
@@ -74,6 +76,8 @@ import type {
 
 interface WalletProps {
   initialShowHistory?: boolean
+  /** Set when the user comes back from paying. */
+  topupReturn?: 'success' | 'cancelled'
 }
 
 export function Wallet(props: WalletProps) {
@@ -98,22 +102,11 @@ export function Wallet(props: WalletProps) {
 
   const queryClient = useQueryClient()
   const { data: membership } = useMembership()
-  const { currency } = useSystemConfig()
   const { topupInfo, presetAmounts, loading: topupLoading } = useTopupInfo()
 
-  // Calculate effective exchange rate - when display type is USD, use rate of 1
-  const effectiveUsdExchangeRate = useMemo(() => {
-    return currency?.quotaDisplayType === 'USD'
-      ? 1
-      : currency?.usdExchangeRate || 1
-  }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
-  // With quota shown in CNY, amounts are entered in yuan and only Stripe and
-  // USDT (which convert them to USD) are offered.
-  const amountsInCNY = currency?.quotaDisplayType === 'CNY'
-  const creditExchangeRate = amountsInCNY ? 1 : effectiveUsdExchangeRate
-  let amountUnit: 'USD' | 'CNY' | undefined = 'USD'
-  if (amountsInCNY) amountUnit = 'CNY'
-  if (currency?.quotaDisplayType === 'TOKENS') amountUnit = undefined
+  const units = useTopupUnits()
+  const { creditExchangeRate, amountUnit } = units
+  const amountNote = useTopupAmountNote(units)
   const {
     amount: paymentAmount,
     calculating,
@@ -312,24 +305,24 @@ export function Wallet(props: WalletProps) {
         <SectionPageLayout.Title>{t('Wallet')}</SectionPageLayout.Title>
         <SectionPageLayout.Content>
           <CardStaggerContainer className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
-            <WalletStatsCard user={user} loading={userLoading} />
-
-            {membership?.enabled && membership.signed_in && (
-              <WalletTiltCard>
-                <MembershipCard
-                  info={membership}
-                  className={WALLET_SURFACE_CLASS}
-                  onTopUp={
-                    showRechargeCard
-                      ? () =>
-                          document
-                            .querySelector('#wallet-add-funds')
-                            ?.scrollIntoView({ behavior: 'smooth' })
-                      : undefined
-                  }
-                />
-              </WalletTiltCard>
+            {props.topupReturn && (
+              <TopupReturnNotice
+                status={props.topupReturn}
+                onArrived={fetchUser}
+                onRetry={() =>
+                  document
+                    .querySelector('#wallet-add-funds')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                onDismiss={() =>
+                  window.history.replaceState({}, '', window.location.pathname)
+                }
+              />
             )}
+            {/* On phones the top-up comes right after the balance. */}
+            <div className='md:order-first'>
+              <WalletStatsCard user={user} loading={userLoading} />
+            </div>
 
             <div
               className={cn(
@@ -352,6 +345,7 @@ export function Wallet(props: WalletProps) {
                       loading={topupLoading}
                       usdExchangeRate={creditExchangeRate}
                       amountUnit={amountUnit}
+                      amountNote={amountNote}
                       onOpenBilling={() => setBillingDialogOpen(true)}
                       creemProducts={topupInfo?.creem_products}
                       enableCreemTopup={topupInfo?.enable_creem_topup}
@@ -384,6 +378,23 @@ export function Wallet(props: WalletProps) {
                 />
               </WalletTiltCard>
             </div>
+
+            {membership?.enabled && membership.signed_in && (
+              <WalletTiltCard className='md:order-first'>
+                <MembershipCard
+                  info={membership}
+                  className={WALLET_SURFACE_CLASS}
+                  onTopUp={
+                    showRechargeCard
+                      ? () =>
+                          document
+                            .querySelector('#wallet-add-funds')
+                            ?.scrollIntoView({ behavior: 'smooth' })
+                      : undefined
+                  }
+                />
+              </WalletTiltCard>
+            )}
 
             <SubscriptionPlansCard
               topupInfo={topupInfo}

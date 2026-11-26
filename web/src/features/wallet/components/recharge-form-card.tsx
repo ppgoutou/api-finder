@@ -67,6 +67,8 @@ interface RechargeFormCardProps {
   usdExchangeRate?: number
   /** Currency of entered amounts; undefined when quota is shown as tokens. */
   amountUnit?: 'USD' | 'CNY'
+  /** A line under each preset, such as what it buys. */
+  amountNote?: (amount: number) => string | undefined
   onOpenBilling?: () => void
   creemProducts?: CreemProduct[]
   enableCreemTopup?: boolean
@@ -89,6 +91,7 @@ export function RechargeFormCard({
   loading,
   usdExchangeRate = 1,
   amountUnit,
+  amountNote,
   onOpenBilling,
   creemProducts,
   enableCreemTopup,
@@ -236,7 +239,7 @@ export function RechargeFormCard({
                         variant='ghost'
                         aria-pressed={selectedPreset === preset.value}
                         className={cn(
-                          'relative flex h-full min-h-12 items-center justify-center overflow-hidden rounded-xl border px-3 py-2 text-center whitespace-normal sm:min-h-[52px]',
+                          'relative flex h-full min-h-12 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl border px-3 py-2 text-center whitespace-normal sm:min-h-[52px]',
                           selectedPreset === preset.value
                             ? 'border-brand bg-brand/10 text-brand-hover hover:bg-brand/15 hover:text-brand-hover dark:text-brand-on-dark dark:hover:text-brand-on-dark border-2'
                             : 'border-foreground/25 bg-background hover:border-foreground/40 hover:bg-muted/50'
@@ -261,6 +264,11 @@ export function RechargeFormCard({
                             </div>
                           )}
                         </div>
+                        {amountNote?.(preset.value) && (
+                          <span className='text-muted-foreground text-caption w-full font-normal'>
+                            {amountNote(preset.value)}
+                          </span>
+                        )}
                       </Button>
                     )
                   })}
@@ -370,7 +378,7 @@ export function RechargeFormCard({
                               {method.name}
                             </span>
                             {disabledLabel && (
-                              <span className='max-w-full truncate text-caption leading-4 font-normal opacity-80'>
+                              <span className='text-caption max-w-full truncate leading-4 font-normal opacity-80'>
                                 {disabledLabel}
                               </span>
                             )}
@@ -477,7 +485,7 @@ export function RechargeFormCard({
                                 {method.name}
                               </span>
                               {disabledLabel && (
-                                <span className='text-muted-foreground max-w-full truncate text-caption leading-4 font-normal'>
+                                <span className='text-muted-foreground text-caption max-w-full truncate leading-4 font-normal'>
                                   {disabledLabel}
                                 </span>
                               )}

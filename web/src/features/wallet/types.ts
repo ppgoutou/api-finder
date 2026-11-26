@@ -191,6 +191,8 @@ export interface PaymentRequest {
   amount: number
   /** Payment method identifier */
   payment_method: string
+  /** Console page to come back to after paying, for Stripe. */
+  return_page?: 'wallet' | 'studio'
 }
 
 /**

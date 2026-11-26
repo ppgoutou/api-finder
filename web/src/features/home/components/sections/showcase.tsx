@@ -23,6 +23,8 @@ import { useTranslation } from 'react-i18next'
 import { CopyButton } from '@/components/copy-button'
 import { Badge } from '@/components/ui/badge'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
+import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
 import { useHomeShowcase } from '../../hooks/use-home-showcase'
 import {
@@ -53,6 +55,9 @@ export function Showcase(props: ShowcaseProps) {
   const { t } = useTranslation()
   const [category, setCategory] = useState(ALL_CATEGORIES)
   const startTarget = props.isAuthenticated ? '/video-studio' : '/sign-up'
+  // Guests sign up first and are then sent on to the page.
+  const startSearch = props.isAuthenticated ? {} : { redirect: '/video-studio' }
+  const setHandoff = useStudioHandoff((state) => state.set)
   const configured = useHomeShowcase().showcase.filter((item) => item.video)
   // Admin clips replace the built-in examples as a whole.
   const cards: ShowcaseCard[] =
@@ -175,6 +180,12 @@ export function Showcase(props: ShowcaseProps) {
                   )}
                   <Link
                     to={startTarget}
+                    search={startSearch}
+                    onClick={() => {
+                      if (card.prompt) {
+                        setHandoff(handoffFromPrompt(card.prompt, card.spec))
+                      }
+                    }}
                     className='text-brand dark:text-brand-on-dark px-2 text-sm font-semibold hover:underline'
                   >
                     {t('Generate with it')}

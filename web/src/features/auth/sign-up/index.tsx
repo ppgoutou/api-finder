@@ -16,10 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
+import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
 import { AuthLayout } from '../auth-layout'
 import { TermsFooter } from '../components/terms-footer'
@@ -28,6 +29,11 @@ import { SignUpForm } from './components/sign-up-form'
 export function SignUp() {
   const { t } = useTranslation()
   const { status } = useStatus()
+  const { redirect } = useSearch({ from: '/(auth)/sign-up' })
+  const pending = useStudioHandoff((state) => state.handoff)
+  // The page is only promised when the work is headed there.
+  const prompt =
+    redirect?.startsWith('/video-studio') && pending?.draft.prompt?.trim()
 
   return (
     <AuthLayout>
@@ -40,6 +46,7 @@ export function SignUp() {
             {t('Already have an account?')}{' '}
             <Link
               to='/sign-in'
+              search={redirect ? { redirect } : {}}
               className='hover:text-primary font-medium underline underline-offset-4'
             >
               {t('Sign in')}
@@ -48,7 +55,18 @@ export function SignUp() {
           </p>
         </div>
 
-        <SignUpForm />
+        {prompt && (
+          <section className='bg-muted/50 rounded-card flex flex-col gap-1 p-4'>
+            <h3 className='text-card-title'>
+              {t('Sign up, then generate this video')}
+            </h3>
+            <p className='text-muted-foreground line-clamp-3 text-sm'>
+              {prompt}
+            </p>
+          </section>
+        )}
+
+        <SignUpForm redirectTo={redirect} />
 
         <TermsFooter
           variant='sign-up'

@@ -34,7 +34,34 @@ interface StudioHandoffState {
   set: (handoff: StudioHandoff | null) => void
 }
 
+// Kept for the tab, so it survives signing up and in on the way to the page.
+const STORAGE_KEY = 'video-studio:handoff'
+
+function readStored(): StudioHandoff | null {
+  try {
+    const parsed: unknown = JSON.parse(
+      window.sessionStorage.getItem(STORAGE_KEY) ?? 'null'
+    )
+    if (!parsed || typeof parsed !== 'object') return null
+    const handoff = parsed as StudioHandoff
+    return handoff.kind === 'video' || handoff.kind === 'image' ? handoff : null
+  } catch {
+    return null
+  }
+}
+
 export const useStudioHandoff = create<StudioHandoffState>((set) => ({
-  handoff: null,
-  set: (handoff) => set({ handoff }),
+  handoff: readStored(),
+  set: (handoff) => {
+    try {
+      if (handoff) {
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(handoff))
+      } else {
+        window.sessionStorage.removeItem(STORAGE_KEY)
+      }
+    } catch {
+      // Without storage the work only reaches the page within this visit.
+    }
+    set({ handoff })
+  },
 }))

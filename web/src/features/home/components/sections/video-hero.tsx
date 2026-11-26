@@ -21,6 +21,8 @@ import { ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
+import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
 import { useHeroClip } from '../../hooks/use-hero-clip'
 import { useSeedancePricing } from '../../hooks/use-seedance-pricing'
@@ -35,6 +37,9 @@ export function VideoHero(props: VideoHeroProps) {
   const { bestDiscount } = useSeedancePricing()
   const hero = useHeroClip()
   const startTarget = props.isAuthenticated ? '/video-studio' : '/sign-up'
+  // Guests sign up first and are then sent on to the page.
+  const startSearch = props.isAuthenticated ? {} : { redirect: '/video-studio' }
+  const setHandoff = useStudioHandoff((state) => state.set)
 
   const facts = [
     t('Up to 4K resolution'),
@@ -81,7 +86,7 @@ export function VideoHero(props: VideoHeroProps) {
         >
           <Button
             className='group h-12 rounded-xl px-6 text-base font-semibold'
-            render={<Link to={startTarget} />}
+            render={<Link to={startTarget} search={startSearch} />}
           >
             {props.isAuthenticated
               ? t('Open Video Creation')
@@ -136,6 +141,10 @@ export function VideoHero(props: VideoHeroProps) {
             </span>
             <Link
               to={startTarget}
+              search={startSearch}
+              onClick={() =>
+                setHandoff(handoffFromPrompt(hero.prompt, hero.spec))
+              }
               className='hover:text-brand-on-dark text-sm font-semibold text-white'
             >
               {t('Try this prompt')} →

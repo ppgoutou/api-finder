@@ -26,6 +26,8 @@ const videoStudioSearchSchema = z.object({
   model: z.string().optional().catch(undefined),
   /** Whether the page opens on video or image generation. */
   kind: z.enum(['video', 'image']).optional().catch(undefined),
+  /** Set by the payment page on the way back. */
+  topup: z.enum(['success', 'cancelled']).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/video-studio/')({

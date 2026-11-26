@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { QuickTopupDialog } from '@/features/wallet/components/quick-topup-dialog'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
 import { getLobeIcon } from '@/lib/lobe-icon'
@@ -110,6 +111,7 @@ export function ImageComposer(props: ImageComposerProps) {
   // A second click right after the first one is taken for the same click; the
   // next request may start while this one is still running.
   const [justSubmitted, setJustSubmitted] = useState(false)
+  const [topupOpen, setTopupOpen] = useState(false)
   const unlockTimer = useRef<number>(undefined)
   useEffect(() => () => window.clearTimeout(unlockTimer.current), [])
   const model = findStudioModel(models, studio.draft.model)
@@ -154,7 +156,11 @@ export function ImageComposer(props: ImageComposerProps) {
       toast.error(t(problem, problemParams))
       return
     }
-    if (insufficient || justSubmitted) return
+    if (justSubmitted) return
+    if (insufficient) {
+      setTopupOpen(true)
+      return
+    }
     setJustSubmitted(true)
     unlockTimer.current = window.setTimeout(
       () => setJustSubmitted(false),
@@ -167,157 +173,172 @@ export function ImageComposer(props: ImageComposerProps) {
   }
 
   return (
-    <ComposerCard
-      prompt={draft.prompt}
-      guide={guide}
-      hintId={hintId}
-      hasContent={draft.prompt !== '' || draft.references.length > 0}
-      restoredAt={studio.restoredAt}
-      drafts={<RecentDrafts kind='image' onRestore={studio.restore} />}
-      saved={studio.stored}
-      onClear={studio.clear}
-      onFiles={addReferences}
-      files={<FileProblems assets={draft.references} />}
-      toolbar={
-        <>
-          {model && (
-            <ChoiceMenu
-              label={t('Model')}
-              value={model.name}
-              options={models.map((option) => ({
-                value: option.name,
-                label: option.label ?? option.name,
-                group: option.group,
-                icon: option.icon ? (
-                  <span className='flex size-4 shrink-0 items-center justify-center'>
-                    {getLobeIcon(option.icon, 16)}
-                  </span>
-                ) : (
-                  <ImageIcon className='size-3.5' aria-hidden />
-                ),
-                unavailableLabel: option.unavailable
-                  ? t('Temporarily unavailable')
-                  : undefined,
-              }))}
-              onChange={(name) => studio.update({ model: name })}
-            />
-          )}
-          {!plugin && (
-            <ChoiceMenu
-              label={t('Size')}
-              value={size}
-              options={STUDIO_IMAGE_SIZES.map((option) => ({
-                value: option.value,
-                label: `${option.ratio} · ${option.value.replace('x', '×')}`,
-                icon: <Maximize className='size-3.5' aria-hidden />,
-              }))}
-              onChange={studio.setSize}
-            />
-          )}
-          {plugin && plugin.resolutions.length > 0 && (
-            <ChoiceMenu
-              label={t('Resolution')}
-              value={shape.size}
-              options={plugin.resolutions.map((value) => ({
-                value,
-                label: value,
-                icon: <Maximize className='size-3.5' aria-hidden />,
-              }))}
-              onChange={(value) => setPluginShape(value, pluginRatio)}
-            />
-          )}
-          {plugin && plugin.ratios.length > 0 && (
-            <ChoiceMenu
-              label={t('Aspect ratio')}
-              value={draft.ratio ?? ''}
-              options={plugin.ratios.map((value) => ({
-                value,
-                label: value,
-                icon: <RectangleHorizontal className='size-3.5' aria-hidden />,
-              }))}
-              onChange={(value) => setPluginShape(pluginSize, value)}
-            />
-          )}
-          <ChoiceMenu
-            label={t('Images')}
-            value={String(draft.count)}
-            options={Array.from(
-              { length: STUDIO_MAX_IMAGE_COUNT },
-              (_, index) => ({
-                value: String(index + 1),
-                label: t('{{count}} images', { count: index + 1 }),
-                icon: <Copy className='size-3.5' aria-hidden />,
-              })
+    <>
+      <ComposerCard
+        prompt={draft.prompt}
+        guide={guide}
+        hintId={hintId}
+        hasContent={draft.prompt !== '' || draft.references.length > 0}
+        restoredAt={studio.restoredAt}
+        drafts={<RecentDrafts kind='image' onRestore={studio.restore} />}
+        saved={studio.stored}
+        onClear={studio.clear}
+        onFiles={addReferences}
+        files={<FileProblems assets={draft.references} />}
+        toolbar={
+          <>
+            {model && (
+              <ChoiceMenu
+                label={t('Model')}
+                value={model.name}
+                options={models.map((option) => ({
+                  value: option.name,
+                  label: option.label ?? option.name,
+                  group: option.group,
+                  icon: option.icon ? (
+                    <span className='flex size-4 shrink-0 items-center justify-center'>
+                      {getLobeIcon(option.icon, 16)}
+                    </span>
+                  ) : (
+                    <ImageIcon className='size-3.5' aria-hidden />
+                  ),
+                  unavailableLabel: option.unavailable
+                    ? t('Temporarily unavailable')
+                    : undefined,
+                }))}
+                onChange={(name) => studio.update({ model: name })}
+              />
             )}
-            onChange={(count) => studio.update({ count: Number(count) })}
+            {!plugin && (
+              <ChoiceMenu
+                label={t('Size')}
+                value={size}
+                options={STUDIO_IMAGE_SIZES.map((option) => ({
+                  value: option.value,
+                  label: `${option.ratio} · ${option.value.replace('x', '×')}`,
+                  icon: <Maximize className='size-3.5' aria-hidden />,
+                }))}
+                onChange={studio.setSize}
+              />
+            )}
+            {plugin && plugin.resolutions.length > 0 && (
+              <ChoiceMenu
+                label={t('Resolution')}
+                value={shape.size}
+                options={plugin.resolutions.map((value) => ({
+                  value,
+                  label: value,
+                  icon: <Maximize className='size-3.5' aria-hidden />,
+                }))}
+                onChange={(value) => setPluginShape(value, pluginRatio)}
+              />
+            )}
+            {plugin && plugin.ratios.length > 0 && (
+              <ChoiceMenu
+                label={t('Aspect ratio')}
+                value={draft.ratio ?? ''}
+                options={plugin.ratios.map((value) => ({
+                  value,
+                  label: value,
+                  icon: (
+                    <RectangleHorizontal className='size-3.5' aria-hidden />
+                  ),
+                }))}
+                onChange={(value) => setPluginShape(pluginSize, value)}
+              />
+            )}
+            <ChoiceMenu
+              label={t('Images')}
+              value={String(draft.count)}
+              options={Array.from(
+                { length: STUDIO_MAX_IMAGE_COUNT },
+                (_, index) => ({
+                  value: String(index + 1),
+                  label: t('{{count}} images', { count: index + 1 }),
+                  icon: <Copy className='size-3.5' aria-hidden />,
+                })
+              )}
+              onChange={(count) => studio.update({ count: Number(count) })}
+            />
+          </>
+        }
+        action={
+          <>
+            <StudioCost
+              price={price}
+              detail={[draft.size.replace('x', '×'), draft.ratio]
+                .filter(Boolean)
+                .join(' · ')
+                .concat(` × ${draft.count}`)}
+              shortfallUSD={balance.shortfallUSD}
+              onTopUp={() => setTopupOpen(true)}
+            />
+            <Button
+              type='button'
+              size='xl'
+              className='max-md:flex-1'
+              onClick={submit}
+              disabled={justSubmitted || unavailable}
+              title={problem ? t(problem, problemParams) : t('Generate image')}
+            >
+              <ImageIcon aria-hidden />
+              {insufficient ? t('Top up and generate') : t('Generate image')}
+            </Button>
+          </>
+        }
+        notice={
+          model &&
+          unavailable && (
+            <UnavailableModelNotice
+              reason={model.unavailableReason}
+              replacement={replacementModel(models, model)?.name}
+              onSwitch={(name) => studio.update({ model: name })}
+            />
+          )
+        }
+      >
+        {(plugin?.maxReferences !== 0 || draft.references.length > 0) && (
+          <ReferencePanel
+            references={draft.references}
+            accept={ASSET_ACCEPT.image}
+            onAddFiles={addReferences}
+            onRemove={studio.removeReference}
           />
-        </>
-      }
-      action={
-        <>
-          <StudioCost
-            price={price}
-            detail={[draft.size.replace('x', '×'), draft.ratio]
-              .filter(Boolean)
-              .join(' · ')
-              .concat(` × ${draft.count}`)}
-            shortfallUSD={balance.shortfallUSD}
-          />
-          <Button
-            type='button'
-            size='xl'
-            className='max-md:flex-1'
-            onClick={submit}
-            disabled={justSubmitted || insufficient || unavailable}
-            title={problem ? t(problem, problemParams) : t('Generate image')}
-          >
-            <ImageIcon aria-hidden />
-            {t('Generate image')}
-          </Button>
-        </>
-      }
-      notice={
-        model &&
-        unavailable && (
-          <UnavailableModelNotice
-            reason={model.unavailableReason}
-            replacement={replacementModel(models, model)?.name}
-            onSwitch={(name) => studio.update({ model: name })}
-          />
-        )
-      }
-    >
-      {(plugin?.maxReferences !== 0 || draft.references.length > 0) && (
-        <ReferencePanel
-          references={draft.references}
-          accept={ASSET_ACCEPT.image}
-          onAddFiles={addReferences}
-          onRemove={studio.removeReference}
+        )}
+        <PromptInput
+          value={draft.prompt}
+          onChange={(prompt) => studio.update({ prompt })}
+          mentions={labelReferences(draft.references).map(
+            ({ asset, token }) => ({
+              token,
+              fileName: asset.fileName,
+              preview: { kind: 'image' as const, url: asset.previewUrl },
+            })
+          )}
+          placeholder={t('Describe the image you want to create')}
+          placeholderExample={t(
+            'Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.',
+            {
+              image: localizeMentions(
+                '@图片1',
+                i18n.resolvedLanguage || i18n.language
+              ).slice(1),
+            }
+          )}
+          onSubmit={submit}
+          label={t('Image prompt')}
+          describedBy={composerHintIds(hintId)}
+          guide={guide}
+        />
+      </ComposerCard>
+      {topupOpen && (
+        <QuickTopupDialog
+          open
+          onOpenChange={setTopupOpen}
+          shortfallUSD={balance.shortfallUSD}
+          returnPage='studio'
         />
       )}
-      <PromptInput
-        value={draft.prompt}
-        onChange={(prompt) => studio.update({ prompt })}
-        mentions={labelReferences(draft.references).map(({ asset, token }) => ({
-          token,
-          fileName: asset.fileName,
-          preview: { kind: 'image' as const, url: asset.previewUrl },
-        }))}
-        placeholder={t('Describe the image you want to create')}
-        placeholderExample={t(
-          'Type @ to mention an uploaded image, e.g. put the character in @{{image}} on a beach.',
-          {
-            image: localizeMentions(
-              '@图片1',
-              i18n.resolvedLanguage || i18n.language
-            ).slice(1),
-          }
-        )}
-        onSubmit={submit}
-        label={t('Image prompt')}
-        describedBy={composerHintIds(hintId)}
-        guide={guide}
-      />
-    </ComposerCard>
+    </>
   )
 }
