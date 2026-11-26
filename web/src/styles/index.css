@@ -774,6 +774,57 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* A blur that a glowing line clears across a clip, as if it were being
+ * generated; see GenerationScan. */
+@property --cinema-scan {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: true;
+}
+.cinema-scan[data-state='scanning'] {
+  animation: cinema-scan 2.6s cubic-bezier(0.5, 0, 0.3, 1) 0.2s forwards;
+}
+@keyframes cinema-scan {
+  from {
+    --cinema-scan: 0%;
+  }
+  to {
+    --cinema-scan: 102%;
+  }
+}
+.cinema-scan-blur {
+  backdrop-filter: blur(16px) saturate(0.3) brightness(0.8);
+  mask-image: linear-gradient(
+    90deg,
+    transparent calc(var(--cinema-scan) - 1%),
+    #000 calc(var(--cinema-scan) + 1%)
+  );
+}
+.cinema-scan-beam {
+  left: var(--cinema-scan);
+  background: #67e8f9;
+  box-shadow: 0 0 18px 4px color-mix(in oklab, #67e8f9 70%, transparent);
+}
+.cinema-scan-label {
+  opacity: calc(1 - var(--cinema-scan) / 100%);
+}
+
+/* The caret of a prompt that types itself; see TypedPrompt. */
+.cinema-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline: 1px;
+  vertical-align: -0.15em;
+  background: var(--brand-on-dark);
+  animation: cinema-caret 0.8s steps(1) infinite;
+}
+@keyframes cinema-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cinema-glow::before,
   .cinema-glow::after,

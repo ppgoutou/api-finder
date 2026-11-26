@@ -27,6 +27,7 @@ import {
   IMAGE_TO_VIDEO_INPUT_IMAGE,
   IMAGE_TO_VIDEO_OUTPUT,
 } from '../../lib/video-home'
+import { GenerationScan } from '../generation-scan'
 import { PlayableClip } from '../playable-clip'
 
 export function ImageToVideo() {
@@ -135,13 +136,14 @@ export function ImageToVideo() {
             aria-hidden
           />
           <figure className='min-w-0 flex-[1.4_1_16rem]'>
-            <div className='border-brand/50 bg-ink-raised aspect-video overflow-hidden rounded-xl border'>
+            <div className='border-brand/50 bg-ink-raised relative aspect-video overflow-hidden rounded-xl border'>
               <PlayableClip
                 key={pair.video}
                 src={pair.video}
                 poster={pair.poster}
                 title={t('Output: a video that starts from it')}
               />
+              {pair.video && <GenerationScan />}
             </div>
             <figcaption className='text-muted-foreground mt-2 text-center text-sm'>
               {t('Output: a video that starts from it')}
