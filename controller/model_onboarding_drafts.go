@@ -207,8 +207,9 @@ func FetchOnboardingSupplierDescription(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	// fenglang publishes no model descriptions.
 	rows := slices.DeleteFunc(upstreamPriceChannelRows(channels), func(row upstreamPriceChannel) bool {
-		return !row.HasToken
+		return !row.HasToken || row.fenglang
 	})
 	if len(rows) == 0 {
 		common.ApiErrorT(c, "Add a supplier token first")
