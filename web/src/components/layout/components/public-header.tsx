@@ -45,6 +45,8 @@ type AuthPromptTarget = {
   href: string
 }
 
+const ANNOUNCEMENT_TURN_MS = 5000
+
 /** A one-line notice shown above the header until the page scrolls. */
 export type HeaderAnnouncement = {
   text: string
@@ -53,7 +55,8 @@ export type HeaderAnnouncement = {
 }
 
 export interface PublicHeaderProps {
-  announcement?: HeaderAnnouncement | null
+  /** Messages that take turns in the bar; empty hides the bar. */
+  announcements?: HeaderAnnouncement[]
   navLinks?: TopNavLink[]
   mobileLinks?: TopNavLink[]
   navContent?: React.ReactNode
@@ -211,19 +214,8 @@ export function PublicHeader(props: PublicHeaderProps) {
           props.className
         )}
       >
-        {props.announcement && !scrolled && (
-          <div className='bg-brand pointer-events-auto flex h-9 items-center justify-center px-4 text-center text-xs font-medium text-white sm:text-sm'>
-            {props.announcement.href ? (
-              <a
-                href={props.announcement.href}
-                className='truncate underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
-              >
-                {props.announcement.text}
-              </a>
-            ) : (
-              <span className='truncate'>{props.announcement.text}</span>
-            )}
-          </div>
+        {props.announcements && props.announcements.length > 0 && !scrolled && (
+          <AnnouncementBar announcements={props.announcements} />
         )}
         <div
           className={cn(
@@ -480,5 +472,52 @@ export function PublicHeader(props: PublicHeaderProps) {
         </div>
       </Dialog>
     </>
+  )
+}
+
+/**
+ * Shows one announcement at a time and moves to the next every few seconds,
+ * holding while the pointer or keyboard focus is on the bar.
+ */
+function AnnouncementBar(props: { announcements: HeaderAnnouncement[] }) {
+  const { announcements } = props
+  const [turn, setTurn] = useState(0)
+  const [held, setHeld] = useState(false)
+  const count = announcements.length
+
+  useEffect(() => {
+    if (count < 2 || held) return
+    const timer = window.setInterval(
+      () => setTurn((current) => current + 1),
+      ANNOUNCEMENT_TURN_MS
+    )
+    return () => window.clearInterval(timer)
+  }, [count, held])
+
+  const announcement = announcements[turn % count]
+  return (
+    <div
+      className='bg-brand pointer-events-auto flex h-9 items-center justify-center overflow-hidden px-4 text-center text-xs font-medium text-white sm:text-sm'
+      onPointerEnter={() => setHeld(true)}
+      onPointerLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={() => setHeld(false)}
+    >
+      <div
+        key={turn % count}
+        className='animate-in fade-in slide-in-from-bottom-2 flex max-w-full min-w-0 justify-center duration-500 motion-reduce:animate-none'
+      >
+        {announcement.href ? (
+          <a
+            href={announcement.href}
+            className='truncate underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
+          >
+            {announcement.text}
+          </a>
+        ) : (
+          <span className='truncate'>{announcement.text}</span>
+        )}
+      </div>
+    </div>
   )
 }

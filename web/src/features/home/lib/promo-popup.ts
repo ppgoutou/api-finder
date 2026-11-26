@@ -69,13 +69,21 @@ export type PromoCard = PromoPriceLine & {
   deals: PromoDeal[]
 }
 
-/** One line shown in a bar above the home page header. */
-export type PromoAnnouncement = {
-  enabled: boolean
+/** One message of the announcement bar. */
+export type PromoAnnouncementMessage = {
   text: string
   textZh: string
   /** Same-site path or https link; empty shows the text without a link. */
   href: string
+}
+
+/**
+ * The bar above the home page header: the first message, plus more messages
+ * that take turns with it.
+ */
+export type PromoAnnouncement = PromoAnnouncementMessage & {
+  enabled: boolean
+  more: PromoAnnouncementMessage[]
 }
 
 export type PromoPopupSettings = {
@@ -94,12 +102,15 @@ export const PROMO_DEFAULT_HREF: Record<PromoCardKind, string> = {
 }
 
 export const PROMO_ANNOUNCEMENT_MAX_LENGTH = 80
+/** Messages besides the first one. */
+export const PROMO_ANNOUNCEMENT_MAX_MORE = 4
 
 export const EMPTY_PROMO_ANNOUNCEMENT: PromoAnnouncement = {
   enabled: false,
   text: '',
   textZh: '',
   href: '',
+  more: [],
 }
 
 export const EMPTY_PROMO_POPUP: PromoPopupSettings = {
@@ -213,6 +224,7 @@ export function parsePromoPopup(
   const source = asRecord(parsed)
   const cards = Array.isArray(source.cards) ? source.cards : []
   const announcement = asRecord(source.announcement)
+  const more = Array.isArray(announcement.more) ? announcement.more : []
   return {
     enabled: source.enabled === true,
     dailyLimit: readDailyLimit(source.daily_limit),
@@ -224,6 +236,14 @@ export function parsePromoPopup(
       text: readText(announcement, 'text'),
       textZh: readText(announcement, 'text_zh'),
       href: readText(announcement, 'href'),
+      more: more.map((message) => {
+        const row = asRecord(message)
+        return {
+          text: readText(row, 'text'),
+          textZh: readText(row, 'text_zh'),
+          href: readText(row, 'href'),
+        }
+      }),
     },
   }
 }
@@ -233,6 +253,7 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
   const announcement = settings.announcement
   const hasAnnouncement =
     announcement.enabled ||
+    announcement.more.length > 0 ||
     Boolean(announcement.text || announcement.textZh || announcement.href)
   if (
     !settings.enabled &&
@@ -281,6 +302,13 @@ export function serializePromoPopup(settings: PromoPopupSettings): string {
         text: announcement.text,
         text_zh: announcement.textZh,
         href: announcement.href,
+        ...(announcement.more.length > 0 && {
+          more: announcement.more.map((message) => ({
+            text: message.text,
+            text_zh: message.textZh,
+            href: message.href,
+          })),
+        }),
       },
     }),
   })
@@ -334,22 +362,23 @@ export function selectPromoCards(
 }
 
 /**
- * The announcement bar's text in the interface language with its link, or
- * null while it is off or has no text for this language.
+ * The announcement bar's messages in the interface language with their
+ * links, in turn order; empty while the bar is off. A message with no text
+ * for this language is left out.
  */
-export function selectPromoAnnouncement(
+export function selectPromoAnnouncements(
   announcement: PromoAnnouncement,
   language: string
-): { text: string; href: string } | null {
-  if (!announcement.enabled) return null
+): { text: string; href: string }[] {
+  if (!announcement.enabled) return []
   const interfaceLanguage = normalizeInterfaceLanguage(language)
   const chinese = interfaceLanguage === 'zhCN' || interfaceLanguage === 'zhTW'
-  const text = (
-    (chinese && announcement.textZh.trim()) ||
-    announcement.text
-  ).trim()
-  if (!text) return null
-  return { text, href: announcement.href.trim() }
+  return [announcement, ...announcement.more]
+    .map((message) => ({
+      text: ((chinese && message.textZh.trim()) || message.text).trim(),
+      href: message.href.trim(),
+    }))
+    .filter((message) => message.text)
 }
 
 /** Reads the number out of display text such as `¥0.12` or `$1,200`. */

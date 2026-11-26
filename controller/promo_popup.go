@@ -20,6 +20,8 @@ const (
 	promoPopupMaxDeals  = 4
 	// A stored limit of 0 means the setting is absent, which shows once a day.
 	promoPopupMaxDailyLimit = 20
+	// Announcement messages besides the first one.
+	promoAnnouncementMaxMore = 4
 )
 
 var errInvalidPromoPopup = errors.New("invalid promo popup settings")
@@ -58,12 +60,18 @@ type promoPopupCard struct {
 	Deals         []promoPopupDeal `json:"deals"`
 }
 
-// promoAnnouncement is the one-line bar shown above the home page header.
+type promoAnnouncementMessage struct {
+	Text   string `json:"text"`
+	TextZh string `json:"text_zh"`
+	Href   string `json:"href"`
+}
+
+// promoAnnouncement is the one-line bar shown above the home page header: the
+// first message, plus more messages that take turns with it.
 type promoAnnouncement struct {
-	Enabled bool   `json:"enabled"`
-	Text    string `json:"text"`
-	TextZh  string `json:"text_zh"`
-	Href    string `json:"href"`
+	Enabled bool `json:"enabled"`
+	promoAnnouncementMessage
+	More []promoAnnouncementMessage `json:"more"`
 }
 
 type promoPopupSettings struct {
@@ -164,10 +172,15 @@ func validatePromoPopup(value string) error {
 		}
 	}
 	announcement := settings.Announcement
-	if !promoPopupTextFits(80, announcement.Text, announcement.TextZh) ||
-		!promoPopupTextFits(500, announcement.Href) ||
-		!promoPopupHrefAllowed(announcement.Href) {
+	if len(announcement.More) > promoAnnouncementMaxMore {
 		return errInvalidPromoPopup
+	}
+	for _, message := range append(announcement.More, announcement.promoAnnouncementMessage) {
+		if !promoPopupTextFits(80, message.Text, message.TextZh) ||
+			!promoPopupTextFits(500, message.Href) ||
+			!promoPopupHrefAllowed(message.Href) {
+			return errInvalidPromoPopup
+		}
 	}
 	return nil
 }

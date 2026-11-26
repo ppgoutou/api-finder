@@ -49,7 +49,7 @@ function HomeContent() {
   const { auth } = useAuthStore()
   const isAuthenticated = !!auth.user
   const { content, isLoaded, isUrl } = useHomePageContent()
-  const { announcement } = usePromoPopup()
+  const { announcements } = usePromoPopup()
 
   const syncIframePreferences = useCallback(() => {
     try {
@@ -135,7 +135,7 @@ function HomeContent() {
   }
 
   return (
-    <PublicLayout showMainContainer={false} headerProps={{ announcement }}>
+    <PublicLayout showMainContainer={false} headerProps={{ announcements }}>
       <HomePlaybackProvider>
         <VideoHero isAuthenticated={isAuthenticated} />
         <Showcase isAuthenticated={isAuthenticated} />

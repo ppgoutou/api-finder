@@ -232,6 +232,10 @@ func TestValidatePromoPopup(t *testing.T) {
 		{"announcement bar", `{"announcement":{"enabled":true,"text":"Seedance 2.5 is live","text_zh":"Seedance 2.5 已上线","href":"/pricing"}}`, true},
 		{"announcement text too long", `{"announcement":{"text_zh":"` + strings.Repeat("长", 81) + `"}}`, false},
 		{"announcement javascript link", `{"announcement":{"text":"x","href":"javascript:alert(1)"}}`, false},
+		{"announcement with more messages", `{"announcement":{"enabled":true,"text":"a","more":[{"text":"b","text_zh":"乙","href":"/pricing"}]}}`, true},
+		{"too many announcement messages", `{"announcement":{"text":"a","more":[{},{},{},{},{}]}}`, false},
+		{"more message text too long", `{"announcement":{"more":[{"text_zh":"` + strings.Repeat("长", 81) + `"}]}}`, false},
+		{"more message javascript link", `{"announcement":{"more":[{"text":"x","href":"javascript:alert(1)"}]}}`, false},
 		{"not json", `{"cards":`, false},
 	}
 	for _, tc := range cases {

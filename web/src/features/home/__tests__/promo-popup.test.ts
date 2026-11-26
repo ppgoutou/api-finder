@@ -26,7 +26,7 @@ import {
   getPromoPriceRatio,
   parsePromoPopup,
   type PromoCard,
-  selectPromoAnnouncement,
+  selectPromoAnnouncements,
   selectPromoCards,
   serializePromoPopup,
 } from '../lib/promo-popup'
@@ -177,11 +177,33 @@ describe('promo announcement bar', () => {
     text: 'Seedance 2.5 is live',
     textZh: 'Seedance 2.5 已上线',
     href: '/pricing',
+    more: [],
+  }
+  const magi = {
+    text: 'MAGI-2 is live',
+    textZh: 'MAGI-2 重磅上线',
+    href: '/video-studio',
   }
 
   it('stores the announcement alone and reads it back', () => {
     const stored = serializePromoPopup({ ...EMPTY_PROMO_POPUP, announcement })
     expect(parsePromoPopup(stored).announcement).toEqual(announcement)
+  })
+
+  it('stores more messages and reads them back in order', () => {
+    const withMore = { ...announcement, more: [magi] }
+    const stored = serializePromoPopup({
+      ...EMPTY_PROMO_POPUP,
+      announcement: withMore,
+    })
+    expect(parsePromoPopup(stored).announcement).toEqual(withMore)
+  })
+
+  it('reads a bar saved before more messages existed', () => {
+    const stored = JSON.stringify({
+      announcement: { enabled: true, text: 'a', text_zh: '', href: '' },
+    })
+    expect(parsePromoPopup(stored).announcement.more).toEqual([])
   })
 
   it('stores nothing when neither the popup nor the bar is set', () => {
@@ -198,28 +220,43 @@ describe('promo announcement bar', () => {
     ['zh-TW', 'Seedance 2.5 已上线'],
     ['ja', 'Seedance 2.5 is live'],
   ])('in %s shows %s with its link', (language, text) => {
-    expect(selectPromoAnnouncement(announcement, language)).toEqual({
-      text,
-      href: '/pricing',
-    })
+    expect(selectPromoAnnouncements(announcement, language)).toEqual([
+      { text, href: '/pricing' },
+    ])
+  })
+
+  it('lists the first message, then the others in turn', () => {
+    expect(
+      selectPromoAnnouncements({ ...announcement, more: [magi] }, 'zh-CN')
+    ).toEqual([
+      { text: 'Seedance 2.5 已上线', href: '/pricing' },
+      { text: 'MAGI-2 重磅上线', href: '/video-studio' },
+    ])
   })
 
   it('falls back to the default text when the Chinese text is empty', () => {
     expect(
-      selectPromoAnnouncement({ ...announcement, textZh: ' ' }, 'zh-CN')?.text
+      selectPromoAnnouncements({ ...announcement, textZh: ' ' }, 'zh-CN')[0]
+        ?.text
     ).toBe('Seedance 2.5 is live')
   })
 
   it('shows nothing while the bar is off', () => {
     expect(
-      selectPromoAnnouncement({ ...announcement, enabled: false }, 'en')
-    ).toBeNull()
+      selectPromoAnnouncements(
+        { ...announcement, more: [magi], enabled: false },
+        'en'
+      )
+    ).toEqual([])
   })
 
-  it('shows nothing when the language has no text', () => {
+  it('leaves out messages with no text for the language', () => {
     expect(
-      selectPromoAnnouncement({ ...announcement, text: '', textZh: '' }, 'en')
-    ).toBeNull()
+      selectPromoAnnouncements(
+        { ...announcement, text: '', textZh: '', more: [magi] },
+        'en'
+      )
+    ).toEqual([{ text: 'MAGI-2 is live', href: '/video-studio' }])
   })
 })
 
