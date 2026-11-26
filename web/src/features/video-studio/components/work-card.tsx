@@ -95,6 +95,8 @@ function WorkMessage(props: {
   icon: ReactNode
   title: string
   detail?: string
+  /** A short line under the detail that must not be cut off. */
+  note?: string
   className?: string
 }) {
   return (
@@ -110,6 +112,9 @@ function WorkMessage(props: {
         <span className='text-muted-foreground line-clamp-3'>
           {props.detail}
         </span>
+      )}
+      {props.note && (
+        <span className='text-foreground font-medium'>{props.note}</span>
       )}
     </div>
   )
@@ -188,9 +193,21 @@ export function WorkCard(props: {
             ? translateServerText(t, task.fail_reason)
             : undefined
         }
+        note={
+          task.refunded_quota
+            ? t('Refunded {{amount}}', {
+                amount: formatWorkCost(task.refunded_quota),
+              })
+            : undefined
+        }
       />
     )
   }
+
+  // Support finds a failure by its request ID; older tasks have none.
+  const supportIdLabel = task.request_id
+    ? t('Copy request ID')
+    : t('Copy task ID')
 
   return (
     <WorkFrame
@@ -227,10 +244,10 @@ export function WorkCard(props: {
           )}
           {failed && !props.compact && (
             <CopyButton
-              value={task.task_id}
+              value={task.request_id || task.task_id}
               size='sm'
-              aria-label={t('Copy task ID')}
-              tooltip={t('Copy task ID')}
+              aria-label={supportIdLabel}
+              tooltip={supportIdLabel}
             />
           )}
           <Button

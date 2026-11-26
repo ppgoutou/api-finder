@@ -920,6 +920,12 @@ func TestRefundTaskQuota_Wallet(t *testing.T) {
 	assert.Equal(t, "test-model", log.ModelName)
 	assert.Zero(t, task.Quota)
 	assert.Zero(t, getTaskQuota(t, task.ID))
+
+	// The owner is told the amount after the quota is cleared.
+	var stored model.Task
+	require.NoError(t, model.DB.First(&stored, task.ID).Error)
+	assert.Equal(t, preConsumed, stored.PrivateData.RefundedQuota)
+	assert.Equal(t, tokenID, stored.PrivateData.TokenId)
 }
 
 func TestRefundTaskQuota_Subscription(t *testing.T) {
@@ -1028,6 +1034,7 @@ func TestRefundTaskQuota_FundingFailureKeepsAccountingAndPendingMarker(t *testin
 	assert.Equal(t, 1, requestCount)
 	assert.Equal(t, int64(preConsumed), getChannelUsedQuota(t, channelID))
 	assert.Equal(t, int64(0), countLogs(t))
+	assert.Zero(t, task.PrivateData.RefundedQuota)
 }
 
 // ===========================================================================

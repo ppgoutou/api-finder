@@ -487,6 +487,10 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 		item.ResultDiscarded = task.PrivateData.ResultDiscarded
 		item.ConsoleImage = task.IsConsoleImage()
 		item.MediaExpiresAt = taskMediaRetention(task, mediaStoreEnabled)
+		item.RefundedQuota = task.PrivateData.RefundedQuota
+		if execution := task.PrivateData.Execution; execution != nil {
+			item.RequestID = execution.RequestID
+		}
 		if task.Status == model.TaskStatusSuccess {
 			item.ResultURL = ""
 			if taskFailReasonIsLegacyResultURL(task.FailReason) {

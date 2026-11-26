@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
+import { CopyButton } from '@/components/copy-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useModelDisplayName } from '@/features/pricing/hooks'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
@@ -28,6 +29,7 @@ import { useWorkArtifacts } from '../hooks/use-work-artifacts'
 import { consoleRequestOf } from '../lib/console-request'
 import { restoredAssets } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
+import { formatWorkCost } from '../lib/work-cost'
 import { taskStage } from '../lib/work-progress'
 import { taskRetention } from '../lib/work-retention'
 import type { StudioDraft } from '../types'
@@ -119,6 +121,25 @@ export function ImageTaskCards(props: {
               )
             )}
           </span>
+        )}
+        {task.refunded_quota ? (
+          <span>
+            {t('Refunded {{amount}}', {
+              amount: formatWorkCost(task.refunded_quota),
+            })}
+          </span>
+        ) : null}
+        {task.request_id && (
+          <CopyButton
+            value={task.request_id}
+            size='sm'
+            variant='outline'
+            className='mt-1'
+            aria-label={t('Copy request ID')}
+            tooltip={t('Copy request ID')}
+          >
+            {t('Request ID')}
+          </CopyButton>
         )}
       </ImageNotice>
     )

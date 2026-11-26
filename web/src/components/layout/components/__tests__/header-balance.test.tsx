@@ -32,10 +32,10 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 vi.mock('@/lib/api', () => ({ getSelf: vi.fn() }))
 
-function renderBalance() {
+function renderBalance(compact?: boolean) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <HeaderBalance />
+      <HeaderBalance compact={compact} />
     </QueryClientProvider>
   )
 }
@@ -47,6 +47,16 @@ describe('HeaderBalance', () => {
 
     const link = await screen.findByLabelText('Balance $1, open the wallet')
     expect(link).toHaveAttribute('href', '/wallet')
+  })
+
+  it('compact on phones keeps the amount and the wallet link without the icon', async () => {
+    vi.mocked(getSelf).mockResolvedValue({ data: { quota: 500000 } } as never)
+    renderBalance(true)
+
+    const link = await screen.findByLabelText('Balance $1, open the wallet')
+    expect(link).toHaveAttribute('href', '/wallet')
+    expect(link).toHaveTextContent('$1')
+    expect(link.querySelector('svg')).toBeNull()
   })
 
   it('shows nothing while the balance is unknown', () => {

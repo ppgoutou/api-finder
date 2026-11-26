@@ -510,4 +510,36 @@ describe('WorksList failures and fees', () => {
     // To the cent, not with the many digits of the usage logs.
     expect(cards[1]).toHaveTextContent(/\$0\.55(?!\d)/)
   })
+
+  it('tells what a failed work gave back and copies its request ID for support', async () => {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...failedTask('task_1', 'seedance-2.0'),
+            refunded_quota: 500000,
+            request_id: 'req-123',
+          },
+        ],
+      },
+    } as never)
+    renderList(vi.fn())
+
+    expect(await screen.findByText('Refunded $1')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Copy request ID' })
+    ).toBeInTheDocument()
+  })
+
+  it('copies the task ID of a failed work submitted before request IDs were kept', async () => {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: { items: [failedTask('task_1', 'seedance-2.0')] },
+    } as never)
+    renderList(vi.fn())
+
+    expect(
+      await screen.findByRole('button', { name: 'Copy task ID' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('article')).not.toHaveTextContent('Refunded')
+  })
 })

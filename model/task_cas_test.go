@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -349,4 +352,62 @@ func TestUpdateWithStatus_PersistsPluginStateAndPollFailures(t *testing.T) {
 	assert.EqualValues(t, TaskStatusInProgress, reloaded.Status)
 	assert.JSONEq(t, `{"req_key":"new"}`, string(reloaded.PrivateData.PluginState))
 	assert.Equal(t, 4, reloaded.PrivateData.PollFailures)
+}
+
+// A refund clears the quota and keeps the amount for the owner in one write,
+// leaving the rest of the private data as it was, on every database.
+func TestTaskMarkRefundedKeepsAmountOnEveryDatabase(t *testing.T) {
+	for _, dialect := range []string{"sqlite", "mysql", "postgres"} {
+		t.Run(dialect, func(t *testing.T) {
+			var driver gorm.Dialector
+			switch dialect {
+			case "sqlite":
+				driver = sqlite.Open(filepath.Join(t.TempDir(), "refund.db"))
+			case "mysql":
+				dsn := os.Getenv("TEST_MYSQL_DSN")
+				if dsn == "" {
+					t.Skip("TEST_MYSQL_DSN is not configured")
+				}
+				driver = mysql.Open(dsn)
+			case "postgres":
+				dsn := os.Getenv("TEST_POSTGRES_DSN")
+				if dsn == "" {
+					t.Skip("TEST_POSTGRES_DSN is not configured")
+				}
+				driver = postgres.Open(dsn)
+			}
+			db, err := gorm.Open(driver, &gorm.Config{})
+			require.NoError(t, err)
+			sqlDB, err := db.DB()
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, sqlDB.Close()) })
+			require.NoError(t, db.Migrator().DropTable(&Task{}))
+			require.NoError(t, db.AutoMigrate(&Task{}))
+			t.Cleanup(func() { require.NoError(t, db.Migrator().DropTable(&Task{})) })
+			previous := DB
+			DB = db
+			t.Cleanup(func() { DB = previous })
+
+			task := &Task{
+				TaskID: "task_refund",
+				Status: TaskStatusFailure,
+				Quota:  3000,
+				PrivateData: TaskPrivateData{
+					TokenId:   7,
+					Execution: &TaskExecutionSnapshot{RequestID: "req-1"},
+				},
+			}
+			require.NoError(t, db.Create(task).Error)
+
+			require.NoError(t, task.MarkRefunded(3000))
+
+			var stored Task
+			require.NoError(t, db.First(&stored, task.ID).Error)
+			assert.Zero(t, stored.Quota)
+			assert.Equal(t, 3000, stored.PrivateData.RefundedQuota)
+			assert.Equal(t, 7, stored.PrivateData.TokenId)
+			require.NotNil(t, stored.PrivateData.Execution)
+			assert.Equal(t, "req-1", stored.PrivateData.Execution.RequestID)
+		})
+	}
 }
