@@ -49,6 +49,14 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }))
 
+vi.mock('@/features/wallet/components/quick-topup-dialog', () => ({
+  QuickTopupDialog: (props: { shortfallUSD: number; returnPage: string }) => (
+    <div role='dialog' aria-label='Quick top-up'>
+      {`${props.shortfallUSD} ${props.returnPage}`}
+    </div>
+  ),
+}))
+
 vi.mock('../api', () => ({
   uploadVideoAsset: vi.fn(),
   createVideoTask: vi.fn(),
@@ -418,7 +426,7 @@ describe('Composer', () => {
 })
 
 describe('Composer balance check', () => {
-  it('shows the shortfall with a top-up link and blocks submission when the wallet falls short', async () => {
+  it('offers an in-place top-up instead of submitting when the wallet falls short', async () => {
     studioBalance.shortfallUSD = 0.5
     const user = userEvent.setup()
     render(<Composer onSubmitted={vi.fn()} />)
@@ -429,16 +437,29 @@ describe('Composer balance check', () => {
 
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Insufficient balance')
+    const button = screen.getByRole('button', { name: 'Top up and generate' })
+    expect(button).toBeEnabled()
+    await user.click(button)
     expect(
-      within(alert).getByRole('link', { name: 'Go to top up' })
-    ).toHaveAttribute('href', '/wallet')
-    const button = screen.getByRole('button', { name: 'Generate video' })
-    expect(button).toBeDisabled()
+      screen.getByRole('dialog', { name: 'Quick top-up' })
+    ).toHaveTextContent('0.5 studio')
+    expect(createMock).not.toHaveBeenCalled()
+  })
+
+  it('opens the same top-up from the shortfall notice', async () => {
+    studioBalance.shortfallUSD = 0.5
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
     await user.type(
       screen.getByRole('textbox', { name: 'Video prompt' }),
-      '{Enter}'
+      'a cat runs'
     )
-    expect(createMock).not.toHaveBeenCalled()
+    await user.click(
+      within(screen.getByRole('alert')).getByRole('button', {
+        name: 'Go to top up',
+      })
+    )
+    expect(screen.getByRole('dialog', { name: 'Quick top-up' })).toBeVisible()
   })
 
   it('keeps the generate button enabled without a shortfall notice when the balance covers the cost', () => {

@@ -20,6 +20,7 @@ import i18next from 'i18next'
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
+import { getSelf } from '@/lib/api'
 import { handleServerError } from '@/lib/handle-server-error'
 import { createServerError } from '@/lib/server-error-message'
 
@@ -42,6 +43,7 @@ import {
   redirectToPaymentPage,
   submitPaymentForm,
 } from '../lib'
+import { rememberTopupStart } from '../lib/topup-return'
 import type { AmountRequest, AmountResponse } from '../types'
 
 // ============================================================================
@@ -132,9 +134,18 @@ export function usePayment() {
 
   // Process payment
   const processPayment = useCallback(
-    async (topupAmount: number, paymentType: string) => {
+    async (
+      topupAmount: number,
+      paymentType: string,
+      returnPage: 'wallet' | 'studio' = 'wallet'
+    ) => {
       try {
         setProcessing(true)
+        // The return page compares the balance with this one.
+        const self = await getSelf().catch(() => null)
+        if (typeof self?.data?.quota === 'number') {
+          rememberTopupStart(self.data.quota)
+        }
 
         const isStripe = isStripePayment(paymentType)
         const amount = Math.floor(topupAmount)
@@ -165,6 +176,7 @@ export function usePayment() {
           ? await requestStripePayment({
               amount,
               payment_method: 'stripe',
+              return_page: returnPage,
             })
           : await requestPayment({
               amount,

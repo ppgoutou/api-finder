@@ -40,6 +40,7 @@ let taskRequests: string[]
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.localStorage.setItem('overview:view', 'developer')
   useSystemConfigStore.setState(useSystemConfigStore.getInitialState(), true)
   useAuthStore.getState().auth.setUser({
     id: 1,
@@ -112,6 +113,34 @@ async function renderOverview() {
   )
 }
 
+describe('overview views', () => {
+  it('opens on the creator view and remembers the developer view once picked', async () => {
+    window.localStorage.removeItem('overview:view')
+    const user = userEvent.setup()
+    await renderOverview()
+
+    expect(
+      await screen.findByRole('textbox', {
+        name: 'What do you want to make today?',
+      })
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: 'Setup guide' })
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'API development' }))
+    expect(
+      await screen.findByRole('button', { name: 'Setup guide' })
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('textbox', {
+        name: 'What do you want to make today?',
+      })
+    ).not.toBeInTheDocument()
+    expect(window.localStorage.getItem('overview:view')).toBe('developer')
+  })
+})
+
 describe('overview setup guide', () => {
   it('shows usage first and only a header entry when setup is complete', async () => {
     await renderOverview()
@@ -138,7 +167,7 @@ describe('overview setup guide', () => {
     await renderOverview()
     const toggle = await screen.findByRole('button', { name: 'Setup guide' })
 
-    await user.tab()
+    act(() => toggle.focus())
     expect(toggle).toHaveFocus()
     await user.keyboard('{Enter}')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
@@ -255,10 +284,9 @@ describe('overview setup guide', () => {
       'href',
       '/wallet'
     )
-    expect(screen.getByRole('link', { name: 'Create API Key' })).toHaveAttribute(
-      'href',
-      '/keys'
-    )
+    expect(
+      screen.getByRole('link', { name: 'Create API Key' })
+    ).toHaveAttribute('href', '/keys')
     await screen.findByText('No videos yet')
     expect(taskRequests).toHaveLength(1)
     expect(taskRequests[0]).toContain('page_size=6')

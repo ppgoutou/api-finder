@@ -21,6 +21,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '@/components/ui/button'
 import { VIP_SURFACE, VIP_TEXT } from '@/features/membership/lib/vip-style'
 import { VIDEO_PRICE_FRACTION_DIGITS } from '@/features/pricing/lib/video-pricing'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
@@ -32,6 +33,8 @@ interface StudioCostProps {
   price: StudioPrice | null
   /** What the fee covers, such as "720P · 5s × 2". */
   detail?: string
+  /** Opens the top-up on this page; without it the link leads to the wallet. */
+  onTopUp?: () => void
   /** How much the wallet lacks for the price in USD, or null when it is enough. */
   shortfallUSD: number | null
 }
@@ -88,12 +91,24 @@ export function StudioCost(props: StudioCostProps) {
               abbreviate: false,
             }),
           })}{' '}
-          <Link
-            to='/wallet'
-            className='font-medium underline underline-offset-2'
-          >
-            {t('Go to top up')}
-          </Link>
+          {props.onTopUp ? (
+            <Button
+              type='button'
+              variant='link'
+              size='inline'
+              className='text-destructive font-medium underline underline-offset-2'
+              onClick={props.onTopUp}
+            >
+              {t('Go to top up')}
+            </Button>
+          ) : (
+            <Link
+              to='/wallet'
+              className='font-medium underline underline-offset-2'
+            >
+              {t('Go to top up')}
+            </Link>
+          )}
         </span>
       )}
     </div>

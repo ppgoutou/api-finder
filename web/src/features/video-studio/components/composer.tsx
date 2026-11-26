@@ -35,6 +35,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { QuickTopupDialog } from '@/features/wallet/components/quick-topup-dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
@@ -114,6 +115,7 @@ export function Composer(props: ComposerProps) {
   const { submit: submitVideos, submitting } = useVideoSubmit()
   const recentTasks = useRecentTasks().tasks ?? []
   const [cheapestFirst, setCheapestFirst] = useState(false)
+  const [topupOpen, setTopupOpen] = useState(false)
   const unavailable = model?.unavailable === true
   let problem = model
     ? validateDraft(draft, model)
@@ -166,7 +168,10 @@ export function Composer(props: ComposerProps) {
       toast.error(t(problem, problemParams))
       return
     }
-    if (insufficient) return
+    if (insufficient) {
+      setTopupOpen(true)
+      return
+    }
     const request = buildVideoRequest(draft)
     const created = await submitVideos(request, draft.count, props.onSubmitted)
     if (created > 0) markDraftSubmitted('video', userId, draft.prompt)
@@ -258,246 +263,257 @@ export function Composer(props: ComposerProps) {
     : undefined
 
   return (
-    <ComposerCard
-      prompt={draft.prompt}
-      guide={guide}
-      hintId={hintId}
-      hasContent={draft.prompt !== '' || assets.length > 0}
-      restoredAt={studio.restoredAt}
-      drafts={<RecentDrafts kind='video' onRestore={studio.restore} />}
-      saved={studio.stored}
-      onClear={studio.clear}
-      onFiles={addFiles}
-      header={
-        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
-          <ToggleGroup
-            aria-label={t('Mode')}
-            value={[draft.mode]}
-            onValueChange={(values: string[]) => {
-              if (values[0]) studio.update({ mode: values[0] as StudioMode })
-            }}
-            spacing={1}
-            className='flex-wrap'
-          >
-            {modes.map((mode) => (
-              <ToggleGroupItem
-                key={mode.value}
-                value={mode.value}
-                className='data-[pressed]:bg-brand-soft data-[pressed]:text-primary dark:data-[pressed]:bg-primary/20 text-body-sm gap-1.5 px-2.5'
-              >
-                {mode.icon}
-                {mode.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          <span className='text-muted-foreground ml-auto px-1 text-xs max-lg:hidden'>
-            {modes.find((mode) => mode.value === draft.mode)?.hint}
-          </span>
-        </div>
-      }
-      files={
-        <>
-          {draft.mode === 'reference' && (
-            <ReferenceUsage
-              references={draft.references}
-              limits={limits}
-              switchTo={
-                roomier
-                  ? {
-                      label: roomier.label ?? roomier.name,
-                      onSwitch: () => studio.update({ model: roomier.name }),
-                    }
-                  : undefined
-              }
-              onRemoveExtra={() => {
-                for (const asset of excessReferences(
-                  draft.references,
-                  limits
-                )) {
-                  studio.removeReference(asset)
-                }
-              }}
-            />
-          )}
-          <FileProblems assets={assets} />
-        </>
-      }
-      toolbar={
-        <>
-          {model && (
-            <ChoiceMenu
-              label={t('Model')}
-              value={draft.model}
-              defaultOpen={props.pickModel}
-              toggle={{
-                label: t('Cheapest first'),
-                checked: cheapestFirst,
-                onChange: setCheapestFirst,
-              }}
-              options={modelOptions.map(({ option, price: optionPrice }) => ({
-                value: option.name,
-                label: option.label ?? option.name,
-                group: cheapestFirst ? undefined : option.group,
-                icon: <Film className='size-3.5' aria-hidden />,
-                description: describeModel(option),
-                detail: optionPrice
-                  ? t('{{unit}}/s', { unit: optionPrice.unitLabel })
-                  : undefined,
-                unavailableLabel: option.unavailable
-                  ? t('Temporarily unavailable')
-                  : undefined,
-              }))}
-              onChange={(name) => studio.update({ model: name })}
-            />
-          )}
-          {model && isMobile && (
-            <ParamsPopover
-              draft={draft}
-              model={model}
-              onChange={studio.update}
-            />
-          )}
-          {model && !isMobile && (
-            <>
-              <ChoiceMenu
-                label={t('Aspect ratio')}
-                value={draft.ratio}
-                options={model.ratios.map((ratio) => ({
-                  value: ratio,
-                  label: ratioLabel(ratio),
-                  icon: (
-                    <RectangleHorizontal className='size-3.5' aria-hidden />
-                  ),
-                }))}
-                onChange={(ratio) => studio.update({ ratio })}
-              />
-              <ChoiceMenu
-                label={t('Resolution')}
-                value={draft.resolution}
-                options={model.resolutions.map((resolution) => ({
-                  value: resolution,
-                  label: resolution.toUpperCase(),
-                  icon: <Maximize className='size-3.5' aria-hidden />,
-                }))}
-                onChange={(resolution) => studio.update({ resolution })}
-              />
-              <ChoiceMenu
-                label={t('Video duration')}
-                value={String(draft.seconds)}
-                options={studioDurations(model).map((seconds) => ({
-                  value: String(seconds),
-                  label: t('{{seconds}}s', { seconds }),
-                  icon: <Clock className='size-3.5' aria-hidden />,
-                }))}
-                onChange={(seconds) =>
-                  studio.update({ seconds: Number(seconds) })
-                }
-              />
-              <ChoiceMenu
-                label={t('Number of videos')}
-                value={String(draft.count)}
-                options={Array.from(
-                  { length: STUDIO_MAX_COUNT },
-                  (_, index) => ({
-                    value: String(index + 1),
-                    label: t('{{count}} video(s)', { count: index + 1 }),
-                    icon: <Copy className='size-3.5' aria-hidden />,
-                  })
-                )}
-                onChange={(count) => studio.update({ count: Number(count) })}
-              />
-            </>
-          )}
-        </>
-      }
-      action={
-        <>
-          <StudioCost
-            price={price}
-            detail={costDetail}
-            shortfallUSD={balance.shortfallUSD}
-          />
-          <Button
-            type='button'
-            size='xl'
-            className='max-md:flex-1'
-            onClick={submit}
-            disabled={submitting || insufficient || unavailable}
-            title={problem ? t(problem, problemParams) : t('Generate video')}
-          >
-            {submitting ? (
-              <Spinner className='size-4' />
-            ) : (
-              <Clapperboard aria-hidden />
-            )}
-            {t('Generate video')}
-          </Button>
-        </>
-      }
-      notice={
-        model &&
-        unavailable && (
-          <UnavailableModelNotice
-            reason={model.unavailableReason}
-            replacement={replacementModel(models, model)?.name}
-            onSwitch={(name) => studio.update({ model: name })}
-          />
-        )
-      }
-    >
-      {draft.mode === 'reference' && (
-        <ReferencePanel
-          references={draft.references}
-          onAddFiles={addFiles}
-          onRemove={studio.removeReference}
-        />
-      )}
-      {(draft.mode === 'image' || draft.mode === 'frames') && (
-        <FramePanel
-          withLastFrame={draft.mode === 'frames'}
-          firstFrame={draft.firstFrame}
-          lastFrame={draft.lastFrame}
-          onSetFrame={setFrame}
-          onRemoveFrame={studio.removeFrame}
-        />
-      )}
-      <PromptInput
-        value={draft.prompt}
-        onChange={(prompt) => studio.update({ prompt })}
-        mentions={
-          draft.mode === 'reference'
-            ? labelReferences(draft.references).map(({ asset, token }) => ({
-                token,
-                fileName: asset.fileName,
-                preview:
-                  asset.kind === 'audio'
-                    ? undefined
-                    : { kind: asset.kind, url: asset.previewUrl },
-              }))
-            : []
-        }
-        placeholder={
-          draft.mode === 'frames'
-            ? t(
-                'Describe how the video moves from the first frame to the last frame.'
-              )
-            : t('Describe the video you want to create')
-        }
-        placeholderExample={
-          draft.mode === 'reference'
-            ? t(
-                'Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.',
-                {
-                  video: localizeMentions('@视频1', language).slice(1),
-                  image: localizeMentions('@图片1', language).slice(1),
-                }
-              )
-            : undefined
-        }
-        describedBy={composerHintIds(hintId)}
-        onSubmit={submit}
+    <>
+      <ComposerCard
+        prompt={draft.prompt}
         guide={guide}
-      />
-    </ComposerCard>
+        hintId={hintId}
+        hasContent={draft.prompt !== '' || assets.length > 0}
+        restoredAt={studio.restoredAt}
+        drafts={<RecentDrafts kind='video' onRestore={studio.restore} />}
+        saved={studio.stored}
+        onClear={studio.clear}
+        onFiles={addFiles}
+        header={
+          <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
+            <ToggleGroup
+              aria-label={t('Mode')}
+              value={[draft.mode]}
+              onValueChange={(values: string[]) => {
+                if (values[0]) studio.update({ mode: values[0] as StudioMode })
+              }}
+              spacing={1}
+              className='flex-wrap'
+            >
+              {modes.map((mode) => (
+                <ToggleGroupItem
+                  key={mode.value}
+                  value={mode.value}
+                  className='data-[pressed]:bg-brand-soft data-[pressed]:text-primary dark:data-[pressed]:bg-primary/20 text-body-sm gap-1.5 px-2.5'
+                >
+                  {mode.icon}
+                  {mode.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            <span className='text-muted-foreground ml-auto px-1 text-xs max-lg:hidden'>
+              {modes.find((mode) => mode.value === draft.mode)?.hint}
+            </span>
+          </div>
+        }
+        files={
+          <>
+            {draft.mode === 'reference' && (
+              <ReferenceUsage
+                references={draft.references}
+                limits={limits}
+                switchTo={
+                  roomier
+                    ? {
+                        label: roomier.label ?? roomier.name,
+                        onSwitch: () => studio.update({ model: roomier.name }),
+                      }
+                    : undefined
+                }
+                onRemoveExtra={() => {
+                  for (const asset of excessReferences(
+                    draft.references,
+                    limits
+                  )) {
+                    studio.removeReference(asset)
+                  }
+                }}
+              />
+            )}
+            <FileProblems assets={assets} />
+          </>
+        }
+        toolbar={
+          <>
+            {model && (
+              <ChoiceMenu
+                label={t('Model')}
+                value={draft.model}
+                defaultOpen={props.pickModel}
+                toggle={{
+                  label: t('Cheapest first'),
+                  checked: cheapestFirst,
+                  onChange: setCheapestFirst,
+                }}
+                options={modelOptions.map(({ option, price: optionPrice }) => ({
+                  value: option.name,
+                  label: option.label ?? option.name,
+                  group: cheapestFirst ? undefined : option.group,
+                  icon: <Film className='size-3.5' aria-hidden />,
+                  description: describeModel(option),
+                  detail: optionPrice
+                    ? t('{{unit}}/s', { unit: optionPrice.unitLabel })
+                    : undefined,
+                  unavailableLabel: option.unavailable
+                    ? t('Temporarily unavailable')
+                    : undefined,
+                }))}
+                onChange={(name) => studio.update({ model: name })}
+              />
+            )}
+            {model && isMobile && (
+              <ParamsPopover
+                draft={draft}
+                model={model}
+                onChange={studio.update}
+              />
+            )}
+            {model && !isMobile && (
+              <>
+                <ChoiceMenu
+                  label={t('Aspect ratio')}
+                  value={draft.ratio}
+                  options={model.ratios.map((ratio) => ({
+                    value: ratio,
+                    label: ratioLabel(ratio),
+                    icon: (
+                      <RectangleHorizontal className='size-3.5' aria-hidden />
+                    ),
+                  }))}
+                  onChange={(ratio) => studio.update({ ratio })}
+                />
+                <ChoiceMenu
+                  label={t('Resolution')}
+                  value={draft.resolution}
+                  options={model.resolutions.map((resolution) => ({
+                    value: resolution,
+                    label: resolution.toUpperCase(),
+                    icon: <Maximize className='size-3.5' aria-hidden />,
+                  }))}
+                  onChange={(resolution) => studio.update({ resolution })}
+                />
+                <ChoiceMenu
+                  label={t('Video duration')}
+                  value={String(draft.seconds)}
+                  options={studioDurations(model).map((seconds) => ({
+                    value: String(seconds),
+                    label: t('{{seconds}}s', { seconds }),
+                    icon: <Clock className='size-3.5' aria-hidden />,
+                  }))}
+                  onChange={(seconds) =>
+                    studio.update({ seconds: Number(seconds) })
+                  }
+                />
+                <ChoiceMenu
+                  label={t('Number of videos')}
+                  value={String(draft.count)}
+                  options={Array.from(
+                    { length: STUDIO_MAX_COUNT },
+                    (_, index) => ({
+                      value: String(index + 1),
+                      label: t('{{count}} video(s)', { count: index + 1 }),
+                      icon: <Copy className='size-3.5' aria-hidden />,
+                    })
+                  )}
+                  onChange={(count) => studio.update({ count: Number(count) })}
+                />
+              </>
+            )}
+          </>
+        }
+        action={
+          <>
+            <StudioCost
+              price={price}
+              detail={costDetail}
+              shortfallUSD={balance.shortfallUSD}
+              onTopUp={() => setTopupOpen(true)}
+            />
+            <Button
+              type='button'
+              size='xl'
+              className='max-md:flex-1'
+              onClick={submit}
+              disabled={submitting || unavailable}
+              title={problem ? t(problem, problemParams) : t('Generate video')}
+            >
+              {submitting ? (
+                <Spinner className='size-4' />
+              ) : (
+                <Clapperboard aria-hidden />
+              )}
+              {insufficient ? t('Top up and generate') : t('Generate video')}
+            </Button>
+          </>
+        }
+        notice={
+          model &&
+          unavailable && (
+            <UnavailableModelNotice
+              reason={model.unavailableReason}
+              replacement={replacementModel(models, model)?.name}
+              onSwitch={(name) => studio.update({ model: name })}
+            />
+          )
+        }
+      >
+        {draft.mode === 'reference' && (
+          <ReferencePanel
+            references={draft.references}
+            onAddFiles={addFiles}
+            onRemove={studio.removeReference}
+          />
+        )}
+        {(draft.mode === 'image' || draft.mode === 'frames') && (
+          <FramePanel
+            withLastFrame={draft.mode === 'frames'}
+            firstFrame={draft.firstFrame}
+            lastFrame={draft.lastFrame}
+            onSetFrame={setFrame}
+            onRemoveFrame={studio.removeFrame}
+          />
+        )}
+        <PromptInput
+          value={draft.prompt}
+          onChange={(prompt) => studio.update({ prompt })}
+          mentions={
+            draft.mode === 'reference'
+              ? labelReferences(draft.references).map(({ asset, token }) => ({
+                  token,
+                  fileName: asset.fileName,
+                  preview:
+                    asset.kind === 'audio'
+                      ? undefined
+                      : { kind: asset.kind, url: asset.previewUrl },
+                }))
+              : []
+          }
+          placeholder={
+            draft.mode === 'frames'
+              ? t(
+                  'Describe how the video moves from the first frame to the last frame.'
+                )
+              : t('Describe the video you want to create')
+          }
+          placeholderExample={
+            draft.mode === 'reference'
+              ? t(
+                  'Type @ to mention an uploaded file, e.g. use the motion of @{{video}} and the character in @{{image}}.',
+                  {
+                    video: localizeMentions('@视频1', language).slice(1),
+                    image: localizeMentions('@图片1', language).slice(1),
+                  }
+                )
+              : undefined
+          }
+          describedBy={composerHintIds(hintId)}
+          onSubmit={submit}
+          guide={guide}
+        />
+      </ComposerCard>
+      {topupOpen && (
+        <QuickTopupDialog
+          open
+          onOpenChange={setTopupOpen}
+          shortfallUSD={balance.shortfallUSD}
+          returnPage='studio'
+        />
+      )}
+    </>
   )
 }

@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Main } from '@/components/layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { QuickTopupDialog } from '@/features/wallet/components/quick-topup-dialog'
+import { TopupReturnNotice } from '@/features/wallet/components/topup-return-notice'
 import { PX_SHOW_LINKS_ENABLED, pxShowUrl } from '@/lib/partner-links'
 import { useAuthStore } from '@/stores/auth-store'
 import { useStudioHandoff } from '@/stores/studio-handoff-store'
@@ -59,13 +61,19 @@ export function VideoStudio() {
   const handoff = useStudioHandoff((state) => state.handoff)
   const setHandoff = useStudioHandoff((state) => state.set)
   // A work another page sent here for editing; that page already asked.
-  const [edited, setEdited] = useState<EditedWork | null>(() =>
-    handoff ? { ...handoff, key: 1 } : null
-  )
+  const [edited, setEdited] = useState<EditedWork | null>(() => {
+    if (!handoff) return null
+    // Before the composer saves the work over it, the draft goes aside.
+    if (wouldLoseDraft(handoff.kind, userId, handoff.draft.prompt)) {
+      keepDraftAside(handoff.kind, userId)
+    }
+    return { ...handoff, key: 1 }
+  })
   const [replacing, setReplacing] = useState<Omit<EditedWork, 'key'> | null>(
     null
   )
   const [worksTab, setWorksTab] = useState<WorksTab>('mine')
+  const [topupOpen, setTopupOpen] = useState(false)
   const composerRef = useRef<HTMLElement>(null)
   const worksRef = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -89,7 +97,10 @@ export function VideoStudio() {
     setWorksTab('mine')
     // After the new cards are drawn.
     requestAnimationFrame(() =>
-      worksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      worksRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
     )
   }
   const editedDraft = edited?.kind === kind ? edited : null
@@ -117,6 +128,28 @@ export function VideoStudio() {
                 {t('Making a multi-shot short drama? Try our partner PX Show')}
                 <ArrowUpRight className='size-3.5 shrink-0' aria-hidden />
               </a>
+            )}
+            {search.topup && (
+              <div className='w-full max-w-5xl'>
+                <TopupReturnNotice
+                  status={search.topup}
+                  keptNote={t('Your draft is still here.')}
+                  onRetry={() => setTopupOpen(true)}
+                  onDismiss={() =>
+                    navigate({
+                      search: (previous) => ({ ...previous, topup: undefined }),
+                      replace: true,
+                    })
+                  }
+                />
+              </div>
+            )}
+            {topupOpen && (
+              <QuickTopupDialog
+                open
+                onOpenChange={setTopupOpen}
+                returnPage='studio'
+              />
             )}
             <Tabs
               value={kind}

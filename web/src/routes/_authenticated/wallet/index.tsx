@@ -23,6 +23,8 @@ import { Wallet } from '@/features/wallet'
 
 const walletSearchSchema = z.object({
   show_history: z.boolean().optional(),
+  /** Set by the payment page on the way back. */
+  topup: z.enum(['success', 'cancelled']).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/wallet/')({
@@ -31,6 +33,6 @@ export const Route = createFileRoute('/_authenticated/wallet/')({
 })
 
 function RouteComponent() {
-  const { show_history } = Route.useSearch()
-  return <Wallet initialShowHistory={show_history} />
+  const { show_history, topup } = Route.useSearch()
+  return <Wallet initialShowHistory={show_history} topupReturn={topup} />
 }

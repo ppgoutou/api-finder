@@ -33,6 +33,14 @@ const studioBalance = vi.hoisted(() => ({
   shortfallUSD: null as number | null,
 }))
 
+vi.mock('@/features/wallet/components/quick-topup-dialog', () => ({
+  QuickTopupDialog: (props: { shortfallUSD: number; returnPage: string }) => (
+    <div role='dialog' aria-label='Quick top-up'>
+      {`${props.shortfallUSD} ${props.returnPage}`}
+    </div>
+  ),
+}))
+
 vi.mock('../api', () => ({
   uploadVideoAsset: vi.fn(),
   generateImages: vi.fn(),
@@ -269,23 +277,22 @@ describe('ImageComposer', () => {
     ).toBeInTheDocument()
   })
 
-  it('blocks generation and links to top-up when the wallet falls short', async () => {
+  it('opens an in-place top-up instead of generating when the wallet falls short', async () => {
     studioBalance.shortfallUSD = 0.2
     const user = userEvent.setup()
     render(<ImageComposer />)
     await user.type(
       screen.getByRole('textbox', { name: 'Image prompt' }),
-      'a red fox{Enter}'
+      'a red fox'
     )
 
     expect(screen.getByRole('alert')).toHaveTextContent('Insufficient balance')
-    expect(screen.getByRole('link', { name: 'Go to top up' })).toHaveAttribute(
-      'href',
-      '/wallet'
-    )
+    const button = screen.getByRole('button', { name: 'Top up and generate' })
+    expect(button).toBeEnabled()
+    await user.click(button)
     expect(
-      screen.getByRole('button', { name: 'Generate image' })
-    ).toBeDisabled()
+      screen.getByRole('dialog', { name: 'Quick top-up' })
+    ).toHaveTextContent('0.2 studio')
     expect(generateMock).not.toHaveBeenCalled()
   })
 })

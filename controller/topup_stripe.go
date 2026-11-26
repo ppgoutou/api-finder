@@ -38,6 +38,33 @@ type StripePayRequest struct {
 	// CancelURL is the optional custom URL to redirect when payment is canceled.
 	// If empty, defaults to the server's console topup page.
 	CancelURL string `json:"cancel_url,omitempty"`
+	// ReturnPage names the console page the payment was started from, so the
+	// user comes back there. Unknown names fall back to the wallet.
+	ReturnPage string `json:"return_page,omitempty"`
+}
+
+// stripeReturnPaths are where Stripe sends the user back, per console page;
+// the page reads the topup parameter to confirm the credit or the cancel.
+var stripeReturnPaths = map[string][2]string{
+	"wallet": {"/wallet?topup=success", "/wallet?topup=cancelled"},
+	"studio": {"/video-studio?topup=success", "/video-studio?topup=cancelled"},
+}
+
+// stripeReturnURLs are the success and cancel addresses of a payment: the
+// custom ones when given, else those of the page it was started from.
+func stripeReturnURLs(req *StripePayRequest) (string, string) {
+	paths, ok := stripeReturnPaths[req.ReturnPage]
+	if !ok {
+		paths = stripeReturnPaths["wallet"]
+	}
+	successURL, cancelURL := req.SuccessURL, req.CancelURL
+	if successURL == "" {
+		successURL = paymentReturnPath(paths[0])
+	}
+	if cancelURL == "" {
+		cancelURL = paymentReturnPath(paths[1])
+	}
+	return successURL, cancelURL
 }
 
 type StripeAdaptor struct {
@@ -133,7 +160,8 @@ func (*StripeAdaptor) RequestPay(c *gin.Context, req *StripePayRequest) {
 	reference := fmt.Sprintf("new-api-ref-%d-%d-%s", user.Id, time.Now().UnixMilli(), randstr.String(4))
 	referenceId := "ref_" + common.Sha1([]byte(reference))
 
-	payLink, err := genStripeLink(referenceId, user.StripeCustomer, user.Email, lineItem, req.SuccessURL, req.CancelURL)
+	successURL, cancelURL := stripeReturnURLs(req)
+	payLink, err := genStripeLink(referenceId, user.StripeCustomer, user.Email, lineItem, successURL, cancelURL)
 	if err != nil {
 		logger.LogError(c.Request.Context(), common.LogText("Stripe failed to create Checkout Session user_id=%d trade_no=%s amount=%d error=%q", id, referenceId, req.Amount, err.Error()))
 		paymentError(c, common.NewMessage("Failed to start payment"))
@@ -474,14 +502,6 @@ func genStripeLink(referenceId string, customerId string, email string, lineItem
 	}
 
 	stripe.Key = setting.StripeApiSecret
-
-	// Use custom URLs if provided, otherwise use defaults
-	if successURL == "" {
-		successURL = paymentReturnPath("/usage-logs")
-	}
-	if cancelURL == "" {
-		cancelURL = paymentReturnPath("/wallet")
-	}
 
 	params := &stripe.CheckoutSessionParams{
 		ClientReferenceID:   stripe.String(referenceId),
