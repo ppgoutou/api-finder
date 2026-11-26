@@ -115,14 +115,15 @@ func TestShareCardFollowsVersionQuery(t *testing.T) {
 		return fmt.Sprintf(`<meta property="og:image" content="https://video.example.com/share-card-v%d.jpg" />`, n)
 	}
 
-	for n := 1; n <= 10; n++ {
+	for n := 1; n <= len(seoShareCards); n++ {
 		page := getBody(t, engine, fmt.Sprintf("/pricing?v=%d", n))
 		assert.Contains(t, page, imageTag(n))
 		assert.Contains(t, page, fmt.Sprintf(`<meta property="og:url" content="https://video.example.com/pricing?v=%d" />`, n))
 		// Search engines keep one copy of the page.
 		assert.Contains(t, page, `<link rel="canonical" href="https://video.example.com/pricing" />`)
 	}
-	for _, query := range []string{"", "?v=0", "?v=-1", "?v=11", "?v=abc", "?v=99999999999999999999"} {
+	past := fmt.Sprintf("?v=%d", len(seoShareCards)+1)
+	for _, query := range []string{"", "?v=0", "?v=-1", past, "?v=abc", "?v=99999999999999999999"} {
 		page := getBody(t, engine, "/pricing"+query)
 		assert.Contains(t, page, imageTag(1), query)
 		assert.Contains(t, page, `<meta property="og:url" content="https://video.example.com/pricing" />`, query)
