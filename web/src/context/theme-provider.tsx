@@ -20,7 +20,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from 'react'
@@ -49,6 +49,11 @@ type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
   resetTheme: () => void
+  /**
+   * Show a page in one theme whatever the visitor chose, without saving it;
+   * null gives the page back the visitor's choice.
+   */
+  setForcedTheme: (theme: ResolvedTheme | null) => void
 }
 
 const initialState: ThemeProviderState = {
@@ -57,6 +62,7 @@ const initialState: ThemeProviderState = {
   theme: DEFAULT_THEME,
   setTheme: () => null,
   resetTheme: () => null,
+  setForcedTheme: () => null,
 }
 
 const ThemeContext = createContext<ThemeProviderState>(initialState)
@@ -81,16 +87,18 @@ export function ThemeProvider({
   const [theme, _setTheme] = useState<Theme>(() =>
     readThemePreference(storageKey, THEMES, defaultTheme)
   )
+  const [forcedTheme, setForcedTheme] = useState<ResolvedTheme | null>(null)
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     resolveTheme(theme)
   )
 
-  useEffect(() => {
+  // Before paint, so a page that forces a theme does not flash the other one.
+  useLayoutEffect(() => {
     const root = window.document.documentElement
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
     const applyTheme = () => {
-      const nextResolvedTheme = theme === 'system' ? getSystemTheme() : theme
+      const nextResolvedTheme = forcedTheme ?? resolveTheme(theme)
       root.classList.remove('light', 'dark')
       root.classList.add(nextResolvedTheme)
       setResolvedTheme(nextResolvedTheme)
@@ -101,7 +109,7 @@ export function ThemeProvider({
     mediaQuery.addEventListener('change', applyTheme)
 
     return () => mediaQuery.removeEventListener('change', applyTheme)
-  }, [theme])
+  }, [theme, forcedTheme])
 
   const setTheme = useCallback(
     (theme: Theme) => {
@@ -123,6 +131,7 @@ export function ThemeProvider({
       resetTheme,
       theme,
       setTheme,
+      setForcedTheme,
     }),
     [defaultTheme, resolvedTheme, resetTheme, theme, setTheme]
   )

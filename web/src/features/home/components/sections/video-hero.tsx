@@ -50,6 +50,11 @@ export function VideoHero(props: VideoHeroProps) {
 
   return (
     <section className='relative z-10 px-6 pt-24 pb-10 md:pt-32 md:pb-14'>
+      {/* A soft brand light behind the headline. */}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[42rem] bg-[radial-gradient(45%_40%_at_50%_30%,color-mix(in_oklab,var(--brand)_32%,transparent),transparent_70%)]'
+      />
       <div className='mx-auto flex max-w-6xl flex-col items-center gap-6 text-center'>
         <p className='landing-animate-fade-up border-brand/20 bg-brand-soft text-brand-hover dark:text-brand-on-dark inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium opacity-0'>
           <span className='bg-brand size-1.5 rounded-full' aria-hidden />
@@ -60,9 +65,7 @@ export function VideoHero(props: VideoHeroProps) {
           style={{ animationDelay: '60ms' }}
         >
           {t('Turn one sentence into')}{' '}
-          <span className='text-brand dark:text-brand-on-dark'>
-            {t('cinematic video')}
-          </span>
+          <span className='cinema-shimmer'>{t('cinematic video')}</span>
         </h1>
         <p
           className='landing-animate-fade-up text-muted-foreground max-w-2xl text-base leading-relaxed opacity-0 md:text-lg'
@@ -115,7 +118,7 @@ export function VideoHero(props: VideoHeroProps) {
         className='landing-animate-fade-up border-border/60 bg-ink shadow-ink/20 relative mx-auto mt-12 max-w-5xl overflow-hidden rounded-2xl border opacity-0 shadow-2xl'
         style={{ animationDelay: '240ms' }}
       >
-        <div className='relative aspect-video'>
+        <div className='cinema-shutter relative aspect-video overflow-hidden'>
           <ShowcaseVideo
             key={hero.video}
             src={hero.video}
@@ -123,6 +126,7 @@ export function VideoHero(props: VideoHeroProps) {
             label={hero.title || t('Video preview')}
             eager
             soundToggle
+            className='cinema-push'
           />
           {hero.spec && (
             <span className='bg-ink/70 absolute top-3 left-3 rounded-md px-2.5 py-1 font-mono text-xs text-white/90'>
