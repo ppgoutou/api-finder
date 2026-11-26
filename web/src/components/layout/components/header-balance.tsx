@@ -24,8 +24,14 @@ import { Button } from '@/components/ui/button'
 import { useStudioBalance } from '@/features/video-studio/hooks/use-studio-balance'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 
-/** The wallet balance in the header, leading to the wallet. */
-export function HeaderBalance(props: { className?: string }) {
+/**
+ * The wallet balance in the header, leading to the wallet. Compact drops the
+ * icon to fit a phone's header.
+ */
+export function HeaderBalance(props: {
+  className?: string
+  compact?: boolean
+}) {
   const { t } = useTranslation()
   const balance = useStudioBalance(null)
   if (balance.quota === null) return null
@@ -38,13 +44,13 @@ export function HeaderBalance(props: { className?: string }) {
   return (
     <Button
       variant='outline'
-      size='sm'
+      size={props.compact ? 'xs' : 'sm'}
       className={props.className}
       nativeButton={false}
       render={<Link to='/wallet' />}
       aria-label={t('Balance {{amount}}, open the wallet', { amount })}
     >
-      <Wallet aria-hidden />
+      {!props.compact && <Wallet aria-hidden />}
       <span className='tabular-nums'>{amount}</span>
     </Button>
   )

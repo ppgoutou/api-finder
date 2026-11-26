@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "Your draft is saved and comes back after you pay.",
     "Your draft is still here.": "Your draft is still here.",
     "about {{count}} videos": "about {{count}} videos",
-    "{{amount}} arrived. Balance {{balance}}": "{{amount}} arrived. Balance {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "{{amount}} arrived. Balance {{balance}}",
+    "Refunded {{amount}}": "Refunded {{amount}}",
+    "Copy request ID": "Copy request ID"
   }
 }

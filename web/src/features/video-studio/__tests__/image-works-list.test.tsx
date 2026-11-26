@@ -336,6 +336,23 @@ describe('ImageWorksList image tasks', () => {
     ).toBeInTheDocument()
   })
 
+  it('tells what a failed image task gave back and offers its request ID', async () => {
+    serveTasks(
+      imageTask({
+        status: 'FAILURE',
+        fail_reason: 'Video generation failed',
+        refunded_quota: 250000,
+        request_id: 'req-9',
+      })
+    )
+    renderList()
+
+    expect(await screen.findByText(/^Refunded \$0\.5/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Copy request ID' })
+    ).toBeInTheDocument()
+  })
+
   it('says the image could not be loaded when its task lists none', async () => {
     serveTasks(imageTask())
     serveImages()

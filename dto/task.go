@@ -61,6 +61,10 @@ type TaskDto struct {
 	// MediaExpiresAt is when the owner is told the video or image stops being
 	// available (Unix seconds); 0 while that is not known yet.
 	MediaExpiresAt int64 `json:"media_expires_at,omitempty"`
+	// RefundedQuota is what a failed task gave back; RequestID is the submit
+	// request's ID, which the owner quotes to support.
+	RefundedQuota int    `json:"refunded_quota,omitempty"`
+	RequestID     string `json:"request_id,omitempty"`
 	// ImageURL and ThumbnailURL are the CDN addresses of a web console image
 	// this site stored. Only its owner's task list carries them.
 	ImageURL     string          `json:"image_url,omitempty"`

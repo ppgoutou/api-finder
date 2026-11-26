@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "草稿已保存，付款后会自动回来。",
     "Your draft is still here.": "草稿还在。",
     "about {{count}} videos": "约 {{count}} 条视频",
-    "{{amount}} arrived. Balance {{balance}}": "{{amount}} 已到账，余额 {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "{{amount}} 已到账，余额 {{balance}}",
+    "Refunded {{amount}}": "已退回 {{amount}}",
+    "Copy request ID": "复制请求 ID"
   }
 }

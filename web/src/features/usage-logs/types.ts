@@ -367,6 +367,10 @@ export interface TaskLog {
   image_url?: string
   thumbnail_url?: string
   fail_reason?: string
+  // Failed tasks: what was given back, in quota units.
+  refunded_quota?: number
+  // The submit request's ID, which the owner quotes to support.
+  request_id?: string
   // Admin views only: what the task's owner sees instead of `fail_reason`.
   user_fail_reason?: string
   status: string // NOT_START, SUBMITTED, IN_PROGRESS, SUCCESS, FAILURE, QUEUED, UNKNOWN

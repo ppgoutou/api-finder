@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "Черновик сохранён и вернётся после оплаты.",
     "Your draft is still here.": "Черновик на месте.",
     "about {{count}} videos": "около {{count}} видео",
-    "{{amount}} arrived. Balance {{balance}}": "Зачислено {{amount}}. Баланс {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "Зачислено {{amount}}. Баланс {{balance}}",
+    "Refunded {{amount}}": "Возвращено {{amount}}",
+    "Copy request ID": "Скопировать ID запроса"
   }
 }

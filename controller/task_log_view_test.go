@@ -50,6 +50,8 @@ func TestTaskLogDTOSeparatesUserAdminAndRootDetails(t *testing.T) {
 	assert.Empty(t, userView.Platform)
 	assert.Zero(t, userView.ChannelId)
 	assert.Nil(t, userView.Data)
+	// The owner quotes the request ID to support.
+	assert.Equal(t, "request-public", userView.RequestID)
 	assert.Equal(t, model.Properties{Input: "a prompt", OriginModelName: "public-model"}, userView.Properties)
 
 	adminView := tasksToDto([]*model.Task{task}, false, common.RoleAdminUser)[0]
@@ -123,16 +125,18 @@ func TestTaskLogDTOReplacesLegacyVideoURLWithAvailabilityFlag(t *testing.T) {
 
 func TestTaskLogDTOKeepsFailureReasonAndDoesNotMarkPluginTaskLegacy(t *testing.T) {
 	failed := &model.Task{
-		TaskID:     "task_failed",
-		Platform:   "jimeng",
-		Action:     constant.TaskActionTextToVideo,
-		Status:     model.TaskStatusFailure,
-		FailReason: "provider rejected the request",
+		TaskID:      "task_failed",
+		Platform:    "jimeng",
+		Action:      constant.TaskActionTextToVideo,
+		Status:      model.TaskStatusFailure,
+		FailReason:  "provider rejected the request",
+		PrivateData: model.TaskPrivateData{RefundedQuota: 250000},
 	}
 	failedView := tasksToDto([]*model.Task{failed}, false, common.RoleCommonUser)[0]
 	assert.Equal(t, usererror.ClassifyFailReason("provider rejected the request").Key(), failedView.FailReason)
 	assert.Empty(t, failedView.UserFailReason)
 	assert.False(t, failedView.LegacyVideoAvailable)
+	assert.Equal(t, 250000, failedView.RefundedQuota)
 
 	adminView := tasksToDto([]*model.Task{failed}, false, common.RoleAdminUser)[0]
 	assert.Equal(t, "provider rejected the request", adminView.FailReason)

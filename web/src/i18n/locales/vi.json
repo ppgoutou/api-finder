@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "Bản nháp đã lưu và sẽ quay lại sau khi thanh toán.",
     "Your draft is still here.": "Bản nháp vẫn còn.",
     "about {{count}} videos": "khoảng {{count}} video",
-    "{{amount}} arrived. Balance {{balance}}": "Đã cộng {{amount}}. Số dư {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "Đã cộng {{amount}}. Số dư {{balance}}",
+    "Refunded {{amount}}": "Đã hoàn {{amount}}",
+    "Copy request ID": "Sao chép ID yêu cầu"
   }
 }

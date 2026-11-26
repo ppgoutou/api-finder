@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "下書きは保存され、支払い後に戻ります。",
     "Your draft is still here.": "下書きはそのままです。",
     "about {{count}} videos": "動画 約 {{count}} 本",
-    "{{amount}} arrived. Balance {{balance}}": "{{amount}} が入金されました。残高 {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "{{amount}} が入金されました。残高 {{balance}}",
+    "Refunded {{amount}}": "{{amount}} を返金済み",
+    "Copy request ID": "リクエスト ID をコピー"
   }
 }

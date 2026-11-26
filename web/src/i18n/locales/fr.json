@@ -8839,6 +8839,8 @@
     "Your draft is saved and comes back after you pay.": "Votre brouillon est enregistré et revient après le paiement.",
     "Your draft is still here.": "Votre brouillon est toujours là.",
     "about {{count}} videos": "environ {{count}} vidéos",
-    "{{amount}} arrived. Balance {{balance}}": "{{amount}} crédités. Solde {{balance}}"
+    "{{amount}} arrived. Balance {{balance}}": "{{amount}} crédités. Solde {{balance}}",
+    "Refunded {{amount}}": "Remboursé {{amount}}",
+    "Copy request ID": "Copier l'ID de requête"
   }
 }

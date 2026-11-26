@@ -145,6 +145,9 @@ type TaskPrivateData struct {
 	// StoredMedia is this site's own copy of the task's media, written after
 	// the task succeeds. Nil until a copy has been attempted.
 	StoredMedia *TaskStoredMedia `json:"stored_media,omitempty"`
+	// RefundedQuota is what a failed task gave back to its owner, kept after
+	// Quota is cleared so the owner can be told the amount.
+	RefundedQuota int `json:"refunded_quota,omitempty"`
 }
 
 // TaskStoredMedia records where a task's video was copied in this site's
@@ -247,7 +250,7 @@ func (p TaskPrivateData) Value() (driver.Value, error) {
 		p.Execution == nil && p.BillingSource == "" && p.SubscriptionId == 0 &&
 		p.TokenId == 0 && p.NodeName == "" && p.BillingContext == nil &&
 		!p.ResponsesBackground && len(p.PluginState) == 0 && p.PollFailures == 0 &&
-		!p.ResultDiscarded && p.StoredMedia == nil {
+		!p.ResultDiscarded && p.StoredMedia == nil && p.RefundedQuota == 0 {
 		return nil, nil
 	}
 	// 同 Properties.Value:string 避免 PG simple protocol 的 bytea 编码。
@@ -693,6 +696,17 @@ func (Task *Task) Update() error {
 
 func (t *Task) UpdateQuota() error {
 	return DB.Model(t).Update("quota", t.Quota).Error
+}
+
+// MarkRefunded clears the quota a refund gave back and records the amount
+// for the owner, in one write.
+func (t *Task) MarkRefunded(refunded int) error {
+	t.Quota = 0
+	t.PrivateData.RefundedQuota = refunded
+	return DB.Model(t).Updates(map[string]any{
+		"quota":        0,
+		"private_data": t.PrivateData,
+	}).Error
 }
 
 // UpdateWithStatus performs a conditional UPDATE guarded by fromStatus (CAS).

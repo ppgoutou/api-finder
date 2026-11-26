@@ -133,6 +133,7 @@ export function AppHeader({
           {showProfileDropdown && (
             <>
               <HeaderBalance className='max-sm:hidden' />
+              <HeaderBalance compact className='sm:hidden' />
               <VipHeaderChip className='max-sm:hidden' />
               <VipHeaderChip compact className='sm:hidden' />
               <ProfileDropdown />
