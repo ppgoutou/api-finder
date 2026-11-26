@@ -22,7 +22,10 @@ import {
   STUDIO_IMAGE_WORKS_KEY,
   STUDIO_IMAGE_WORKS_LIMIT,
 } from '@/features/video-studio/constants'
-import type { StudioImage } from '@/features/video-studio/types'
+import type {
+  ImageGenerationRequest,
+  StudioImage,
+} from '@/features/video-studio/types'
 
 function storeWorks(works: StudioImage[]) {
   try {
@@ -53,11 +56,25 @@ export interface PendingImages {
   startedAt: number
 }
 
+/** An image request that failed, kept as a card to retry. */
+export interface FailedImages {
+  id: string
+  request: ImageGenerationRequest
+  /** Why it failed, as shown to the user. */
+  reason: string
+  /** Unix seconds. */
+  failedAt: number
+}
+
 interface ImageWorksState {
   works: StudioImage[]
   pending: PendingImages[]
   startGenerating: (request: PendingImages) => void
   stopGenerating: (id: string) => void
+  /** Failed requests of this page, newest first; not kept across visits. */
+  failed: FailedImages[]
+  addFailed: (failed: FailedImages[]) => void
+  removeFailed: (id: string) => void
   add: (images: StudioImage[]) => void
   remove: (id: string) => void
 }
@@ -71,6 +88,13 @@ interface ImageWorksState {
 export const useStudioImageWorks = create<ImageWorksState>((set) => ({
   works: readStoredWorks(),
   pending: [],
+  failed: [],
+  addFailed: (failed) =>
+    set((state) => ({ failed: [...failed, ...state.failed] })),
+  removeFailed: (id) =>
+    set((state) => ({
+      failed: state.failed.filter((request) => request.id !== id),
+    })),
   startGenerating: (request) =>
     set((state) => ({ pending: [request, ...state.pending] })),
   stopGenerating: (id) =>

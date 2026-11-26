@@ -18,6 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
+import { SUPPORT_TELEGRAM } from '@/features/home/lib/video-home'
+
 import { useUnixNow } from '../hooks/use-expiring-works'
 import {
   formatElapsed,
@@ -39,6 +41,8 @@ export function WorkProgress(props: {
   typical: number | null
   /** Reference image shown blurred behind the progress. */
   backdrop?: string
+  /** Ratio the video was asked for, such as 9:16, to outline its shape. */
+  ratio?: string
   compact?: boolean
 }) {
   const { t } = useTranslation()
@@ -58,6 +62,8 @@ export function WorkProgress(props: {
   if (progress.slow) {
     hint = t('Taking longer than usual. A failure is refunded automatically.')
   }
+  const [width, height] = (props.ratio ?? '').split(':').map(Number)
+  const portrait = width > 0 && height > width
 
   return (
     <div
@@ -70,6 +76,14 @@ export function WorkProgress(props: {
           alt=''
           aria-hidden
           className='absolute inset-0 size-full scale-110 object-cover opacity-50 blur-xl'
+        />
+      )}
+      {portrait && (
+        // The shape of the video on its way, inside the landscape card.
+        <span
+          aria-hidden
+          className='absolute inset-y-2 left-1/2 -translate-x-1/2 rounded-md border border-white/40'
+          style={{ aspectRatio: `${width} / ${height}` }}
         />
       )}
       <div className='relative flex flex-col gap-1.5 text-xs'>
@@ -90,7 +104,24 @@ export function WorkProgress(props: {
             />
           )}
         </div>
-        {!props.compact && <span className='text-white/85'>{hint}</span>}
+        {!props.compact && (
+          <span className='text-white/85'>
+            {hint}
+            {progress.slow && (
+              <>
+                {' '}
+                <a
+                  href={`https://t.me/${SUPPORT_TELEGRAM}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='font-medium text-white underline underline-offset-2'
+                >
+                  {t('Contact support')}
+                </a>
+              </>
+            )}
+          </span>
+        )}
       </div>
     </div>
   )

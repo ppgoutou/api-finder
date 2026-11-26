@@ -45,7 +45,12 @@ describe('studio cost', () => {
   it('shows the VIP price as a link to top up beside the estimate for a standard member', () => {
     render(
       <StudioCost
-        price={{ label: '¥1.00', costUSD: 0.15, vipLabel: '¥0.85' }}
+        price={{
+          label: '¥1.00',
+          costUSD: 0.15,
+          vipLabel: '¥0.85',
+          unitLabel: '¥0.20',
+        }}
         shortfallUSD={null}
       />
     )
@@ -60,7 +65,12 @@ describe('studio cost', () => {
   it('shows only the estimate when there is no VIP price to offer', () => {
     render(
       <StudioCost
-        price={{ label: '¥0.85', costUSD: 0.12, vipLabel: null }}
+        price={{
+          label: '¥0.85',
+          costUSD: 0.12,
+          vipLabel: null,
+          unitLabel: '¥0.17',
+        }}
         shortfallUSD={null}
       />
     )

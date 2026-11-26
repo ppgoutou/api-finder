@@ -87,7 +87,11 @@ export function WorksList(props: {
   loadMore?: boolean
   /** Up to six small cards per row, as on the dashboard. */
   compact?: boolean
-  onEdit?: (draft: Partial<StudioDraft>) => void
+  /** With pickModel, the composer opens its model menu. */
+  onEdit?: (draft: Partial<StudioDraft>, pickModel?: boolean) => void
+  /** The state filter, when the page above controls it. */
+  filter?: WorkFilter
+  onFilterChange?: (filter: WorkFilter) => void
 }) {
   const { t, i18n } = useTranslation()
   const firstPageSize = props.limit ?? WORKS_PAGE_SIZE
@@ -107,7 +111,9 @@ export function WorksList(props: {
   const [regenerating, setRegenerating] = useState<VideoTaskRequest | null>(
     null
   )
-  const [filter, setFilter] = useState<WorkFilter>('all')
+  const [ownFilter, setOwnFilter] = useState<WorkFilter>('all')
+  const filter = props.filter ?? ownFilter
+  const setFilter = props.onFilterChange ?? setOwnFilter
   const [search, setSearch] = useState('')
   const works = useQuery({
     queryKey: [...STUDIO_WORKS_QUERY_KEY, 'video', pageSize],
@@ -164,12 +170,12 @@ export function WorksList(props: {
   const viewedIndex = playable.findIndex(({ task }) => task.task_id === viewing)
   const viewed = playable.at(viewedIndex)
 
-  const editAction = (text: WorkText) => {
+  const editAction = (text: WorkText, pickModel = false) => {
     const draft = editDraftOf(text)
     if (!props.onEdit || Object.keys(draft).length === 0) return undefined
     return () => {
       setViewing(null)
-      props.onEdit?.(draft)
+      props.onEdit?.(draft, pickModel)
     }
   }
   const regenerateAction = (text: WorkText) => {
@@ -238,6 +244,7 @@ export function WorksList(props: {
                 stage={video.taskId ? 'queued' : 'submitting'}
                 startedAt={video.startedAt}
                 typical={typicalSeconds(loaded, video.request.model)}
+                ratio={video.request.ratio}
                 backdrop={
                   video.request.first_image_url ?? video.request.images?.[0]
                 }
@@ -256,6 +263,7 @@ export function WorksList(props: {
             compact={props.compact}
             onOpen={() => setViewing(task.task_id)}
             onEdit={editAction(text)}
+            onChangeModel={editAction(text, true)}
             onRegenerate={regenerateAction(text)}
             onDelete={() => setDeleting(task.task_id)}
           />

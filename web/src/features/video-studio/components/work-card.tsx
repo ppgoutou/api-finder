@@ -21,6 +21,7 @@ import {
   History,
   PencilLine,
   RotateCw,
+  Shuffle,
   Trash2,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -30,7 +31,7 @@ import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
-import { formatTimestamp } from '@/lib/format'
+import { formatLogQuota, formatTimestamp } from '@/lib/format'
 import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
@@ -122,6 +123,8 @@ export function WorkCard(props: {
   compact?: boolean
   onOpen: () => void
   onEdit?: () => void
+  /** Loads the work into the composer with its model menu open. */
+  onChangeModel?: () => void
   onRegenerate?: () => void
   onDelete: () => void
 }) {
@@ -138,6 +141,7 @@ export function WorkCard(props: {
       startedAt={task.submit_time}
       typical={props.typical}
       backdrop={text.request?.first_image_url ?? text.request?.images?.[0]}
+      ratio={text.request?.ratio}
       compact={props.compact}
     />
   )
@@ -191,7 +195,14 @@ export function WorkCard(props: {
     <WorkFrame
       media={media}
       title={text.title}
-      meta={[text.spec, formatTimestamp(task.submit_time)].join(' · ')}
+      meta={[
+        text.spec,
+        formatTimestamp(task.submit_time),
+        // A failed work is refunded, so its charge would mislead.
+        succeeded && task.quota ? formatLogQuota(task.quota) : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       compact={props.compact}
       actions={
         <>
@@ -205,6 +216,12 @@ export function WorkCard(props: {
             <Button variant='outline' size='sm' onClick={props.onRegenerate}>
               <RotateCw aria-hidden />
               {failed ? t('Retry') : t('Generate again')}
+            </Button>
+          )}
+          {failed && props.onChangeModel && !props.compact && (
+            <Button variant='outline' size='sm' onClick={props.onChangeModel}>
+              <Shuffle aria-hidden />
+              {t('Try another model')}
             </Button>
           )}
           {failed && !props.compact && (

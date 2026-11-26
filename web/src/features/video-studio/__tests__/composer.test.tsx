@@ -59,7 +59,11 @@ vi.mock('../hooks/use-studio-models', () => ({
 }))
 
 vi.mock('../hooks/use-studio-price', () => ({
-  useStudioPricer: () => () => ({ label: '¥0.75', costUSD: 0.11 }),
+  useStudioPricer: () => () => ({
+    label: '¥0.75',
+    costUSD: 0.11,
+    unitLabel: '¥0.15',
+  }),
 }))
 
 vi.mock('../hooks/use-studio-balance', () => ({
@@ -258,9 +262,9 @@ describe('Composer', () => {
     expect(
       screen.getAllByRole('menuitemradio').map((item) => item.textContent)
     ).toEqual([
-      'seedance-2.04–15s · up to 4K¥0.75',
-      'seedance-2.54–30s · up to 1080P¥0.75',
-      'seedance2.0-720p-P5–15s · up to 720P¥0.75',
+      'seedance-2.04–15s · up to 4K¥0.15/s',
+      'seedance-2.54–30s · up to 1080P¥0.15/s',
+      'seedance2.0-720p-P5–15s · up to 720P¥0.15/s',
     ])
     await user.click(
       screen.getByRole('menuitemradio', { name: /^seedance2.0-720p-P/ })
@@ -616,7 +620,7 @@ describe('Composer modes', () => {
     await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
     expect(createMock.mock.calls[0][0]).not.toHaveProperty('images')
     await user.click(
-      screen.getByRole('button', { name: 'Reference generation' })
+      screen.getByRole('button', { name: 'All-in-one reference' })
     )
     expect(screen.getByText('@Image1')).toBeInTheDocument()
   })
@@ -803,5 +807,74 @@ describe('Composer submission', () => {
     await waitFor(() =>
       expect(useStudioPending.getState().videos).toHaveLength(0)
     )
+  })
+})
+
+describe('Composer recent drafts and model choice', () => {
+  it('says the draft came back from an earlier visit until it is changed', async () => {
+    const user = userEvent.setup()
+    const view = render(<Composer onSubmitted={vi.fn()} />)
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video prompt' }),
+      'a cat runs'
+    )
+    view.unmount()
+
+    render(<Composer onSubmitted={vi.fn()} />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /^Restored your draft from/
+    )
+    await user.type(screen.getByRole('textbox', { name: 'Video prompt' }), '!')
+
+    expect(screen.queryByText(/^Restored your draft from/)).toBeNull()
+    expect(screen.getByText('Draft saved')).toBeInTheDocument()
+  })
+
+  it('brings back a cleared draft from Recent drafts', async () => {
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    const prompt = screen.getByRole('textbox', { name: 'Video prompt' })
+    await user.type(prompt, 'a cat runs')
+    await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+    await user.click(screen.getByRole('button', { name: 'Recent drafts' }))
+    await user.click(screen.getByRole('menuitem', { name: /a cat runs/ }))
+
+    expect(prompt).toHaveValue('a cat runs')
+  })
+
+  it('spells out the fee as the price of a second times the length and count', () => {
+    render(<Composer onSubmitted={vi.fn()} />)
+
+    expect(screen.getByText('≈ ¥0.15/s × 5s × 1')).toBeInTheDocument()
+  })
+
+  it('offers a model that takes all the files when the picked one does not', async () => {
+    studioModels.current = [
+      {
+        ...studioModels.current[0],
+        referenceLimits: { image: 1, video: 0, audio: 0 },
+      },
+      { ...studioModels.current[1], name: 'roomy-model' },
+    ]
+    const user = userEvent.setup()
+    render(<Composer onSubmitted={vi.fn()} />)
+    dropFiles([png('cat.png'), png('dog.png')])
+    await screen.findByText('Image 2/1')
+
+    await user.click(
+      screen.getByRole('button', { name: 'Switch to roomy-model' })
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Model: roomy-model' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Image 2/9')).toBeInTheDocument()
+  })
+
+  it('opens the model menu when asked to try another model', () => {
+    render(<Composer onSubmitted={vi.fn()} pickModel />)
+
+    expect(screen.getAllByRole('menuitemradio')).toHaveLength(3)
   })
 })

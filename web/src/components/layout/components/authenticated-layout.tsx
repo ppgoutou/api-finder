@@ -21,6 +21,7 @@ import { SkipToMain } from '@/components/skip-to-main'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { LayoutProvider } from '@/context/layout-provider'
 import { SearchProvider } from '@/context/search-provider'
+import { StudioTaskTray } from '@/features/video-studio/components/studio-task-tray'
 import { StudioTaskWatcher } from '@/features/video-studio/components/studio-task-watcher'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
@@ -46,6 +47,7 @@ export function AuthenticatedLayout(props: AuthenticatedLayoutProps) {
         >
           <SkipToMain />
           <StudioTaskWatcher />
+          <StudioTaskTray />
           <AppHeader />
           <div className='flex min-h-0 w-full flex-1'>
             <AppSidebar />

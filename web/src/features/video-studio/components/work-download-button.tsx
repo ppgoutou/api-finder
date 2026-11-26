@@ -26,13 +26,32 @@ import { useSegmentedDownload } from '@/hooks/use-segmented-download'
 export function WorkDownloadButton(props: {
   url: string
   filename: string
-  /** Accessible name while idle. */
+  /** Accessible name while idle; also the text of the block button. */
   label: string
+  /** A full-width button with its label instead of a corner icon. */
+  block?: boolean
 }) {
   const { t } = useTranslation()
   const download = useSegmentedDownload(props.url, props.filename)
   const busy = download.percent !== null
 
+  if (props.block) {
+    return (
+      <Button
+        size='lg'
+        className='w-full tabular-nums'
+        nativeButton={false}
+        render={<a href={props.url} download={props.filename} />}
+        onClick={download.onClick}
+        aria-busy={busy}
+      >
+        <Download aria-hidden />
+        {busy
+          ? t('Downloading {{percent}}%', { percent: download.percent })
+          : props.label}
+      </Button>
+    )
+  }
   return (
     <Button
       variant='secondary'

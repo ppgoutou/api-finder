@@ -32,9 +32,14 @@ import type { TaskLog } from '@/features/usage-logs/types'
 import { createAppQueryClient } from '@/lib/query-client'
 import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
+import { generateImages } from '../api'
 import { ImageWorksList } from '../components/image-works-list'
 import { STUDIO_IMAGE_WORKS_KEY } from '../constants'
 
+vi.mock('../api', () => ({
+  generateImages: vi.fn(),
+  deleteTaskPrompt: vi.fn(),
+}))
 vi.mock('@/features/usage-logs/api', () => ({
   getUserTaskLogs: vi.fn(),
   getTaskArtifacts: vi.fn(),
@@ -111,7 +116,7 @@ async function confirmDelete() {
 
 beforeEach(() => {
   window.localStorage.clear()
-  useStudioImageWorks.setState({ works: [], pending: [] })
+  useStudioImageWorks.setState({ works: [], pending: [], failed: [] })
   serveTasks()
   serveImages('image-1')
 })
@@ -391,5 +396,37 @@ describe('ImageWorksList image tasks', () => {
     expect(
       screen.queryByRole('button', { name: 'Load more' })
     ).not.toBeInTheDocument()
+  })
+})
+
+describe('ImageWorksList failed requests', () => {
+  it('sends a failed request again on Retry and drops it on Dismiss', async () => {
+    const request = {
+      model: 'plugin-image',
+      prompt: 'a red fox',
+      n: 1,
+      response_format: 'url' as const,
+    }
+    useStudioImageWorks.setState({
+      failed: [
+        { id: 'f1', request, reason: 'Busy', failedAt: 1 },
+        { id: 'f2', request, reason: 'Busy', failedAt: 1 },
+      ],
+    })
+    vi.mocked(generateImages).mockResolvedValue([
+      { url: 'https://cdn.example/a.png' },
+    ])
+    const user = userEvent.setup()
+    renderList()
+
+    const retries = await screen.findAllByRole('button', { name: 'Retry' })
+    await user.click(retries[0])
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+
+    expect(generateImages).toHaveBeenCalledWith(request)
+    await waitFor(() =>
+      expect(useStudioImageWorks.getState().works).toHaveLength(1)
+    )
+    expect(useStudioImageWorks.getState().failed).toEqual([])
   })
 })

@@ -22,11 +22,13 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -52,6 +54,14 @@ interface ChoiceMenuProps<T extends string> {
   }[]
   /** Shown after the label on the trigger. */
   triggerDetail?: string
+  /** Opens the menu when it first shows, such as to pick another model. */
+  defaultOpen?: boolean
+  /** A switch under the options, such as how they are sorted. */
+  toggle?: {
+    label: string
+    checked: boolean
+    onChange: (checked: boolean) => void
+  }
   onChange: (value: T) => void
 }
 
@@ -67,7 +77,7 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
     else sections.push({ group, options: [option] })
   }
   return (
-    <DropdownMenu>
+    <DropdownMenu defaultOpen={props.defaultOpen}>
       <DropdownMenuTrigger
         render={
           <Button
@@ -144,6 +154,17 @@ export function ChoiceMenu<T extends string>(props: ChoiceMenuProps<T>) {
             </DropdownMenuGroup>
           ))}
         </DropdownMenuRadioGroup>
+        {props.toggle && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={props.toggle.checked}
+              onCheckedChange={props.toggle.onChange}
+            >
+              {props.toggle.label}
+            </DropdownMenuCheckboxItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

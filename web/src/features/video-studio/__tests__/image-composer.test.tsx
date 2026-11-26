@@ -96,7 +96,7 @@ const generateMock = vi.mocked(generateImages)
 beforeEach(() => {
   studioBalance.shortfallUSD = null
   window.localStorage.clear()
-  useStudioImageWorks.setState({ works: [], pending: [] })
+  useStudioImageWorks.setState({ works: [], pending: [], failed: [] })
   vi.mocked(getUserTaskLogs).mockResolvedValue({
     data: { items: [], total: 0 },
   } as never)
@@ -222,10 +222,10 @@ describe('ImageComposer', () => {
       await screen.findByRole('img', { name: 'a red fox' })
     ).toBeInTheDocument()
     expect(screen.queryByText('Generating')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('article')).toHaveLength(1)
     await waitFor(() =>
       expect(useStudioImageWorks.getState().pending).toHaveLength(0)
     )
+    expect(screen.getAllByRole('article')).toHaveLength(1)
   })
 
   it('shows a waiting card per image at once and takes the next request meanwhile', async () => {

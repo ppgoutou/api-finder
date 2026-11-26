@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber } from '@/lib/format'
+import { formatNumber, formatTimestamp } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import { ASSET_RETENTION_DAYS } from '../constants'
@@ -56,6 +56,10 @@ interface ComposerCardProps {
   hintId: string
   /** Whether there is anything to clear. */
   hasContent: boolean
+  /** Unix seconds of a draft brought back from an earlier visit. */
+  restoredAt?: number
+  /** The recent drafts menu. */
+  drafts?: ReactNode
   /** Whether this browser keeps the draft. */
   saved: boolean
   onClear: () => void
@@ -126,14 +130,22 @@ export function ComposerCard(props: ComposerCardProps) {
       </div>
       <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-2.5 text-xs'>
         {props.files}
-        {props.hasContent && (
-          <span className='ml-auto inline-flex items-center gap-3'>
-            {props.saved && (
-              <span className='text-success inline-flex items-center gap-1'>
-                <Check className='size-3.5' aria-hidden />
-                {t('Draft saved')}
-              </span>
-            )}
+        <span className='ml-auto inline-flex items-center gap-3'>
+          {props.hasContent && props.restoredAt && (
+            <span role='status'>
+              {t('Restored your draft from {{time}}', {
+                time: formatTimestamp(props.restoredAt),
+              })}
+            </span>
+          )}
+          {props.hasContent && !props.restoredAt && props.saved && (
+            <span className='text-success inline-flex items-center gap-1'>
+              <Check className='size-3.5' aria-hidden />
+              {t('Draft saved')}
+            </span>
+          )}
+          {props.drafts}
+          {props.hasContent && (
             <Button
               type='button'
               variant='ghost'
@@ -142,8 +154,8 @@ export function ComposerCard(props: ComposerCardProps) {
             >
               {t('Clear')}
             </Button>
-          </span>
-        )}
+          )}
+        </span>
       </div>
       <div className='bg-muted/60 rounded-b-[15px] border-t px-3 pt-2 pb-2.5'>
         <div className='flex flex-wrap items-center gap-1'>

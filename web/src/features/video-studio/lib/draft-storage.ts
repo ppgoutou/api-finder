@@ -50,12 +50,19 @@ interface StoredDraft {
   size?: string
   /** Prompt of the last submission, which is safe to replace. */
   submittedPrompt?: string
+  /** Unix seconds of the last change. */
+  savedAt?: number
 }
+
+/** Drafts put aside, newest first, to bring back. */
+const RECENT_DRAFTS_LIMIT = 5
 
 /** A draft back from storage, with the image size it was saved with. */
 export interface SavedDraft {
   draft: StudioDraft
   size?: string
+  /** Unix seconds of the last change, when known. */
+  savedAt?: number
 }
 
 /** Drafts are kept per account, so accounts sharing a browser never mix. */
@@ -63,17 +70,48 @@ function storageKey(kind: StudioKind, userId: number | undefined) {
   return `video-studio:draft:${kind}:${userId ?? 'guest'}`
 }
 
+function recentKey(kind: StudioKind, userId: number | undefined) {
+  return `video-studio:recent-drafts:${kind}:${userId ?? 'guest'}`
+}
+
+function isStoredDraft(value: unknown): value is StoredDraft {
+  if (!value || typeof value !== 'object') return false
+  const stored = value as StoredDraft
+  return typeof stored.prompt === 'string' && Array.isArray(stored.references)
+}
+
 function readStored(kind: StudioKind, userId?: number): StoredDraft | null {
   try {
     const raw = window.localStorage.getItem(storageKey(kind, userId))
     const parsed: unknown = raw ? JSON.parse(raw) : null
-    if (!parsed || typeof parsed !== 'object') return null
-    const stored = parsed as StoredDraft
-    return typeof stored.prompt === 'string' && Array.isArray(stored.references)
-      ? stored
-      : null
+    return isStoredDraft(parsed) ? parsed : null
   } catch {
     return null
+  }
+}
+
+function readRecent(kind: StudioKind, userId?: number): StoredDraft[] {
+  try {
+    const raw = window.localStorage.getItem(recentKey(kind, userId))
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.filter(isStoredDraft) : []
+  } catch {
+    return []
+  }
+}
+
+function writeRecent(
+  kind: StudioKind,
+  userId: number | undefined,
+  drafts: StoredDraft[]
+) {
+  try {
+    window.localStorage.setItem(
+      recentKey(kind, userId),
+      JSON.stringify(drafts.slice(0, RECENT_DRAFTS_LIMIT))
+    )
+  } catch {
+    // Storage may be full or blocked; the draft is not kept aside then.
   }
 }
 
@@ -137,6 +175,7 @@ export function saveDraft(
     lastFrame: storedAsset(draft.lastFrame),
     ...(size ? { size } : {}),
     ...(submittedPrompt ? { submittedPrompt } : {}),
+    savedAt: Math.floor(Date.now() / 1000),
   })
 }
 
@@ -150,8 +189,10 @@ export function readDraft(
   now: number
 ): SavedDraft | null {
   const stored = readStored(kind, userId)
-  if (!stored) return null
+  return stored ? restoredDraft(stored, now) : null
+}
 
+function restoredDraft(stored: StoredDraft, now: number): SavedDraft {
   let prompt = stored.prompt
   const references: StoredAsset[] = []
   const seen = { image: 0, video: 0, audio: 0 }
@@ -179,7 +220,44 @@ export function readDraft(
       lastFrame: frame(stored.lastFrame),
     },
     size: stored.size,
+    savedAt: stored.savedAt,
   }
+}
+
+/**
+ * Puts the saved draft aside among the recent drafts before it is replaced,
+ * unless it holds no prompt, was submitted already or is kept aside already.
+ */
+export function keepDraftAside(kind: StudioKind, userId: number | undefined) {
+  const stored = readStored(kind, userId)
+  const prompt = stored?.prompt.trim()
+  if (!stored || !prompt || prompt === stored.submittedPrompt) return
+  const others = readRecent(kind, userId).filter(
+    (draft) => draft.prompt.trim() !== prompt
+  )
+  writeRecent(kind, userId, [stored, ...others])
+}
+
+/** Drafts put aside, newest first, as they can be loaded again. */
+export function readRecentDrafts(
+  kind: StudioKind,
+  userId: number | undefined,
+  now: number
+): SavedDraft[] {
+  return readRecent(kind, userId).map((stored) => restoredDraft(stored, now))
+}
+
+/** Takes a draft off the recent list, once it is loaded again. */
+export function forgetRecentDraft(
+  kind: StudioKind,
+  userId: number | undefined,
+  prompt: string
+) {
+  writeRecent(
+    kind,
+    userId,
+    readRecent(kind, userId).filter((draft) => draft.prompt !== prompt)
+  )
 }
 
 /** Remembers that the prompt was submitted, so replacing it loses nothing. */

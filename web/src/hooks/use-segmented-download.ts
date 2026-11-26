@@ -48,6 +48,21 @@ function namedForType(filename: string, type: string) {
 }
 
 /**
+ * Downloads the file in parts and saves it under its name. Rejects when the
+ * server cannot serve it that way.
+ */
+export async function saveFileInParts(
+  url: string,
+  filename: string,
+  options: { signal: AbortSignal; onProgress: (percent: number) => void }
+) {
+  const blob = await downloadInParts(url, options)
+  const objectUrl = URL.createObjectURL(blob)
+  clickLink({ href: objectUrl, download: namedForType(filename, blob.type) })
+  setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_LIFETIME_MS)
+}
+
+/**
  * Click handler for a download link: a plain click downloads in parts, and any
  * failure falls back to the link itself. Modified clicks stay with the browser,
  * and leaving the page cancels a running download. `percent` is null when idle.
@@ -63,16 +78,10 @@ export function useSegmentedDownload(url: string, filename: string) {
     running.current = controller
     setPercent(0)
     try {
-      const blob = await downloadInParts(url, {
+      await saveFileInParts(url, filename, {
         signal: controller.signal,
         onProgress: setPercent,
       })
-      const objectUrl = URL.createObjectURL(blob)
-      clickLink({
-        href: objectUrl,
-        download: namedForType(filename, blob.type),
-      })
-      setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_LIFETIME_MS)
     } catch {
       // A new tab keeps this page open when the browser shows the file instead
       // of saving it.

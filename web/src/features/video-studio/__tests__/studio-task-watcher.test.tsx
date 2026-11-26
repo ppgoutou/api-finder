@@ -23,29 +23,41 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { act, render, screen } from '@testing-library/react'
-import { toast } from 'sonner'
+import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserTaskLogs } from '@/features/usage-logs/api'
 import type { TaskLog } from '@/features/usage-logs/types'
 import { createSiteTitle } from '@/lib/site-title'
 
+import { StudioTaskTray } from '../components/studio-task-tray'
 import { StudioTaskWatcher } from '../components/studio-task-watcher'
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { rememberTaskPrompt } from '../lib/prompt-history'
 
-const navigate = vi.fn()
+const router = vi.hoisted(() => ({ pathname: '/wallet' }))
 
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }))
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
+  useRouterState: (options: {
+    select: (state: { location: { pathname: string } }) => string
+  }) => options.select({ location: { pathname: router.pathname } }),
+  Link: (props: { to: string; children: ReactNode }) => (
+    <a href={props.to}>{props.children}</a>
+  ),
+}))
 vi.mock('@/features/usage-logs/api', () => ({ getUserTaskLogs: vi.fn() }))
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
-function listTask(status: string) {
+function listTask(status: string, taskId = 'task_1') {
+  const now = Math.floor(Date.now() / 1000)
   const task: Partial<TaskLog> = {
-    task_id: 'task_1',
+    task_id: taskId,
     action: 'generate',
     status,
-    submit_time: 1_790_000_000,
+    submit_time: now - 30,
+    finish_time: status === 'SUCCESS' || status === 'FAILURE' ? now : 0,
+    properties: { origin_model_name: 'm' },
   }
   vi.mocked(getUserTaskLogs).mockResolvedValue({
     data: { items: [task], total: 1 },
@@ -59,6 +71,7 @@ async function renderWatcher() {
   render(
     <QueryClientProvider client={client}>
       <StudioTaskWatcher />
+      <StudioTaskTray />
     </QueryClientProvider>
   )
   await vi.waitFor(() =>
@@ -74,7 +87,8 @@ beforeEach(() => {
   // Query results reach the component within the act() that refetches.
   notifyManager.setScheduler((callback) => callback())
   window.localStorage.clear()
-  window.history.replaceState({}, '', '/wallet')
+  window.sessionStorage.clear()
+  router.pathname = '/wallet'
   rememberTaskPrompt(
     'task_1',
     { model: 'm', prompt: 'a cat', seconds: 5, resolution: '720p' },
@@ -85,47 +99,53 @@ beforeEach(() => {
 afterEach(() => {
   notifyManager.setScheduler(defaultScheduler)
   vi.unstubAllGlobals()
-  window.history.replaceState({}, '', '/')
 })
 
-describe('StudioTaskWatcher', () => {
-  it('says on another page that a video of this browser is ready', async () => {
+describe('StudioTaskTray', () => {
+  it('shows on another page a video of this browser while it runs and once it is ready', async () => {
     listTask('IN_PROGRESS')
     const refetch = await renderWatcher()
+    const tray = screen.getByRole('region', { name: 'Your videos' })
+    expect(tray).toHaveTextContent('a cat')
+    expect(tray).toHaveTextContent('Generating')
+
     listTask('SUCCESS')
     await refetch()
 
-    expect(toast.success).toHaveBeenCalledWith(
-      'Your video is ready',
-      expect.objectContaining({ description: 'a cat' })
+    expect(tray).toHaveTextContent('Completed')
+    expect(screen.getByRole('link', { name: 'View my works' })).toHaveAttribute(
+      'href',
+      '/my-works'
     )
   })
 
-  it('stays quiet on the pages that list the works', async () => {
-    window.history.replaceState({}, '', '/video-studio')
+  it('stays closed for the videos it showed once it is closed', async () => {
     listTask('IN_PROGRESS')
     const refetch = await renderWatcher()
-    listTask('SUCCESS')
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }))
     await refetch()
 
-    expect(toast.success).not.toHaveBeenCalled()
+    expect(screen.queryByRole('region', { name: 'Your videos' })).toBeNull()
   })
 
-  it('does not announce works that were finished already, or API tasks', async () => {
-    listTask('SUCCESS')
-    const refetch = await renderWatcher()
-    await refetch()
-    expect(toast.success).not.toHaveBeenCalled()
-
-    window.localStorage.clear()
+  it('does not show on the pages that list the works', async () => {
+    router.pathname = '/my-works'
     listTask('IN_PROGRESS')
-    await refetch()
-    listTask('FAILURE')
-    await refetch()
-    expect(toast.error).not.toHaveBeenCalled()
+    await renderWatcher()
+
+    expect(screen.queryByRole('region', { name: 'Your videos' })).toBeNull()
   })
 
-  it('notifies instead while the tab is hidden and notifications are allowed', async () => {
+  it('does not show tasks submitted elsewhere, such as through the API', async () => {
+    listTask('IN_PROGRESS', 'task_api')
+    await renderWatcher()
+
+    expect(screen.queryByRole('region', { name: 'Your videos' })).toBeNull()
+  })
+})
+
+describe('StudioTaskWatcher', () => {
+  it('notifies while the tab is hidden and notifications are allowed', async () => {
     const notify = vi.fn()
     class FakeNotification {
       static permission = 'granted'
@@ -136,25 +156,51 @@ describe('StudioTaskWatcher', () => {
       close() {}
     }
     vi.stubGlobal('Notification', FakeNotification)
-    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     listTask('IN_PROGRESS')
     const refetch = await renderWatcher()
     listTask('SUCCESS')
     await refetch()
 
     expect(notify).toHaveBeenCalledWith('Your video is ready', 'a cat')
-    expect(toast.success).not.toHaveBeenCalled()
+    hidden.mockRestore()
   })
 
-  it('counts the running works in the tab title until they end', async () => {
+  it('counts the running works in the tab title, then says one is ready until the tab is seen', async () => {
     createSiteTitle(document, '/wallet').setSiteName('Acme')
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     listTask('IN_PROGRESS')
     const refetch = await renderWatcher()
     await vi.waitFor(() => expect(document.title).toBe('1 generating · Acme'))
     listTask('SUCCESS')
     await refetch()
+    expect(document.title).toBe('Video ready · Acme')
 
+    hidden.mockReturnValue(false)
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
     expect(document.title).toBe('Acme')
-    expect(screen.queryByText('1 generating')).toBeNull()
+    hidden.mockRestore()
+  })
+
+  it('does not announce works that were finished already', async () => {
+    const notify = vi.fn()
+    vi.stubGlobal(
+      'Notification',
+      class {
+        static permission = 'granted'
+        constructor() {
+          notify()
+        }
+      }
+    )
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    listTask('SUCCESS')
+    const refetch = await renderWatcher()
+    await refetch()
+
+    expect(notify).not.toHaveBeenCalled()
+    hidden.mockRestore()
   })
 })

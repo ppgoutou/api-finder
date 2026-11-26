@@ -22,7 +22,13 @@ import { useAuthStore } from '@/stores/auth-store'
 
 import { DEFAULT_DRAFT } from '../constants'
 import { removeReferenceFromPrompt } from '../lib/draft'
-import { readDraft, saveDraft } from '../lib/draft-storage'
+import {
+  forgetRecentDraft,
+  keepDraftAside,
+  readDraft,
+  saveDraft,
+  type SavedDraft,
+} from '../lib/draft-storage'
 import type { StudioAsset, StudioDraft, StudioKind } from '../types'
 
 type FrameSlot = 'first' | 'last'
@@ -67,7 +73,14 @@ export function useStudioDraft(
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- initial is read once
   }, [kind, userId, draft, size])
 
-  const clear = () =>
+  // When the draft came back from an earlier visit, until it is changed.
+  const [restoredAt, setRestoredAt] = useState(() =>
+    saved && saved.draft.prompt.trim() ? saved.savedAt : undefined
+  )
+
+  const clear = () => {
+    keepDraftAside(kind, userId)
+    setRestoredAt(undefined)
     setDraft((current) => ({
       ...current,
       prompt: '',
@@ -75,9 +88,21 @@ export function useStudioDraft(
       firstFrame: undefined,
       lastFrame: undefined,
     }))
+  }
 
-  const update = (patch: Partial<StudioDraft>) =>
+  /** Loads a recent draft, putting the current one aside. */
+  const restore = (recent: SavedDraft) => {
+    keepDraftAside(kind, userId)
+    forgetRecentDraft(kind, userId, recent.draft.prompt)
+    setRestoredAt(undefined)
+    setDraft(recent.draft)
+    if (recent.size) setSize(recent.size)
+  }
+
+  const update = (patch: Partial<StudioDraft>) => {
+    setRestoredAt(undefined)
     setDraft((current) => ({ ...current, ...patch }))
+  }
 
   const putReference = (asset: StudioAsset) => {
     if (removedIds.current.has(asset.id)) return
@@ -138,7 +163,10 @@ export function useStudioDraft(
     /** Image size kept with the draft. */
     size,
     setSize,
+    /** Unix seconds of the restored draft, until it is changed. */
+    restoredAt,
     clear,
+    restore,
     update,
     putReference,
     removeReference,

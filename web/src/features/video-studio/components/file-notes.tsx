@@ -28,6 +28,8 @@ interface ReferenceUsageProps {
   references: StudioAsset[]
   limits: Readonly<Record<AssetKind, number>>
   onRemoveExtra: () => void
+  /** A model that takes all the files, when the picked one does not. */
+  switchTo?: { label: string; onSwitch: () => void }
 }
 
 /** How many reference files the model takes and how many are added. */
@@ -63,7 +65,19 @@ export function ReferenceUsage(props: ReferenceUsageProps) {
         >
           {t('Remove the extra files')}
         </Button>
-      ) : (
+      ) : null}
+      {over && props.switchTo && (
+        <Button
+          type='button'
+          variant='link'
+          size='inline'
+          className='font-medium'
+          onClick={props.switchTo.onSwitch}
+        >
+          {t('Switch to {{model}}', { model: props.switchTo.label })}
+        </Button>
+      )}
+      {!over && (
         <span className='max-md:hidden'>{t('Drop or paste to upload')}</span>
       )}
     </span>

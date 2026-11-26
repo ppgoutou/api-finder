@@ -131,7 +131,7 @@ describe('WorksList', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Edit again' }))
 
-    expect(onEdit).toHaveBeenCalledWith({ model: 'seedance-2.0' })
+    expect(onEdit).toHaveBeenCalledWith({ model: 'seedance-2.0' }, false)
   })
 
   it('asks the server for video works only, so images never push them off the page', async () => {
@@ -470,5 +470,43 @@ describe('WorksList', () => {
     expect(
       await screen.findByRole('button', { name: 'Edit again' })
     ).toBeInTheDocument()
+  })
+})
+
+describe('WorksList failures and fees', () => {
+  it('loads a failed work with the model menu open to try another model', async () => {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: { items: [failedTask('task_1', 'seedance-2.0')] },
+    } as never)
+    const onEdit = vi.fn()
+    const user = userEvent.setup()
+    renderList(onEdit)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Try another model' })
+    )
+
+    expect(onEdit).toHaveBeenCalledWith({ model: 'seedance-2.0' }, true)
+  })
+
+  it('shows what a finished work cost, and no charge for a failed one', async () => {
+    vi.mocked(getUserTaskLogs).mockResolvedValue({
+      data: {
+        items: [
+          { ...failedTask('task_1', 'seedance-2.0'), quota: 500000 },
+          {
+            ...failedTask('task_2', 'seedance-2.0'),
+            status: 'SUCCESS',
+            fail_reason: '',
+            quota: 500000,
+          },
+        ],
+      },
+    } as never)
+    renderList(vi.fn())
+
+    const cards = await screen.findAllByRole('article')
+    expect(cards[0]).not.toHaveTextContent('$1')
+    expect(cards[1]).toHaveTextContent(/\$1/)
   })
 })

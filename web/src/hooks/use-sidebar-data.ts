@@ -85,6 +85,43 @@ export function useSidebarData(): SidebarData {
             badge:
               expiringWorks.total > 0 ? String(expiringWorks.total) : undefined,
           },
+        ],
+      },
+      {
+        id: 'personal',
+        title: t('Account'),
+        items: [
+          {
+            title: t('Overview'),
+            url: '/dashboard/overview',
+            icon: Activity,
+          },
+          {
+            title: t('Wallet'),
+            url: '/wallet',
+            icon: Wallet,
+          },
+          {
+            title: t('Billing Records'),
+            url: '/usage-logs/billing',
+            icon: Receipt,
+          },
+          {
+            title: t('Profile'),
+            url: '/profile',
+            icon: User,
+          },
+          {
+            title: t('Security & Access'),
+            url: '/security',
+            icon: ShieldCheck,
+          },
+        ],
+      },
+      {
+        id: 'general',
+        title: t('Developer'),
+        items: [
           {
             title: t('Playground'),
             url: '/playground',
@@ -94,17 +131,6 @@ export function useSidebarData(): SidebarData {
             title: t('Chat'),
             icon: MessageSquare,
             type: 'chat-presets',
-          },
-        ],
-      },
-      {
-        id: 'general',
-        title: t('General'),
-        items: [
-          {
-            title: t('Overview'),
-            url: '/dashboard/overview',
-            icon: Activity,
           },
           {
             title: t('Dashboard'),
@@ -137,32 +163,6 @@ export function useSidebarData(): SidebarData {
             activeUrls: ['/usage-logs/drawing'],
             configUrls: ['/usage-logs/drawing', '/usage-logs/task'],
             icon: ListTodo,
-          },
-        ],
-      },
-      {
-        id: 'personal',
-        title: t('Personal'),
-        items: [
-          {
-            title: t('Wallet'),
-            url: '/wallet',
-            icon: Wallet,
-          },
-          {
-            title: t('Billing Records'),
-            url: '/usage-logs/billing',
-            icon: Receipt,
-          },
-          {
-            title: t('Profile'),
-            url: '/profile',
-            icon: User,
-          },
-          {
-            title: t('Security & Access'),
-            url: '/security',
-            icon: ShieldCheck,
           },
         ],
       },

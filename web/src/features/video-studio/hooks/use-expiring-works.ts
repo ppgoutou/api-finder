@@ -93,18 +93,24 @@ export function useExpiringWorks() {
   const images = useStudioImageWorks((state) => state.works)
   const recent = useRecentTasks().tasks ?? []
   const hidden = readHiddenTasks()
-  const videos = recent.filter(
+  const videoTasks = recent.filter(
     (task) =>
       !hidden.includes(task.task_id) &&
       !isImageTask(task) &&
       taskRetention(task, now)?.state === 'expiring'
-  ).length
-  const imageCount =
-    images.filter(
-      (image) => imageRetention(image, now, recent)?.state === 'expiring'
-    ).length +
-    listedImageTasks(recent, images, hidden).filter(
-      (task) => taskRetention(task, now)?.state === 'expiring'
-    ).length
-  return { videos, images: imageCount, total: videos + imageCount }
+  )
+  const browserImages = images.filter(
+    (image) => imageRetention(image, now, recent)?.state === 'expiring'
+  )
+  const imageTasks = listedImageTasks(recent, images, hidden).filter(
+    (task) => taskRetention(task, now)?.state === 'expiring'
+  )
+  const imageCount = browserImages.length + imageTasks.length
+  return {
+    videos: videoTasks.length,
+    images: imageCount,
+    total: videoTasks.length + imageCount,
+    /** The works themselves, to download them. */
+    works: { videoTasks, browserImages, imageTasks },
+  }
 }

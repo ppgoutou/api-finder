@@ -25,6 +25,8 @@ export interface StudioHandoff {
   kind: StudioKind
   draft: Partial<StudioDraft>
   size?: string
+  /** Opens the model menu, to try the work on another model. */
+  pickModel?: boolean
 }
 
 interface StudioHandoffState {

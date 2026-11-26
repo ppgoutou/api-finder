@@ -16,7 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQueryClient } from '@tanstack/react-query'
 import {
   Copy,
   Image as ImageIcon,
@@ -30,19 +29,16 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
-import { getServerErrorMessage } from '@/lib/server-error-message'
 import { useAuthStore } from '@/stores/auth-store'
-import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 
-import { generateImages } from '../api'
 import {
   ASSET_ACCEPT,
   DEFAULT_IMAGE_SIZE,
   STUDIO_IMAGE_SIZES,
   STUDIO_MAX_IMAGE_COUNT,
-  STUDIO_WORKS_QUERY_KEY,
 } from '../constants'
 import { assetKindOf, useAssetUploader } from '../hooks/use-asset-uploader'
+import { useImageGeneration } from '../hooks/use-image-generation'
 import { useStudioBalance } from '../hooks/use-studio-balance'
 import { useStudioDraft } from '../hooks/use-studio-draft'
 import { useStudioImageModels } from '../hooks/use-studio-models'
@@ -56,7 +52,6 @@ import { markDraftSubmitted } from '../lib/draft-storage'
 import {
   buildImageRequests,
   fitPluginImageShape,
-  imageShapeLabel,
   validateImageDraft,
   type ImageDraft,
 } from '../lib/image-draft'
@@ -72,6 +67,7 @@ import { ChoiceMenu } from './choice-menu'
 import { ComposerCard } from './composer-card'
 import { FileProblems } from './file-notes'
 import { PromptInput } from './prompt-input'
+import { RecentDrafts } from './recent-drafts'
 import { ReferencePanel } from './reference-panel'
 import { StudioCost } from './studio-cost'
 import { UnavailableModelNotice } from './unavailable-model-notice'
@@ -99,11 +95,8 @@ export function ImageComposer(props: ImageComposerProps) {
     size: props.initialSize,
   })
   const models = useStudioImageModels()
-  const queryClient = useQueryClient()
-  const addWorks = useStudioImageWorks((state) => state.add)
-  const startGenerating = useStudioImageWorks((state) => state.startGenerating)
-  const stopGenerating = useStudioImageWorks((state) => state.stopGenerating)
   const upload = useAssetUploader()
+  const generate = useImageGeneration()
   // Kept as "2048x2048", or for a plugin model as "2K 16:9", "2K" or "16:9".
   const shapeParts = studio.size?.split(' ') ?? []
   const size =
@@ -166,52 +159,10 @@ export function ImageComposer(props: ImageComposerProps) {
       () => setJustSubmitted(false),
       SUBMIT_LOCK_MS
     )
-    const requests = buildImageRequests(draft, plugin)
-    const [body] = requests
-    const pendingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    startGenerating({
-      id: pendingId,
-      prompt: body.prompt,
-      model: body.model,
-      size: imageShapeLabel(body),
-      count: draft.count,
-      startedAt: Math.floor(Date.now() / 1000),
-    })
     markDraftSubmitted('image', userId, draft.prompt)
     props.onSubmitted?.()
-    try {
-      const results = await Promise.allSettled(
-        requests.map((request) => generateImages(request))
-      )
-      const images = results.flatMap((result) =>
-        result.status === 'fulfilled' ? result.value : []
-      )
-      const failed = results.find((result) => result.status === 'rejected')
-      if (failed && images.length === 0) throw failed.reason
-      const createdAt = Math.floor(Date.now() / 1000)
-      addWorks(
-        images.map((image, index) => ({
-          id: `${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-          url: image.url,
-          ...(image.thumbnailUrl ? { thumbnailUrl: image.thumbnailUrl } : {}),
-          ...(image.expiresAt ? { expiresAt: image.expiresAt } : {}),
-          ...(image.taskId ? { taskId: image.taskId } : {}),
-          prompt: body.prompt,
-          model: body.model,
-          size: imageShapeLabel(body),
-          ...(body.image ? { references: body.image } : {}),
-          createdAt,
-        }))
-      )
-      toast.success(t('Images generated; they appear below.'))
-      if (failed) throw failed.reason
-    } catch (error) {
-      toast.error(getServerErrorMessage(error, t('Image generation failed')))
-    } finally {
-      stopGenerating(pendingId)
-      void queryClient.invalidateQueries({ queryKey: STUDIO_WORKS_QUERY_KEY })
-      balance.refresh()
-    }
+    await generate(buildImageRequests(draft, plugin), draft.count)
+    balance.refresh()
   }
 
   return (
@@ -220,6 +171,8 @@ export function ImageComposer(props: ImageComposerProps) {
       guide={guide}
       hintId={hintId}
       hasContent={draft.prompt !== '' || draft.references.length > 0}
+      restoredAt={studio.restoredAt}
+      drafts={<RecentDrafts kind='image' onRestore={studio.restore} />}
       saved={studio.stored}
       onClear={studio.clear}
       onFiles={addReferences}
