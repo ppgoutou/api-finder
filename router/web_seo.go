@@ -48,7 +48,7 @@ type seoShareCard struct {
 
 // seoShareCards are the pictures a shared link can show. Adding ?v=2 to a page
 // address picks the second card, and so on; any other address shows the first.
-// Cards 5-7 and 10 carry dated prices and cards 8 and 9 measured figures (from
+// Cards 5-7, 10 and 11 carry dated prices and cards 8 and 9 measured figures (from
 // /api/perf-metrics): redraw them under new file names when those change.
 var seoShareCards = []seoShareCard{
 	{"/share-card-v1.jpg", "Turn one sentence into cinematic video: an animated swimmer waves as a shark fin surfaces at sunset"},
@@ -61,6 +61,7 @@ var seoShareCards = []seoShareCard{
 	{"/share-card-v8.jpg", "Seedance 2.5 success rate 93.5%, measured November 18 to 25, 2026. Failed videos are refunded."},
 	{"/share-card-v9.jpg", "Average Seedance 2.5 wait 7 minutes 23 seconds, measured November 18 to 25, 2026"},
 	{"/share-card-v10.jpg", "A 10-second Seedance 2.5 clip at 720p for $0.74, list price $2.31, November 2026"},
+	{"/share-card-v11.jpg", "MAGI-2 at 1080p for $0.57 per video, official price $2.40 for a 30-second clip, November 2026"},
 }
 
 var seoPages = map[string]seoPage{
