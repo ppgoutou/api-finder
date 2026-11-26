@@ -85,7 +85,8 @@ export function FilmStrip() {
               />
             )}
             <span className='from-ink/80 absolute inset-x-0 bottom-0 truncate bg-gradient-to-t to-transparent px-2.5 pt-6 pb-1.5 text-xs font-medium text-white/90'>
-              {card.title}
+              {/* The model is the spec's first part, e.g. "Seedance 2.5". */}
+              {card.spec.split('·')[0].trim()}
             </span>
           </li>
         ))}

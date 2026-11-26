@@ -72,7 +72,7 @@ describe('home film strip', () => {
     expect(screen.queryByTestId('film-strip')).toBeNull()
   })
 
-  it('shows only landscape gallery works, twice each and hidden from assistive technology', async () => {
+  it('shows only landscape gallery works, labelled with their model, twice each and hidden from assistive technology', async () => {
     mockStudioGallery(
       JSON.stringify({
         items: [
@@ -90,7 +90,7 @@ describe('home film strip', () => {
           },
           {
             title: 'Music video',
-            spec: 'Seedance 2.5 · 4:3 · 720p · 30s',
+            spec: 'Wan 3.0 · 4:3 · 720p · 30s',
             video: `${CLASSIC}.mp4`,
           },
           { title: 'No ratio', spec: 'Seedance 2.5', poster: `${WIDE}.jpg` },
@@ -103,7 +103,7 @@ describe('home film strip', () => {
     expect(strip).toHaveAttribute('aria-hidden', 'true')
     expect(
       [...strip.querySelectorAll('li')].map((item) => item.textContent)
-    ).toEqual(['Dragon rescue', 'Music video', 'Dragon rescue', 'Music video'])
+    ).toEqual(['Seedance 2.5', 'Wan 3.0', 'Seedance 2.5', 'Wan 3.0'])
     // A poster is used when set; otherwise the clip's first frame.
     expect(strip.querySelectorAll('img')[0]).toHaveAttribute(
       'src',
