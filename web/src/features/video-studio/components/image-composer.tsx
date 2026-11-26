@@ -325,6 +325,20 @@ export function ImageComposer(props: ImageComposerProps) {
               ).slice(1),
             }
           )}
+          examples={[
+            t(
+              'A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style'
+            ),
+            t(
+              'Product photo of a white sneaker on a pastel background, soft studio lighting'
+            ),
+            t(
+              'Portrait of an old fisherman with a weathered face, dramatic side light, 85mm'
+            ),
+            t(
+              'Isometric illustration of a tiny floating island with a lighthouse'
+            ),
+          ]}
           onSubmit={submit}
           label={t('Image prompt')}
           describedBy={composerHintIds(hintId)}

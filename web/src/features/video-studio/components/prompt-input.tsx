@@ -32,6 +32,7 @@ import {
   promptLength,
   type PromptGuide,
 } from '../lib/prompt-guide'
+import { TypingPlaceholder } from './typing-placeholder'
 
 /** Box and type the prompt textarea and its mention layer share. */
 const PROMPT_TEXT_BOX =
@@ -55,6 +56,11 @@ interface PromptInputProps {
   placeholder: string
   /** A smaller example line under the placeholder. */
   placeholderExample?: string
+  /**
+   * Example prompts the empty, unfocused box types out in turn after the
+   * placeholder.
+   */
+  examples?: string[]
   /** ids of the advice and counter that describe the prompt. */
   describedBy: string
   onSubmit: () => void
@@ -89,6 +95,7 @@ export function PromptInput(props: PromptInputProps) {
   // Caret position right after the "@" that opened the list.
   const [mentionAt, setMentionAt] = useState<number | null>(null)
   const [highlighted, setHighlighted] = useState(0)
+  const [focused, setFocused] = useState(false)
   const menuOpen = mentionAt !== null
   const tooLong = promptLength(props.value) > props.guide.maxLength
 
@@ -155,7 +162,14 @@ export function PromptInput(props: PromptInputProps) {
               data-testid='prompt-placeholder'
               className='text-muted-foreground'
             >
-              {props.placeholder}
+              {props.examples?.length && !focused ? (
+                <TypingPlaceholder
+                  key={[props.placeholder, ...props.examples].join('\n')}
+                  lines={[props.placeholder, ...props.examples]}
+                />
+              ) : (
+                props.placeholder
+              )}
               {props.placeholderExample && (
                 <span className='text-body-sm mt-1 block'>
                   {props.placeholderExample}
@@ -212,7 +226,11 @@ export function PromptInput(props: PromptInputProps) {
             }
           }}
           onKeyDown={handleKeyDown}
-          onBlur={() => closeMenu()}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false)
+            closeMenu()
+          }}
         />
       </div>
       {menuOpen && (

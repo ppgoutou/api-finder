@@ -518,6 +518,34 @@ export function Composer(props: ComposerProps) {
                 )
               : undefined
           }
+          examples={
+            draft.mode === 'frames'
+              ? [
+                  t(
+                    'The flower bud slowly opens into full bloom while the camera holds still'
+                  ),
+                  t(
+                    'The city turns from day to night as the lights come on one by one'
+                  ),
+                  t(
+                    'The character walks from the doorway to the window, the camera tracking alongside'
+                  ),
+                ]
+              : [
+                  t(
+                    'An orange cat runs down a neon street on a rainy night, the camera following slowly'
+                  ),
+                  t(
+                    'Aerial shot of a misty mountain lake at sunrise, the camera gliding forward'
+                  ),
+                  t(
+                    'A girl in a red coat turns and smiles in the falling snow, shallow depth of field'
+                  ),
+                  t(
+                    'Close-up of coffee poured into a glass cup, slow motion, warm morning light'
+                  ),
+                ]
+          }
           describedBy={composerHintIds(hintId)}
           onSubmit={submit}
           guide={guide}
