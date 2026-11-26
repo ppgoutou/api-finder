@@ -27,6 +27,7 @@ import (
 	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2376,4 +2377,103 @@ func TestTaskAdaptorChainsSunoBatchFetchThroughNewAPIUpstream(t *testing.T) {
 	require.Contains(t, results, "task_up_public")
 	assert.Equal(t, "SUCCESS", results["task_up_public"].TaskInfo.Status)
 	assert.Equal(t, []string{"POST /suno/submit/MUSIC", "POST /suno/fetch"}, seen)
+}
+
+func TestTaskAdaptorPublishesURLFilePlaceholders(t *testing.T) {
+	pngBytes := append([]byte("\x89PNG\r\n\x1a\n"), bytes.Repeat([]byte{1}, 32)...)
+	encoded := base64.StdEncoding.EncodeToString(pngBytes)
+	source := `
+export const meta = {apiVersion:1,key:"json-url",name:"JSON URL",version:"1.0.0",author:{name:"Test"},models:["m"],fetchMode:"per_task"};
+export function buildSubmitRequest(ctx) {
+  return {url:ctx.baseUrl+"/submit",body:{images:[
+    {__fileRef:ctx.files[0].ref,encoding:"url",mimeType:"image/png"},
+    {__fileData:"data:image/png;base64,` + encoded + `",encoding:"url"},
+    {__fileData:"` + encoded + `",encoding:"url"}
+  ]}};
+}
+export function parseSubmitResponse(){return {taskId:"1"}} export function buildQueryRequest(){return {url:"https://example.com"}} export function parseTaskResult(){return {status:"SUCCESS"}}
+`
+	plugin, err := pluginruntime.NewRegistry().Register(source, pluginruntime.Options{})
+	require.NoError(t, err)
+	info := &relaycommon.RelayInfo{ChannelMeta: &relaycommon.ChannelMeta{ChannelBaseUrl: "https://provider.example"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{}}
+	build := func(t *testing.T) []any {
+		adaptor := New(plugin)
+		adaptor.Init(info)
+		c := newMultipartFileContext(t, "image[]", "ref.bin", "application/octet-stream", pngBytes)
+		c.Set("task_request", map[string]any{"prompt": "p"})
+		body, err := adaptor.BuildRequestBody(c, info)
+		require.NoError(t, err)
+		requestBytes, err := io.ReadAll(body)
+		require.NoError(t, err)
+		var decoded map[string]any
+		require.NoError(t, common.Unmarshal(requestBytes, &decoded))
+		images, _ := decoded["images"].([]any)
+		require.Len(t, images, 3)
+		return images
+	}
+	settings := system_setting.GetMediaStorageSettings()
+	original := *settings
+	t.Cleanup(func() { *settings = original })
+
+	t.Run("media storage on sends links to the stored files", func(t *testing.T) {
+		var stored []string
+		bucket := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			content, _ := io.ReadAll(r.Body)
+			assert.Equal(t, http.MethodPut, r.Method)
+			assert.Equal(t, "image/png", r.Header.Get("Content-Type"))
+			assert.Equal(t, pngBytes, content)
+			stored = append(stored, r.URL.Path)
+		}))
+		t.Cleanup(bucket.Close)
+		*settings = system_setting.MediaStorageSettings{
+			Enabled: true, OverseasEndpoint: bucket.URL, OverseasRegion: "auto", OverseasBucket: "media",
+			OverseasAccessKeyID: "ak", OverseasAccessSecret: "sk", OverseasPublicURL: "https://media.example.com",
+		}
+		images := build(t)
+		require.Len(t, stored, 3)
+		for index, image := range images {
+			link, _ := image.(string)
+			assert.Regexp(t, `^https://media\.example\.com/video-assets/\d{4}/\d{2}/[0-9a-f]{32}\.png$`, link)
+			assert.True(t, strings.HasSuffix(stored[index], strings.TrimPrefix(link, "https://media.example.com")))
+		}
+	})
+
+	t.Run("media storage off sends data URLs of the sniffed type", func(t *testing.T) {
+		*settings = system_setting.MediaStorageSettings{}
+		for _, image := range build(t) {
+			assert.Equal(t, "data:image/png;base64,"+encoded, image)
+		}
+	})
+}
+
+func TestTaskAdaptorURLFilePlaceholderErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		part        string
+		wantContain string
+	}{
+		{name: "fileData needs url encoding", part: `{__fileData:"aGVsbG8=",encoding:"dataUrl"}`, wantContain: `needs encoding "url"`},
+		{name: "fileData with fileRef", part: `{__fileData:"aGVsbG8=",__fileRef:"request_file:input_reference",encoding:"url"}`, wantContain: "invalid file placeholder"},
+		{name: "fileData not Base64", part: `{__fileData:"data:image/png,abc",encoding:"url"}`, wantContain: "Base64 data URL"},
+		{name: "not a media file", part: `{__fileData:"aGVsbG8gd29ybGQ=",encoding:"url"}`, wantContain: "must be a PNG, JPEG"},
+		{name: "fileData over maxBytes", part: `{__fileData:"aGVsbG8gd29ybGQ=",encoding:"url",maxBytes:4}`, wantContain: "4 byte limit"},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			source := strings.Replace(`
+export const meta = {apiVersion:1,key:"json-url-err",name:"JSON URL Err",version:"1.0.0",author:{name:"Test"},models:["m"],fetchMode:"per_task"};
+export function buildSubmitRequest() { return {url:"https://provider.example/submit",body:{image:PLACEHOLDER}}; }
+export function parseSubmitResponse(){return {taskId:"1"}} export function buildQueryRequest(){return {url:"https://example.com"}} export function parseTaskResult(){return {status:"SUCCESS"}}
+`, "PLACEHOLDER", testCase.part, 1)
+			plugin, err := pluginruntime.NewRegistry().Register(source, pluginruntime.Options{})
+			require.NoError(t, err)
+			adaptor := New(plugin)
+			info := &relaycommon.RelayInfo{ChannelMeta: &relaycommon.ChannelMeta{ChannelBaseUrl: "https://provider.example"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{}}
+			adaptor.Init(info)
+			c := newMultipartFileContext(t, "input_reference", "ref.bin", "application/octet-stream", []byte("data"))
+			c.Set("task_request", map[string]any{"prompt": "p"})
+			_, err = adaptor.BuildRequestBody(c, info)
+			require.ErrorContains(t, err, testCase.wantContain)
+		})
+	}
 }

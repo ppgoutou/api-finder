@@ -3,7 +3,9 @@ package jsplugin
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -351,7 +353,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	}
 	value := descriptor.Body
 	if descriptor.BodyText != nil {
-		if !bytes.Contains(descriptor.BodyText, []byte(`"__fileRef":`)) {
+		if !bytes.Contains(descriptor.BodyText, []byte(`"__fileRef":`)) && !bytes.Contains(descriptor.BodyText, []byte(`"__fileData":`)) {
 			return bytes.NewReader(descriptor.BodyText), nil
 		}
 		// File placeholders resolve only in the decoded value, which writes
@@ -379,30 +381,59 @@ func maxInlineFileBytes() int64 {
 	return int64(limitMB) << 20
 }
 
-func inlineJSONFilePlaceholders(c *gin.Context, body any) (any, error) {
-	cloned := jsonValue(body)
-	var form *multipart.Form
-	if c != nil && c.Request != nil && strings.Contains(c.GetHeader("Content-Type"), "multipart/form-data") {
-		parsed, parseErr := common.ParseMultipartFormReusable(c)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		form = parsed
-		defer form.RemoveAll()
-	}
-	limit := maxInlineFileBytes()
-	var total int64
-	return replaceJSONFilePlaceholders(cloned, form, limit, &total)
+// taskFileStoreTimeout bounds the object storage upload of one file a
+// placeholder asks to send as a link.
+const taskFileStoreTimeout = 2 * time.Minute
+
+// taskFileStoredTypes are the sniffed content types a placeholder may publish
+// as a link, with the stored extension: media upstreams fetch, never anything
+// a browser could run as a document.
+var taskFileStoredTypes = map[string]string{
+	"image/png":  ".png",
+	"image/jpeg": ".jpg",
+	"image/webp": ".webp",
+	"image/gif":  ".gif",
+	"video/mp4":  ".mp4",
+	"audio/mpeg": ".mp3",
+	"audio/wave": ".wav",
 }
 
-func replaceJSONFilePlaceholders(value any, form *multipart.Form, limit int64, total *int64) (any, error) {
+// filePlaceholderResolver replaces the file placeholders of one request
+// descriptor body, counting every file against one total limit.
+type filePlaceholderResolver struct {
+	ctx   context.Context
+	form  *multipart.Form
+	limit int64
+	total int64
+}
+
+func inlineJSONFilePlaceholders(c *gin.Context, body any) (any, error) {
+	cloned := jsonValue(body)
+	resolver := &filePlaceholderResolver{ctx: context.Background(), limit: maxInlineFileBytes()}
+	if c != nil && c.Request != nil {
+		resolver.ctx = c.Request.Context()
+		if strings.Contains(c.GetHeader("Content-Type"), "multipart/form-data") {
+			parsed, parseErr := common.ParseMultipartFormReusable(c)
+			if parseErr != nil {
+				return nil, parseErr
+			}
+			resolver.form = parsed
+			defer parsed.RemoveAll()
+		}
+	}
+	return resolver.replace(cloned)
+}
+
+func (r *filePlaceholderResolver) replace(value any) (any, error) {
 	switch typed := value.(type) {
 	case map[string]any:
-		if _, isPlaceholder := typed["__fileRef"]; isPlaceholder {
-			return encodeFilePlaceholder(typed, form, limit, total)
+		_, isFileRef := typed["__fileRef"]
+		_, isFileData := typed["__fileData"]
+		if isFileRef || isFileData {
+			return r.encode(typed)
 		}
 		for key, item := range typed {
-			replaced, err := replaceJSONFilePlaceholders(item, form, limit, total)
+			replaced, err := r.replace(item)
 			if err != nil {
 				return nil, err
 			}
@@ -411,7 +442,7 @@ func replaceJSONFilePlaceholders(value any, form *multipart.Form, limit int64, t
 		return typed, nil
 	case []any:
 		for index, item := range typed {
-			replaced, err := replaceJSONFilePlaceholders(item, form, limit, total)
+			replaced, err := r.replace(item)
 			if err != nil {
 				return nil, err
 			}
@@ -423,32 +454,19 @@ func replaceJSONFilePlaceholders(value any, form *multipart.Form, limit int64, t
 	}
 }
 
-func encodeFilePlaceholder(placeholder map[string]any, form *multipart.Form, limit int64, total *int64) (string, error) {
+func (r *filePlaceholderResolver) encode(placeholder map[string]any) (string, error) {
 	for key := range placeholder {
 		switch key {
-		case "__fileRef", "encoding", "mimeType", "maxBytes":
+		case "__fileRef", "__fileData", "encoding", "mimeType", "maxBytes":
 		default:
 			return "", fmt.Errorf("invalid file placeholder")
 		}
 	}
-	ref, _ := placeholder["__fileRef"].(string)
-	if strings.TrimSpace(ref) == "" {
-		return "", fmt.Errorf("unknown file reference %q", ref)
-	}
 	encoding, _ := placeholder["encoding"].(string)
-	if encoding != "base64" && encoding != "dataUrl" {
-		return "", fmt.Errorf("file placeholder encoding must be \"base64\" or \"dataUrl\"")
+	if encoding != "base64" && encoding != "dataUrl" && encoding != "url" {
+		return "", fmt.Errorf("file placeholder encoding must be \"base64\", \"dataUrl\" or \"url\"")
 	}
-	if form == nil {
-		return "", fmt.Errorf("unknown file reference %q", ref)
-	}
-	field, index, validRef := pluginruntime.ParseFileReference(ref)
-	files := form.File[field]
-	if !validRef || index >= len(files) {
-		return "", fmt.Errorf("unknown file reference %q", ref)
-	}
-	header := files[index]
-	maxBytes := limit
+	maxBytes := r.limit
 	if raw, exists := placeholder["maxBytes"]; exists {
 		n, ok := usageNumber(raw, false)
 		if !ok || n <= 0 || n != math.Trunc(n) {
@@ -458,36 +476,116 @@ func encodeFilePlaceholder(placeholder map[string]any, form *multipart.Form, lim
 			maxBytes = int64(n)
 		}
 	}
-	if header.Size > maxBytes {
-		return "", fmt.Errorf("file %q exceeds the %d byte limit", ref, maxBytes)
+	mimeType := "application/octet-stream"
+	if override, ok := placeholder["mimeType"].(string); ok && strings.TrimSpace(override) != "" {
+		mimeType = override
 	}
-	file, openErr := header.Open()
-	if openErr != nil {
-		return "", openErr
-	}
-	data, readErr := io.ReadAll(io.LimitReader(file, maxBytes+1))
-	file.Close()
-	if readErr != nil {
-		return "", readErr
+
+	var label string
+	var data []byte
+	if _, isFileData := placeholder["__fileData"]; isFileData {
+		if _, isFileRef := placeholder["__fileRef"]; isFileRef {
+			return "", fmt.Errorf("invalid file placeholder")
+		}
+		if encoding != "url" {
+			return "", fmt.Errorf("a __fileData placeholder needs encoding \"url\"")
+		}
+		text, _ := placeholder["__fileData"].(string)
+		label = "__fileData"
+		payload := strings.TrimSpace(text)
+		if rest, isDataURL := strings.CutPrefix(payload, "data:"); isDataURL {
+			header, encoded, found := strings.Cut(rest, ",")
+			declared, isBase64 := strings.CutSuffix(header, ";base64")
+			if !found || !isBase64 {
+				return "", fmt.Errorf("__fileData must be Base64 data or a Base64 data URL")
+			}
+			if declared != "" && placeholder["mimeType"] == nil {
+				mimeType = declared
+			}
+			payload = encoded
+		}
+		if int64(base64.StdEncoding.DecodedLen(len(payload))) > maxBytes+3 {
+			return "", fmt.Errorf("file %s exceeds the %d byte limit", label, maxBytes)
+		}
+		decoded, err := base64.StdEncoding.DecodeString(payload)
+		if err != nil || len(decoded) == 0 {
+			return "", fmt.Errorf("__fileData must be Base64 data or a Base64 data URL")
+		}
+		data = decoded
+	} else {
+		ref, _ := placeholder["__fileRef"].(string)
+		if strings.TrimSpace(ref) == "" || r.form == nil {
+			return "", fmt.Errorf("unknown file reference %q", ref)
+		}
+		label = strconv.Quote(ref)
+		field, index, validRef := pluginruntime.ParseFileReference(ref)
+		files := r.form.File[field]
+		if !validRef || index >= len(files) {
+			return "", fmt.Errorf("unknown file reference %q", ref)
+		}
+		header := files[index]
+		if header.Size > maxBytes {
+			return "", fmt.Errorf("file %s exceeds the %d byte limit", label, maxBytes)
+		}
+		file, openErr := header.Open()
+		if openErr != nil {
+			return "", openErr
+		}
+		read, readErr := io.ReadAll(io.LimitReader(file, maxBytes+1))
+		file.Close()
+		if readErr != nil {
+			return "", readErr
+		}
+		data = read
+		if contentType := header.Header.Get("Content-Type"); contentType != "" && placeholder["mimeType"] == nil {
+			mimeType = contentType
+		}
 	}
 	if int64(len(data)) > maxBytes {
-		return "", fmt.Errorf("file %q exceeds the %d byte limit", ref, maxBytes)
+		return "", fmt.Errorf("file %s exceeds the %d byte limit", label, maxBytes)
 	}
-	if *total+int64(len(data)) > limit {
-		return "", fmt.Errorf("inlined files exceed the %d byte limit", limit)
+	if r.total+int64(len(data)) > r.limit {
+		return "", fmt.Errorf("inlined files exceed the %d byte limit", r.limit)
 	}
-	*total += int64(len(data))
+	r.total += int64(len(data))
+
+	if encoding == "url" {
+		// The stored type is the sniffed one, which also labels the data URL
+		// sent when the file cannot be stored.
+		contentType := http.DetectContentType(data)
+		ext, ok := taskFileStoredTypes[contentType]
+		if !ok {
+			return "", fmt.Errorf("file %s must be a PNG, JPEG, WebP or GIF image, an MP4 video, or MP3 or WAV audio", label)
+		}
+		if link := r.store(data, contentType, ext); link != "" {
+			return link, nil
+		}
+		mimeType = contentType
+	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 	if encoding == "base64" {
 		return encoded, nil
 	}
-	mimeType := "application/octet-stream"
-	if override, ok := placeholder["mimeType"].(string); ok && strings.TrimSpace(override) != "" {
-		mimeType = override
-	} else if contentType := header.Header.Get("Content-Type"); contentType != "" {
-		mimeType = contentType
-	}
 	return "data:" + mimeType + ";base64," + encoded, nil
+}
+
+// store publishes a file in media storage under a random name and returns
+// its link, so the upstream fetches it instead of receiving it inline in the
+// request. It returns "" when media storage is off or the upload fails; the
+// caller then sends the file as a data URL.
+func (r *filePlaceholderResolver) store(data []byte, contentType, ext string) string {
+	random := make([]byte, 16)
+	if _, err := rand.Read(random); err != nil {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(r.ctx, taskFileStoreTimeout)
+	defer cancel()
+	link, err := service.StoreVideoAsset(ctx, bytes.NewReader(data), hex.EncodeToString(random)+ext, contentType, int64(len(data)))
+	if err != nil {
+		common.SysError(common.LogText("task plugin file upload to media storage failed; sending it inline: %s", err.Error()))
+		return ""
+	}
+	return link
 }
 
 func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, body io.Reader) (*http.Response, error) {

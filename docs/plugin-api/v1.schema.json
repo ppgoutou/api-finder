@@ -96,13 +96,18 @@
     "filePlaceholder": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["__fileRef", "encoding"],
+      "required": ["encoding"],
       "properties": {
         "__fileRef": {"type": "string", "minLength": 1},
-        "encoding": {"enum": ["base64", "dataUrl"]},
+        "__fileData": {"type": "string", "minLength": 1},
+        "encoding": {"enum": ["base64", "dataUrl", "url"]},
         "mimeType": {"type": "string", "minLength": 1},
         "maxBytes": {"type": "integer", "exclusiveMinimum": 0}
-      }
+      },
+      "oneOf": [
+        {"required": ["__fileRef"], "not": {"required": ["__fileData"]}},
+        {"required": ["__fileData"], "not": {"required": ["__fileRef"]}, "properties": {"encoding": {"const": "url"}}}
+      ]
     },
     "route": {"type": "object", "additionalProperties": false, "required": ["method", "path", "type", "render"], "properties": {"method": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]}, "path": {"type": "string", "pattern": "^/"}, "type": {"enum": ["submit", "query", "dynamic"]}, "action": {"type": "string"}, "taskIdParam": {"type": "string"}, "retainResult": {"type": "boolean"}, "decode": {"type": "string"}, "render": {"type": "string"}, "models": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}}, "allOf": [{"if": {"properties": {"type": {"const": "query"}}}, "then": {"allOf": [{"not": {"required": ["decode"]}}, {"not": {"required": ["models"]}}, {"not": {"required": ["retainResult"]}}]}}, {"if": {"properties": {"type": {"enum": ["submit", "dynamic"]}}}, "then": {"required": ["decode"]}}]},
     "upstreamKind": {"enum": ["vendor", "new_api"]},

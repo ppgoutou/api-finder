@@ -136,6 +136,7 @@ describe('Lobe icons', () => {
         'OpenAI',
         'Claude.Color',
         'SGLang',
+        'SandAI',
         'Sub2API',
         'Wan',
       ])

@@ -81,6 +81,7 @@ export function studioModelsFromPricing(
       {
         name: model.model_name,
         label: modelDisplayName(model),
+        ...studioModelIcon(model),
         ...studioModelAvailability(model),
         resolutions,
         duration:
@@ -105,6 +106,12 @@ export function studioModelsFromPricing(
       },
     ]
   })
+}
+
+/** The model plaza icon of a pricing model, when it has one. */
+export function studioModelIcon(model: PricingModel): { icon?: string } {
+  const icon = model.icon || model.vendor_icon
+  return icon ? { icon } : {}
 }
 
 /** Whether a pricing model is listed but refusing new requests. */

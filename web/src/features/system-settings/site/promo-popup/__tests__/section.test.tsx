@@ -302,7 +302,7 @@ describe('promotion popup text limits', () => {
       enabled: false,
       dailyLimit: 1,
       cards: [],
-      announcement: { enabled: true, text, textZh: '', href: '' },
+      announcement: { enabled: true, text, textZh: '', href: '', more: [] },
     })
   }
 

@@ -20,6 +20,7 @@ import * as z from 'zod'
 
 import {
   PROMO_ANNOUNCEMENT_MAX_LENGTH,
+  PROMO_ANNOUNCEMENT_MAX_MORE,
   PROMO_CARD_KINDS,
   PROMO_POPUP_MAX_CARDS,
   PROMO_POPUP_MAX_DAILY_LIMIT,
@@ -130,12 +131,21 @@ const announcementText = textUpTo(
   'At most 80 characters'
 )
 
+const announcementMessageSchema = z
+  .object({ text: announcementText, textZh: announcementText, href })
+  .superRefine((message, context) => {
+    if (!message.text && !message.textZh) {
+      context.addIssue({ code: 'custom', message: REQUIRED, path: ['text'] })
+    }
+  })
+
 const announcementSchema = z
   .object({
     enabled: z.boolean(),
     text: announcementText,
     textZh: announcementText,
     href,
+    more: z.array(announcementMessageSchema).max(PROMO_ANNOUNCEMENT_MAX_MORE),
   })
   .superRefine((announcement, context) => {
     if (announcement.enabled && !announcement.text && !announcement.textZh) {

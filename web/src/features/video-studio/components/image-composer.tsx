@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { QuickTopupDialog } from '@/features/wallet/components/quick-topup-dialog'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
+import { getLobeIcon } from '@/lib/lobe-icon'
 import { useAuthStore } from '@/stores/auth-store'
 
 import {
@@ -194,7 +195,13 @@ export function ImageComposer(props: ImageComposerProps) {
                   value: option.name,
                   label: option.label ?? option.name,
                   group: option.group,
-                  icon: <ImageIcon className='size-3.5' aria-hidden />,
+                  icon: option.icon ? (
+                    <span className='flex size-4 shrink-0 items-center justify-center'>
+                      {getLobeIcon(option.icon, 16)}
+                    </span>
+                  ) : (
+                    <ImageIcon className='size-3.5' aria-hidden />
+                  ),
                   unavailableLabel: option.unavailable
                     ? t('Temporarily unavailable')
                     : undefined,

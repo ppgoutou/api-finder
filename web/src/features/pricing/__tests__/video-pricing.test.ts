@@ -391,8 +391,18 @@ describe('per-video pricing', () => {
     })
   })
 
-  test('returns null for per-second models and per-video models with a fixed charge', () => {
+  test('returns null for per-second models, items counted by another option and per-video models with a fixed charge', () => {
     expect(getPerVideoPricing(videoModel(SEEDANCE_25_EXPR))).toBeNull()
+    expect(
+      getPerVideoPricing(
+        videoModel('tier("music", u("clips") * 0.22)', {
+          billing_usage_schema: {
+            action: { enum: ['music'] },
+            clips: { type: 'number', unit: 'count' },
+          },
+        })
+      )
+    ).toBeNull()
     expect(
       getPerVideoPricing(
         videoModel('tier("base", u("videos") * 1.28 + 0.5)', {

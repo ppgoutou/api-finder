@@ -39,6 +39,7 @@ import { QuickTopupDialog } from '@/features/wallet/components/quick-topup-dialo
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
+import { getLobeIcon } from '@/lib/lobe-icon'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { STUDIO_MAX_COUNT, type StudioModel } from '../constants'
@@ -47,7 +48,7 @@ import { useRecentTasks } from '../hooks/use-expiring-works'
 import { useStudioBalance } from '../hooks/use-studio-balance'
 import { useStudioDraft } from '../hooks/use-studio-draft'
 import { useStudioModels } from '../hooks/use-studio-models'
-import { useStudioPricer } from '../hooks/use-studio-price'
+import { useStudioPricer, type StudioPrice } from '../hooks/use-studio-price'
 import { useVideoSubmit } from '../hooks/use-video-submit'
 import {
   buildVideoRequest,
@@ -254,13 +255,23 @@ export function Composer(props: ComposerProps) {
       : undefined
   const ratioLabel = (ratio: StudioRatio) =>
     ratio === 'auto' ? t('Auto') : ratio
-  const costDetail = price
-    ? t('≈ {{unit}}/s × {{seconds}}s × {{count}}', {
-        unit: price.unitLabel,
-        seconds: draft.seconds,
-        count: draft.count,
-      })
-    : undefined
+  const unitPriceDetail = (unitPrice: StudioPrice) =>
+    unitPrice.perVideo
+      ? t('{{unit}}/video', { unit: unitPrice.unitLabel })
+      : t('{{unit}}/s', { unit: unitPrice.unitLabel })
+  let costDetail: string | undefined
+  if (price?.perVideo) {
+    costDetail = t('≈ {{unit}}/video × {{count}}', {
+      unit: price.unitLabel,
+      count: draft.count,
+    })
+  } else if (price) {
+    costDetail = t('≈ {{unit}}/s × {{seconds}}s × {{count}}', {
+      unit: price.unitLabel,
+      seconds: draft.seconds,
+      count: draft.count,
+    })
+  }
 
   return (
     <>
@@ -344,10 +355,16 @@ export function Composer(props: ComposerProps) {
                   value: option.name,
                   label: option.label ?? option.name,
                   group: cheapestFirst ? undefined : option.group,
-                  icon: <Film className='size-3.5' aria-hidden />,
+                  icon: option.icon ? (
+                    <span className='flex size-4 shrink-0 items-center justify-center'>
+                      {getLobeIcon(option.icon, 16)}
+                    </span>
+                  ) : (
+                    <Film className='size-3.5' aria-hidden />
+                  ),
                   description: describeModel(option),
                   detail: optionPrice
-                    ? t('{{unit}}/s', { unit: optionPrice.unitLabel })
+                    ? unitPriceDetail(optionPrice)
                     : undefined,
                   unavailableLabel: option.unavailable
                     ? t('Temporarily unavailable')

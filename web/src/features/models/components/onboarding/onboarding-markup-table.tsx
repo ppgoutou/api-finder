@@ -116,6 +116,7 @@ export function OnboardingMarkupTable(props: {
     props.markup?.base_price,
   ])
   const perImage = rows[0]?.unit === 'image'
+  const perVideo = rows[0]?.unit === 'video'
   const fixedPrice = rows.length > 0 && !rows[0].source
   const official = useMemo(
     () =>
@@ -146,7 +147,18 @@ export function OnboardingMarkupTable(props: {
   const groupRatio =
     group === undefined ? props.priceFactor : props.groupRatios[group]
   const groupScale = groupRatio / props.priceFactor
-  const unit = perImage ? t('image') : t('s')
+  let unit = t('s')
+  let priceHeading = t('Price per second')
+  let profitHeading = t('Profit per second')
+  if (perImage) {
+    unit = t('image')
+    priceHeading = t('Price per image')
+    profitHeading = t('Profit per image')
+  } else if (perVideo) {
+    unit = t('video')
+    priceHeading = t('Price per video')
+    profitHeading = t('Profit per video')
+  }
 
   // Inputs hold display-currency text; saved markups are USD.
   const savedText = useMemo(() => {
@@ -240,9 +252,13 @@ export function OnboardingMarkupTable(props: {
     })
   const adjustmentLabel = (row: MarkupRow) => {
     if (fixedPrice) return t('Price adjustment per image')
-    return perImage
-      ? t('Price adjustment per image for {{tier}}', { tier: row.tier })
-      : t('Price adjustment per second for {{tier}}', { tier: row.tier })
+    if (perImage) {
+      return t('Price adjustment per image for {{tier}}', { tier: row.tier })
+    }
+    if (perVideo) {
+      return t('Price adjustment per video for {{tier}}', { tier: row.tier })
+    }
+    return t('Price adjustment per second for {{tier}}', { tier: row.tier })
   }
   const allSelected = rows.every((row) => selected.has(row.tier))
   const columns: StaticDataTableColumn<MarkupRow>[] = [
@@ -351,7 +367,7 @@ export function OnboardingMarkupTable(props: {
     },
     {
       id: 'profit',
-      header: perImage ? t('Profit per image') : t('Profit per second'),
+      header: profitHeading,
       cellClassName: 'font-mono',
       cell: (row) => {
         const profit = groupFinal(row) - row.supply
@@ -426,6 +442,10 @@ export function OnboardingMarkupTable(props: {
     footnote = t(
       'Customers pay the final price for each image. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.'
     )
+  } else if (perVideo) {
+    footnote = t(
+      'Customers pay the final price for each video, whatever its length. A negative adjustment lowers the price; a new group ratio keeps the adjustment unchanged.'
+    )
   } else if (rows.some((row) => row.tokensPerSecond)) {
     footnote = t(
       'Token prices are shown per second of video at each resolution. With reference videos, the adjustment applies to output and reference seconds alike. A negative adjustment lowers the price. Customers pay the final price; a new group ratio keeps the adjustment unchanged.'
@@ -435,9 +455,7 @@ export function OnboardingMarkupTable(props: {
   return (
     <section className='space-y-2'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
-        <h4 className='text-sm font-medium'>
-          {perImage ? t('Price per image') : t('Price per second')}
-        </h4>
+        <h4 className='text-sm font-medium'>{priceHeading}</h4>
         {groups.length > 1 && (
           <Select
             value={group ?? null}
