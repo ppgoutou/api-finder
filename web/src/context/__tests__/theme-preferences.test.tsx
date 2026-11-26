@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useLayoutEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -297,5 +298,39 @@ describe('theme font selection', () => {
 
     expect(document.body).toHaveAttribute('data-theme-font', 'system')
     expect(localStorage.getItem('newapi:theme:v1:font')).toBeNull()
+  })
+})
+
+function ForcedThemeControls(props: { forced: 'dark' | null }) {
+  const theme = useTheme()
+  const setForcedTheme = theme.setForcedTheme
+  useLayoutEffect(() => {
+    setForcedTheme(props.forced)
+  }, [props.forced, setForcedTheme])
+  return <output aria-label='Resolved theme'>{theme.resolvedTheme}</output>
+}
+
+function ForcedThemeFixture(props: { forced: 'dark' | null }) {
+  return (
+    <ThemeProvider>
+      <ForcedThemeControls forced={props.forced} />
+    </ThemeProvider>
+  )
+}
+
+describe('page-forced theme', () => {
+  it('shows the forced theme without saving it, then restores the saved theme when released', () => {
+    localStorage.setItem('newapi:theme:v1:mode', 'light')
+    const view = render(<ForcedThemeFixture forced='dark' />)
+
+    expect(document.documentElement).toHaveClass('dark')
+    expect(document.documentElement).not.toHaveClass('light')
+    expect(screen.getByLabelText('Resolved theme')).toHaveTextContent('dark')
+    expect(localStorage.getItem('newapi:theme:v1:mode')).toBe('light')
+
+    view.rerender(<ForcedThemeFixture forced={null} />)
+
+    expect(document.documentElement).toHaveClass('light')
+    expect(screen.getByLabelText('Resolved theme')).toHaveTextContent('light')
   })
 })

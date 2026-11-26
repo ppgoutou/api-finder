@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
@@ -29,6 +29,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import {
   ApiQuickstart,
   Faq,
+  FilmStrip,
   ImageToVideo,
   ModelPricing,
   Showcase,
@@ -45,11 +46,20 @@ import { usePromoPopup } from './hooks/use-promo-popup'
 function HomeContent() {
   const { i18n, t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const { resolvedTheme } = useTheme()
+  const { resolvedTheme, setForcedTheme } = useTheme()
   const { auth } = useAuthStore()
   const isAuthenticated = !!auth.user
   const { content, isLoaded, isUrl } = useHomePageContent()
   const { announcements } = usePromoPopup()
+  // The built-in home page is a dark screening room whatever the visitor's
+  // theme; a custom home page keeps the visitor's theme.
+  const cinematic = !content
+
+  useLayoutEffect(() => {
+    if (!cinematic) return
+    setForcedTheme('dark')
+    return () => setForcedTheme(null)
+  }, [cinematic, setForcedTheme])
 
   const syncIframePreferences = useCallback(() => {
     try {
@@ -136,8 +146,10 @@ function HomeContent() {
 
   return (
     <PublicLayout showMainContainer={false} headerProps={{ announcements }}>
+      <div aria-hidden className='cinema-grain' />
       <HomePlaybackProvider>
         <VideoHero isAuthenticated={isAuthenticated} />
+        <FilmStrip />
         <Showcase isAuthenticated={isAuthenticated} />
         <ImageToVideo />
       </HomePlaybackProvider>

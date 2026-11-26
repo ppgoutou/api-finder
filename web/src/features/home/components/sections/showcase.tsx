@@ -26,26 +26,11 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
 import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
-import { useHomeShowcase } from '../../hooks/use-home-showcase'
-import {
-  getHomeMediaUrl,
-  SHOWCASE_CATEGORY_LABELS,
-  SHOWCASE_VIDEOS,
-} from '../../lib/video-home'
+import { useShowcaseCards } from '../../hooks/use-showcase-cards'
 import { ClipSpec } from '../clip-spec'
 import { PlayableClip } from '../playable-clip'
 
 const ALL_CATEGORIES = 'all'
-
-type ShowcaseCard = {
-  key: string
-  title: string
-  category: string
-  prompt: string
-  spec: string
-  video: string
-  poster: string
-}
 
 interface ShowcaseProps {
   isAuthenticated?: boolean
@@ -58,28 +43,7 @@ export function Showcase(props: ShowcaseProps) {
   // Guests sign up first and are then sent on to the page.
   const startSearch = props.isAuthenticated ? {} : { redirect: '/video-studio' }
   const setHandoff = useStudioHandoff((state) => state.set)
-  const configured = useHomeShowcase().showcase.filter((item) => item.video)
-  // Admin clips replace the built-in examples as a whole.
-  const cards: ShowcaseCard[] =
-    configured.length > 0
-      ? configured.map((item, index) => ({
-          key: `${index}:${item.video}`,
-          title: item.title,
-          category: item.category,
-          prompt: item.prompt,
-          spec: item.spec,
-          video: item.video,
-          poster: item.poster,
-        }))
-      : SHOWCASE_VIDEOS.map((video) => ({
-          key: video.name,
-          title: t(video.title),
-          category: t(SHOWCASE_CATEGORY_LABELS[video.category]),
-          prompt: t(video.prompt),
-          spec: video.spec,
-          video: getHomeMediaUrl(`${video.name}.mp4`),
-          poster: getHomeMediaUrl(`${video.name}.jpg`),
-        }))
+  const cards = useShowcaseCards()
   const categories = [
     ...new Set(cards.map((card) => card.category).filter(Boolean)),
   ]

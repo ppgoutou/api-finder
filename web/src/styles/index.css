@@ -560,6 +560,134 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* ── Home page cinema treatment ──
+ * Film grain over the whole page, a shutter that opens on the hero clip, a
+ * light sweep across the headline keyword and a looping strip of clips.
+ * Motion only uses transform, opacity and background-position. */
+.cinema-grain {
+  pointer-events: none;
+  position: fixed;
+  inset: -50%;
+  z-index: 45;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: cinema-grain 1s steps(6) infinite;
+}
+@keyframes cinema-grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -1%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+}
+
+.cinema-shutter::before,
+.cinema-shutter::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  z-index: 2;
+  height: 50%;
+  background: var(--ink);
+  pointer-events: none;
+  transform: scaleY(0);
+  animation: cinema-shutter 1.6s cubic-bezier(0.7, 0, 0.2, 1) 0.3s backwards;
+}
+.cinema-shutter::before {
+  top: 0;
+  transform-origin: top;
+}
+.cinema-shutter::after {
+  bottom: 0;
+  transform-origin: bottom;
+}
+@keyframes cinema-shutter {
+  0%,
+  20% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(0);
+  }
+}
+.cinema-push {
+  animation: cinema-push 4s ease-out 0.3s backwards;
+}
+@keyframes cinema-push {
+  from {
+    transform: scale(1.12);
+  }
+}
+
+.cinema-shimmer {
+  background: linear-gradient(
+      100deg,
+      var(--brand-on-dark) 20%,
+      #fff 40%,
+      #67e8f9 50%,
+      var(--brand-on-dark) 62%
+    )
+    0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cinema-shimmer 4s linear infinite;
+}
+@keyframes cinema-shimmer {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -125% 0;
+  }
+}
+
+.cinema-marquee {
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 10%,
+    #000 90%,
+    transparent
+  );
+}
+.cinema-marquee-track {
+  animation: cinema-marquee 40s linear infinite;
+}
+.cinema-marquee:hover .cinema-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes cinema-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-grain,
+  .cinema-shutter::before,
+  .cinema-shutter::after,
+  .cinema-push,
+  .cinema-shimmer,
+  .cinema-marquee-track {
+    animation: none;
+  }
+  .cinema-shimmer {
+    background-position: 50% 0;
+  }
+}
+
 /* Micro-interactions — Vercel-style subtle hover/active feedback */
 @media (prefers-reduced-motion: no-preference) {
   [data-slot='card']:not([data-card-hover='false']) {
