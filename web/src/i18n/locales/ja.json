@@ -1,5 +1,6 @@
 {
   "translation": {
+    "AI video from a prompt, an image or a reference clip, billed by the second.": "プロンプト、画像、参考動画から AI 動画を生成。秒単位で課金。",
     "Hourly task report": "毎時タスク統計",
     "Send payment notices": "入金通知を送信",
     "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "引き換えコードを含む入金ごとに、ユーザー名、チャージ額、チャージ回数、累計チャージ額、登録からの日数を送信します。残高アラートを有効にしなくても動作します。",

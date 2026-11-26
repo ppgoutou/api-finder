@@ -1,5 +1,6 @@
 {
   "translation": {
+    "AI video from a prompt, an image or a reference clip, billed by the second.": "Des vidéos IA à partir d’un prompt, d’une image ou d’un clip de référence, facturées à la seconde.",
     "Hourly task report": "Rapport horaire des tâches",
     "Send payment notices": "Envoyer les avis de paiement",
     "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "Envoie le nom d’utilisateur, le montant, le nombre de recharges, le total rechargé et le nombre de jours depuis l’inscription pour chaque paiement, codes d’échange compris. Fonctionne sans les alertes de solde.",

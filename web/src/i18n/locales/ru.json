@@ -1,5 +1,6 @@
 {
   "translation": {
+    "AI video from a prompt, an image or a reference clip, billed by the second.": "ИИ-видео из промпта, изображения или референсного клипа с посекундной оплатой.",
     "Hourly task report": "Ежечасный отчёт по задачам",
     "Send payment notices": "Отправлять уведомления о платежах",
     "Sends the username, amount, number of top-ups, total topped up and days since registration for every payment, including redemption codes. Works without balance alerts.": "Для каждого платежа, включая коды пополнения, отправляет имя пользователя, сумму, номер пополнения, общую сумму пополнений и число дней с регистрации. Работает без оповещений о балансе.",
