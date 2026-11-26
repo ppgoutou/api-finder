@@ -64,12 +64,14 @@ import {
 } from '../lib/task-price-display'
 import {
   getImagePricing,
+  getPerVideoPricing,
   getTokenVideoPricing,
   getVideoPricing,
   imagePriceFractionDigits,
   IMAGE_COUNT_FIELD,
   IMAGE_PRICE_FRACTION_DIGITS,
   VIDEO_PRICE_FRACTION_DIGITS,
+  type VideoPricingRow,
 } from '../lib/video-pricing'
 import {
   getCardVipRatios,
@@ -207,7 +209,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     />
   )
   const videoPricing = useMemo(
-    () => getVideoPricing(props.model) ?? getTokenVideoPricing(props.model),
+    () =>
+      getVideoPricing(props.model) ??
+      getPerVideoPricing(props.model) ??
+      getTokenVideoPricing(props.model),
     [props.model]
   )
   const imagePricing = useMemo(
@@ -253,8 +258,14 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         groupRatioMultiplier: vipRatios?.standardRatio,
         fractionDigits: VIP_VIDEO_PRICE_FRACTION_DIGITS,
       })
+    // A model billed per video shows the price of one video, else of one
+    // second.
+    const perVideo = videoPricing.rows.every(
+      (row) => row.videoPrice !== undefined
+    )
+    const rowPrice = (row: VideoPricingRow) => row.videoPrice ?? row.secondPrice
     const lowestRow = videoPricing.rows.reduce((lowest, row) =>
-      row.secondPrice < lowest.secondPrice ? row : lowest
+      rowPrice(row) < rowPrice(lowest) ? row : lowest
     )
     // VIP prices keep a third decimal so a small saving stays visible.
     const formatVipSecondPrice = (price: number) =>
@@ -264,18 +275,25 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         fractionDigits: VIP_VIDEO_PRICE_FRACTION_DIGITS,
       })
     pricesVip = vipRatios !== null
+    let perVideoUnit: string | undefined
+    if (perVideo) {
+      perVideoUnit =
+        videoPricing.rows.length > 1
+          ? t('/ {{unit}} from', { unit: t('video') })
+          : t('/video')
+    }
     const formatShownSecondPrice = showVip
       ? formatVipSecondPrice
       : formatSecondPrice
     priceSummary = (
       <>
         <CardOptionPrices
-          label={t('Video billing (per second)')}
-          unit={t('/s from')}
+          label={perVideo ? t('Per video') : t('Video billing (per second)')}
+          unit={perVideoUnit ?? t('/s from')}
           rows={videoPricing.rows.map((row) => ({
             key: row.option,
             label: taskEnumLabel(optionDefinition, row.option, i18n.language),
-            price: formatShownSecondPrice(row.secondPrice),
+            price: formatShownSecondPrice(rowPrice(row)),
           }))}
           lowestIndex={videoPricing.rows.indexOf(lowestRow)}
           showVip={showVip}
@@ -285,7 +303,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             vipRatios && (
               <CardVipSaving
                 standardPrice={formatStandardSecondPriceBesideVip(
-                  lowestRow.secondPrice
+                  rowPrice(lowestRow)
                 )}
                 savingPercent={vipRatios.savingPercent}
               />

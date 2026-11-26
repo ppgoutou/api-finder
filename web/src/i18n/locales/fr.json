@@ -8809,7 +8809,9 @@
     "Your videos": "Vos vidéos",
     "your recent ones took about {{count}} min": "vos dernières ont pris environ {{count}} min",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "{{count}} créations n’ont pas pu être téléchargées ensemble. Téléchargez-les une par une depuis leur carte.",
+    "{{unit}}/video": "{{unit}}/vidéo",
     "{{unit}}/s": "{{unit}}/s",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/vidéo × {{count}}",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/s × {{seconds}} s × {{count}}"
   }
 }

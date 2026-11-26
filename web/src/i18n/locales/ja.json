@@ -8809,7 +8809,9 @@
     "Your videos": "あなたの動画",
     "your recent ones took about {{count}} min": "最近の作品は約 {{count}} 分",
     "{{count}} works could not be downloaded together. Download them one by one from their cards.": "{{count}} 件はまとめてダウンロードできませんでした。カードから個別にダウンロードしてください。",
+    "{{unit}}/video": "{{unit}}/本",
     "{{unit}}/s": "{{unit}}/秒",
+    "≈ {{unit}}/video × {{count}}": "≈ {{unit}}/本 × {{count}} 本",
     "≈ {{unit}}/s × {{seconds}}s × {{count}}": "≈ {{unit}}/秒 × {{seconds}} 秒 × {{count}} 本"
   }
 }

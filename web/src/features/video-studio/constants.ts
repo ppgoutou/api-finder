@@ -29,6 +29,8 @@ export interface StudioModel extends StudioModelAvailability {
   name: string
   /** Name shown in menus; requests still send `name`. */
   label?: string
+  /** Icon of the model plaza, such as "Doubao.Color"; unset when it has none. */
+  icon?: string
   /** Category name from the model plaza; empty for uncategorized models. */
   group?: string
   resolutions: readonly string[]
@@ -147,6 +149,8 @@ export interface StudioImageModel extends StudioModelAvailability {
   name: string
   /** Name shown in menus; requests still send `name`. */
   label?: string
+  /** Icon of the model plaza, such as "Doubao.Color"; unset when it has none. */
+  icon?: string
   /** Category name from the model plaza; empty for uncategorized models. */
   group?: string
   /** What a model served by a task plugin takes; unset for other models. */

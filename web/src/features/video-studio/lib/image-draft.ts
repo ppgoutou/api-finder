@@ -27,7 +27,7 @@ import {
   type StudioImagePluginOptions,
 } from '../constants'
 import type { ImageGenerationRequest, StudioAsset } from '../types'
-import { studioModelAvailability } from './draft'
+import { studioModelAvailability, studioModelIcon } from './draft'
 
 /** Image output tokens per pixel, as image models report them. */
 const PIXELS_PER_IMAGE_TOKEN = 256
@@ -67,6 +67,7 @@ export function studioImageModelsFromPricing(
       {
         name: model.model_name,
         label: modelDisplayName(model),
+        ...studioModelIcon(model),
         ...studioModelAvailability(model),
         ...(plugin ? { plugin } : {}),
       },

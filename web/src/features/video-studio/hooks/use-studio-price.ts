@@ -44,8 +44,13 @@ export interface StudioPrice {
   costUSD: number
   /** The charge at VIP prices for a viewer who is not VIP yet, else null. */
   vipLabel: string | null
-  /** The charge of one second of video, or of one image, formatted. */
+  /**
+   * The charge of one second of video, of one video for a model billed per
+   * video, or of one image, formatted.
+   */
   unitLabel: string
+  /** Whether the model charges each video the same whatever its length. */
+  perVideo?: boolean
 }
 
 /**
@@ -94,6 +99,7 @@ export function useStudioPricer(): (draft: StudioDraft) => StudioPrice | null {
           inputImages,
         })
     if (costUSD === null) return null
+    const perVideo = row?.videoPrice !== undefined
     const groupRatio = getDisplayGroupRatio(model)
     const format = (ratio: number, usd = costUSD) =>
       formatTaskUsageUnitPrice(usd, {
@@ -108,7 +114,11 @@ export function useStudioPricer(): (draft: StudioDraft) => StudioPrice | null {
       label: format(groupRatio),
       costUSD: costUSD * groupRatio,
       vipLabel: vipRate ? format(groupRatio * vipRate) : null,
-      unitLabel: format(groupRatio, costUSD / (draft.seconds * draft.count)),
+      unitLabel: format(
+        groupRatio,
+        costUSD / (perVideo ? draft.count : draft.seconds * draft.count)
+      ),
+      perVideo,
     }
   }
 }
