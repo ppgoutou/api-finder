@@ -16,20 +16,38 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useShowcaseCards } from '../../hooks/use-showcase-cards'
+import { useStudioGallery } from '@/features/video-studio/hooks/use-studio-gallery'
+
+/** Seconds each frame takes to scroll past, so long strips do not race. */
+const SECONDS_PER_FRAME = 6
 
 /**
- * A strip of example stills that scrolls on its own below the hero. It is
- * decoration: the same clips follow, with their prompts, in the showcase. The
- * list is rendered twice so the loop has no seam.
+ * Whether a gallery work is wider than tall, from the aspect ratio in its
+ * spec such as "Seedance 2.5 · 16:9 · 720p · 15s".
+ */
+function isLandscapeSpec(spec: string): boolean {
+  const match = /(\d+(?:\.\d+)?)\s*:\s*(\d+(?:\.\d+)?)/.exec(spec)
+  if (!match) return false
+  return Number(match[1]) > Number(match[2])
+}
+
+/**
+ * A strip of landscape stills from the video-studio gallery that scrolls on
+ * its own below the hero, so it shows other work than the showcase further
+ * down. It is decoration. The list is rendered twice so the loop has no seam;
+ * with no landscape gallery work it is left out.
  */
 export function FilmStrip() {
-  // Built-in examples have no media while no media host is set.
-  const cards = useShowcaseCards().filter((card) => card.poster || card.video)
-  if (cards.length === 0) return null
+  const works = useStudioGallery().items.filter(
+    (item) => (item.poster || item.video) && isLandscapeSpec(item.spec)
+  )
+  if (works.length === 0) return null
 
   const frames = ['first', 'second'].flatMap((copy) =>
-    cards.map((card) => ({ ...card, key: `${copy}:${card.key}` }))
+    works.map((work) => ({
+      ...work,
+      key: `${copy}:${work.video || work.poster}`,
+    }))
   )
 
   return (
@@ -38,7 +56,10 @@ export function FilmStrip() {
       data-testid='film-strip'
       className='cinema-marquee relative z-10 overflow-hidden py-6'
     >
-      <ul className='cinema-marquee-track flex w-max'>
+      <ul
+        className='cinema-marquee-track flex w-max'
+        style={{ animationDuration: `${works.length * SECONDS_PER_FRAME}s` }}
+      >
         {frames.map((card) => (
           <li
             key={card.key}

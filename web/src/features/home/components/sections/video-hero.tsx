@@ -77,11 +77,6 @@ export function VideoHero(props: VideoHeroProps) {
         aria-hidden
         className='from-ink/60 pointer-events-none absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r to-transparent md:block'
       />
-      {hero.spec && (
-        <span className='bg-ink/60 absolute top-24 left-4 z-[3] rounded-md px-2.5 py-1 font-mono text-xs text-white/80 backdrop-blur-sm md:left-6'>
-          {hero.spec}
-        </span>
-      )}
 
       <div className='relative z-[3] mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-6 pt-36 pb-20 md:gap-6 md:pb-24'>
         <p className='landing-animate-fade-up border-brand-on-dark/30 bg-brand/15 text-brand-on-dark inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium opacity-0 backdrop-blur-sm'>

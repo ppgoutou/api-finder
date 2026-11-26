@@ -24,10 +24,13 @@ import { api } from '@/lib/api'
 
 import { FilmStrip } from '../components/sections/film-strip'
 
-function mockHomeShowcase(value: string) {
-  vi.spyOn(api, 'get').mockResolvedValue({
-    data: { success: true, data: value },
-  })
+function mockStudioGallery(value: string) {
+  vi.spyOn(api, 'get').mockImplementation(async (url: string) => ({
+    data: {
+      success: true,
+      data: url === '/api/studio_gallery' ? value : '',
+    },
+  }))
 }
 
 function renderFilmStrip() {
@@ -45,27 +48,52 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+const WIDE = '/home-media/0123456789abcdef0123456789abcdef'
+const CLASSIC = '/home-media/1123456789abcdef0123456789abcdef'
+const TALL = '/home-media/2123456789abcdef0123456789abcdef'
+
 describe('home film strip', () => {
-  it('renders nothing when no example clip has media', () => {
-    mockHomeShowcase('')
+  it('renders nothing when the gallery has no landscape work', async () => {
+    mockStudioGallery(
+      JSON.stringify({
+        items: [
+          {
+            title: 'Vertical vlog',
+            spec: 'Seedance 2.5 · 9:16 · 720p · 15s',
+            video: `${TALL}.mp4`,
+            poster: `${TALL}.jpg`,
+          },
+        ],
+      })
+    )
     renderFilmStrip()
 
+    await waitFor(() => expect(api.get).toHaveBeenCalled())
     expect(screen.queryByTestId('film-strip')).toBeNull()
   })
 
-  it('shows each admin clip twice, hidden from assistive technology, using the poster when one is set', async () => {
-    mockHomeShowcase(
+  it('shows only landscape gallery works, twice each and hidden from assistive technology', async () => {
+    mockStudioGallery(
       JSON.stringify({
-        showcase: [
+        items: [
           {
-            title: 'City chase',
-            video: '/home-media/0123456789abcdef0123456789abcdef.mp4',
-            poster: '/home-media/0123456789abcdef0123456789abcdef.jpg',
+            title: 'Dragon rescue',
+            spec: 'Seedance 2.5 · 16:9 · 1080p · 30s',
+            video: `${WIDE}.mp4`,
+            poster: `${WIDE}.jpg`,
           },
           {
-            title: 'Pastry ad',
-            video: '/home-media/fedcba9876543210fedcba9876543210.mp4',
+            title: 'Vertical vlog',
+            spec: 'Seedance 2.5 · 9:16 · 720p · 15s',
+            video: `${TALL}.mp4`,
+            poster: `${TALL}.jpg`,
           },
+          {
+            title: 'Music video',
+            spec: 'Seedance 2.5 · 4:3 · 720p · 30s',
+            video: `${CLASSIC}.mp4`,
+          },
+          { title: 'No ratio', spec: 'Seedance 2.5', poster: `${WIDE}.jpg` },
         ],
       })
     )
@@ -73,20 +101,17 @@ describe('home film strip', () => {
 
     const strip = await screen.findByTestId('film-strip')
     expect(strip).toHaveAttribute('aria-hidden', 'true')
-    await waitFor(() => expect(strip.querySelectorAll('li')).toHaveLength(4))
     expect(
-      [...strip.querySelectorAll('img')].map((img) => img.getAttribute('src'))
-    ).toEqual([
-      '/home-media/0123456789abcdef0123456789abcdef.jpg',
-      '/home-media/0123456789abcdef0123456789abcdef.jpg',
-    ])
-    expect(
-      [...strip.querySelectorAll('video')].map((video) =>
-        video.getAttribute('src')
-      )
-    ).toEqual([
-      '/home-media/fedcba9876543210fedcba9876543210.mp4#t=0.5',
-      '/home-media/fedcba9876543210fedcba9876543210.mp4#t=0.5',
-    ])
+      [...strip.querySelectorAll('li')].map((item) => item.textContent)
+    ).toEqual(['Dragon rescue', 'Music video', 'Dragon rescue', 'Music video'])
+    // A poster is used when set; otherwise the clip's first frame.
+    expect(strip.querySelectorAll('img')[0]).toHaveAttribute(
+      'src',
+      `${WIDE}.jpg`
+    )
+    expect(strip.querySelectorAll('video')[0]).toHaveAttribute(
+      'src',
+      `${CLASSIC}.mp4#t=0.5`
+    )
   })
 })
