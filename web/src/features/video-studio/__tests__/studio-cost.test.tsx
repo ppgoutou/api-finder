@@ -17,10 +17,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { StudioCost } from '../components/studio-cost'
+import { StudioCost, StudioShortfallBadge } from '../components/studio-cost'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: (props: {
@@ -77,5 +78,47 @@ describe('studio cost', () => {
 
     expect(screen.queryByText(/VIP price/)).not.toBeInTheDocument()
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('keeps how the fee adds up and the top-up gap behind the breakdown button', async () => {
+    const onTopUp = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <StudioCost
+        price={{
+          label: '¥7.80',
+          costUSD: 1.15,
+          vipLabel: '¥7.20',
+          unitLabel: '¥3.90',
+        }}
+        detail='≈ ¥3.90/video × 2'
+        shortfallUSD={1.15}
+        onTopUp={onTopUp}
+      />
+    )
+
+    expect(screen.queryByText('≈ ¥3.90/video × 2')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Fee breakdown' }))
+    expect(screen.getByText('≈ ¥3.90/video × 2')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Go to top up' }))
+    expect(onTopUp).toHaveBeenCalledOnce()
+  })
+})
+
+describe('studio shortfall badge', () => {
+  it('announces the top-up gap when the wallet falls short', () => {
+    render(<StudioShortfallBadge shortfallUSD={0.5} />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /Insufficient balance, .*0\.5.* short\./
+    )
+  })
+
+  it('renders nothing when the balance covers the fee', () => {
+    render(<StudioShortfallBadge shortfallUSD={null} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

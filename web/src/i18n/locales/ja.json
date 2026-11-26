@@ -2703,6 +2703,8 @@
     "Error Type (optional)": "エラータイプ（任意）",
     "Estimated cost": "推定コスト",
     "Estimated fee": "見積もり料金",
+    "Fee breakdown": "料金の内訳",
+    "{{amount}} short": "{{amount}} 不足",
     "Estimated quota cost": "想定クォートコスト",
     "Evaluate fields from the provider user info response. Conditions and nested groups use and/or logic.": "プロバイダーのユーザー情報レスポンスのフィールドを評価します。条件とネストしたグループでは and/or ロジックを使用します。",
     "Event": "イベント",
