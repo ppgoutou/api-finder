@@ -44,6 +44,8 @@ export interface StudioPrice {
   costUSD: number
   /** The charge at VIP prices for a viewer who is not VIP yet, else null. */
   vipLabel: string | null
+  /** The charge of one second of video, or of one image, formatted. */
+  unitLabel: string
 }
 
 /**
@@ -93,8 +95,8 @@ export function useStudioPricer(): (draft: StudioDraft) => StudioPrice | null {
         })
     if (costUSD === null) return null
     const groupRatio = getDisplayGroupRatio(model)
-    const format = (ratio: number) =>
-      formatTaskUsageUnitPrice(costUSD, {
+    const format = (ratio: number, usd = costUSD) =>
+      formatTaskUsageUnitPrice(usd, {
         tokenUnit: 'M',
         showRechargePrice: false,
         priceRate: pricing.priceRate,
@@ -106,6 +108,7 @@ export function useStudioPricer(): (draft: StudioDraft) => StudioPrice | null {
       label: format(groupRatio),
       costUSD: costUSD * groupRatio,
       vipLabel: vipRate ? format(groupRatio * vipRate) : null,
+      unitLabel: format(groupRatio, costUSD / (draft.seconds * draft.count)),
     }
   }
 }
@@ -130,8 +133,8 @@ export function useStudioImagePrice(
   const costUSD = model ? estimateImageCostUSD(model, size, count) : null
   if (!model || costUSD === null) return null
   const groupRatio = getDisplayGroupRatio(model)
-  const format = (ratio: number) =>
-    formatTaskUsageUnitPrice(costUSD, {
+  const format = (ratio: number, usd = costUSD) =>
+    formatTaskUsageUnitPrice(usd, {
       tokenUnit: 'M',
       showRechargePrice: false,
       priceRate: pricing.priceRate,
@@ -143,5 +146,6 @@ export function useStudioImagePrice(
     label: format(groupRatio),
     costUSD: costUSD * groupRatio,
     vipLabel: vipRate ? format(groupRatio * vipRate) : null,
+    unitLabel: format(groupRatio, costUSD / count),
   }
 }

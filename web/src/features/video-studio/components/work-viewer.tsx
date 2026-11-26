@@ -145,6 +145,14 @@ export function WorkViewer(props: {
                 </div>
               ))}
             </dl>
+            {video.url && (
+              <WorkDownloadButton
+                block
+                url={video.url}
+                filename={`${task.task_id}.mp4`}
+                label={t('Download video')}
+              />
+            )}
             <div className='grid grid-cols-2 gap-2'>
               {props.onEdit && (
                 <Button variant='outline' size='lg' onClick={props.onEdit}>

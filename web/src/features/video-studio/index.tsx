@@ -34,7 +34,7 @@ import { ImageComposer } from './components/image-composer'
 import { ImageWorksList } from './components/image-works-list'
 import { NotifyOffer } from './components/notify-offer'
 import { WorksList } from './components/works-list'
-import { wouldLoseDraft } from './lib/draft-storage'
+import { keepDraftAside, wouldLoseDraft } from './lib/draft-storage'
 import type { StudioDraft, StudioKind } from './types'
 
 type WorksTab = 'mine' | 'gallery'
@@ -44,6 +44,7 @@ interface EditedWork {
   kind: StudioKind
   draft: Partial<StudioDraft>
   size?: string
+  pickModel?: boolean
   /** Changes on every load, so the composer starts over from the work. */
   key: number
 }
@@ -75,8 +76,12 @@ export function VideoStudio() {
     setEdited((current) => ({ ...work, key: (current?.key ?? 0) + 1 }))
     composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-  const editWork = (draft: Partial<StudioDraft>, size?: string) => {
-    const work = { kind, draft, size }
+  const editWork = (
+    draft: Partial<StudioDraft>,
+    size?: string,
+    pickModel?: boolean
+  ) => {
+    const work = { kind, draft, size, pickModel }
     if (wouldLoseDraft(kind, userId, draft.prompt)) setReplacing(work)
     else loadWork(work)
   }
@@ -142,6 +147,7 @@ export function VideoStudio() {
                   key={editedDraft?.key}
                   initialModel={search.model}
                   initialDraft={editedDraft?.draft}
+                  pickModel={editedDraft?.pickModel}
                   onSubmitted={showSubmitted}
                 />
               )}
@@ -165,7 +171,11 @@ export function VideoStudio() {
                   <TabsTrigger value='gallery'>{t('Gallery')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value='mine' className='flex flex-col gap-4'>
-                  <WorksList onEdit={(draft) => editWork(draft)} />
+                  <WorksList
+                    onEdit={(draft, pickModel) =>
+                      editWork(draft, undefined, pickModel)
+                    }
+                  />
                 </TabsContent>
                 <TabsContent value='gallery' className='flex flex-col gap-4'>
                   <GalleryList onReuse={(draft) => editWork(draft)} />
@@ -182,12 +192,15 @@ export function VideoStudio() {
         }}
         title={t('Replace what you are writing?')}
         desc={t(
-          'The current prompt has not been submitted and will be replaced.'
+          'The current prompt has not been submitted. It is kept in Recent drafts, so you can bring it back.'
         )}
         cancelBtnText={t('Keep writing')}
         confirmText={t('Replace')}
         handleConfirm={() => {
-          if (replacing) loadWork(replacing)
+          if (replacing) {
+            keepDraftAside(replacing.kind, userId)
+            loadWork(replacing)
+          }
           setReplacing(null)
         }}
       />

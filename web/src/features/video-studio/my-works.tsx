@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Clapperboard, TriangleAlert } from 'lucide-react'
+import { Clapperboard, TriangleAlert, Download } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -35,8 +35,10 @@ import {
 import { ImageWorksList } from './components/image-works-list'
 import { WorksList } from './components/works-list'
 import { IMAGE_RETENTION_DAYS, VIDEO_RETENTION_DAYS } from './constants'
+import { useDownloadAll } from './hooks/use-download-all'
 import { useExpiringWorks } from './hooks/use-expiring-works'
-import { wouldLoseDraft } from './lib/draft-storage'
+import { keepDraftAside, wouldLoseDraft } from './lib/draft-storage'
+import type { WorkFilter } from './lib/work-retention'
 
 type WorksKind = 'video' | 'image'
 
@@ -51,6 +53,8 @@ export function MyWorks() {
     expiring.videos === 0 && expiring.images > 0 ? 'image' : 'video'
   )
 
+  const [videoFilter, setVideoFilter] = useState<WorkFilter>('all')
+  const bulk = useDownloadAll()
   const navigate = useNavigate()
   const userId = useAuthStore((state) => state.auth.user?.id)
   const setHandoff = useStudioHandoff((state) => state.set)
@@ -100,6 +104,31 @@ export function MyWorks() {
                 {t(
                   'Download the works marked with a countdown before they expire; expired works can no longer be played or downloaded.'
                 )}
+                <span className='mt-2 flex flex-wrap gap-2'>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    disabled={bulk.progress !== null}
+                    onClick={() => void bulk.downloadAll(expiring.works)}
+                  >
+                    <Download aria-hidden />
+                    {bulk.progress
+                      ? t('Downloading {{done}} / {{total}}', bulk.progress)
+                      : t('Download all')}
+                  </Button>
+                  {expiring.videos > 0 && (
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => {
+                        setKind('video')
+                        setVideoFilter('expiring')
+                      }}
+                    >
+                      {t('Show only these')}
+                    </Button>
+                  )}
+                </span>
               </AlertDescription>
             </Alert>
           )}
@@ -129,7 +158,11 @@ export function MyWorks() {
             <TabsContent value='video' className='flex flex-col gap-4'>
               <WorksList
                 loadMore
-                onEdit={(draft) => editWork({ kind: 'video', draft })}
+                filter={videoFilter}
+                onFilterChange={setVideoFilter}
+                onEdit={(draft, pickModel) =>
+                  editWork({ kind: 'video', draft, pickModel })
+                }
               />
             </TabsContent>
             <TabsContent value='image' className='flex flex-col gap-4'>
@@ -149,12 +182,15 @@ export function MyWorks() {
         }}
         title={t('Replace what you are writing?')}
         desc={t(
-          'The prompt on the creation page has not been submitted and will be replaced.'
+          'The prompt on the creation page has not been submitted. It is kept in Recent drafts, so you can bring it back.'
         )}
         cancelBtnText={t('Keep writing')}
         confirmText={t('Replace')}
         handleConfirm={() => {
-          if (replacing) openInStudio(replacing)
+          if (replacing) {
+            keepDraftAside(replacing.kind, userId)
+            openInStudio(replacing)
+          }
           setReplacing(null)
         }}
       />

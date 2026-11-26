@@ -26,6 +26,8 @@ import { STUDIO_BALANCE_QUERY_KEY } from '../constants'
 interface StudioBalance {
   /** How much the wallet lacks for the cost in USD, or null when it is enough or unknown. */
   shortfallUSD: number | null
+  /** The wallet balance in quota, or null while it is unknown. */
+  quota: number | null
   /** Re-read the wallet, such as after a submission spent from it. */
   refresh: () => void
 }
@@ -45,9 +47,15 @@ export function useStudioBalance(costUSD: number | null): StudioBalance {
   const refresh = () => {
     void query.refetch()
   }
-  if (quota === null || costUSD === null) return { shortfallUSD: null, refresh }
+  if (quota === null || costUSD === null) {
+    return { shortfallUSD: null, quota, refresh }
+  }
 
   const balanceUSD = quota / getCurrencyDisplay().config.quotaPerUnit
   const shortfallUSD = costUSD - balanceUSD
-  return { shortfallUSD: shortfallUSD > 0 ? shortfallUSD : null, refresh }
+  return {
+    shortfallUSD: shortfallUSD > 0 ? shortfallUSD : null,
+    quota,
+    refresh,
+  }
 }

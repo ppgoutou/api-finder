@@ -28,7 +28,7 @@ import {
   RectangleHorizontal,
   Type,
 } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -42,6 +42,7 @@ import { useAuthStore } from '@/stores/auth-store'
 
 import { STUDIO_MAX_COUNT, type StudioModel } from '../constants'
 import { assetKindOf, useAssetUploader } from '../hooks/use-asset-uploader'
+import { useRecentTasks } from '../hooks/use-expiring-works'
 import { useStudioBalance } from '../hooks/use-studio-balance'
 import { useStudioDraft } from '../hooks/use-studio-draft'
 import { useStudioModels } from '../hooks/use-studio-models'
@@ -49,6 +50,7 @@ import { useStudioPricer } from '../hooks/use-studio-price'
 import { useVideoSubmit } from '../hooks/use-video-submit'
 import {
   buildVideoRequest,
+  countReferences,
   draftAssets,
   excessReferences,
   findStudioModel,
@@ -67,12 +69,14 @@ import {
   promptGuide,
   promptLength,
 } from '../lib/prompt-guide'
+import { typicalSeconds } from '../lib/work-progress'
 import type { StudioDraft, StudioMode, StudioRatio } from '../types'
 import { ChoiceMenu } from './choice-menu'
 import { ComposerCard } from './composer-card'
 import { FileProblems, ReferenceUsage } from './file-notes'
 import { ParamsPopover } from './params-popover'
 import { PromptInput } from './prompt-input'
+import { RecentDrafts } from './recent-drafts'
 import { FramePanel, ReferencePanel } from './reference-panel'
 import { StudioCost } from './studio-cost'
 import { UnavailableModelNotice } from './unavailable-model-notice'
@@ -84,6 +88,8 @@ interface ComposerProps {
   initialModel?: string
   /** A past request loaded back for editing; takes over the initial model. */
   initialDraft?: Partial<StudioDraft>
+  /** Opens the model menu at once, to try the request on another model. */
+  pickModel?: boolean
 }
 
 /** Prompt box with references, mode, model and output settings. */
@@ -106,6 +112,8 @@ export function Composer(props: ComposerProps) {
   const balance = useStudioBalance(price?.costUSD ?? null)
   const insufficient = balance.shortfallUSD !== null
   const { submit: submitVideos, submitting } = useVideoSubmit()
+  const recentTasks = useRecentTasks().tasks ?? []
+  const [cheapestFirst, setCheapestFirst] = useState(false)
   const unavailable = model?.unavailable === true
   let problem = model
     ? validateDraft(draft, model)
@@ -190,7 +198,7 @@ export function Composer(props: ComposerProps) {
     },
     {
       value: 'reference',
-      label: t('Reference generation'),
+      label: t('All-in-one reference'),
       hint: t('Images, videos or audio, mentioned with @'),
       icon: <Images className='size-3.5 max-sm:hidden' aria-hidden />,
     },
@@ -198,15 +206,56 @@ export function Composer(props: ComposerProps) {
 
   const describeModel = (option: StudioModel) => {
     const [shortest, longest] = option.duration
-    return t('{{shortest}}–{{longest}}s · up to {{resolution}}', {
+    const specs = t('{{shortest}}–{{longest}}s · up to {{resolution}}', {
       shortest,
       longest,
       resolution: (option.resolutions.at(-1) ?? '').toUpperCase(),
     })
+    const typical = typicalSeconds(recentTasks, option.name)
+    if (typical === null) return specs
+    return `${specs} · ${t('your recent ones took about {{count}} min', {
+      count: Math.max(1, Math.round(typical / 60)),
+    })}`
   }
+  // Each model priced for the current settings, cheapest first on request;
+  // models that cannot run now go last.
+  const modelOptions = models.map((option) => ({
+    option,
+    price: priceOf(fitDraftToModel({ ...draft, model: option.name }, [option])),
+  }))
+  if (cheapestFirst) {
+    modelOptions.sort((a, b) => {
+      if (a.option.unavailable !== b.option.unavailable) {
+        return a.option.unavailable ? 1 : -1
+      }
+      return (
+        (a.price?.costUSD ?? Number.POSITIVE_INFINITY) -
+        (b.price?.costUSD ?? Number.POSITIVE_INFINITY)
+      )
+    })
+  }
+  // A model that takes all the files added, when the picked one does not.
+  const excess = excessReferences(draft.references, limits)
+  const counts = countReferences(draft.references)
+  const roomier =
+    excess.length > 0
+      ? models.find(
+          (option) =>
+            !option.unavailable &&
+            (['image', 'video', 'audio'] as const).every(
+              (kind) => counts[kind] <= referenceLimitsOf(option)[kind]
+            )
+        )
+      : undefined
   const ratioLabel = (ratio: StudioRatio) =>
     ratio === 'auto' ? t('Auto') : ratio
-  const costDetail = `${draft.resolution.toUpperCase()} · ${t('{{seconds}}s', { seconds: draft.seconds })} × ${draft.count}`
+  const costDetail = price
+    ? t('≈ {{unit}}/s × {{seconds}}s × {{count}}', {
+        unit: price.unitLabel,
+        seconds: draft.seconds,
+        count: draft.count,
+      })
+    : undefined
 
   return (
     <ComposerCard
@@ -214,6 +263,8 @@ export function Composer(props: ComposerProps) {
       guide={guide}
       hintId={hintId}
       hasContent={draft.prompt !== '' || assets.length > 0}
+      restoredAt={studio.restoredAt}
+      drafts={<RecentDrafts kind='video' onRestore={studio.restore} />}
       saved={studio.stored}
       onClear={studio.clear}
       onFiles={addFiles}
@@ -250,6 +301,14 @@ export function Composer(props: ComposerProps) {
             <ReferenceUsage
               references={draft.references}
               limits={limits}
+              switchTo={
+                roomier
+                  ? {
+                      label: roomier.label ?? roomier.name,
+                      onSwitch: () => studio.update({ model: roomier.name }),
+                    }
+                  : undefined
+              }
               onRemoveExtra={() => {
                 for (const asset of excessReferences(
                   draft.references,
@@ -269,15 +328,21 @@ export function Composer(props: ComposerProps) {
             <ChoiceMenu
               label={t('Model')}
               value={draft.model}
-              options={models.map((option) => ({
+              defaultOpen={props.pickModel}
+              toggle={{
+                label: t('Cheapest first'),
+                checked: cheapestFirst,
+                onChange: setCheapestFirst,
+              }}
+              options={modelOptions.map(({ option, price: optionPrice }) => ({
                 value: option.name,
                 label: option.label ?? option.name,
-                group: option.group,
+                group: cheapestFirst ? undefined : option.group,
                 icon: <Film className='size-3.5' aria-hidden />,
                 description: describeModel(option),
-                detail: priceOf(
-                  fitDraftToModel({ ...draft, model: option.name }, [option])
-                )?.label,
+                detail: optionPrice
+                  ? t('{{unit}}/s', { unit: optionPrice.unitLabel })
+                  : undefined,
                 unavailableLabel: option.unavailable
                   ? t('Temporarily unavailable')
                   : undefined,

@@ -27,6 +27,7 @@ import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
 import { Header } from './header'
+import { HeaderBalance } from './header-balance'
 import { SystemBrand } from './system-brand'
 import { TopNav } from './top-nav'
 
@@ -131,6 +132,7 @@ export function AppHeader({
           <LanguageSwitcher />
           {showProfileDropdown && (
             <>
+              <HeaderBalance className='max-sm:hidden' />
               <VipHeaderChip className='max-sm:hidden' />
               <VipHeaderChip compact className='sm:hidden' />
               <ProfileDropdown />

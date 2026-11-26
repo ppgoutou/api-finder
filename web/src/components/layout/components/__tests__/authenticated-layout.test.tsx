@@ -26,6 +26,9 @@ vi.mock('../app-sidebar', () => ({ AppSidebar: () => null }))
 vi.mock('@/features/video-studio/components/studio-task-watcher', () => ({
   StudioTaskWatcher: () => null,
 }))
+vi.mock('@/features/video-studio/components/studio-task-tray', () => ({
+  StudioTaskTray: () => null,
+}))
 vi.mock('@/components/command-menu', () => ({ CommandMenu: () => null }))
 
 describe('AuthenticatedLayout', () => {

@@ -17,9 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import { setSiteTitleNote } from '@/lib/site-title'
@@ -30,14 +29,11 @@ import { recallTaskPrompt, rememberedTaskIds } from '../lib/prompt-history'
 import { showTaskNotification } from '../lib/task-notifications'
 import { runningTasks } from '../lib/work-progress'
 
-/** Pages that show the works themselves, so a finished one needs no toast. */
-const WORKS_PATHS = ['/video-studio', '/my-works']
-
 /**
- * Announces the end of tasks submitted in this browser while the user is on
- * another page or tab: a notification when the tab is hidden and the user
- * allowed it, else a toast that leads to the works. The tab's title counts
- * the running ones.
+ * Announces the end of tasks submitted in this browser while their tab is
+ * hidden: a notification when the user allowed it, and the tab's title, which
+ * otherwise counts the running ones. Visible pages show them in the works or
+ * the task tray.
  */
 export function StudioTaskWatcher() {
   const { t, i18n } = useTranslation()
@@ -45,6 +41,7 @@ export function StudioTaskWatcher() {
   const navigate = useNavigate()
   const { tasks, runningCount } = useRecentTasks()
   const running = useRef(new Set<string>())
+  const [readyWhileAway, setReadyWhileAway] = useState(false)
 
   useEffect(() => {
     if (!tasks) return
@@ -60,36 +57,34 @@ export function StudioTaskWatcher() {
     const openWorks = () => void navigate({ to: '/my-works' })
     for (const task of ended) {
       const succeeded = task.status === TASK_STATUS.SUCCESS
-      const title = succeeded
-        ? t('Your video is ready')
-        : t('Generation failed')
-      const description = localizeMentions(
-        recallTaskPrompt(task.task_id)?.prompt ?? '',
-        language
+      // Only a hidden tab needs telling; a visible one shows the works or
+      // the tray.
+      if (!document.hidden) continue
+      if (succeeded) setReadyWhileAway(true)
+      showTaskNotification(
+        succeeded ? t('Your video is ready') : t('Generation failed'),
+        localizeMentions(
+          recallTaskPrompt(task.task_id)?.prompt ?? '',
+          language
+        ),
+        openWorks
       )
-      if (
-        document.hidden &&
-        showTaskNotification(title, description, openWorks)
-      ) {
-        continue
-      }
-      if (
-        !document.hidden &&
-        WORKS_PATHS.some((path) => window.location.pathname.startsWith(path))
-      ) {
-        continue
-      }
-      const options = {
-        description,
-        action: { label: t('View'), onClick: openWorks },
-      }
-      if (succeeded) toast.success(title, options)
-      else toast.error(title, options)
     }
   }, [tasks, navigate, t, language])
 
-  const titleNote =
-    runningCount > 0 ? t('{{count}} generating', { count: runningCount }) : ''
+  // Until the user comes back to the tab.
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden) setReadyWhileAway(false)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
+  let titleNote = readyWhileAway ? t('Video ready') : ''
+  if (runningCount > 0) {
+    titleNote = t('{{count}} generating', { count: runningCount })
+  }
   useEffect(() => {
     setSiteTitleNote(titleNote)
     return () => setSiteTitleNote('')

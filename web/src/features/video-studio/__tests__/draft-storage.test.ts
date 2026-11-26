@@ -20,7 +20,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { DEFAULT_DRAFT } from '../constants'
 import {
+  forgetRecentDraft,
+  keepDraftAside,
   markDraftSubmitted,
+  readRecentDrafts,
   readDraft,
   saveDraft,
   wouldLoseDraft,
@@ -96,5 +99,39 @@ describe('studio draft storage', () => {
     expect(wouldLoseDraft('video', 1, 'other')).toBe(false)
     saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: 'a cat and a dog' })
     expect(wouldLoseDraft('video', 1, 'other')).toBe(true)
+  })
+})
+
+describe('recent drafts', () => {
+  it('keeps a replaced draft aside, newest first, without repeats', () => {
+    saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: 'first' })
+    keepDraftAside('video', 1)
+    saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: 'second' })
+    keepDraftAside('video', 1)
+    keepDraftAside('video', 1)
+
+    expect(
+      readRecentDrafts('video', 1, NOW).map((draft) => draft.draft.prompt)
+    ).toEqual(['second', 'first'])
+    expect(readRecentDrafts('video', 2, NOW)).toEqual([])
+  })
+
+  it('does not keep aside a draft that was submitted or holds no prompt', () => {
+    saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: '  ' })
+    keepDraftAside('video', 1)
+    saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: 'sent' })
+    markDraftSubmitted('video', 1, 'sent')
+    keepDraftAside('video', 1)
+
+    expect(readRecentDrafts('video', 1, NOW)).toEqual([])
+  })
+
+  it('takes a draft off the list once it is loaded again', () => {
+    saveDraft('video', 1, { ...DEFAULT_DRAFT, prompt: 'first' })
+    keepDraftAside('video', 1)
+
+    forgetRecentDraft('video', 1, 'first')
+
+    expect(readRecentDrafts('video', 1, NOW)).toEqual([])
   })
 })

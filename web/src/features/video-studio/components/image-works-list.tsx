@@ -40,6 +40,7 @@ import { useStudioImageWorks } from '@/stores/studio-image-works-store'
 import { STUDIO_WORKS_QUERY_KEY } from '../constants'
 import { useDeleteWork } from '../hooks/use-delete-work'
 import { useUnixNow } from '../hooks/use-expiring-works'
+import { useImageGeneration } from '../hooks/use-image-generation'
 import { restoredAssets } from '../lib/draft'
 import { localizeMentions } from '../lib/mention-names'
 import {
@@ -80,6 +81,9 @@ export function ImageWorksList(props: {
   const displayName = useModelDisplayName()
   const images = useStudioImageWorks((state) => state.works)
   const pending = useStudioImageWorks((state) => state.pending)
+  const failedRequests = useStudioImageWorks((state) => state.failed)
+  const removeFailed = useStudioImageWorks((state) => state.removeFailed)
+  const generate = useImageGeneration()
   const removeImage = useStudioImageWorks((state) => state.remove)
   const { hidden, deleteWork } = useDeleteWork()
   const [deleting, setDeleting] = useState<Listed | null>(null)
@@ -153,7 +157,12 @@ export function ImageWorksList(props: {
     setDeleting(null)
   }
 
-  if (listed.length === 0 && waiting.length === 0 && works.isLoading) {
+  if (
+    listed.length === 0 &&
+    waiting.length === 0 &&
+    failedRequests.length === 0 &&
+    works.isLoading
+  ) {
     return (
       <div className={GRID_CLASS_NAME}>
         {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -164,7 +173,9 @@ export function ImageWorksList(props: {
   }
   return (
     <>
-      {listed.length === 0 && waiting.length === 0 ? (
+      {listed.length === 0 &&
+      waiting.length === 0 &&
+      failedRequests.length === 0 ? (
         <Empty className='border'>
           <EmptyHeader>
             <EmptyMedia variant='icon'>
@@ -180,6 +191,48 @@ export function ImageWorksList(props: {
         </Empty>
       ) : (
         <div className={GRID_CLASS_NAME}>
+          {failedRequests.map((failure) => (
+            <article
+              key={failure.id}
+              className='bg-card border-border/60 overflow-hidden rounded-xl border'
+            >
+              <div className='bg-destructive/5 flex aspect-square flex-col items-center justify-center gap-2 p-3 text-center'>
+                <span className='text-destructive text-xs font-semibold'>
+                  {t('Image generation failed')}
+                </span>
+                <span className='text-muted-foreground text-caption line-clamp-3'>
+                  {failure.reason}
+                </span>
+                <div className='flex flex-wrap justify-center gap-1'>
+                  <Button
+                    size='xs'
+                    variant='outline'
+                    onClick={() => {
+                      removeFailed(failure.id)
+                      void generate([failure.request], failure.request.n)
+                    }}
+                  >
+                    {t('Retry')}
+                  </Button>
+                  <Button
+                    size='xs'
+                    variant='ghost'
+                    onClick={() => removeFailed(failure.id)}
+                  >
+                    {t('Dismiss')}
+                  </Button>
+                </div>
+              </div>
+              <div className='flex flex-col p-2'>
+                <p className='truncate text-xs font-medium'>
+                  {localizeMentions(failure.request.prompt, language)}
+                </p>
+                <p className='text-muted-foreground text-caption truncate'>
+                  {displayName(failure.request.model)}
+                </p>
+              </div>
+            </article>
+          ))}
           {waiting.map(({ key, request }) => (
             <article
               key={key}
