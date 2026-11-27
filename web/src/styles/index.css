@@ -682,6 +682,10 @@ For commercial licensing, please contact support@quantumnous.com
 }
 .cinema-glow {
   position: relative;
+  /* Safari re-reads Tailwind's `--tw-border-style` on every frame of the
+   * spin below and flips the 1px border on and off, so the button (and the
+   * one beside it) shakes by 2px. A fixed style keeps the width still. */
+  border-style: solid;
 }
 .cinema-glow::before,
 .cinema-glow::after {
