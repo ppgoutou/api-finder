@@ -17,15 +17,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { GenerationScan } from '../components/generation-scan'
-import { TYPED_PROMPT_SPEED, TypedPrompt } from '../components/typed-prompt'
-
-const PROMPT = 'A neon street at night, rain on the lens'
 
 let showInView: () => void = () => undefined
-let frames: FrameRequestCallback[] = []
 
 function stubMotion(reduced: boolean) {
   vi.stubGlobal(
@@ -55,63 +51,9 @@ function stubMotion(reduced: boolean) {
   )
 }
 
-/** Runs the pending animation frames as if `ms` had passed since typing began. */
-function runFramesAt(ms: number) {
-  const pending = frames
-  frames = []
-  act(() => {
-    for (const frame of pending) frame(ms)
-  })
-}
-
-function visibleText(): string {
-  const visible = document.querySelector('p > [aria-hidden]')
-  const hidden = visible?.querySelector('.invisible')?.textContent ?? ''
-  return (visible?.textContent ?? '').slice(
-    0,
-    (visible?.textContent ?? '').length - hidden.length
-  )
-}
-
-beforeEach(() => {
-  frames = []
-  vi.spyOn(performance, 'now').mockReturnValue(0)
-  vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => {
-    frames.push(frame)
-    return frames.length
-  })
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
-})
-
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-})
-
-describe('TypedPrompt', () => {
-  it('shows the whole prompt at once when the visitor asks for reduced motion', () => {
-    stubMotion(true)
-    render(<TypedPrompt text={PROMPT} />)
-
-    expect(visibleText()).toBe(PROMPT)
-    expect(document.querySelector('.cinema-caret')).toBeNull()
-  })
-
-  it('keeps the prompt for screen readers and types it out once it scrolls into view', () => {
-    stubMotion(false)
-    render(<TypedPrompt text={PROMPT} />)
-
-    expect(document.querySelector('.sr-only')).toHaveTextContent(PROMPT)
-    expect(visibleText()).toBe('')
-
-    act(() => showInView())
-    runFramesAt((10 / TYPED_PROMPT_SPEED) * 1000)
-    expect(visibleText()).toBe(PROMPT.slice(0, 10))
-
-    runFramesAt((PROMPT.length / TYPED_PROMPT_SPEED) * 1000)
-    expect(visibleText()).toBe(PROMPT)
-    expect(document.querySelector('.cinema-caret')).toBeNull()
-  })
 })
 
 describe('GenerationScan', () => {

@@ -809,16 +809,7 @@ For commercial licensing, please contact support@quantumnous.com
   opacity: calc(1 - var(--cinema-scan) / 100%);
 }
 
-/* The caret of a prompt that types itself; see TypedPrompt. */
-.cinema-caret {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-inline: 1px;
-  vertical-align: -0.15em;
-  background: var(--brand-on-dark);
-  animation: cinema-caret 0.8s steps(1) infinite;
-}
+/* A light that blinks on and off. */
 @keyframes cinema-caret {
   50% {
     opacity: 0;

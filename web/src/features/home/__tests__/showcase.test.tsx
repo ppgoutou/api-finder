@@ -86,12 +86,37 @@ describe('home showcase', () => {
     )
   })
 
+  it('keeps prompts off the grid until a clip is opened', async () => {
+    const user = userEvent.setup()
+    renderShowcase()
+    const prompt = SHOWCASE_VIDEOS[1].prompt
+
+    expect(screen.queryByText(prompt)).toBeNull()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Play Mechanical watch with sound' })
+    )
+
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Mechanical watch',
+    })
+    expect(within(dialog).getByText(prompt)).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('link', { name: 'Generate with it' })
+    ).toHaveAttribute('href', '/sign-up')
+  })
+
   it('copies the full prompt of a clip when its copy button is pressed', async () => {
     const user = userEvent.setup()
     renderShowcase()
 
     await user.click(
-      screen.getByRole('button', { name: 'Copy prompt: Mechanical watch' })
+      screen.getByRole('button', { name: 'Play Mechanical watch with sound' })
+    )
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Copy prompt: Mechanical watch',
+      })
     )
 
     // user-event installs a clipboard stub for the session.
