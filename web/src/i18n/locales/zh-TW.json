@@ -8866,6 +8866,11 @@
     "Pick the first day": "請選擇第一天",
     "Pick the last day": "請選擇最後一天",
     "The last day must not be before the first day": "最後一天不能早於第一天",
-    "Invalid holiday theme settings": "節日主題設定無效"
+    "Invalid holiday theme settings": "節日主題設定無效",
+    "The saved HTML was turned into text. Save to apply it.": "原本儲存的 HTML 已轉換為文字，儲存後生效。",
+    "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.": "只寫文字，頁尾樣式固定。只有連結或電子郵件的一行顯示為圖示（X、Telegram、Discord、電子郵件），以連結結尾的一行會把前面的文字顯示為連結。",
+    "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.": "只寫文字，頁面樣式固定。第一行是標題。段落之間空一行：單獨一行的短句是小標題，多行的段落是清單（每行以 1. 2. 3. 開頭時為編號清單）。連結和電子郵件會自動變成可點擊的連結。",
+    "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com": "© 2026 你的公司\n合作夥伴：範例 https://example.com\nhttps://x.com/yourname\nsupport@example.com",
+    "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com": "關於你的公司\n\n用一段話介紹網站。\n\n你可以創作什麼\n文生影片：用文字描述場景\n圖生影片：從一張照片開始\n\n聯絡我們\n電子郵件：support@example.com"
   }
 }

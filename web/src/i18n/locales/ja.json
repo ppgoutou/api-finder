@@ -8866,6 +8866,11 @@
     "Pick the first day": "初日を選択してください",
     "Pick the last day": "最終日を選択してください",
     "The last day must not be before the first day": "最終日を初日より前にすることはできません",
-    "Invalid holiday theme settings": "季節テーマの設定が無効です"
+    "Invalid holiday theme settings": "季節テーマの設定が無効です",
+    "The saved HTML was turned into text. Save to apply it.": "保存済みの HTML をテキストに変換しました。保存すると反映されます。",
+    "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.": "テキストのみ入力します。フッターのスタイルは固定です。リンクまたはメールアドレスだけの行はアイコン（X、Telegram、Discord、メール）として表示され、リンクで終わる行はその前のテキストがリンクになります。",
+    "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.": "テキストのみ入力します。ページのスタイルは固定です。1 行目がタイトルです。段落の間は空行で区切ります。単独の短い行は見出しに、複数行の段落はリスト（各行が 1. 2. 3. で始まる場合は番号付き）になります。リンクとメールアドレスは自動でリンクになります。",
+    "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com": "© 2026 あなたの会社\nパートナー：サンプル https://example.com\nhttps://x.com/yourname\nsupport@example.com",
+    "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com": "あなたの会社について\n\nサイトを紹介する段落を 1 つ。\n\n作成できるもの\nテキストから動画：シーンを言葉で説明\n画像から動画：写真から始める\n\nお問い合わせ\nメール：support@example.com"
   }
 }

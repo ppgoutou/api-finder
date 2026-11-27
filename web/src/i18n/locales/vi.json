@@ -8866,6 +8866,11 @@
     "Pick the first day": "Chọn ngày đầu",
     "Pick the last day": "Chọn ngày cuối",
     "The last day must not be before the first day": "Ngày cuối không được trước ngày đầu",
-    "Invalid holiday theme settings": "Cài đặt giao diện ngày lễ không hợp lệ"
+    "Invalid holiday theme settings": "Cài đặt giao diện ngày lễ không hợp lệ",
+    "The saved HTML was turned into text. Save to apply it.": "HTML đã lưu đã được chuyển thành văn bản. Lưu để áp dụng.",
+    "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.": "Chỉ nhập văn bản; kiểu chân trang được cố định. Dòng chỉ có liên kết hoặc email sẽ hiển thị thành biểu tượng (X, Telegram, Discord, email), còn dòng kết thúc bằng liên kết sẽ biến phần chữ phía trước thành liên kết.",
+    "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.": "Chỉ nhập văn bản; kiểu trang được cố định. Dòng đầu tiên là tiêu đề. Ngăn cách các đoạn bằng một dòng trống: một dòng ngắn đứng riêng là tiêu đề mục, đoạn có nhiều dòng là danh sách (được đánh số khi các dòng bắt đầu bằng 1. 2. 3.). Liên kết và email tự động trở thành liên kết bấm được.",
+    "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com": "© 2026 Công ty của bạn\nĐối tác: Ví dụ https://example.com\nhttps://x.com/yourname\nsupport@example.com",
+    "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com": "Giới thiệu về công ty của bạn\n\nMột đoạn giới thiệu trang web.\n\nBạn có thể tạo gì\nVăn bản thành video: mô tả cảnh bằng lời\nẢnh thành video: bắt đầu từ một bức ảnh\n\nLiên hệ\nEmail: support@example.com"
   }
 }

@@ -291,3 +291,13 @@ func TestWWWPageRequestsRedirectToServerAddress(t *testing.T) {
 		assert.Equal(t, tc.location, rec.Header().Get("Location"))
 	}
 }
+
+func TestFooterContactHTMLLinksAddressesInPlainTextFooter(t *testing.T) {
+	footer := "© 2026 A & B\nPartner: PX Show https://p.example.com/?a=1&b=2\nhttps://t.me/Support\nhelp@example.com"
+	assert.Equal(t,
+		`© 2026 A &amp; B · <a href="https://p.example.com/?a=1&amp;b=2">Partner: PX Show</a> · <a href="https://t.me/Support">t.me/Support</a> · <a href="mailto:help@example.com">help@example.com</a>`,
+		string(footerContactHTML(footer)))
+
+	legacy := "<span>support@example.com</span>"
+	assert.Equal(t, legacy, string(footerContactHTML(legacy)))
+}

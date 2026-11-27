@@ -23,10 +23,11 @@ import { useTranslation } from 'react-i18next'
 import { PublicLayout } from '@/components/layout'
 import { RichContent } from '@/components/rich-content'
 import { Skeleton } from '@/components/ui/skeleton'
-import { isHttpUrl, isLikelyHtml } from '@/lib/content-format'
+import { isLikelyHtml } from '@/lib/content-format'
 import { selectLanguageBlock } from '@/lib/language-blocks'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
+import { AboutText } from './about-text'
 import { getAboutContent } from './api'
 
 function EmptyAboutState() {
@@ -115,7 +116,7 @@ function EmptyAboutState() {
 }
 
 export function About() {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const { data, isLoading } = useQuery({
     queryKey: ['about-content'],
     queryFn: async () => requireServerSuccess(await getAboutContent()),
@@ -126,7 +127,6 @@ export function About() {
     i18n.resolvedLanguage || i18n.language
   )
   const hasContent = rawContent.length > 0
-  const isUrl = hasContent && isHttpUrl(rawContent)
   const contentIsHtml = hasContent && isLikelyHtml(rawContent)
 
   if (isLoading) {
@@ -150,19 +150,8 @@ export function About() {
     )
   }
 
-  if (isUrl) {
-    return (
-      <PublicLayout showMainContainer={false}>
-        <iframe
-          src={rawContent}
-          className='h-[calc(100vh-3.5rem)] w-full border-0'
-          title={t('About')}
-          sandbox='allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts'
-        />
-      </PublicLayout>
-    )
-  }
-
+  // Saved before the about page became plain text; shown as is until an admin
+  // saves it again from System Settings.
   if (contentIsHtml) {
     return (
       <PublicLayout showMainContainer={false}>
@@ -178,13 +167,7 @@ export function About() {
 
   return (
     <PublicLayout>
-      <div className='mx-auto max-w-6xl px-4 py-8'>
-        <RichContent
-          mode='markdown'
-          content={rawContent}
-          className='prose-neutral dark:prose-invert max-w-none'
-        />
-      </div>
+      <AboutText text={rawContent} />
     </PublicLayout>
   )
 }

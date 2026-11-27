@@ -8866,6 +8866,11 @@
     "Pick the first day": "Choisissez le premier jour",
     "Pick the last day": "Choisissez le dernier jour",
     "The last day must not be before the first day": "Le dernier jour ne peut pas précéder le premier jour",
-    "Invalid holiday theme settings": "Paramètres du thème festif invalides"
+    "Invalid holiday theme settings": "Paramètres du thème festif invalides",
+    "The saved HTML was turned into text. Save to apply it.": "Le HTML enregistré a été converti en texte. Enregistrez pour l’appliquer.",
+    "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.": "Texte brut ; le style du pied de page est fixe. Une ligne ne contenant qu’un lien ou une adresse e-mail s’affiche sous forme d’icône (X, Telegram, Discord, e-mail), et une ligne qui se termine par un lien affiche son texte comme lien.",
+    "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.": "Texte brut ; le style de la page est fixe. La première ligne est le titre. Séparez les paragraphes par une ligne vide : une ligne courte seule devient un intertitre, et un paragraphe de plusieurs lignes devient une liste (numérotée quand ses lignes commencent par 1. 2. 3.). Les liens et adresses e-mail deviennent cliquables automatiquement.",
+    "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com": "© 2026 Votre entreprise\nPartenaire : Exemple https://example.com\nhttps://x.com/yourname\nsupport@example.com",
+    "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com": "À propos de votre entreprise\n\nUn paragraphe qui présente le site.\n\nCe que vous pouvez créer\nTexte en vidéo : décrivez la scène avec des mots\nImage en vidéo : partez d’une photo\n\nNous contacter\nE-mail : support@example.com"
   }
 }

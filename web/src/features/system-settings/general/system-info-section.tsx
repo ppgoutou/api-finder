@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import * as z from 'zod'
@@ -33,7 +34,9 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { isLikelyHtml } from '@/lib/content-format'
 import { LANGUAGE_BLOCKS_HINT } from '@/lib/language-blocks'
+import { legacyHtmlToText } from '@/lib/plain-text-content'
 
 import { FormDirtyIndicator } from '../components/form-dirty-indicator'
 import { FormNavigationGuard } from '../components/form-navigation-guard'
@@ -74,6 +77,14 @@ type SystemInfoFormValues = z.infer<typeof _systemInfoSchema>
 type SystemInfoSectionProps = {
   defaultValues: SystemInfoFormValues
 }
+
+/** i18n key: an example footer, one item per line. */
+const FOOTER_PLACEHOLDER =
+  '© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com'
+
+/** i18n key: an example about page in the plain-text layout. */
+const ABOUT_PLACEHOLDER =
+  'About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com'
 
 function normalizeValue(value: unknown): string {
   if (value === undefined || value === null) return ''
@@ -150,6 +161,25 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
         }
       },
     })
+
+  // Footer and about are plain text now; HTML saved earlier is turned into
+  // text here so the admin sees and saves text.
+  const footerValue = form.watch('Footer') ?? ''
+  const aboutValue = form.watch('About') ?? ''
+  useEffect(() => {
+    if (isLikelyHtml(footerValue)) {
+      form.setValue('Footer', legacyHtmlToText(footerValue, 'footer'), {
+        shouldDirty: true,
+      })
+    }
+    if (isLikelyHtml(aboutValue)) {
+      form.setValue('About', legacyHtmlToText(aboutValue, 'about'), {
+        shouldDirty: true,
+      })
+    }
+  }, [footerValue, aboutValue, form])
+  const footerWasHtml = isLikelyHtml(normalizedDefaults.Footer ?? '')
+  const aboutWasHtml = isLikelyHtml(normalizedDefaults.About ?? '')
 
   return (
     <>
@@ -272,15 +302,17 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                     <FormLabel>{t('Footer')}</FormLabel>
                     <FormControl>
                       <LanguageBlocksTextarea
-                        placeholder={t(
-                          '© 2025 Your Company. All rights reserved.'
-                        )}
-                        rows={4}
+                        placeholder={t(FOOTER_PLACEHOLDER)}
+                        rows={6}
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      {t('Footer text displayed at the bottom of pages')}{' '}
+                      {footerWasHtml &&
+                        `${t('The saved HTML was turned into text. Save to apply it.')} `}
+                      {t(
+                        'Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.'
+                      )}{' '}
                       {t(LANGUAGE_BLOCKS_HINT)}
                     </FormDescription>
                     <FormMessage />
@@ -296,16 +328,16 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                     <FormLabel>{t('About')}</FormLabel>
                     <FormControl>
                       <LanguageBlocksTextarea
-                        placeholder={t(
-                          'Enter HTML code (e.g., <p>About us...</p>) or a URL (e.g., https://example.com) to embed as iframe'
-                        )}
-                        rows={4}
+                        placeholder={t(ABOUT_PLACEHOLDER)}
+                        rows={12}
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
+                      {aboutWasHtml &&
+                        `${t('The saved HTML was turned into text. Save to apply it.')} `}
                       {t(
-                        'Supports HTML markup or iframe embedding. Enter HTML code directly, or provide a complete URL to automatically embed it as an iframe.'
+                        'Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.'
                       )}{' '}
                       {t(LANGUAGE_BLOCKS_HINT)}
                     </FormDescription>

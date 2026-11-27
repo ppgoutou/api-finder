@@ -32,6 +32,9 @@ export const STATIC_I18N_KEYS = [
   // EVENT_FIELDS labels in x-pixel-settings-section
   'Sign-up event ID',
   'Top-up event ID',
+  // FOOTER_PLACEHOLDER and ABOUT_PLACEHOLDER in system-settings/general/system-info-section
+  '© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com',
+  'About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com',
   // LANGUAGE_BLOCKS_HINT in @/lib/language-blocks
   'Switch languages to edit each version. Visitors see the version for their interface language, falling back to English; text under All languages shows in every language.',
   'Task usage metadata is unavailable. Pricing details cannot be displayed.',
