@@ -41,10 +41,10 @@ const mediaUrl = z
 const showcaseItemSchema = z.object({
   title: z.string().trim().max(80, { message: 'At most 80 characters' }),
   category: z.string().trim().max(20, { message: 'At most 20 characters' }),
-  prompt: z.string().trim().max(2000, { message: 'At most 2000 characters' }),
+  prompt: z.string().trim().max(5000, { message: 'At most 5000 characters' }),
   titleZh: z.string().trim().max(80, { message: 'At most 80 characters' }),
   categoryZh: z.string().trim().max(20, { message: 'At most 20 characters' }),
-  promptZh: z.string().trim().max(2000, { message: 'At most 2000 characters' }),
+  promptZh: z.string().trim().max(5000, { message: 'At most 5000 characters' }),
   spec: z.string().trim().max(60, { message: 'At most 60 characters' }),
   video: mediaUrl,
   poster: mediaUrl,
