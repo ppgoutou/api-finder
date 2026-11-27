@@ -82,7 +82,7 @@ export function VideoHero(props: VideoHeroProps) {
         className='from-ink/60 pointer-events-none absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r to-transparent md:block'
       />
 
-      <div className='relative z-[3] mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-6 pt-36 pb-16 md:pb-20'>
+      <div className='relative z-[3] mx-auto flex w-full max-w-7xl flex-col items-start gap-5 px-6 pt-36 pb-16 md:px-8 md:pb-20'>
         <p className='landing-animate-fade-up text-micro inline-flex items-center gap-2 font-mono tracking-[0.12em] text-white/55 uppercase opacity-0'>
           <span className='cinema-rec size-1.5 rounded-full' aria-hidden />
           {t('Seedance 2.5 is live · up to 30 seconds per clip')}
@@ -91,7 +91,7 @@ export function VideoHero(props: VideoHeroProps) {
           className={cn(
             'landing-animate-fade-up font-display tracking-tight text-balance uppercase opacity-0',
             isCjk
-              ? 'text-[clamp(2.75rem,12.5vw,4rem)] leading-[1.15] sm:text-[clamp(4rem,11vw,5.5rem)] lg:text-[clamp(5.5rem,8vw,7rem)] lg:leading-[1.1] 2xl:w-max 2xl:text-[clamp(6rem,6.4vw,9rem)]'
+              ? 'text-[clamp(2.75rem,12.5vw,4rem)] leading-[1.15] sm:text-[clamp(4rem,11vw,5.5rem)] lg:text-[clamp(5.5rem,8vw,7rem)] lg:leading-[1.1] 2xl:w-max 2xl:text-[clamp(6rem,5.8vw,6.875rem)]'
               : 'text-display max-w-6xl leading-[1.02] 2xl:text-[clamp(6rem,5.2vw,8rem)]'
           )}
           style={{ animationDelay: '60ms' }}
