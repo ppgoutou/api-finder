@@ -8866,6 +8866,11 @@
     "Pick the first day": "Pick the first day",
     "Pick the last day": "Pick the last day",
     "The last day must not be before the first day": "The last day must not be before the first day",
-    "Invalid holiday theme settings": "Invalid holiday theme settings"
+    "Invalid holiday theme settings": "Invalid holiday theme settings",
+    "The saved HTML was turned into text. Save to apply it.": "The saved HTML was turned into text. Save to apply it.",
+    "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.": "Plain text; the footer style is fixed. A line with only a link or email shows as an icon (X, Telegram, Discord, email), and a line ending in a link shows its text as a link.",
+    "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.": "Plain text; the page style is fixed. The first line is the title. Separate paragraphs with a blank line: a short line on its own is a section heading, and a paragraph of several lines is a list (numbered when its lines start with 1. 2. 3.). Links and emails are linked automatically.",
+    "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com": "© 2026 Your Company\nPartner: Example https://example.com\nhttps://x.com/yourname\nsupport@example.com",
+    "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com": "About Your Company\n\nOne paragraph that introduces the site.\n\nWhat you can create\nText to video: describe the scene in words\nImage to video: start from a photo\n\nContact us\nEmail: support@example.com"
   }
 }

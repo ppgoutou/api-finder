@@ -364,6 +364,44 @@ func englishBlock(text string) string {
 	return strings.TrimSpace(block)
 }
 
+// footerContactHTML renders the admin's footer for the static page. The footer
+// is plain text, one item per line: a line holding only a web or email address
+// becomes a link, as does a line ending in one, with the text before it as the
+// label. Footer HTML saved before the footer became plain text is kept as it
+// was, since the app renders it unescaped too.
+func footerContactHTML(footer string) template.HTML {
+	if strings.Contains(footer, "<") {
+		return template.HTML(footer)
+	}
+	var parts []string
+	for line := range strings.SplitSeq(footer, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		label, address := "", line
+		if i := strings.LastIndexAny(line, " \t"); i >= 0 {
+			label, address = strings.TrimSpace(line[:i]), line[i+1:]
+		}
+		href := ""
+		user, domain, isEmail := strings.Cut(address, "@")
+		if strings.HasPrefix(address, "https://") || strings.HasPrefix(address, "http://") {
+			href = address
+		} else if isEmail && user != "" && strings.Contains(domain, ".") && !strings.ContainsAny(domain, "@/") {
+			href = "mailto:" + address
+		}
+		if href == "" {
+			parts = append(parts, template.HTMLEscapeString(line))
+			continue
+		}
+		if label == "" {
+			label = strings.TrimPrefix(strings.TrimPrefix(address, "https://"), "http://")
+		}
+		parts = append(parts, fmt.Sprintf(`<a href="%s">%s</a>`, template.HTMLEscapeString(href), template.HTMLEscapeString(label)))
+	}
+	return template.HTML(strings.Join(parts, " · "))
+}
+
 // renderIndexPage returns the HTTP status and index document for path, with
 // page-specific metadata and, for the home, pricing and model pages, a static
 // rendering of their copy.
@@ -417,8 +455,7 @@ func renderIndexPage(c *gin.Context, indexPage []byte, path string) (int, []byte
 		view.ShareAlt = card.Alt
 	}
 	view.JSONLD = seoStructuredData(snap, view, path)
-	// Admin-authored footer HTML is already rendered unescaped by the app.
-	view.Contact = template.HTML(englishBlock(snap.footer))
+	view.Contact = footerContactHTML(englishBlock(snap.footer))
 
 	var head bytes.Buffer
 	if err := seoHeadTemplate.Execute(&head, view); err != nil {
