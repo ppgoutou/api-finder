@@ -29,6 +29,7 @@ func TestClassifyProductionErrors(t *testing.T) {
 		{"supplier fault", Input{Raw: `{"error":{"code":"video_request_failed","message":"❌ 本次视频生成未能完成"}}`, StatusCode: 503}, CodeServiceUnavailable},
 		{"bare gateway error", Input{Raw: "error code: 502\n", StatusCode: 502}, CodeServiceUnavailable},
 		{"supplier overload", Input{Raw: `{"error":{"message":"system cpu overloaded (current: 99.7%, threshold: 90%)"}}`, StatusCode: 503}, CodeServiceBusy},
+		{"supplier paused the model", Input{Raw: `status_code=409, {"error":{"message":"失败率太高，先暂停一会儿~","type":"invalid_request_error","code":"model_intake_paused"}}`, ErrorCode: bad, ErrorType: "new_api_error", StatusCode: 409}, CodeServiceBusy},
 		{"unreachable asset", Input{Raw: `{"code":"MATERIAL_UNREACHABLE","message":"上传素材无法访问"}`, StatusCode: 400}, CodeMaterialUnreachable},
 		{"asset download timeout", Input{Raw: `参考图登记失败（HTTP 400）：外部素材下载超时，请改用本站直传`, StatusCode: 400}, CodeMaterialDownloadTimeout},
 		{"asset needs a public URL", Input{Raw: `first_image_url must be a public http(s) URL`, StatusCode: 400}, CodeMaterialPublicURL},
