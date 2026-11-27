@@ -156,6 +156,9 @@ func TestValidateHomeShowcase(t *testing.T) {
 		{"too many clips", `{"showcase":` + manyItems + `}`, false},
 		{"title too long", `{"showcase":[{"title":"` + strings.Repeat("长", 81) + `"}]}`, false},
 		{"chinese versions", `{"hero":{"title":"Hero","title_zh":"主视频","prompt_zh":"提示词"},"showcase":[{"title":"Clip","title_zh":"案例","category":"Ads","category_zh":"广告"}]}`, true},
+		{"prompt of 5000 characters", `{"hero":{"prompt":"` + strings.Repeat("词", 5000) + `","prompt_zh":"` + strings.Repeat("词", 5000) + `"}}`, true},
+		{"prompt over 5000 characters", `{"showcase":[{"prompt":"` + strings.Repeat("p", 5001) + `"}]}`, false},
+		{"chinese prompt over 5000 characters", `{"hero":{"prompt_zh":"` + strings.Repeat("词", 5001) + `"}}`, false},
 		{"chinese category too long", `{"showcase":[{"category_zh":"` + strings.Repeat("长", 21) + `"}]}`, false},
 		{"not json", `{"showcase":`, false},
 	}

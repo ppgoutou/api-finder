@@ -314,8 +314,8 @@ func validateHomeShowcase(value string) error {
 			utf8.RuneCountInString(item.TitleZh) > 80 ||
 			utf8.RuneCountInString(item.Category) > 20 ||
 			utf8.RuneCountInString(item.CategoryZh) > 20 ||
-			utf8.RuneCountInString(item.Prompt) > 2000 ||
-			utf8.RuneCountInString(item.PromptZh) > 2000 ||
+			utf8.RuneCountInString(item.Prompt) > 5000 ||
+			utf8.RuneCountInString(item.PromptZh) > 5000 ||
 			utf8.RuneCountInString(item.Spec) > 60 ||
 			!showcaseMediaAllowed(item) {
 			return errInvalidHomeShowcase
