@@ -1345,3 +1345,152 @@ For commercial licensing, please contact support@quantumnous.com
     opacity: 0;
   }
 }
+
+/* ── Studio work in progress: the frame develops ──
+ * A work being made shows its frame developing from the top down: above the
+ * scan line it is in colour and sharp, below it grey and grainy. `--dev` is
+ * the share developed (0–1), set from the work's progress. Without a known
+ * share the line sweeps (generating) or the frame only breathes (waiting).
+ * Motion only uses transform, opacity and clip-path. */
+.studio-dev {
+  --dev: 0;
+  --dev-a: var(--brand);
+  --dev-b: #8b5cf6;
+  --dev-c: #22d3ee;
+  content-visibility: auto;
+}
+.studio-dev[data-slow] {
+  --dev-a: #f59e0b;
+  --dev-b: #ef4444;
+  --dev-c: #fb923c;
+}
+.studio-dev-lights {
+  position: absolute;
+  inset: 0;
+}
+.studio-dev-lights > span {
+  position: absolute;
+  width: 80%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--dev-a), transparent);
+  transition: background 1.2s;
+  animation: studio-dev-drift 7s ease-in-out infinite alternate;
+}
+.studio-dev-lights > span:nth-child(1) {
+  left: -15%;
+  top: -25%;
+}
+.studio-dev-lights > span:nth-child(2) {
+  right: -20%;
+  bottom: -35%;
+  background: radial-gradient(closest-side, var(--dev-b), transparent);
+  animation-duration: 9s;
+  animation-direction: alternate-reverse;
+}
+.studio-dev-lights > span:nth-child(3) {
+  left: 25%;
+  top: 20%;
+  width: 50%;
+  height: 65%;
+  background: radial-gradient(closest-side, var(--dev-c), transparent);
+  animation-duration: 11s;
+}
+@keyframes studio-dev-drift {
+  to {
+    transform: translate(18%, 12%) scale(1.15);
+  }
+}
+.studio-dev-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.1);
+}
+.studio-dev-raw {
+  opacity: 0.22;
+  filter: grayscale(1);
+}
+.studio-dev-raw .studio-dev-backdrop {
+  filter: blur(24px);
+}
+/* The developed part sharpens as it develops. */
+.studio-dev-developed .studio-dev-backdrop {
+  opacity: 0.85;
+  filter: blur(calc(24px - 16px * var(--dev)));
+}
+.studio-dev[data-mode='known'] .studio-dev-developed {
+  clip-path: inset(0 0 calc(100% - var(--dev) * 100%) 0);
+  transition: clip-path 1s linear;
+}
+.studio-dev[data-mode='sweeping'] .studio-dev-developed {
+  opacity: 0.55;
+}
+.studio-dev[data-mode='waiting'] .studio-dev-developed {
+  opacity: 0.35;
+}
+.studio-dev[data-mode='waiting'] .studio-dev-lights > span {
+  animation-duration: 16s;
+}
+.studio-dev-grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: cinema-grain 1s steps(6) infinite;
+}
+/* The scan line rides the bottom edge of the developed part. */
+.studio-dev-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateY(calc(var(--dev) * 100%));
+  transition: transform 1s linear;
+}
+.studio-dev-scan::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: -1px;
+  height: 2px;
+  background: #fff;
+  box-shadow: 0 0 12px 3px rgb(255 255 255 / 0.5);
+}
+.studio-dev[data-mode='sweeping'] .studio-dev-scan {
+  transition: none;
+  animation: studio-dev-sweep 3s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+.studio-dev[data-mode='waiting'] .studio-dev-scan {
+  display: none;
+}
+.studio-dev[data-slow] .studio-dev-scan::before {
+  animation: studio-dev-breathe 1.6s ease-in-out infinite;
+}
+@keyframes studio-dev-sweep {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes studio-dev-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+.studio-dev-text {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-dev *,
+  .studio-dev *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .studio-dev[data-mode='sweeping'] .studio-dev-scan {
+    display: none;
+  }
+}
