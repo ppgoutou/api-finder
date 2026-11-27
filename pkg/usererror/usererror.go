@@ -241,7 +241,9 @@ var textRules = []rule{
 	{CodeInvalidFormat, []string{"json body required", "json object required", "unsupported model"}},
 	{CodeRequestTooLarge, []string{"request body too large"}},
 	{CodeModelNotPriced, []string{"price not configured", "pricing is not configured", "has not been priced", "价格尚未", "价格未配置"}},
-	{CodeServiceBusy, []string{"overloaded", "saturated", "负载已饱和"}},
+	// "model_intake_paused" is the supplier pausing a model after too many
+	// failures; the customer can only wait.
+	{CodeServiceBusy, []string{"overloaded", "saturated", "负载已饱和", "model_intake_paused", "失败率太高"}},
 	{CodeUpstreamAuth, []string{"invalid auth"}},
 	{CodeRequestCancelled, []string{"context canceled"}},
 	{CodeConnectionFailed, []string{"dial tcp", "connection refused", "context deadline exceeded", "connection reset", "no such host"}},
