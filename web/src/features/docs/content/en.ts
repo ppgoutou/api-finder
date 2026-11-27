@@ -107,18 +107,22 @@ Models differ in resolution, duration and billing, see Choosing a model and Imag
 | \`seedance-2.5-stable-YH\` | 480p–1080p | 4–30 s | Per second |
 | \`seedance-2.5-flash-YH\` | 480p–720p | 4–30 s | Per second |
 | \`wan3-YH\` | 480p–720p | 2–30 s | Per second |
+| \`seedance-2.0-AM\` | 480p–720p | 4–15 s | Per second |
+| \`seedance-2.5-AM\` | 480p–720p | 4–30 s | Per second |
+| \`wan3-AM\` | 720p–1080p | 2–30 s | Per video |
 | \`doubao-seedance-2-5-261111\` | 480p–1080p | 4–30 s | Per token |
 
-**Reference limits**: the Seedance 2.0 models take up to 9 images, 3 videos and 3 audios; \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` up to 30 images, 10 videos and 10 audios; \`seedance-2.5-flash-YH\` and \`wan3-YH\` up to 10 images, 5 videos and 5 audios.
+**Reference limits**: the Seedance 2.0 models take up to 9 images, 3 videos and 3 audios; \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\`, \`seedance-2.5-AM\` and \`doubao-seedance-2-5-261111\` up to 30 images, 10 videos and 10 audios; \`seedance-2.5-flash-YH\` and \`wan3-YH\` up to 10 images, 5 videos and 5 audios; \`wan3-AM\` up to 10 images and 5 videos, no reference audio.
 
 **Which one to pick**
 
-- **Long videos**: the Seedance 2.5 models and \`wan3-YH\` go up to 30 seconds per clip;
+- **Long videos**: the Seedance 2.5 models, \`wan3-YH\` and \`wan3-AM\` go up to 30 seconds per clip;
+- **Per-video price**: \`wan3-AM\` charges one price per video whatever the duration, the same at 720p and 1080p;
 - **Faster and cheaper**: models with \`fast\`, \`mini\` or \`flash\` in the name;
-- **Many references**: \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\` and \`doubao-seedance-2-5-261111\` take up to 30 reference images, 10 reference videos and 10 reference audios;
+- **Many references**: \`seedance-2.5-YH\`, \`seedance-2.5-stable-YH\`, \`seedance-2.5-AM\` and \`doubao-seedance-2-5-261111\` take up to 30 reference images, 10 reference videos and 10 reference audios;
 - **Official model**: \`doubao-seedance-2-5-261111\` runs on ByteDance Volcano Engine and can generate sound.
 
-**Aspect ratios**: \`seedance-2.5-stable-YH\` and \`seedance-2.5-flash-YH\` take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the other \`-YH\` models also take \`9:21\`; the official model takes \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\`, \`9:16\` and \`adaptive\`.`,
+**Aspect ratios**: \`seedance-2.5-stable-YH\` and \`seedance-2.5-flash-YH\` take \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\`, \`3:4\` and \`21:9\`; the other \`-YH\` models also take \`9:21\`; \`seedance-2.0-AM\` and \`seedance-2.5-AM\` take \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\` and \`9:16\`; \`wan3-AM\` takes \`16:9\`, \`9:16\`, \`1:1\`, \`4:3\` and \`3:4\`; the official model takes \`21:9\`, \`16:9\`, \`4:3\`, \`1:1\`, \`3:4\`, \`9:16\` and \`adaptive\`.`,
         },
       ],
     },
