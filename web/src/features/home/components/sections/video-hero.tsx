@@ -38,7 +38,8 @@ interface VideoHeroProps {
 export function VideoHero(props: VideoHeroProps) {
   const { t, i18n } = useTranslation()
   // Chinese and Japanese headlines are short enough to sit on one line on
-  // wide screens; other languages keep wrapping at a smaller size.
+  // wide screens; other languages wrap onto two lines. Both sizes follow the
+  // viewport height too, so the copy keeps to the lower half of the clip.
   const isCjk = /^(zh|ja)/i.test(i18n.resolvedLanguage || i18n.language || '')
   const { bestDiscount } = useSeedancePricing()
   const hero = useHeroClip()
@@ -78,7 +79,7 @@ export function VideoHero(props: VideoHeroProps) {
       />
       <div
         aria-hidden
-        className='from-ink via-ink/70 pointer-events-none absolute inset-x-0 bottom-0 h-[80%] bg-gradient-to-t to-transparent'
+        className='from-ink via-ink/70 pointer-events-none absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t to-transparent'
       />
       <div
         aria-hidden
@@ -87,7 +88,7 @@ export function VideoHero(props: VideoHeroProps) {
 
       {christmas && <HolidaySnow className='z-[2]' />}
 
-      <div className='relative z-[3] mx-auto flex w-full max-w-7xl flex-col items-start gap-5 px-6 pt-36 pb-16 md:px-8 md:pb-20'>
+      <div className='relative z-[3] mx-auto flex w-full max-w-7xl flex-col items-start gap-4 px-6 pt-36 pb-8 md:px-8 md:pb-10'>
         <p className='landing-animate-fade-up text-micro inline-flex items-center gap-2 font-mono tracking-[0.12em] text-white/55 uppercase opacity-0'>
           {christmas ? (
             <Snowflake
@@ -103,19 +104,19 @@ export function VideoHero(props: VideoHeroProps) {
           className={cn(
             'landing-animate-fade-up font-display tracking-tight text-balance uppercase opacity-0',
             isCjk
-              ? 'text-[clamp(2.75rem,12.5vw,4rem)] leading-[1.15] sm:text-[clamp(4rem,11vw,5.5rem)] lg:text-[clamp(5.5rem,8vw,7rem)] lg:leading-[1.1] 2xl:w-max 2xl:text-[clamp(6rem,5.8vw,6.875rem)]'
-              : 'text-display max-w-6xl leading-[1.02] 2xl:text-[clamp(6rem,5.2vw,8rem)]'
+              ? 'text-[clamp(2.5rem,min(9vw,7.5svh),4.5rem)] leading-[1.1] lg:w-max'
+              : 'text-[clamp(2.25rem,min(6vw,7svh),4.5rem)] max-w-5xl leading-[1.02] font-bold'
           )}
           style={{ animationDelay: '60ms' }}
         >
-          <span className={cn('block', isCjk && '2xl:inline')}>
+          <span className={cn('block', isCjk && 'lg:inline')}>
             {t('Turn one sentence into')}
           </span>{' '}
           <span
             className={cn(
               'cinema-shimmer block',
               christmas && 'holiday-shimmer',
-              isCjk && '2xl:inline'
+              isCjk && 'lg:inline'
             )}
           >
             {t('cinematic video')}
@@ -138,7 +139,7 @@ export function VideoHero(props: VideoHeroProps) {
           )}
         </p>
         <div
-          className='landing-animate-fade-up mt-2 flex flex-wrap items-center gap-3 opacity-0'
+          className='landing-animate-fade-up mt-1 flex flex-wrap items-center gap-3 opacity-0'
           style={{ animationDelay: '180ms' }}
         >
           <Button
@@ -164,13 +165,14 @@ export function VideoHero(props: VideoHeroProps) {
             {t('View Pricing')}
           </Button>
         </div>
-        <ul className='text-micro flex flex-wrap gap-x-5 gap-y-1.5 font-mono tracking-wide text-white/35 uppercase'>
+        {/* Short screens drop the fact line so the copy stays under half. */}
+        <ul className='text-micro flex flex-wrap gap-x-5 gap-y-1.5 font-mono tracking-wide text-white/35 uppercase [@media(max-height:720px)]:hidden'>
           {facts.map((fact) => (
             <li key={fact}>{fact}</li>
           ))}
         </ul>
         {hero.prompt && (
-          <div className='mt-4 flex w-full max-w-xl flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-4 text-xs'>
+          <div className='mt-1 flex w-full max-w-xl flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs'>
             <span className='text-micro font-mono tracking-wide text-white/40 uppercase'>
               {t('Prompt used')}
             </span>
