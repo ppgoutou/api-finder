@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
 import { useStudioHandoff } from '@/stores/studio-handoff-store'
@@ -29,7 +30,6 @@ import { useStudioHandoff } from '@/stores/studio-handoff-store'
 import { useShowcaseCards } from '../../hooks/use-showcase-cards'
 import { ClipSpec } from '../clip-spec'
 import { PlayableClip } from '../playable-clip'
-import { TypedPrompt } from '../typed-prompt'
 
 const ALL_CATEGORIES = 'all'
 
@@ -105,60 +105,75 @@ export function Showcase(props: ShowcaseProps) {
           {visibleCards.map((card) => (
             <li
               key={card.key}
-              className='cinema-reveal bg-card border-border/60 flex flex-col overflow-hidden rounded-2xl border'
+              className='cinema-reveal border-border/60 relative aspect-video overflow-hidden rounded-2xl border'
             >
-              <div className='relative aspect-video'>
-                <PlayableClip
-                  src={card.video}
-                  poster={card.poster}
-                  title={card.title}
+              <PlayableClip
+                src={card.video}
+                poster={card.poster}
+                title={card.title}
+                openLabel={t('Watch and get the prompt')}
+                details={
+                  <div className='flex flex-col gap-4'>
+                    {(card.category || card.spec) && (
+                      <div className='flex flex-wrap items-center gap-2'>
+                        {card.category && (
+                          <Badge variant='secondary'>{card.category}</Badge>
+                        )}
+                        {card.spec && (
+                          <ClipSpec
+                            spec={card.spec}
+                            className='bg-muted text-muted-foreground px-2 py-0.5 text-xs'
+                          />
+                        )}
+                      </div>
+                    )}
+                    {card.prompt && (
+                      <p className='bg-muted/60 max-h-60 overflow-y-auto rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap'>
+                        {card.prompt}
+                      </p>
+                    )}
+                    <div className='flex flex-wrap items-center gap-2'>
+                      {card.prompt && (
+                        <CopyButton
+                          value={card.prompt}
+                          variant='outline'
+                          size='default'
+                          aria-label={t('Copy prompt: {{title}}', {
+                            title: card.title,
+                          })}
+                        >
+                          {t('Copy prompt')}
+                        </CopyButton>
+                      )}
+                      <Link
+                        to={startTarget}
+                        search={startSearch}
+                        onClick={() => {
+                          if (card.prompt) {
+                            setHandoff(
+                              handoffFromPrompt(card.prompt, card.spec)
+                            )
+                          }
+                        }}
+                        className={buttonVariants()}
+                      >
+                        {t('Generate with it')}
+                      </Link>
+                    </div>
+                  </div>
+                }
+              />
+              {card.spec && (
+                <ClipSpec
+                  spec={card.spec}
+                  className='text-micro pointer-events-none absolute top-2.5 right-2.5 px-2 py-0.5'
                 />
-                {card.spec && (
-                  <ClipSpec
-                    spec={card.spec}
-                    className='text-micro pointer-events-none absolute right-2.5 bottom-2.5 px-2 py-0.5'
-                  />
+              )}
+              <div className='from-ink/85 pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent px-4 pt-10 pb-3 text-white'>
+                <h3 className='truncate font-semibold'>{card.title}</h3>
+                {card.category && (
+                  <p className='text-xs text-white/70'>{card.category}</p>
                 )}
-              </div>
-              <div className='flex flex-1 flex-col gap-3 p-5'>
-                <div className='flex items-center justify-between gap-3'>
-                  <h3 className='font-semibold'>{card.title}</h3>
-                  {card.category && (
-                    <Badge variant='secondary'>{card.category}</Badge>
-                  )}
-                </div>
-                {card.prompt && (
-                  <TypedPrompt
-                    text={card.prompt}
-                    className='text-muted-foreground line-clamp-3 text-sm leading-relaxed'
-                  />
-                )}
-                <div className='mt-auto flex flex-wrap items-center gap-2 pt-1'>
-                  {card.prompt && (
-                    <CopyButton
-                      value={card.prompt}
-                      variant='outline'
-                      size='sm'
-                      aria-label={t('Copy prompt: {{title}}', {
-                        title: card.title,
-                      })}
-                    >
-                      {t('Copy prompt')}
-                    </CopyButton>
-                  )}
-                  <Link
-                    to={startTarget}
-                    search={startSearch}
-                    onClick={() => {
-                      if (card.prompt) {
-                        setHandoff(handoffFromPrompt(card.prompt, card.spec))
-                      }
-                    }}
-                    className='text-brand dark:text-brand-on-dark px-2 text-sm font-semibold hover:underline'
-                  >
-                    {t('Generate with it')}
-                  </Link>
-                </div>
               </div>
             </li>
           ))}

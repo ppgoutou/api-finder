@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Play } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
@@ -30,12 +30,16 @@ interface PlayableClipProps {
   poster?: string
   /** Clip title; also the dialog title. */
   title: string
+  /** Shown under the player in the dialog, such as the clip's prompt. */
+  details?: ReactNode
+  /** Text of the hover badge; defaults to playing with sound. */
+  openLabel?: string
 }
 
 /**
  * A muted looping preview that opens the full clip, with sound and controls,
  * in a dialog. Background previews pause while the dialog is open. Without a
- * source it is a plain placeholder.
+ * source it is a plain placeholder, unless there are details to open.
  */
 export function PlayableClip(props: PlayableClipProps) {
   const { t } = useTranslation()
@@ -43,7 +47,7 @@ export function PlayableClip(props: PlayableClipProps) {
   const [open, setOpen] = useState(false)
   const title = props.title || t('Video preview')
 
-  if (!props.src) {
+  if (!props.src && !props.details) {
     return <ShowcaseVideo src='' label={title} />
   }
 
@@ -73,7 +77,7 @@ export function PlayableClip(props: PlayableClipProps) {
         >
           <span className='text-ink flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold'>
             <Play className='size-4 fill-current' />
-            {t('Play with sound')}
+            {props.openLabel ?? t('Play with sound')}
           </span>
         </span>
       </button>
@@ -83,15 +87,22 @@ export function PlayableClip(props: PlayableClipProps) {
         title={title}
         contentClassName='sm:max-w-4xl'
       >
-        <video
-          src={props.src}
-          poster={props.poster || undefined}
-          controls
-          autoPlay
-          playsInline
-          aria-label={title}
-          className='aspect-video w-full rounded-lg bg-black'
-        />
+        {props.src ? (
+          <video
+            src={props.src}
+            poster={props.poster || undefined}
+            controls
+            autoPlay
+            playsInline
+            aria-label={title}
+            className='aspect-video w-full rounded-lg bg-black'
+          />
+        ) : (
+          <div className='aspect-video overflow-hidden rounded-lg'>
+            <ShowcaseVideo src='' label={title} />
+          </div>
+        )}
+        {props.details}
       </Dialog>
     </>
   )
