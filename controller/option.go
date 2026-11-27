@@ -240,6 +240,12 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
+	if option.Key == holidayThemeOptionKey {
+		if err := validateHolidayTheme(option.Value.(string)); err != nil {
+			common.ApiErrorT(c, "Invalid holiday theme settings")
+			return
+		}
+	}
 	if option.Key == promoPopupOptionKey {
 		if err := validatePromoPopup(option.Value.(string)); err != nil {
 			common.ApiErrorT(c, "Invalid promotion popup settings")

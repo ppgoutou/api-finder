@@ -140,6 +140,8 @@ export interface SystemStatus {
   }
   // Allow direct access to common properties
   version?: string
+  /** The `HolidayTheme` option, a JSON string; see lib/holiday-theme. */
+  holiday_theme?: string
   system_name?: string
   logo?: string
   github_oauth?: boolean

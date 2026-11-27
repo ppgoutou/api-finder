@@ -150,6 +150,7 @@ export type SiteSettings = {
   HomeShowcase: string
   StudioGallery: string
   PromoPopup: string
+  HolidayTheme: string
   ServerAddress: string
   TaskPublicAddress: string
   'general_setting.docs_link': string

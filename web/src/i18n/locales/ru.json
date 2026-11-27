@@ -8855,6 +8855,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "Уютная хижина в заснеженном лесу в сумерках, тёплый свет в окнах, акварель",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "Предметное фото белых кроссовок на пастельном фоне, мягкий студийный свет",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "Портрет старого рыбака с обветренным лицом, драматичный боковой свет, 85 мм",
-    "Isometric illustration of a tiny floating island with a lighthouse": "Изометрическая иллюстрация маленького парящего острова с маяком"
+    "Isometric illustration of a tiny floating island with a lighthouse": "Изометрическая иллюстрация маленького парящего острова с маяком",
+    "Holiday theme": "Праздничная тема",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "Добавляет снег, тёплые огни и новогоднюю шапку на логотип на главной странице и в шапке сайта — с первого по последний день по дате каждого посетителя. После последнего дня отключается сама.",
+    "Christmas theme": "Рождественская тема",
+    "Visitors who ask their system for less motion see no snow.": "Посетители, у которых в системе включено уменьшение движения, снег не видят.",
+    "First day": "Первый день",
+    "Last day": "Последний день",
+    "Pick the first day": "Выберите первый день",
+    "Pick the last day": "Выберите последний день",
+    "The last day must not be before the first day": "Последний день не может быть раньше первого",
+    "Invalid holiday theme settings": "Неверные настройки праздничной темы"
   }
 }

@@ -249,3 +249,31 @@ func TestValidatePromoPopup(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateHolidayTheme(t *testing.T) {
+	cases := []struct {
+		name  string
+		value string
+		valid bool
+	}{
+		{"empty means off", "", true},
+		{"no theme means off", `{"theme":"","start":"","end":""}`, true},
+		{"christmas across new year", `{"theme":"christmas","start":"2026-12-15","end":"2027-01-02"}`, true},
+		{"single day", `{"theme":"christmas","start":"2026-12-25","end":"2026-12-25"}`, true},
+		{"unknown theme", `{"theme":"halloween","start":"2026-10-25","end":"2026-10-31"}`, false},
+		{"missing last day", `{"theme":"christmas","start":"2026-12-15"}`, false},
+		{"impossible date", `{"theme":"christmas","start":"2026-12-15","end":"2026-12-32"}`, false},
+		{"last day before first day", `{"theme":"christmas","start":"2026-12-26","end":"2026-12-25"}`, false},
+		{"not json", `{"theme":`, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateHolidayTheme(tc.value)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}

@@ -37,6 +37,7 @@ import { NoticeSection } from '../maintenance/notice-section'
 import { SidebarModulesSection } from '../maintenance/sidebar-modules-section'
 import type { SiteSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
+import { HolidayThemeSection } from './holiday-theme/section'
 import { HomeShowcaseSection } from './home-showcase/section'
 import { PromoPopupSection } from './promo-popup/section'
 import { StudioGallerySection } from './studio-gallery/section'
@@ -97,6 +98,13 @@ const SITE_SECTIONS = [
     titleKey: 'Promotion popup',
     build: (settings: SiteSettings) => (
       <PromoPopupSection defaultValue={settings.PromoPopup ?? ''} />
+    ),
+  },
+  {
+    id: 'holiday-theme',
+    titleKey: 'Holiday theme',
+    build: (settings: SiteSettings) => (
+      <HolidayThemeSection defaultValue={settings.HolidayTheme ?? ''} />
     ),
   },
   {

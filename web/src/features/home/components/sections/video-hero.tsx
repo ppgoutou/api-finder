@@ -17,11 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Snowflake } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { HolidayLights, HolidaySnow } from '@/components/holiday-decor'
 import { Button } from '@/components/ui/button'
 import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
+import { useHolidayTheme } from '@/hooks/use-holiday-theme'
 import { cn } from '@/lib/utils'
 import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
@@ -44,6 +46,7 @@ export function VideoHero(props: VideoHeroProps) {
   // Guests sign up first and are then sent on to the page.
   const startSearch = props.isAuthenticated ? {} : { redirect: '/video-studio' }
   const setHandoff = useStudioHandoff((state) => state.set)
+  const christmas = useHolidayTheme() === 'christmas'
 
   const facts = [
     t('Up to 4K resolution'),
@@ -82,9 +85,18 @@ export function VideoHero(props: VideoHeroProps) {
         className='from-ink/60 pointer-events-none absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r to-transparent md:block'
       />
 
+      {christmas && <HolidaySnow className='z-[2]' />}
+
       <div className='relative z-[3] mx-auto flex w-full max-w-7xl flex-col items-start gap-5 px-6 pt-36 pb-16 md:px-8 md:pb-20'>
         <p className='landing-animate-fade-up text-micro inline-flex items-center gap-2 font-mono tracking-[0.12em] text-white/55 uppercase opacity-0'>
-          <span className='cinema-rec size-1.5 rounded-full' aria-hidden />
+          {christmas ? (
+            <Snowflake
+              className='holiday-announcement-icon size-3'
+              aria-hidden
+            />
+          ) : (
+            <span className='cinema-rec size-1.5 rounded-full' aria-hidden />
+          )}
           {t('Seedance 2.5 is live · up to 30 seconds per clip')}
         </p>
         <h1
@@ -99,7 +111,13 @@ export function VideoHero(props: VideoHeroProps) {
           <span className={cn('block', isCjk && '2xl:inline')}>
             {t('Turn one sentence into')}
           </span>{' '}
-          <span className={cn('cinema-shimmer block', isCjk && '2xl:inline')}>
+          <span
+            className={cn(
+              'cinema-shimmer block',
+              christmas && 'holiday-shimmer',
+              isCjk && '2xl:inline'
+            )}
+          >
             {t('cinematic video')}
           </span>
         </h1>
@@ -124,7 +142,10 @@ export function VideoHero(props: VideoHeroProps) {
           style={{ animationDelay: '180ms' }}
         >
           <Button
-            className='cinema-glow group h-12 rounded-xl px-6 text-base font-semibold'
+            className={cn(
+              'cinema-glow group h-12 rounded-xl px-6 text-base font-semibold',
+              christmas && 'holiday-glow'
+            )}
             render={<Link to={startTarget} search={startSearch} />}
           >
             {props.isAuthenticated
@@ -169,6 +190,7 @@ export function VideoHero(props: VideoHeroProps) {
           </div>
         )}
       </div>
+      {christmas && <HolidayLights className='bottom-1 z-[3]' />}
     </section>
   )
 }

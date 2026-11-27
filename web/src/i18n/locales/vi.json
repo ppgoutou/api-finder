@@ -8855,6 +8855,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "Căn nhà gỗ ấm cúng trong rừng tuyết lúc hoàng hôn, ánh đèn ấm qua cửa sổ, phong cách màu nước",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "Ảnh sản phẩm giày thể thao trắng trên nền pastel, ánh sáng studio dịu",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "Chân dung ông lão đánh cá gương mặt dãi dầu, ánh sáng bên kịch tính, 85mm",
-    "Isometric illustration of a tiny floating island with a lighthouse": "Minh họa isometric hòn đảo nhỏ bay lơ lửng có ngọn hải đăng"
+    "Isometric illustration of a tiny floating island with a lighthouse": "Minh họa isometric hòn đảo nhỏ bay lơ lửng có ngọn hải đăng",
+    "Holiday theme": "Giao diện ngày lễ",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "Thêm tuyết rơi, ánh đèn ấm và mũ Noel trên logo cho trang chủ và thanh đầu trang, từ ngày đầu đến ngày cuối theo ngày của từng khách truy cập. Tự tắt sau ngày cuối.",
+    "Christmas theme": "Giao diện Giáng sinh",
+    "Visitors who ask their system for less motion see no snow.": "Khách truy cập đã bật giảm chuyển động trong hệ thống sẽ không thấy tuyết.",
+    "First day": "Ngày đầu",
+    "Last day": "Ngày cuối",
+    "Pick the first day": "Chọn ngày đầu",
+    "Pick the last day": "Chọn ngày cuối",
+    "The last day must not be before the first day": "Ngày cuối không được trước ngày đầu",
+    "Invalid holiday theme settings": "Cài đặt giao diện ngày lễ không hợp lệ"
   }
 }
