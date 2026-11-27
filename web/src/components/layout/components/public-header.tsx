@@ -17,10 +17,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import { Gift } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
+import { HolidayHat } from '@/components/holiday-decor'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
@@ -28,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { VipHeaderChip } from '@/features/membership'
 import { SystemUpdateAction } from '@/features/system-update/system-update-action'
+import { useHolidayTheme } from '@/hooks/use-holiday-theme'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
@@ -100,6 +103,7 @@ export function PublicHeader(props: PublicHeaderProps) {
   } = useSystemConfig()
   const dynamicLinks = useTopNavLinks()
   const notifications = useNotifications()
+  const christmas = useHolidayTheme() === 'christmas'
   const routerState = useRouterState()
   const pathname = routerState.location.pathname
 
@@ -215,7 +219,10 @@ export function PublicHeader(props: PublicHeaderProps) {
         )}
       >
         {props.announcements && props.announcements.length > 0 && !scrolled && (
-          <AnnouncementBar announcements={props.announcements} />
+          <AnnouncementBar
+            announcements={props.announcements}
+            christmas={christmas}
+          />
         )}
         <div
           className={cn(
@@ -237,8 +244,9 @@ export function PublicHeader(props: PublicHeaderProps) {
                 to={homeUrl}
                 className='group flex min-w-0 items-center gap-2.5'
               >
-                <div className='flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105'>
+                <div className='relative flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105'>
                   {logoContent}
+                  {christmas && !loading && <HolidayHat />}
                 </div>
                 <span
                   className='max-w-48 truncate text-sm font-semibold tracking-tight'
@@ -479,7 +487,11 @@ export function PublicHeader(props: PublicHeaderProps) {
  * Shows one announcement at a time and moves to the next every few seconds,
  * holding while the pointer or keyboard focus is on the bar.
  */
-function AnnouncementBar(props: { announcements: HeaderAnnouncement[] }) {
+function AnnouncementBar(props: {
+  announcements: HeaderAnnouncement[]
+  /** Warm Christmas colours with a gift icon while the holiday theme is on. */
+  christmas?: boolean
+}) {
   const { announcements } = props
   const [turn, setTurn] = useState(0)
   const [held, setHeld] = useState(false)
@@ -497,12 +509,21 @@ function AnnouncementBar(props: { announcements: HeaderAnnouncement[] }) {
   const announcement = announcements[turn % count]
   return (
     <div
-      className='bg-brand pointer-events-auto flex h-9 items-center justify-center overflow-hidden px-4 text-center text-xs font-medium text-white sm:text-sm'
+      className={cn(
+        'pointer-events-auto flex h-9 items-center justify-center gap-2 overflow-hidden px-4 text-center text-xs font-medium sm:text-sm',
+        props.christmas ? 'holiday-announcement' : 'bg-brand text-white'
+      )}
       onPointerEnter={() => setHeld(true)}
       onPointerLeave={() => setHeld(false)}
       onFocus={() => setHeld(true)}
       onBlur={() => setHeld(false)}
     >
+      {props.christmas && (
+        <Gift
+          className='holiday-announcement-icon size-3.5 shrink-0'
+          aria-hidden
+        />
+      )}
       <div
         key={turn % count}
         className='animate-in fade-in slide-in-from-bottom-2 flex max-w-full min-w-0 justify-center duration-500 motion-reduce:animate-none'

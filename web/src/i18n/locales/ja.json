@@ -8856,6 +8856,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "夕暮れの雪の森に佇む小屋、窓から漏れる暖かい光、水彩画風",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "パステル背景に置いた白いスニーカーの商品写真、柔らかなスタジオ照明",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "風雪に刻まれた顔の老漁師のポートレート、劇的なサイドライト、85mm",
-    "Isometric illustration of a tiny floating island with a lighthouse": "灯台のある小さな浮島のアイソメトリックイラスト"
+    "Isometric illustration of a tiny floating island with a lighthouse": "灯台のある小さな浮島のアイソメトリックイラスト",
+    "Holiday theme": "季節テーマ",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "ホームページとヘッダーに雪、暖かい光、ロゴのサンタ帽を追加します。各訪問者の日付で初日から最終日まで表示され、最終日を過ぎると自動でオフになります。",
+    "Christmas theme": "クリスマステーマ",
+    "Visitors who ask their system for less motion see no snow.": "システムで視差効果を減らす設定をしている訪問者には雪は表示されません。",
+    "First day": "初日",
+    "Last day": "最終日",
+    "Pick the first day": "初日を選択してください",
+    "Pick the last day": "最終日を選択してください",
+    "The last day must not be before the first day": "最終日を初日より前にすることはできません",
+    "Invalid holiday theme settings": "季節テーマの設定が無効です"
   }
 }

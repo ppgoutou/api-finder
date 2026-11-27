@@ -840,6 +840,109 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* ── Holiday theme (Christmas) ──
+ * Shown only between the dates set in System settings → Site → Holiday theme;
+ * see components/holiday-decor. Warm lights over the cinema look, no change to
+ * the brand colours. */
+.holiday-snowflake {
+  position: absolute;
+  top: -12px;
+  border-radius: 9999px;
+  background: #fff;
+  filter: blur(0.4px);
+  animation-name: holiday-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes holiday-fall {
+  50% {
+    transform: translate3d(18px, 52vh, 0);
+  }
+  100% {
+    transform: translate3d(-6px, 105vh, 0);
+  }
+}
+
+.holiday-wire path {
+  stroke: rgb(255 255 255 / 0.18);
+}
+.holiday-bulb {
+  width: 9px;
+  height: 13px;
+  border-radius: 50% 50% 45% 45%;
+  background: var(--holiday-bulb);
+  box-shadow: 0 0 10px var(--holiday-bulb);
+  animation: holiday-twinkle 2.4s ease-in-out infinite;
+}
+.holiday-bulb-warm {
+  --holiday-bulb: #ffd28a;
+}
+.holiday-bulb-red {
+  --holiday-bulb: #f87171;
+}
+.holiday-bulb-amber {
+  --holiday-bulb: #ffb366;
+}
+.holiday-bulb-green {
+  --holiday-bulb: #86efac;
+}
+@keyframes holiday-twinkle {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The main button's running light turns warm. */
+.holiday-glow::before,
+.holiday-glow::after {
+  background: conic-gradient(
+    from var(--cinema-angle),
+    #ffd28a,
+    #f87171,
+    #fbbf77,
+    #86efac,
+    #ffd28a
+  );
+}
+.holiday-glow::after {
+  opacity: 0.7;
+}
+.holiday-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #fde7c4 20%,
+    #fff 40%,
+    #fbbf77 50%,
+    #fde7c4 62%
+  );
+}
+
+.holiday-hat-red {
+  fill: #dc2626;
+}
+.holiday-hat-fur {
+  fill: #f8fafc;
+}
+
+/* The announcement bar above the header. */
+.holiday-announcement {
+  background: #1d1430;
+  color: #fde7c4;
+  box-shadow: inset 0 -1px 0 rgb(255 214 153 / 0.18);
+}
+.holiday-announcement-icon {
+  color: #fbbf77;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holiday-snowflake {
+    display: none;
+  }
+  .holiday-bulb {
+    animation: none;
+  }
+}
+
 /* Micro-interactions — Vercel-style subtle hover/active feedback */
 @media (prefers-reduced-motion: no-preference) {
   [data-slot='card']:not([data-card-hover='false']) {

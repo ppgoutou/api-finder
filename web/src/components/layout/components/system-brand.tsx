@@ -19,11 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { HolidayHat } from '@/components/holiday-decor'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { useHolidayTheme } from '@/hooks/use-holiday-theme'
 import { usePrivateStatus, useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { cn } from '@/lib/utils'
@@ -50,6 +52,7 @@ export function SystemBrand(props: SystemBrandProps) {
   const { status } = useStatus()
   const { privateStatus } = usePrivateStatus()
   const { logo } = useSystemConfig()
+  const christmas = useHolidayTheme() === 'christmas'
 
   const variant = props.variant ?? 'sidebar'
   const name = status?.system_name || props.defaultName || 'API-Finder'
@@ -66,13 +69,16 @@ export function SystemBrand(props: SystemBrandProps) {
           'hover:bg-accent focus-visible:ring-ring/40 focus-visible:ring-2'
         )}
       >
-        <div className='flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-md'>
-          <img
-            src={logo}
-            alt={t('Logo')}
-            className='size-full rounded-md object-cover'
-          />
-        </div>
+        <span className='relative flex size-5 shrink-0'>
+          <span className='flex size-full items-center justify-center overflow-hidden rounded-md'>
+            <img
+              src={logo}
+              alt={t('Logo')}
+              className='size-full rounded-md object-cover'
+            />
+          </span>
+          {christmas && <HolidayHat />}
+        </span>
         <span className='max-w-[12rem] truncate'>{name}</span>
       </Link>
     )

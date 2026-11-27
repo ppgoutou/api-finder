@@ -8856,6 +8856,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "Product photo of a white sneaker on a pastel background, soft studio lighting",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm",
-    "Isometric illustration of a tiny floating island with a lighthouse": "Isometric illustration of a tiny floating island with a lighthouse"
+    "Isometric illustration of a tiny floating island with a lighthouse": "Isometric illustration of a tiny floating island with a lighthouse",
+    "Holiday theme": "Holiday theme",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.",
+    "Christmas theme": "Christmas theme",
+    "Visitors who ask their system for less motion see no snow.": "Visitors who ask their system for less motion see no snow.",
+    "First day": "First day",
+    "Last day": "Last day",
+    "Pick the first day": "Pick the first day",
+    "Pick the last day": "Pick the last day",
+    "The last day must not be before the first day": "The last day must not be before the first day",
+    "Invalid holiday theme settings": "Invalid holiday theme settings"
   }
 }

@@ -71,6 +71,11 @@ vi.mock('@/features/system-update/system-update-action', () => ({
 }))
 vi.mock('../header-logo', () => ({ HeaderLogo: () => null }))
 
+const holiday = vi.hoisted(() => ({ theme: null as 'christmas' | null }))
+vi.mock('@/hooks/use-holiday-theme', () => ({
+  useHolidayTheme: () => holiday.theme,
+}))
+
 describe('PublicHeader desktop navigation', () => {
   it.each([
     ['internal', 'Model Square'],
@@ -155,5 +160,28 @@ describe('PublicHeader announcement bar', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('PublicHeader holiday theme', () => {
+  afterEach(() => {
+    holiday.theme = null
+  })
+
+  it('keeps the brand colours on the announcement bar outside the holiday dates', () => {
+    render(<PublicHeader announcements={[{ text: 'Sale', href: '' }]} />)
+
+    const bar = screen.getByText('Sale').closest('.pointer-events-auto')
+    expect(bar).toHaveClass('bg-brand')
+    expect(bar).not.toHaveClass('holiday-announcement')
+  })
+
+  it('turns the announcement bar warm while the Christmas theme is on', () => {
+    holiday.theme = 'christmas'
+    render(<PublicHeader announcements={[{ text: 'Sale', href: '' }]} />)
+
+    const bar = screen.getByText('Sale').closest('.pointer-events-auto')
+    expect(bar).toHaveClass('holiday-announcement')
+    expect(bar).not.toHaveClass('bg-brand')
   })
 })

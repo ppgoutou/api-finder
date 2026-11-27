@@ -80,6 +80,7 @@ func InitOptionMap() {
 	common.OptionMap["HomeShowcase"] = ""
 	common.OptionMap["StudioGallery"] = ""
 	common.OptionMap["PromoPopup"] = ""
+	common.OptionMap["HolidayTheme"] = ""
 	common.OptionMap["PricingCategories"] = ""
 	common.OptionMap["OnboardingUpstreamPricingToken"] = ""
 	common.OptionMap["OnboardingUpstreamPriceSnapshot"] = ""

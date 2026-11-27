@@ -8856,6 +8856,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "黃昏雪林中的溫馨小木屋，窗戶透出暖光，水彩風格",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "白色運動鞋的產品圖，柔和馬卡龍色背景，攝影棚柔光",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "飽經風霜的老漁夫肖像，戲劇性側光，85mm",
-    "Isometric illustration of a tiny floating island with a lighthouse": "漂浮小島與燈塔的等角插畫"
+    "Isometric illustration of a tiny floating island with a lighthouse": "漂浮小島與燈塔的等角插畫",
+    "Holiday theme": "節日主題",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "在首頁和頁首加上飄雪、暖色燈光和 logo 聖誕帽，依訪客自己的日期從第一天顯示到最後一天，過了最後一天自動關閉。",
+    "Christmas theme": "聖誕主題",
+    "Visitors who ask their system for less motion see no snow.": "系統設定了減少動態效果的訪客看不到飄雪。",
+    "First day": "第一天",
+    "Last day": "最後一天",
+    "Pick the first day": "請選擇第一天",
+    "Pick the last day": "請選擇最後一天",
+    "The last day must not be before the first day": "最後一天不能早於第一天",
+    "Invalid holiday theme settings": "節日主題設定無效"
   }
 }

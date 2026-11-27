@@ -34,6 +34,7 @@ const defaultSiteSettings: SiteSettings = {
   HomeShowcase: '',
   StudioGallery: '',
   PromoPopup: '',
+  HolidayTheme: '',
   ServerAddress: '',
   TaskPublicAddress: '',
   'general_setting.docs_link': '',

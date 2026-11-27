@@ -8856,6 +8856,16 @@
     "A cozy cabin in a snowy forest at dusk, warm light in the windows, watercolor style": "Un chalet douillet dans une forêt enneigée au crépuscule, fenêtres éclairées, style aquarelle",
     "Product photo of a white sneaker on a pastel background, soft studio lighting": "Photo produit d’une basket blanche sur fond pastel, éclairage doux de studio",
     "Portrait of an old fisherman with a weathered face, dramatic side light, 85mm": "Portrait d’un vieux pêcheur au visage buriné, lumière latérale dramatique, 85 mm",
-    "Isometric illustration of a tiny floating island with a lighthouse": "Illustration isométrique d’une petite île flottante avec un phare"
+    "Isometric illustration of a tiny floating island with a lighthouse": "Illustration isométrique d’une petite île flottante avec un phare",
+    "Holiday theme": "Thème festif",
+    "Adds snow, warm lights and a Santa hat on the logo to the home page and the header, from the first day to the last day by each visitor’s own date. It turns itself off after the last day.": "Ajoute de la neige, des lumières chaudes et un bonnet de Noël sur le logo à la page d’accueil et à l’en-tête, du premier au dernier jour selon la date de chaque visiteur. Il se désactive de lui-même après le dernier jour.",
+    "Christmas theme": "Thème de Noël",
+    "Visitors who ask their system for less motion see no snow.": "Les visiteurs qui demandent moins d’animations à leur système ne voient pas la neige.",
+    "First day": "Premier jour",
+    "Last day": "Dernier jour",
+    "Pick the first day": "Choisissez le premier jour",
+    "Pick the last day": "Choisissez le dernier jour",
+    "The last day must not be before the first day": "Le dernier jour ne peut pas précéder le premier jour",
+    "Invalid holiday theme settings": "Paramètres du thème festif invalides"
   }
 }
