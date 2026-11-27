@@ -193,13 +193,17 @@ var codeRules = map[string]string{
 var (
 	promptTooLongPatterns    = []string{"字符，最多允许", "prompt is too long", "prompt too long", "characters, at most"}
 	taskTypeMismatchPatterns = []string{"inner_generation__classification", "classified your task as", "识别为视频编辑"}
-	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核", "素材不符合社区规范"}
-	outputModerationPatterns = []string{"生成的视频可能涉及版权", "生成的视频：审核", "output video may", "output audio may"}
+	inputModerationPatterns  = []string{"未通过内容安全检查", "参考视频：审核", "参考图片：审核", "参考音频：审核", "素材不符合社区规范", "参考素材审核不通过"}
+	outputModerationPatterns = []string{"生成的视频可能涉及版权", "生成的视频：审核", "生成的音频：审核", "生成的音频可能", "output video may", "output audio may"}
+	// Generated audio blocked for copyright is music the model made, not an
+	// asset, so the customer is told to turn audio off or drop music cues.
+	musicCopyrightPatterns = []string{"音乐版权", "生成的音频：审核判定可能涉及版权", "生成的音频可能涉及版权"}
 	// A reference the supplier could not fetch or open, in its own words.
 	materialUnreachablePatterns = []string{"material_unreachable", "上传素材无法访问", "参考素材下载失败",
 		"source video could not be resolved", "video file cannot be read"}
 	noFramesPatterns          = []string{"不支持首帧", "takes reference media only"}
 	materialFrameRatePatterns = []string{"frame rate must", "参考视频帧率"}
+	materialPixelsPatterns    = []string{"pixel count must", "宽高或像素数量不符合"}
 	// Checked after copyright, which names an asset: these name neither side,
 	// and a supplier uses them for the result.
 	generalModerationPatterns = []string{"审核判定", "敏感画面", "content moderation", "内容审核未通过",
@@ -217,7 +221,7 @@ var textRules = []rule{
 	{CodeNoLineForSpec, []string{"no_line_for_request", "没有线路能接这一单"}},
 	{CodeModelUnavailable, []string{"model_not_found", "no available channel", "无可用渠道", "無可用管道", "可用渠道不存在"}},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
-	{CodeModerationMusicCopyright, []string{"音乐版权"}},
+	{CodeModerationMusicCopyright, musicCopyrightPatterns},
 	{CodeModerationInput, inputModerationPatterns},
 	{CodeModerationOutput, outputModerationPatterns},
 	{CodeModerationCopyright, []string{"copyright", "版权"}},
@@ -229,7 +233,7 @@ var textRules = []rule{
 	{CodeMaterialUnreachable, materialUnreachablePatterns},
 	{CodeMaterialPublicURL, []string{"public http(s) url", "media_url_required", "公网 http", "仅接受 http(s)"}},
 	{CodeMaterialFrameRate, materialFrameRatePatterns},
-	{CodeMaterialPixels, []string{"pixel count must"}},
+	{CodeMaterialPixels, materialPixelsPatterns},
 	{CodeMaterialRequirements, []string{"请检查上传素材"}},
 	{CodeFramesPaired, []string{"must be provided together"}},
 	{CodePromptRequired, []string{"prompt is required", "missing `prompt`", "prompt 不能为空"}},
@@ -268,7 +272,7 @@ var failReasonRules = []rule{
 	{CodePromptTooLong, promptTooLongPatterns},
 	{CodeTaskTypeMismatch, taskTypeMismatchPatterns},
 	{CodeModerationRealPerson, []string{"privacyinformation", "real person", "真人人脸", "隐私信息"}},
-	{CodeModerationMusicCopyright, []string{"音乐版权"}},
+	{CodeModerationMusicCopyright, musicCopyrightPatterns},
 	{CodeModerationInput, inputModerationPatterns},
 	{CodeModerationOutput, outputModerationPatterns},
 	{CodeModerationCopyright, []string{"copyright", "版权"}},
@@ -276,11 +280,11 @@ var failReasonRules = []rule{
 	{CodeMaterialDownloadTimeout, []string{"外部素材下载超时"}},
 	{CodeMaterialUnreachable, materialUnreachablePatterns},
 	{CodeMaterialFrameRate, materialFrameRatePatterns},
-	{CodeMaterialPixels, []string{"pixel count must"}},
+	{CodeMaterialPixels, materialPixelsPatterns},
 	{CodeMaterialRequirements, []string{"请检查上传素材"}},
 	{CodeMaterialDuration30s, []string{"要求大于 0 且不超过 30 秒"}},
 	{CodeMaterialDuration, []string{"素材时长"}},
-	{CodeMaterialProcessing, []string{"上传资产库失败"}},
+	{CodeMaterialProcessing, []string{"上传资产库失败", "参考图片传输失败", "参考图片确认上传失败"}},
 	// Last: a busy line can wrap a specific reason, which wins.
 	{CodeTaskServiceUnavailable, []string{"all_platforms_paused", "暂不可用", "生成服务暂时不可用", "线路繁忙"}},
 }
