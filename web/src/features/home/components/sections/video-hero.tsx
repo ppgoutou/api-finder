@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { handoffFromPrompt } from '@/features/video-studio/lib/prompt-handoff'
+import { cn } from '@/lib/utils'
 import { useStudioHandoff } from '@/stores/studio-handoff-store'
 
 import { useHeroClip } from '../../hooks/use-hero-clip'
@@ -33,7 +34,10 @@ interface VideoHeroProps {
 }
 
 export function VideoHero(props: VideoHeroProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  // Chinese and Japanese headlines are short enough to sit on one line on
+  // wide screens; other languages keep wrapping at a smaller size.
+  const isCjk = /^(zh|ja)/i.test(i18n.resolvedLanguage || i18n.language || '')
   const { bestDiscount } = useSeedancePricing()
   const hero = useHeroClip()
   const startTarget = props.isAuthenticated ? '/video-studio' : '/sign-up'
@@ -84,11 +88,20 @@ export function VideoHero(props: VideoHeroProps) {
           {t('Seedance 2.5 is live · up to 30 seconds per clip')}
         </p>
         <h1
-          className='landing-animate-fade-up font-display text-display max-w-6xl leading-[0.95] tracking-tight text-balance uppercase opacity-0'
+          className={cn(
+            'landing-animate-fade-up font-display tracking-tight text-balance uppercase opacity-0',
+            isCjk
+              ? 'text-[clamp(2.75rem,12.5vw,4rem)] leading-[1.15] sm:text-[clamp(4rem,11vw,5.5rem)] lg:text-[clamp(5.5rem,8vw,7rem)] lg:leading-[1.1] 2xl:w-max 2xl:text-[clamp(6rem,6.4vw,9rem)]'
+              : 'text-display max-w-6xl leading-[1.02] 2xl:text-[clamp(6rem,5.2vw,8rem)]'
+          )}
           style={{ animationDelay: '60ms' }}
         >
-          <span className='block'>{t('Turn one sentence into')}</span>{' '}
-          <span className='cinema-shimmer block'>{t('cinematic video')}</span>
+          <span className={cn('block', isCjk && '2xl:inline')}>
+            {t('Turn one sentence into')}
+          </span>{' '}
+          <span className={cn('cinema-shimmer block', isCjk && '2xl:inline')}>
+            {t('cinematic video')}
+          </span>
         </h1>
         <p
           className='landing-animate-fade-up max-w-lg text-sm leading-relaxed text-white/55 opacity-0'
